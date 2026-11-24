@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ChoiceCard, fieldLabelClassName } from "@/components/ui/field";
+import { fieldLabelClassName } from "@/components/ui/field";
+import { OptionGroup } from "@/components/ui/option-group";
 import { GroupOwnerSettings } from "./group-owner-settings";
 import { useAsyncAction } from "./use-async-action";
 import { updateChatGroup } from "@/lib/supabase/chat-groups";
@@ -46,25 +47,21 @@ export function ChatSettingsSection({
     <div className="space-y-6">
       {canPosting && (
         <section aria-labelledby="chat-posting-title" className="space-y-3">
-          <fieldset className="space-y-2" disabled={save.busy}>
-            <legend id="chat-posting-title" className={fieldLabelClassName}>
+          <div className="space-y-2">
+            <p id="chat-posting-title" className={fieldLabelClassName}>
               {t("groups.settings.postingLabel")}
-            </legend>
-            <ChoiceCard>
-              <input type="radio" name="posting-policy" checked={posting === "members"} onChange={() => setPosting("members")} className="mt-1 accent-[var(--color-primary)]" />
-              <span>
-                <span className="block font-medium">{t("groups.settings.postingMembers")}</span>
-                <span className="block text-caption text-text-muted">{t("groups.settings.postingMembersHelp")}</span>
-              </span>
-            </ChoiceCard>
-            <ChoiceCard>
-              <input type="radio" name="posting-policy" checked={posting === "admins"} onChange={() => setPosting("admins")} className="mt-1 accent-[var(--color-primary)]" />
-              <span>
-                <span className="block font-medium">{t("groups.settings.postingAdmins")}</span>
-                <span className="block text-caption text-text-muted">{t("groups.settings.postingAdminsHelp")}</span>
-              </span>
-            </ChoiceCard>
-          </fieldset>
+            </p>
+            <OptionGroup<"members" | "admins">
+              labelledBy="chat-posting-title"
+              value={posting}
+              onChange={setPosting}
+              disabled={save.busy}
+              options={[
+                { key: "members", label: t("groups.settings.postingMembers"), description: t("groups.settings.postingMembersHelp") },
+                { key: "admins", label: t("groups.settings.postingAdmins"), description: t("groups.settings.postingAdminsHelp") },
+              ]}
+            />
+          </div>
           {save.error && (
             <InlineAlert>
               {save.error}

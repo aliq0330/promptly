@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { OptionGroup } from "@/components/ui/option-group";
 import { Globe } from "@/components/icons/globe";
 import { Lock } from "@/components/icons/lock";
 import { Plus } from "@/components/icons/plus";
@@ -125,49 +126,42 @@ export function WorkflowSpaceField({
 
         {choice.enabled && (
           <>
-            <div role="radiogroup" aria-label={t("wfSpace.field.pick")} className="space-y-2">
+            <div className="space-y-2">
               {spaces === null && <p className="text-small text-text-muted">{t("common.loading")}</p>}
               {failed && <p className="text-small text-danger">{t("wfSpace.field.loadFailed")}</p>}
-              {(spaces ?? []).map((space) => {
-                const active = choice.spaceId === space.id;
-                return (
-                  <button
-                    key={space.id}
-                    type="button"
-                    role="radio"
-                    aria-checked={active}
-                    onClick={() => onChange({ ...choice, spaceId: space.id })}
-                    className={cn("flex w-full items-center gap-3 rounded-xl border bg-surface p-2.5 text-left transition-colors", active ? "border-primary ring-1 ring-primary" : "border-border hover:bg-surface-soft")}
-                  >
-                    <span className={cn("h-4 w-4 shrink-0 rounded-full border-2", active ? "border-[5px] border-primary" : "border-border-strong")} aria-hidden />
-                    <SpaceCoverArt urls={summaryArt(space)} className="h-10 w-10 shrink-0 overflow-hidden rounded-lg" iconSize={16} />
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-small font-semibold text-text">{space.title}</span>
-                      <span className="block truncate text-caption text-text-muted">{t("spaces.count.images", { count: space.imageCount })} · {t("spaces.count.prompts", { count: space.promptCount })}</span>
-                    </span>
-                    <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-surface-soft px-2 py-0.5 text-caption font-semibold text-text-secondary">
-                      {space.visibility === "public" ? <Globe size={12} aria-hidden /> : <Lock size={12} aria-hidden />}
-                      {t(space.visibility === "public" ? "spaces.visibility.public" : space.visibility === "link" ? "spaces.visibility.link" : "spaces.visibility.private")}
-                    </span>
-                  </button>
-                );
-              })}
-              <button
-                type="button"
-                role="radio"
-                aria-checked={choice.spaceId === "new"}
-                onClick={() => onChange({ ...choice, spaceId: "new" })}
-                className={cn("flex w-full items-center gap-3 rounded-xl border bg-surface p-2.5 text-left transition-colors", choice.spaceId === "new" ? "border-primary ring-1 ring-primary" : "border-border hover:bg-surface-soft")}
-              >
-                <span className={cn("h-4 w-4 shrink-0 rounded-full border-2", choice.spaceId === "new" ? "border-[5px] border-primary" : "border-border-strong")} aria-hidden />
-                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-surface-soft text-text-secondary">
-                  <Plus size={16} aria-hidden />
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block text-small font-semibold text-text">{t("wfSpace.field.newSpace")}</span>
-                  <span className="block text-caption text-text-muted">{t("wfSpace.field.newSpaceHint")}</span>
-                </span>
-              </button>
+              <OptionGroup<string>
+                ariaLabel={t("wfSpace.field.pick")}
+                value={choice.spaceId}
+                onChange={(spaceId) => onChange({ ...choice, spaceId })}
+                options={[
+                  ...(spaces ?? []).map((space) => ({
+                    key: space.id,
+                    leading: <SpaceCoverArt urls={summaryArt(space)} className="h-10 w-10 shrink-0 overflow-hidden rounded-md" iconSize={16} />,
+                    label: <span className="truncate">{space.title}</span>,
+                    description: (
+                      <span className="block truncate">
+                        {t("spaces.count.images", { count: space.imageCount })} · {t("spaces.count.prompts", { count: space.promptCount })}
+                      </span>
+                    ),
+                    badge: (
+                      <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-surface-soft px-2 py-0.5 text-caption font-semibold text-text-secondary">
+                        {space.visibility === "public" ? <Globe size={12} aria-hidden /> : <Lock size={12} aria-hidden />}
+                        {t(space.visibility === "public" ? "spaces.visibility.public" : space.visibility === "link" ? "spaces.visibility.link" : "spaces.visibility.private")}
+                      </span>
+                    ),
+                  })),
+                  {
+                    key: "new",
+                    leading: (
+                      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-md bg-surface-soft text-text-secondary">
+                        <Plus size={16} aria-hidden />
+                      </span>
+                    ),
+                    label: t("wfSpace.field.newSpace"),
+                    description: t("wfSpace.field.newSpaceHint"),
+                  },
+                ]}
+              />
             </div>
 
             <div>

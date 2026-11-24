@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ChoiceCard } from "@/components/ui/field";
 import { InlineAlert } from "@/components/ui/inline-alert";
+import { OptionGroup } from "@/components/ui/option-group";
 import { SwitchRow } from "@/components/ui/switch";
 import { useAuth } from "@/features/auth/auth-provider";
 import { setCallDevices, useCallDevices, useCallPrefs } from "@/features/calls/call-prefs-store";
@@ -99,17 +99,13 @@ export default function CallSettingsPage() {
       {saveFailed && <InlineAlert>{t("calls.settings.saveError")}</InlineAlert>}
 
       <SettingsCard title={t("calls.settings.who")}>
-        <div className="space-y-2" role="radiogroup" aria-label={t("calls.settings.who")}>
-          {WHO.map((option) => (
-            <ChoiceCard key={option.key}>
-              <input type="radio" name="call-privacy" checked={current.privacy === option.key} disabled={!settings || saving} onChange={() => void save({ ...current, privacy: option.key })} className="mt-0.5" data-call-privacy={option.key} />
-              <span>
-                <span className="font-medium">{t(option.label)}</span>
-                <span className="block text-caption text-text-muted">{t(option.hint)}</span>
-              </span>
-            </ChoiceCard>
-          ))}
-        </div>
+        <OptionGroup
+          ariaLabel={t("calls.settings.who")}
+          value={current.privacy}
+          disabled={!settings || saving}
+          onChange={(privacy) => void save({ ...current, privacy })}
+          options={WHO.map((option) => ({ key: option.key, label: t(option.label), description: t(option.hint), attrs: { "data-call-privacy": option.key } }))}
+        />
         <SwitchRow checked={current.notifyMissed} disabled={!settings || saving} onChange={(next) => void save({ ...current, notifyMissed: next })} data-call-notify-missed="">
           <span className="min-w-0 flex-1">
             <span className="block text-small font-medium text-text">{t("calls.settings.notifyMissed")}</span>

@@ -1,5 +1,6 @@
 "use client";
 
+import { OptionGroup } from "@/components/ui/option-group";
 import { forwardRef, useImperativeHandle, useState, type ReactNode } from "react";
 import { AlertCircle } from "@/components/icons/alert-circle";
 import { Check } from "@/components/icons/check";
@@ -152,30 +153,13 @@ export const PublishPanel = forwardRef<
 
       {options.length > 1 && !inTeam && (
         <section className="space-y-2" data-audience-field={audience}>
-          <div className="grid gap-2" role="radiogroup" aria-label={t("publish.whoSees")}>
-            {options.map((option) => {
-              const selected = option.key === audience;
-              return (
-                <button
-                  key={option.key}
-                  type="button"
-                  role="radio"
-                  aria-checked={selected}
-                  disabled={busy}
-                  onClick={() => choose(option.key)}
-                  data-audience-option={option.key}
-                  className={cn(
-                    "flex min-h-14 items-center gap-3 rounded-xl border px-4 text-left transition-colors disabled:opacity-50",
-                    selected ? "border-primary bg-primary-soft text-text" : "border-border-strong bg-surface text-text-secondary hover:border-primary/50",
-                  )}
-                >
-                  <span aria-hidden className={cn("h-5 w-5 shrink-0 rounded-full border-2", selected ? "border-[6px] border-primary" : "border-border-strong")} />
-                  <option.icon size={20} aria-hidden className="shrink-0" />
-                  <span className="min-w-0 flex-1 text-body font-semibold">{option.label}</span>
-                </button>
-              );
-            })}
-          </div>
+          <OptionGroup<Audience>
+            ariaLabel={t("publish.whoSees")}
+            value={audience}
+            disabled={busy}
+            onChange={choose}
+            options={options.map((option) => ({ key: option.key, icon: option.icon, label: option.label, attrs: { "data-audience-option": option.key } }))}
+          />
           {audience === "community" && (
             <button
               type="button"

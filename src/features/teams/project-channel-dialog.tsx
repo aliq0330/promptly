@@ -75,6 +75,7 @@ export function NewProjectChannelDialog({ projectId, onClose, onCreated }: { pro
           <span className={fieldLabelClassName}>{t("th.newChannel.posting")}</span>
           <ChoiceGroup<"members" | "admins">
             ariaLabel={t("th.newChannel.posting")}
+            variant="segmented"
             value={posting}
             onChange={setPosting}
             options={[

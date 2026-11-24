@@ -3,6 +3,8 @@
 import { useId, useMemo, useState } from "react";
 import { ChevronRight } from "@/components/icons/chevron-right";
 import { Button } from "@/components/ui/button";
+import { ChoiceGroup } from "@/components/ui/choice-group";
+import { OptionGroup } from "@/components/ui/option-group";
 import { SpaceDialog } from "@/features/spaces/space-modals";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import {
@@ -19,10 +21,11 @@ import { createCommunityRoom, updateCommunityRoom } from "@/lib/supabase/communi
 import { cn } from "@/lib/utils";
 import type { CommunityRoom, CommunityRoomIcon } from "@/types";
 import { refreshCommunityRooms } from "./use-community-rooms";
-import { RoomIcon } from "./room-icon";
+import { ROOM_ICON_COMPONENTS } from "./room-icon";
 import { InlineAlert } from "@/components/ui/inline-alert";
 
 const NEW_SECTION = "__new__";
+const DEFAULT_SECTION = "__default__";
 
 /**
  * Oda ekle / düzenle penceresi (docs/history/352-*, mockup 5): ad, açıklama, simge, bölüm, kim yazar, kim görür + "ne olacak" cümlesi.
@@ -98,13 +101,6 @@ export function RoomFormModal({
   }
 
   const title = sectionOnly ? t("rooms.manage.moveTitle") : editing ? t("rooms.form.editTitle") : t("rooms.form.createTitle");
-  const radioClass = (active: boolean, disabled = false) =>
-    cn(
-      "flex min-h-12 flex-1 cursor-pointer items-center gap-2 rounded-lg border px-3 text-small font-semibold transition-colors",
-      active ? "border-primary bg-primary-soft text-text" : "border-border bg-surface text-text hover:border-border-strong",
-      disabled && "cursor-not-allowed opacity-60",
-    );
-
   return (
     <SpaceDialog
       title={title}
@@ -169,26 +165,19 @@ export function RoomFormModal({
               />
             </div>
 
-            <div role="radiogroup" aria-label={t("rooms.form.icon")}>
-              <div className="text-label font-semibold text-text">{t("rooms.form.icon")}</div>
-              <div className="mt-1.5 flex flex-wrap gap-2">
-                {ROOM_ICONS.map((key) => (
-                  <button
-                    key={key}
-                    type="button"
-                    role="radio"
-                    aria-checked={icon === key}
-                    aria-label={t(`rooms.icon.${key}` as const)}
-                    onClick={() => setIcon(key)}
-                    className={cn(
-                      "flex h-12 w-12 items-center justify-center rounded-lg border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
-                      icon === key ? "border-2 border-primary bg-primary-soft text-primary" : "border-border bg-surface text-text-secondary hover:border-border-strong",
-                    )}
-                  >
-                    <RoomIcon icon={key} size={24} />
-                  </button>
-                ))}
-              </div>
+            <div>
+              <p id={`${uid}-icon`} className="text-label font-semibold text-text">
+                {t("rooms.form.icon")}
+              </p>
+              <ChoiceGroup<CommunityRoomIcon>
+                labelledBy={`${uid}-icon`}
+                variant="tile"
+                iconOnly
+                className="mt-1.5"
+                value={icon}
+                onChange={setIcon}
+                options={ROOM_ICONS.map((key) => ({ key, label: t(`rooms.icon.${key}` as const), icon: ROOM_ICON_COMPONENTS[key] }))}
+              />
             </div>
           </>
         )}
@@ -209,17 +198,16 @@ export function RoomFormModal({
             </button>
           )}
           {sectionOpen && (
-            <div role="radiogroup" aria-label={t("rooms.form.sectionPick")} className="mt-2 space-y-1.5">
-              {["", ...choices].map((choice) => (
-                <label key={choice || "default"} className={radioClass(section === choice && section !== NEW_SECTION)}>
-                  <input type="radio" name={`${uid}-section`} checked={section === choice} onChange={() => setSection(choice)} className="h-4 w-4 accent-primary" />
-                  {choice || t("rooms.sectionDefault")}
-                </label>
-              ))}
-              <label className={radioClass(section === NEW_SECTION)}>
-                <input type="radio" name={`${uid}-section`} checked={section === NEW_SECTION} onChange={() => setSection(NEW_SECTION)} className="h-4 w-4 accent-primary" />
-                {t("rooms.form.sectionNew")}
-              </label>
+            <div className="mt-2 space-y-2">
+              <OptionGroup<string>
+                ariaLabel={t("rooms.form.sectionPick")}
+                value={section === NEW_SECTION ? NEW_SECTION : section === "" ? DEFAULT_SECTION : section}
+                onChange={(key) => setSection(key === DEFAULT_SECTION ? "" : key)}
+                options={[
+                  ...["", ...choices].map((choice) => ({ key: choice || DEFAULT_SECTION, label: choice || t("rooms.sectionDefault") })),
+                  { key: NEW_SECTION, label: t("rooms.form.sectionNew") },
+                ]}
+              />
               {section === NEW_SECTION && (
                 <input
                   type="text"
@@ -237,33 +225,38 @@ export function RoomFormModal({
 
         {!sectionOnly && (
           <>
-            <fieldset>
-              <legend className="text-label font-semibold text-text">{t("rooms.form.whoWrites")}</legend>
-              <div className="mt-1.5 flex gap-2">
-                <label className={radioClass(posting === "members")}>
-                  <input type="radio" name={`${uid}-post`} checked={posting === "members"} onChange={() => setPosting("members")} className="h-4 w-4 accent-primary" />
-                  {t("rooms.form.writeAll")}
-                </label>
-                <label className={radioClass(posting === "admins")}>
-                  <input type="radio" name={`${uid}-post`} checked={posting === "admins"} onChange={() => setPosting("admins")} className="h-4 w-4 accent-primary" />
-                  {t("rooms.form.writeStaff")}
-                </label>
-              </div>
-            </fieldset>
+            <div>
+              <p id={`${uid}-writes`} className="mb-1.5 text-label font-semibold text-text">
+                {t("rooms.form.whoWrites")}
+              </p>
+              <ChoiceGroup<"members" | "admins">
+                labelledBy={`${uid}-writes`}
+                variant="segmented"
+                value={posting}
+                onChange={setPosting}
+                options={[
+                  { key: "members", label: t("rooms.form.writeAll") },
+                  { key: "admins", label: t("rooms.form.writeStaff") },
+                ]}
+              />
+            </div>
 
-            <fieldset disabled={isDefault}>
-              <legend className="text-label font-semibold text-text">{t("rooms.form.whoSees")}</legend>
-              <div className="mt-1.5 flex gap-2">
-                <label className={radioClass(reading === "all", isDefault)}>
-                  <input type="radio" name={`${uid}-see`} checked={reading === "all"} onChange={() => setReading("all")} className="h-4 w-4 accent-primary" />
-                  {t("rooms.form.seeAll")}
-                </label>
-                <label className={radioClass(reading === "staff", isDefault)}>
-                  <input type="radio" name={`${uid}-see`} checked={reading === "staff"} onChange={() => setReading("staff")} className="h-4 w-4 accent-primary" />
-                  {t("rooms.form.seePrivate")}
-                </label>
-              </div>
-            </fieldset>
+            <div>
+              <p id={`${uid}-sees`} className="mb-1.5 text-label font-semibold text-text">
+                {t("rooms.form.whoSees")}
+              </p>
+              <ChoiceGroup<"all" | "staff">
+                labelledBy={`${uid}-sees`}
+                variant="segmented"
+                disabled={isDefault}
+                value={reading}
+                onChange={setReading}
+                options={[
+                  { key: "all", label: t("rooms.form.seeAll") },
+                  { key: "staff", label: t("rooms.form.seePrivate") },
+                ]}
+              />
+            </div>
 
             {isDefault && <p className="text-caption text-text-muted">{t("rooms.form.defaultNote")}</p>}
 

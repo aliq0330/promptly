@@ -8,6 +8,7 @@ import { Check } from "@/components/icons/check";
 import { ScrollText } from "@/components/icons/scroll-text";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ChoiceGroup } from "@/components/ui/choice-group";
 import { ChatMuteToggle, LeaveCommunitySection } from "@/features/groups/personal-prefs";
 import { RoleBadge } from "@/features/groups/role-badge";
 import { ReportButton } from "@/features/moderation/report-button";
@@ -19,7 +20,6 @@ import type { CommunityTabProps } from "./community-page";
 import { acceptCommunityRules, setCommunityNotifyPrefs } from "@/lib/supabase/communities";
 import { communityTopicLabelKey, effectiveNotifyLevel, isTemporarilyMuted, MUTE_DURATIONS_HOURS, muteUntilIso, NOTIFY_LEVELS } from "@/lib/communities";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import { cn } from "@/lib/utils";
 import type { CommunityNotifyLevel } from "@/types";
 
 /**
@@ -152,23 +152,15 @@ export function AboutTab({ group, role, viewerId, membership, reload, onToast, g
               {effective === "none" ? <BellOff size={16} aria-hidden /> : <Bell size={16} aria-hidden />} {t("communities.notify.title")}
             </h2>
             <p className="text-caption text-text-muted">{t("communities.notify.help")}</p>
-            <div role="radiogroup" aria-label={t("communities.notify.title")} className="space-y-2">
-              {NOTIFY_LEVELS.map((value) => (
-                <label
-                  key={value}
-                  className={cn(
-                    "flex cursor-pointer items-start gap-3 rounded-lg border px-4 py-3 text-small transition-colors",
-                    level === value ? "border-primary/50 bg-primary-soft/40" : "border-border-soft bg-background hover:border-border-strong",
-                  )}
-                >
-                  <input type="radio" name="notify-level" checked={level === value} onChange={() => void savePrefs(value, null)} disabled={prefs.busy} className="mt-1 accent-[var(--color-primary)]" />
-                  <span>
-                    <span className="block font-medium text-text">{t(`communities.notify.level.${value}`)}</span>
-                    <span className="block text-caption text-text-muted">{t(`communities.notify.level.${value}Help`)}</span>
-                  </span>
-                </label>
-              ))}
-            </div>
+            <ChoiceGroup<(typeof NOTIFY_LEVELS)[number]>
+              ariaLabel={t("communities.notify.title")}
+              variant="segmented"
+              showHint
+              value={level}
+              disabled={prefs.busy}
+              onChange={(value) => void savePrefs(value, null)}
+              options={NOTIFY_LEVELS.map((value) => ({ key: value, label: t(`communities.notify.level.${value}`), hint: t(`communities.notify.level.${value}Help`) }))}
+            />
             <div className="space-y-2">
               {tempMuted ? (
                 <div className="flex flex-wrap items-center gap-3 rounded-lg bg-surface-soft px-4 py-2.5 text-small text-text-secondary">

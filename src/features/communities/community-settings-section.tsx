@@ -4,7 +4,8 @@ import { useState } from "react";
 import { Lock } from "@/components/icons/lock";
 import { LockOpen } from "@/components/icons/lock-open";
 import { Button } from "@/components/ui/button";
-import { ChoiceCard, fieldControlClassName, fieldLabelClassName } from "@/components/ui/field";
+import { ChoiceGroup } from "@/components/ui/choice-group";
+import { fieldControlClassName, fieldLabelClassName } from "@/components/ui/field";
 import { ConfirmDialog } from "@/features/groups/confirm-dialog";
 import { useAsyncAction } from "@/features/groups/use-async-action";
 import { closeCommunity, reopenCommunity, updateCommunity, type UpdateCommunityPatch } from "@/lib/supabase/communities";
@@ -85,17 +86,22 @@ export function CommunitySettingsSection({ group, onChanged, onToast }: { group:
           {canSettings && (
             <>
               <CommunityTopicFields idPrefix="settings" domain={domain} onDomainChange={setDomain} category={category} onCategoryChange={setCategory} disabled={save.busy} />
-              <fieldset className="space-y-2" disabled={save.busy}>
-                <legend className={fieldLabelClassName}>{t("communities.create.feedPolicyLabel")}</legend>
-                <ChoiceCard>
-                  <input type="radio" name="settings-feed" checked={feedPolicy === "members"} onChange={() => setFeedPolicy("members")} className="mt-1 accent-[var(--color-primary)]" />
-                  <span className="font-medium">{t("communities.policy.everyone")}</span>
-                </ChoiceCard>
-                <ChoiceCard>
-                  <input type="radio" name="settings-feed" checked={feedPolicy === "admins"} onChange={() => setFeedPolicy("admins")} className="mt-1 accent-[var(--color-primary)]" />
-                  <span className="font-medium">{t("communities.policy.staff")}</span>
-                </ChoiceCard>
-              </fieldset>
+              <div>
+                <p id="settings-feed-label" className={`${fieldLabelClassName} mb-2`}>
+                  {t("communities.create.feedPolicyLabel")}
+                </p>
+                <ChoiceGroup<CommunityFeedPolicy>
+                  labelledBy="settings-feed-label"
+                  variant="segmented"
+                  value={feedPolicy}
+                  onChange={setFeedPolicy}
+                  disabled={save.busy}
+                  options={[
+                    { key: "members", label: t("communities.policy.everyone") },
+                    { key: "admins", label: t("communities.policy.staff") },
+                  ]}
+                />
+              </div>
             </>
           )}
           {canRules && (

@@ -1,5 +1,6 @@
 "use client";
 
+import { ChoiceGroup } from "@/components/ui/choice-group";
 import { useEffect, useState } from "react";
 import { BarChart3 } from "@/components/icons/bar-chart-3";
 import { CalendarDays } from "@/components/icons/calendar-days";
@@ -11,7 +12,6 @@ import { UserMinus } from "@/components/icons/user-minus";
 import { UserPlus } from "@/components/icons/user-plus";
 import { UsersRound } from "@/components/icons/users-round";
 import { Button } from "@/components/ui/button";
-import { Tabs } from "@/components/ui/tabs";
 import { fetchCommunityStats } from "@/lib/supabase/communities";
 import { toGroupError } from "@/lib/supabase/chat-groups";
 import type { CommunityStats } from "@/lib/communities";
@@ -54,7 +54,13 @@ export function StatsSection({ groupId }: { groupId: string }) {
         <h3 id="community-stats-title" className="flex items-center gap-1.5 text-label font-semibold text-text">
           <BarChart3 size={16} aria-hidden /> {t("communities.stats.title")}
         </h3>
-        <Tabs variant="segmented" ariaLabel={t("communities.stats.periodAria")} active={String(days) as "7" | "30" | "90"} onChange={(key) => setDays(Number(key) as (typeof PERIODS)[number])} items={PERIODS.map((value) => ({ key: String(value) as "7" | "30" | "90", label: t("communities.stats.days", { count: value }) }))} />
+        <ChoiceGroup<"7" | "30" | "90">
+          ariaLabel={t("communities.stats.periodAria")}
+          variant="segmented"
+          value={String(days) as "7" | "30" | "90"}
+          onChange={(key) => setDays(Number(key) as (typeof PERIODS)[number])}
+          options={PERIODS.map((value) => ({ key: String(value) as "7" | "30" | "90", label: t("communities.stats.days", { count: value }) }))}
+        />
       </div>
       <p className="text-caption text-text-muted">{t("communities.stats.privacyNote")}</p>
 

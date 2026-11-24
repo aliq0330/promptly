@@ -2,6 +2,7 @@
 
 // Hex literals here are USER DATA defaults (a colour variable's starting value), not interface colours (docs/history/406-*).
 
+import { ChoiceGroup } from "@/components/ui/choice-group";
 import { useEffect, useRef, useState } from "react";
 import { ImagePlus } from "@/components/icons/image-plus";
 import { Palette } from "@/components/icons/palette";
@@ -391,26 +392,17 @@ export function VariableSpecEditor({
               />
             </div>
           </div>
-          <div role="radiogroup" aria-label={t("variable.defaultValueLabel")} className="flex flex-wrap gap-2">
-            <Chip
-              role="radio"
-              aria-checked={defaultValue === (spec.config.onText ?? "") && defaultValue !== (spec.config.offText ?? "")}
-              aria-pressed={undefined}
-              selected={defaultValue === (spec.config.onText ?? "") && defaultValue !== (spec.config.offText ?? "")}
-              onClick={() => onChange({ spec, defaultValue: spec.config.onText ?? "" })}
-            >
-              {t("variable.defaultOn")}
-            </Chip>
-            <Chip
-              role="radio"
-              aria-checked={defaultValue === (spec.config.offText ?? "")}
-              aria-pressed={undefined}
-              selected={defaultValue === (spec.config.offText ?? "")}
-              onClick={() => onChange({ spec, defaultValue: spec.config.offText ?? "" })}
-            >
-              {t("variable.defaultOff")}
-            </Chip>
-          </div>
+          <ChoiceGroup<"on" | "off">
+            ariaLabel={t("variable.defaultValueLabel")}
+            variant="segmented"
+            className="max-w-xs"
+            value={defaultValue === (spec.config.offText ?? "") ? "off" : defaultValue === (spec.config.onText ?? "") ? "on" : null}
+            onChange={(key) => onChange({ spec, defaultValue: key === "on" ? (spec.config.onText ?? "") : (spec.config.offText ?? "") })}
+            options={[
+              { key: "on", label: t("variable.defaultOn") },
+              { key: "off", label: t("variable.defaultOff") },
+            ]}
+          />
         </div>
       )}
 

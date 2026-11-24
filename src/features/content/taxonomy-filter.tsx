@@ -1,8 +1,7 @@
 "use client";
 
-import { Check } from "@/components/icons/check";
+import { MenuRadioGroup } from "@/components/ui/menu-radio";
 import { Chip, ChipRow } from "@/components/ui/chip";
-import { cn } from "@/lib/utils";
 import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
 import {
   CONTENT_TYPE_IDS,
@@ -91,25 +90,16 @@ export function TaxonomyDrillList({ value, onChange }: { value: TaxonomyFilterVa
   const categories = getCategories(value.contentType);
   const subcategories = getSubcategories(value.contentType, value.category);
   return (
-    <div role="radiogroup" aria-label={t("toolbar.category")} className="space-y-1" data-taxonomy-drill>
-      {categories.map((category) => {
-        const selected = value.category === category.id;
-        return (
-          <div key={category.id}>
-            <button
-              type="button"
-              role="radio"
-              aria-checked={selected}
-              onClick={() => onChange(selected ? { ...value, category: null, subcategory: null } : { ...value, category: category.id, subcategory: null })}
-              className={cn(
-                "flex min-h-11 w-full items-center justify-between gap-2 rounded-md px-3 text-left text-label transition-colors",
-                selected ? "bg-primary-soft font-semibold text-text" : "text-text-secondary hover:bg-surface-soft",
-              )}
-            >
-              <span className="min-w-0 truncate">{taxonomyLabel(category.labelKey, language)}</span>
-              {selected && <Check size={16} className="shrink-0 text-primary" aria-hidden />}
-            </button>
-            {selected && subcategories.length > 0 && (
+    <div data-taxonomy-drill>
+      <MenuRadioGroup<string>
+        ariaLabel={t("toolbar.category")}
+        value={value.category}
+        onChange={(key) => onChange(value.category === key ? { ...value, category: null, subcategory: null } : { ...value, category: key, subcategory: null })}
+        items={categories.map((category) => ({
+          key: category.id,
+          label: taxonomyLabel(category.labelKey, language),
+          below:
+            subcategories.length > 0 ? (
               <div className="flex flex-wrap gap-2 px-3 pb-2 pt-2.5">
                 <Chip selected={!value.subcategory} onClick={() => onChange({ ...value, subcategory: null })}>
                   {t("taxonomy.allSubcategories")}
@@ -120,10 +110,9 @@ export function TaxonomyDrillList({ value, onChange }: { value: TaxonomyFilterVa
                   </Chip>
                 ))}
               </div>
-            )}
-          </div>
-        );
-      })}
+            ) : undefined,
+        }))}
+      />
     </div>
   );
 }

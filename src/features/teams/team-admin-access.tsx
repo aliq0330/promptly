@@ -31,7 +31,7 @@ import {
 import { cn } from "@/lib/utils";
 import { InviteDialog } from "./team-invites";
 import type { TeamCtx } from "./team-page";
-import { PersonRow, StatTile, TEAM_TONES, TeamMark } from "./team-ui";
+import { PersonRow, StatTile, TeamMark, TeamToneSwatches } from "./team-ui";
 
 /** Yönetim → Gruplar: ekip grupları (tasarım, pazarlama…); grup erişim listelerinde tek satırdır ve lideri klasör onayı verebilir. */
 export function AdminGroupsSection({ ctx }: { ctx: TeamCtx }) {
@@ -273,13 +273,7 @@ function GroupDialog({ ctx, group, onClose, onSaved }: { ctx: TeamCtx; group: Te
           </label>
           <Input id="group-name" value={name} onChange={(e) => setName(e.target.value)} maxLength={40} autoComplete="off" />
         </div>
-        <div className="flex flex-wrap gap-2" role="radiogroup" aria-label={t("tm.create.tone")}>
-          {TEAM_TONES.map((option) => (
-            <button key={option} type="button" role="radio" aria-checked={tone === option} onClick={() => setTone(option)} className={`rounded-xl p-0.5 ${tone === option ? "ring-2 ring-primary" : ""}`}>
-              <TeamMark name={name || "?"} tone={option} size={32} />
-            </button>
-          ))}
-        </div>
+        <TeamToneSwatches value={tone} onChange={setTone} name={name} size={32} />
         <div>
           <label htmlFor="group-lead" className={fieldLabelClassName}>
             {t("tm.groups.leadLabel")}

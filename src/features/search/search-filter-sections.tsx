@@ -1,7 +1,7 @@
 "use client";
 
+import { MenuRadioGroup } from "@/components/ui/menu-radio";
 import { useEffect, useId, useState, type ReactNode } from "react";
-import { Check } from "@/components/icons/check";
 import { Search } from "@/components/icons/search";
 import { X } from "@/components/icons/x";
 import { Avatar } from "@/components/ui/avatar";
@@ -15,7 +15,6 @@ import { searchProfiles } from "@/lib/supabase/profiles";
 import { fetchPopularTags, searchTags } from "@/lib/supabase/tags";
 import type { ContentSearchFilters } from "@/lib/supabase/taxonomy-query";
 import type { TranslationKey } from "@/lib/i18n/translations";
-import { cn } from "@/lib/utils";
 import { KIND_ICON, KIND_LABEL, tokenChip } from "./search-chip-meta";
 import { SKILLS_MENU_ENABLED } from "@/lib/skills/flag";
 import { ALL_KINDS, FILTER_KINDS, toggleToken, tokenKey, type SearchToken } from "./search-tokens";
@@ -141,24 +140,7 @@ export function SearchFilterSections({
       {group(
         "sort",
         t("toolbar.sort"),
-        <div role="radiogroup" aria-label={t("toolbar.sort")} className="space-y-1">
-          {SORTS.map((item) => (
-            <button
-              key={item.key}
-              type="button"
-              role="radio"
-              aria-checked={sort === item.key}
-              onClick={() => onSortChange(item.key)}
-              className={cn(
-                "flex min-h-11 w-full items-center justify-between rounded-md px-3 text-left text-label transition-colors",
-                sort === item.key ? "bg-primary-soft font-semibold text-text" : "text-text-secondary hover:bg-surface-soft",
-              )}
-            >
-              {t(item.label)}
-              {sort === item.key && <Check size={16} className="text-primary" aria-hidden />}
-            </button>
-          ))}
-        </div>,
+        <MenuRadioGroup<SearchSort> ariaLabel={t("toolbar.sort")} value={sort} onChange={onSortChange} items={SORTS.map((item) => ({ key: item.key, label: t(item.label) }))} />,
       )}
     </>
   );

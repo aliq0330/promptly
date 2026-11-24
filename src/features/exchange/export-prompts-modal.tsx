@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Download } from "@/components/icons/download";
 import { Loader2 } from "@/components/icons/loader-2";
 import { Button } from "@/components/ui/button";
+import { OptionGroup } from "@/components/ui/option-group";
 import { SpaceDialog } from "@/features/spaces/space-modals";
 import { ExchangeError, FORMAT_META, exportFileName, serializePrompts, type ExchangeFormat, type ExchangePrompt } from "@/lib/exchange";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -82,21 +83,17 @@ export function ExportPromptsModal({ single, load, onClose }: { single?: boolean
         ) : (
           <>
             {!single && <p className="text-small text-text-secondary">{t("exchange.export.count", { count: items.length })}</p>}
-            <fieldset className="space-y-2">
-              <legend className="mb-1 text-label font-semibold text-text">{t("exchange.export.formatLabel")}</legend>
-              {FORMATS.map((option) => (
-                <label
-                  key={option.value}
-                  className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors duration-200 ${format === option.value ? "border-primary bg-primary-soft" : "border-border-soft hover:bg-surface-soft"}`}
-                >
-                  <input type="radio" name="exchange-format" value={option.value} checked={format === option.value} onChange={() => setFormat(option.value)} className="mt-1 accent-primary" />
-                  <span>
-                    <span className="block text-small font-semibold text-text">{t(option.label)}</span>
-                    <span className="block text-caption text-text-secondary">{t(option.hint)}</span>
-                  </span>
-                </label>
-              ))}
-            </fieldset>
+            <div className="space-y-2">
+              <p id="export-format-label" className="text-label font-semibold text-text">
+                {t("exchange.export.formatLabel")}
+              </p>
+              <OptionGroup<(typeof FORMATS)[number]["value"]>
+                labelledBy="export-format-label"
+                value={format}
+                onChange={setFormat}
+                options={FORMATS.map((option) => ({ key: option.value, label: t(option.label), description: t(option.hint) }))}
+              />
+            </div>
             <p className="text-caption text-text-muted">{t("exchange.export.note")}</p>
             {items.some((item) => item.source) && (
               <p className="text-caption text-text-muted" data-testid="exchange-credit-note">

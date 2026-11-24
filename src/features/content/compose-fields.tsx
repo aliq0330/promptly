@@ -1,6 +1,7 @@
 "use client";
 
 import { Plus } from "@/components/icons/plus";
+import { ChoiceGroup } from "@/components/ui/choice-group";
 import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
 import type { UseTagPickerResult } from "@/features/prompts/use-tag-picker";
 import { CONTENT_TYPE_IDS } from "@/lib/content-taxonomy";
@@ -18,31 +19,20 @@ const chipClassName =
 export function ContentTypePicker({ value, onChange, locked = false }: { value: PromptContentType; onChange: (next: PromptContentType) => void; locked?: boolean }) {
   const { t } = useTranslation();
   return (
-    <div role="radiogroup" aria-label={t("compose.whatMaking")} data-compose-type={value} className="flex flex-wrap gap-2">
-      {CONTENT_TYPE_IDS.map((type) => {
-        const option = CONTENT_TYPE_META[type];
-        const selected = type === value;
-        return (
-          <button
-            key={type}
-            type="button"
-            role="radio"
-            aria-checked={selected}
-            disabled={locked && !selected}
-            data-taxonomy-type={type}
-            onClick={() => onChange(type)}
-            className={cn(
-              chipClassName,
-              "min-h-11 px-3 text-body font-medium disabled:opacity-50 sm:px-4",
-              selected ? "border-primary bg-primary-soft font-semibold text-primary" : "border-border-strong bg-surface text-text-secondary hover:border-primary/50 hover:text-text",
-            )}
-          >
-            <option.icon size={16} aria-hidden />
-            {t(option.labelKey)}
-          </button>
-        );
-      })}
-    </div>
+    <ChoiceGroup<PromptContentType>
+      ariaLabel={t("compose.whatMaking")}
+      variant="tile"
+      testId={value}
+      value={value}
+      onChange={onChange}
+      options={CONTENT_TYPE_IDS.map((type) => ({
+        key: type,
+        label: t(CONTENT_TYPE_META[type].labelKey),
+        icon: CONTENT_TYPE_META[type].icon,
+        disabled: locked && type !== value,
+        attrs: { "data-taxonomy-type": type },
+      }))}
+    />
   );
 }
 

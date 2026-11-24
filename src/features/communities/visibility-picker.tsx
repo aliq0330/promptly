@@ -1,10 +1,10 @@
 "use client";
 
-import { useId } from "react";
 import { Check } from "@/components/icons/check";
 import { X } from "@/components/icons/x";
 import { Badge } from "@/components/ui/badge";
 import { fieldLabelClassName } from "@/components/ui/field";
+import { OptionGroup } from "@/components/ui/option-group";
 import { VISIBILITY_ICONS } from "./visibility-label";
 import { VISIBILITY_HELP_KEYS, VISIBILITY_LABEL_KEYS, VISIBILITY_OPTIONS } from "@/lib/communities";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -65,70 +65,49 @@ export function VisibilityPicker({
   value,
   onChange,
   disabled = false,
-  name = "community-visibility",
   currentLabel,
   options = VISIBILITY_OPTIONS,
 }: {
   value: GroupVisibility;
   onChange: (next: GroupVisibility) => void;
   disabled?: boolean;
-  name?: string;
   /** Verilirse seçili kartta "Seçili" yerine bu etiket (ör. Ayarlar'da "Şu anki"). */
   currentLabel?: string;
   /** Seçilebilir düzeyler (varsayılan hepsi). Topluluklarda "Tamamen kapalı" = ekip yoktur (docs/history/350-*). */
   options?: readonly GroupVisibility[];
 }) {
   const { t } = useTranslation();
-  const baseId = useId();
   return (
     <fieldset className="space-y-3" disabled={disabled}>
       <legend className={fieldLabelClassName}>{t("groups.visibility.label")}</legend>
-      <div role="radiogroup" aria-label={t("communities.visibility.optionsAria")} className={cn("grid gap-2", options.length === 2 ? "md:grid-cols-2" : "md:grid-cols-3")}>
-        {options.map((option) => {
-          const Icon = VISIBILITY_ICONS[option];
-          const selected = value === option;
-          return (
-            <label
-              key={option}
-              className={cn(
-                "flex cursor-pointer flex-col gap-2 rounded-lg border bg-background px-4 py-3 text-small text-text transition-colors duration-200 ease-soft focus-within:ring-2 focus-within:ring-primary/40 hover:border-border-strong",
-                selected ? "border-primary bg-primary-soft/50 shadow-xs" : "border-border-soft",
-                disabled && "cursor-not-allowed opacity-70",
-              )}
-            >
-              <span className="flex items-start gap-3">
-                <input
-                  type="radio"
-                  name={name}
-                  value={option}
-                  checked={selected}
-                  onChange={() => onChange(option)}
-                  aria-labelledby={`${baseId}-${option}-title`}
-                  aria-describedby={`${baseId}-${option}-help`}
-                  className="mt-1 accent-[var(--color-primary)]"
-                />
-                <span className="min-w-0 flex-1">
-                  <span className="flex flex-wrap items-center gap-1.5 font-medium">
-                    <Icon size={16} aria-hidden />
-                    <span id={`${baseId}-${option}-title`}>{t(VISIBILITY_LABEL_KEYS[option])}</span>
-                    {selected && <Badge variant="accent">{currentLabel ?? t("communities.visibility.selected")}</Badge>}
-                  </span>
-                  <span id={`${baseId}-${option}-help`} className="mt-0.5 block text-caption text-text-muted">{t(VISIBILITY_HELP_KEYS[option])}</span>
-                </span>
-              </span>
-              {/* Mobil: kompakt olgu listesi (masaüstünde aşağıdaki tablo gösterilir). */}
-              <dl className="space-y-1 border-t border-border-soft pt-2 md:hidden">
+      <OptionGroup<GroupVisibility>
+        ariaLabel={t("communities.visibility.optionsAria")}
+        value={value}
+        onChange={onChange}
+        disabled={disabled}
+        columns={options.length === 2 ? 2 : 3}
+        options={options.map((option) => ({
+          key: option,
+          icon: VISIBILITY_ICONS[option],
+          label: t(VISIBILITY_LABEL_KEYS[option]),
+          badge: value === option ? <Badge variant="accent">{currentLabel ?? t("communities.visibility.selected")}</Badge> : undefined,
+          // Mobil: kompakt olgu listesi (masaüstünde aşağıdaki tablo gösterilir).
+          description: (
+            <>
+              <span className="block">{t(VISIBILITY_HELP_KEYS[option])}</span>
+              <span className="mt-2 block space-y-1 border-t border-border-soft pt-2 md:hidden">
                 {FACTS.map((fact) => (
-                  <div key={fact} className="flex items-start justify-between gap-3 text-caption">
-                    <dt className="shrink-0 text-text-muted">{t(FACT_LABEL_KEYS[fact])}</dt>
-                    <dd className="text-right text-text-secondary">{t(FACT_VALUE_KEYS[option][fact])}</dd>
-                  </div>
+                  <span key={fact} className="flex items-start justify-between gap-3">
+                    <span className="shrink-0 text-text-muted">{t(FACT_LABEL_KEYS[fact])}</span>
+                    <span className="text-right text-text-secondary">{t(FACT_VALUE_KEYS[option][fact])}</span>
+                  </span>
                 ))}
-              </dl>
-            </label>
-          );
-        })}
-      </div>
+              </span>
+            </>
+          ),
+          attrs: { "data-visibility-option": option },
+        }))}
+      />
 
       <div className="hidden overflow-hidden rounded-lg border border-border-soft md:block">
         <table className="w-full table-fixed border-collapse text-left text-caption">

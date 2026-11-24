@@ -1,8 +1,8 @@
 "use client";
 
+import { MenuRadioGroup } from "@/components/ui/menu-radio";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import type { IconComponent } from "@/components/icons/icon";
-import { Check } from "@/components/icons/check";
 import { ChevronDown } from "@/components/icons/chevron-down";
 import { Modal } from "@/components/ui/modal";
 import { focusMenuItem, menuKeyDown } from "@/components/ui/menu-keys";
@@ -96,36 +96,18 @@ export function SectionMenu<K extends string>({
   }, [open, wide]);
 
   const list = (
-    <div ref={listRef} role="radiogroup" aria-label={ariaLabel} className="space-y-0.5" onKeyDown={(event) => menuKeyDown(event, listRef.current, '[role="radio"]')}>
-      {items.map((item) => {
-        const selected = item.key === active;
-        const Icon = item.icon;
-        return (
-          <button
-            key={item.key}
-            type="button"
-            role="radio"
-            aria-checked={selected}
-            data-section-option={item.key}
-            onClick={() => {
-              onChange(item.key);
-              setOpen(false);
-            }}
-            className={cn(
-              "flex min-h-12 w-full items-center gap-2 rounded-lg px-3 text-left text-body transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
-              selected ? "font-semibold text-text" : "text-text-secondary",
-              (item.dividerBefore || item.key === "invites") && "mt-1 border-t border-border-soft pt-1",
-            )}
-          >
-            {Icon && <Icon size={20} aria-hidden className="shrink-0 text-text-muted" />}
-            <span className="flex-1">{item.label}</span>
-            {item.meta ? <span data-section-meta className="text-small tabular-nums text-text-muted">{item.meta}</span> : null}
-            {item.count ? <span className="grid h-6 min-w-6 place-items-center rounded-full bg-primary px-1.5 text-caption font-semibold text-primary-foreground">{item.count}</span> : null}
-            {selected && <Check size={20} className="text-primary" aria-hidden />}
-          </button>
-        );
-      })}
-    </div>
+    <MenuRadioGroup<K>
+      groupRef={listRef}
+      ariaLabel={ariaLabel}
+      size="lg"
+      value={active}
+      onKeyDown={(event) => menuKeyDown(event, listRef.current, '[role="radio"]')}
+      onChange={(key) => {
+        onChange(key);
+        setOpen(false);
+      }}
+      items={items.map((item) => ({ key: item.key, label: item.label, icon: item.icon, meta: item.meta, count: item.count, dividerBefore: item.dividerBefore || item.key === "invites", attrs: { "data-section-option": item.key } }))}
+    />
   );
 
   return (

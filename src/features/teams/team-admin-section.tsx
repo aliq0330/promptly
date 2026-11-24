@@ -43,7 +43,7 @@ import { cn } from "@/lib/utils";
 import { AdminGroupsSection, AdminGuestsSection } from "./team-admin-access";
 import { InvitesPanel } from "./team-invites";
 import type { TeamCtx } from "./team-page";
-import { Panel, StatTile, TEAM_TONES, TeamMark, roleLabelKey } from "./team-ui";
+import { Panel, StatTile, TeamToneSwatches, roleLabelKey } from "./team-ui";
 
 type Section = "overview" | "policies" | "invites" | "groups" | "guests" | "audit" | "export" | "danger";
 
@@ -260,13 +260,7 @@ function GeneralSection({ ctx }: { ctx: TeamCtx }) {
         </div>
         <div>
           <span className={fieldLabelClassName}>{t("tm.create.tone")}</span>
-          <div className="flex flex-wrap gap-2" role="radiogroup" aria-label={t("tm.create.tone")}>
-            {TEAM_TONES.map((option) => (
-              <button key={option} type="button" role="radio" aria-checked={tone === option} onClick={() => setTone(option)} className={`rounded-xl p-0.5 ${tone === option ? "ring-2 ring-primary" : ""}`}>
-                <TeamMark name={name || "?"} tone={option} size={36} />
-              </button>
-            ))}
-          </div>
+          <TeamToneSwatches value={tone} onChange={setTone} name={name} />
         </div>
         <Button type="submit" disabled={name.trim().length < 2}>
           {t("common.save")}

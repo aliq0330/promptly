@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useState } from "react";
+import { ChoiceGroup } from "@/components/ui/choice-group";
 import { useRouter } from "next/navigation";
 import { Check } from "@/components/icons/check";
 import { Copy } from "@/components/icons/copy";
@@ -307,24 +308,22 @@ export function SpaceSettingsModal({
         <TitleField value={title} onChange={setTitle} />
         <DescriptionField value={description} onChange={setDescription} />
         <KindField value={kind} onChange={setKind} />
-        <fieldset data-space-activity-visibility="">
-          <legend className="mb-1 text-label font-medium text-text">{t("spaces.settings.activityVisibility")}</legend>
+        <div data-space-activity-visibility="">
+          <p id="space-activity-visibility-label" className="mb-1 text-label font-medium text-text">
+            {t("spaces.settings.activityVisibility")}
+          </p>
           <p className="mb-2 text-caption text-text-muted">{t("spaces.settings.activityVisibilityHint")}</p>
-          <div className="grid gap-2 sm:grid-cols-2">
-            {(["everyone", "members"] as const).map((value) => (
-              <label
-                key={value}
-                className={cn(
-                  "flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2.5 text-small font-medium has-[:checked]:border-primary/50 has-[:checked]:bg-primary-soft",
-                  activityVisibility === value ? "border-primary/50 bg-primary-soft text-text" : "border-border-soft text-text-secondary",
-                )}
-              >
-                <input type="radio" name="space-activity-visibility" value={value} checked={activityVisibility === value} onChange={() => setActivityVisibility(value)} className="accent-primary" />
-                {t(value === "everyone" ? "spaces.activity.visible.everyone" : "spaces.activity.visible.members")}
-              </label>
-            ))}
-          </div>
-        </fieldset>
+          <ChoiceGroup<"everyone" | "members">
+            labelledBy="space-activity-visibility-label"
+            variant="segmented"
+            value={activityVisibility}
+            onChange={setActivityVisibility}
+            options={[
+              { key: "everyone", label: t("spaces.activity.visible.everyone") },
+              { key: "members", label: t("spaces.activity.visible.members") },
+            ]}
+          />
+        </div>
         <CoverPicker
           file={coverFile}
           onChange={(file) => {

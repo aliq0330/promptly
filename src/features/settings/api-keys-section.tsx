@@ -6,7 +6,8 @@ import { Copy } from "@/components/icons/copy";
 import { KeyRound } from "@/components/icons/key-round";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { ChoiceCard, Input, Select } from "@/components/ui/field";
+import { Input, Select } from "@/components/ui/field";
+import { OptionCheckbox, OptionGroup } from "@/components/ui/option-group";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import {
   API_TOKEN_ACTIVE_LIMIT,
@@ -135,30 +136,21 @@ export function ApiKeysSection() {
           <p className="mt-1 text-caption text-text-muted">{t("apiKeys.nameHint")}</p>
         </div>
 
-        <fieldset className="space-y-2">
-          <legend className={labelClassName}>{t("apiKeys.accessLabel")}</legend>
-          <ChoiceCard>
-            <input type="radio" name="api-key-access" checked={preset === "read"} onChange={() => setPreset("read")} className="mt-0.5" />
-            <span>
-              <span className="font-medium">{t("apiKeys.accessRead")}</span>
-              <span className="block text-caption text-text-muted">{t("apiKeys.accessReadHint")}</span>
-            </span>
-          </ChoiceCard>
-          <ChoiceCard>
-            <input type="radio" name="api-key-access" checked={preset === "write"} onChange={() => setPreset("write")} className="mt-0.5" />
-            <span>
-              <span className="font-medium">{t("apiKeys.accessWrite")}</span>
-              <span className="block text-caption text-text-muted">{t("apiKeys.accessWriteHint")}</span>
-            </span>
-          </ChoiceCard>
-          <ChoiceCard>
-            <input type="checkbox" name="api-key-interact" checked={interact} onChange={(event) => setInteract(event.target.checked)} className="mt-0.5" />
-            <span>
-              <span className="font-medium">{t("apiKeys.accessInteract")}</span>
-              <span className="block text-caption text-text-muted">{t("apiKeys.accessInteractHint")}</span>
-            </span>
-          </ChoiceCard>
-        </fieldset>
+        <div className="space-y-2">
+          <p id="api-key-access-label" className={labelClassName}>
+            {t("apiKeys.accessLabel")}
+          </p>
+          <OptionGroup<ApiTokenPreset>
+            labelledBy="api-key-access-label"
+            value={preset}
+            onChange={setPreset}
+            options={[
+              { key: "read", label: t("apiKeys.accessRead"), description: t("apiKeys.accessReadHint") },
+              { key: "write", label: t("apiKeys.accessWrite"), description: t("apiKeys.accessWriteHint") },
+            ]}
+          />
+          <OptionCheckbox checked={interact} onChange={setInteract} label={t("apiKeys.accessInteract")} description={t("apiKeys.accessInteractHint")} attrs={{ "data-api-key-interact": "" }} />
+        </div>
 
         <div>
           <label htmlFor="api-key-expiry" className={labelClassName}>{t("apiKeys.expiryLabel")}</label>

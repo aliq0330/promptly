@@ -255,7 +255,7 @@ await scenario("8. Oluştur (metin): yazı ekle → önizle → Paylaş; çift t
   await text.fill("Yeni prompt yolda");
   await page.getByRole("button", { name: "Sarı" }).click();
   await page.getByRole("button", { name: "Böğürtlen" }).click();
-  await page.getByRole("button", { name: "Takipçiler" }).click();
+  await page.getByRole("radio", { name: "Takipçiler" }).click();
   await page.getByRole("button", { name: "Önizle" }).click();
   await page.getByRole("heading", { name: "Önizleme" }).waitFor();
   await page.getByText("Metin hikâyesi").waitFor();
@@ -285,7 +285,7 @@ await scenario("9. Doğrulama: boş metin hikâyesi, eksik anket seçeneği ve t
   await page.getByRole("button", { name: "Önizle" }).click();
   await page.getByRole("alert").getByText(/Ankette 2–4 dolu seçenek/).waitFor();
   await page.getByRole("textbox", { name: "Seçenek 2" }).fill("B");
-  await page.getByRole("button", { name: "Topluluk", exact: true }).click();
+  await page.getByRole("radio", { name: "Topluluk", exact: true }).click();
   await page.getByRole("button", { name: "Önizle" }).click();
   await page.getByRole("alert").getByText("Bir topluluk seç.").waitFor();
 });

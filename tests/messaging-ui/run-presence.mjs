@@ -101,14 +101,14 @@ await scenario("1. Ayarlar → Gizlilik: Otomatik + Herkes varsayılan; kitle ve
   await page.goto(`${BASE}/settings/privacy`);
   await page.locator("[data-presence-settings=ready]").waitFor();
   assert.equal(await page.getByRole("radio", { name: /Otomatik/ }).isChecked(), true);
-  assert.equal(await page.locator("input[name=presence-audience][value=everyone]").isChecked(), true);
+  assert.equal(await page.getByRole("radio", { name: /^Herkes/ }).first().isChecked(), true);
   await page.getByText(/Karşılıklılık: durumunu gizlersen/).waitFor();
   await page.getByRole("radio", { name: /Takip ettiklerim/ }).check();
   await page.getByText("Kaydedildi.").waitFor();
   assert.equal(db.presenceOf(ME).audience, "following");
   assert.equal(presenceCalls(db, "set_my_presence").at(-1).body.p_audience, "following");
   await page.getByRole("radio", { name: /Görünmez/ }).check();
-  await page.waitForFunction(() => document.querySelector("input[value=invisible]")?.checked);
+  await page.waitForFunction(() => document.querySelector("[data-presence-mode=invisible]")?.getAttribute("aria-checked") === "true");
   await page.waitForTimeout(300);
   assert.equal(db.presenceOf(ME).mode, "invisible");
   assert.equal(presenceCalls(db, "set_my_presence").at(-1).body.p_mode, "invisible");

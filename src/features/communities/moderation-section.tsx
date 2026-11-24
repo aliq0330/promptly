@@ -1,5 +1,6 @@
 "use client";
 
+import { ChoiceGroup } from "@/components/ui/choice-group";
 import { useState } from "react";
 import Link from "next/link";
 import { Flag } from "@/components/icons/flag";
@@ -10,7 +11,6 @@ import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { fieldControlClassName, fieldLabelClassName } from "@/components/ui/field";
-import { Tabs } from "@/components/ui/tabs";
 import { ConfirmDialog } from "@/features/groups/confirm-dialog";
 import { useAsyncAction } from "@/features/groups/use-async-action";
 import { fetchCommunityReports, resolveCommunityReport, type CommunityReport } from "@/lib/supabase/communities";
@@ -61,7 +61,16 @@ export function ModerationSection({ groupId, onChanged }: { groupId: string; onC
         <h3 id="community-moderation-title" className="flex items-center gap-1.5 text-label font-semibold text-text">
           <Flag size={16} aria-hidden /> {t("communities.moderation.title")}
         </h3>
-        <Tabs variant="segmented" ariaLabel={t("communities.moderation.filterAria")} active={filter} onChange={setFilter} items={[{ key: "open", label: t("communities.moderation.open") }, { key: "closed", label: t("communities.moderation.closed") }]} />
+        <ChoiceGroup<"open" | "closed">
+          ariaLabel={t("communities.moderation.filterAria")}
+          variant="segmented"
+          value={filter}
+          onChange={setFilter}
+          options={[
+            { key: "open", label: t("communities.moderation.open") },
+            { key: "closed", label: t("communities.moderation.closed") },
+          ]}
+        />
       </div>
       <p className="text-caption text-text-muted">{t("communities.moderation.help")}</p>
 

@@ -7,6 +7,7 @@ import { ArrowUp } from "@/components/icons/arrow-up";
 import { Check } from "@/components/icons/check";
 import { Button } from "@/components/ui/button";
 import { CodeBlock } from "@/components/ui/code-block";
+import { OptionGroup } from "@/components/ui/option-group";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { CONNECT_METHODS, CONNECT_STEPS, clampStep, filledSegments, stepState, type ConnectCode, type ConnectMethod } from "@/lib/connect-guide";
 import { cn } from "@/lib/utils";
@@ -43,34 +44,18 @@ export function ConnectWizard({ mcpMeUrl, keysHref, headingLevel = "h4" }: { mcp
 
   return (
     <div className="space-y-4" data-dev-connect="" data-guide-method={method}>
-      <div role="radiogroup" aria-label={t("guide.pick")} className="grid gap-3">
-        {CONNECT_METHODS.map((id) => {
-          const selected = id === method;
-          return (
-            <button
-              key={id}
-              type="button"
-              role="radio"
-              aria-checked={selected}
-              data-guide-method-tile={id}
-              onClick={() => chooseMethod(id)}
-              className={cn(
-                "flex min-h-14 items-center gap-3 rounded-lg border-2 p-4 text-left transition-colors duration-200 ease-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
-                selected ? "border-primary bg-primary-soft" : "border-border-soft bg-surface hover:border-border-strong",
-              )}
-            >
-              <span aria-hidden className={cn("h-5 w-5 shrink-0 rounded-full bg-surface", selected ? "border-[6px] border-primary" : "border-2 border-border-strong")} />
-              <span className="min-w-0 flex-1">
-                <span className="flex flex-wrap items-center gap-2">
-                  <span className="text-small font-semibold text-text">{t(`guide.method.${id}.title` as "guide.method.oauth.title")}</span>
-                  {id === "oauth" && <span className="rounded-full bg-secondary-soft px-2 py-0.5 text-caption font-semibold text-secondary">{t("guide.method.oauth.badge")}</span>}
-                </span>
-                <span className="block text-caption text-text-secondary">{t(`guide.method.${id}.desc` as "guide.method.oauth.desc")}</span>
-              </span>
-            </button>
-          );
-        })}
-      </div>
+      <OptionGroup<ConnectMethod>
+        ariaLabel={t("guide.pick")}
+        value={method}
+        onChange={chooseMethod}
+        options={CONNECT_METHODS.map((id) => ({
+          key: id,
+          label: t(`guide.method.${id}.title` as "guide.method.oauth.title"),
+          description: t(`guide.method.${id}.desc` as "guide.method.oauth.desc"),
+          badge: id === "oauth" ? <span className="rounded-full bg-secondary-soft px-2 py-0.5 text-caption font-semibold text-secondary">{t("guide.method.oauth.badge")}</span> : undefined,
+          attrs: { "data-guide-method-tile": id },
+        }))}
+      />
 
       <div className="space-y-4 rounded-lg card-flat p-4 shadow-card sm:p-5" data-guide-card="">
         <div className="flex gap-1.5" aria-hidden>

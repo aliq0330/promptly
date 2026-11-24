@@ -83,8 +83,7 @@ await scenario("3 account: username, email and password cards; a mismatching pas
 }, { path: "/settings/account/" });
 
 await scenario("4 privacy: message permission + blocked users; the blocked page goes back to Privacy", async ({ page }) => {
-  await page.getByRole("heading", { name: "Mesaj izni", level: 3 }).waitFor().catch(async () => { await page.locator("input[name=message-privacy]").first().waitFor(); });
-  await page.locator("input[name=message-privacy]").first().waitFor();
+  await page.getByRole("radiogroup", { name: "Mesaj gizliliği" }).waitFor();
   const blocked = page.getByRole("link", { name: /Engellenen/ }).first();
   assert.match(await blocked.getAttribute("href"), /\/settings\/blocked\/?$/);
   await blocked.click();
@@ -102,7 +101,7 @@ await scenario("5 preferences: appearance, language (switching to English relabe
   assert.equal(await page.evaluate(() => document.documentElement.classList.contains("dark")), true, "dark mode applies");
   await page.getByRole("radio", { name: "Açık" }).click();
   assert.equal(await page.evaluate(() => document.documentElement.classList.contains("dark")), false);
-  await page.locator("input[name=language]").nth(1).check();
+  await page.getByRole("radio", { name: "English" }).click();
   await page.getByRole("heading", { name: "Preferences", level: 1 }).waitFor();
 }, { path: "/settings/preferences/" });
 

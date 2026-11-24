@@ -50,23 +50,6 @@ Select.displayName = "Select";
 /** A field's label line. */
 export const fieldLabelClassName = "mb-1.5 block text-label font-medium text-text";
 
-/**
- * A radio/checkbox choice rendered as a selectable card. The checked state
- * comes from the nested input (`has-checked`), so callers keep plain inputs.
- */
-export function ChoiceCard({ children, className }: { children: ReactNode; className?: string }) {
-  return (
-    <label
-      className={cn(
-        "flex cursor-pointer items-start gap-3 rounded-lg card-inset px-4 py-3 text-small text-text transition-colors duration-200 ease-soft hover:border-border-strong has-checked:border-primary/50 has-checked:bg-primary-soft/40",
-        className,
-      )}
-    >
-      {children}
-    </label>
-  );
-}
-
 /** The round icon badge above an auth form's title. */
 export function FormIconBadge({ children }: { children: ReactNode }) {
   return (

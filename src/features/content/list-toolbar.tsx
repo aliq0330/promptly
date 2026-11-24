@@ -1,7 +1,7 @@
 "use client";
 
+import { MenuRadioGroup } from "@/components/ui/menu-radio";
 import { useId, useState, type ReactNode } from "react";
-import { Check } from "@/components/icons/check";
 import { X } from "@/components/icons/x";
 import { Filter } from "@/components/icons/filter";
 import { Button } from "@/components/ui/button";
@@ -125,24 +125,7 @@ export function ListFilterSheet({
           {desktopSheetSections && <div className="space-y-5 max-md:hidden">{desktopSheetSections}</div>}
           {sort && onSortChange && (
             <SheetSection title={t("toolbar.sort")}>
-              <div role="radiogroup" aria-label={t("profile.sortAriaLabel")} className="space-y-1">
-                {sortKeys.map((key) => (
-                  <button
-                    key={key}
-                    type="button"
-                    role="radio"
-                    aria-checked={sort === key}
-                    onClick={() => onSortChange(key)}
-                    className={cn(
-                      "flex min-h-11 w-full items-center justify-between rounded-md px-3 text-left text-label transition-colors",
-                      sort === key ? "bg-primary-soft font-semibold text-text" : "text-text-secondary hover:bg-surface-soft",
-                    )}
-                  >
-                    {t(SORT_LABELS[key])}
-                    {sort === key && <Check size={16} className="text-primary" aria-hidden />}
-                  </button>
-                ))}
-              </div>
+              <MenuRadioGroup<ContentSortKey> ariaLabel={t("profile.sortAriaLabel")} value={sort} onChange={onSortChange} items={sortKeys.map((key) => ({ key, label: t(SORT_LABELS[key]) }))} />
             </SheetSection>
           )}
         </div>

@@ -2,12 +2,12 @@
 
 import { useRef } from "react";
 import { Camera } from "@/components/icons/camera";
-import { Check } from "@/components/icons/check";
+import { ChoiceGroup } from "@/components/ui/choice-group";
+import { SwatchGroup } from "@/components/ui/swatch-group";
 import { CommunityCover } from "@/features/communities/community-cover";
 import { COMMUNITY_COVER_COLORS, normalizeCoverColor, type CoverMode } from "@/lib/communities";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
-import { cn } from "@/lib/utils";
 
 export const ACCEPTED_COVER_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
@@ -61,43 +61,26 @@ export function CommunityCoverPicker({
         <CommunityCover coverUrl={mode === "photo" ? shownPhoto : null} coverColor={mode === "color" ? normalized : null} avatarUrl={avatarUrl} />
       </div>
 
-      <div role="radiogroup" aria-label={t("groups.cover.modesAria")} className="inline-flex gap-1 rounded-full bg-surface-soft p-1">
-        {MODES.map((option) => (
-          <button
-            key={option.mode}
-            type="button"
-            role="radio"
-            aria-checked={mode === option.mode}
-            disabled={disabled}
-            onClick={() => onModeChange(option.mode)}
-            className={cn(
-              "h-9 rounded-full px-4 text-label font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-50",
-              mode === option.mode ? "bg-surface text-text shadow-xs" : "text-text-muted hover:text-text",
-            )}
-          >
-            {t(option.labelKey)}
-          </button>
-        ))}
-      </div>
+      <ChoiceGroup<CoverMode>
+        ariaLabel={t("groups.cover.modesAria")}
+        variant="segmented"
+        className="max-w-sm"
+        value={mode}
+        disabled={disabled}
+        onChange={onModeChange}
+        options={MODES.map((option) => ({ key: option.mode, label: t(option.labelKey) }))}
+      />
 
       {mode === "color" && (
         <div className="flex flex-wrap items-center gap-2">
-          {COMMUNITY_COVER_COLORS.map((swatch) => (
-            <button
-              key={swatch}
-              type="button"
-              disabled={disabled}
-              onClick={() => onColorChange(swatch)}
-              aria-label={t("groups.cover.swatchAria", { color: swatch })}
-              aria-pressed={normalized === swatch}
-              data-cover-swatch={swatch}
-              // The swatch IS the colour the community can choose (user content), not a design token.
-              style={{ backgroundColor: swatch }}
-              className="relative flex h-9 w-9 items-center justify-center rounded-full ring-offset-2 ring-offset-background transition-shadow hover:ring-2 hover:ring-border-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-50 aria-pressed:ring-2 aria-pressed:ring-text"
-            >
-              {normalized === swatch && <Check size={16} className="text-on-art" aria-hidden />}
-            </button>
-          ))}
+          <SwatchGroup<string>
+            ariaLabel={t("groups.cover.swatchesAria")}
+            value={COMMUNITY_COVER_COLORS.includes(normalized as (typeof COMMUNITY_COVER_COLORS)[number]) ? normalized : null}
+            disabled={disabled}
+            onChange={onColorChange}
+            // The swatch IS the colour the community can choose (user content), not a design token.
+            options={COMMUNITY_COVER_COLORS.map((swatch) => ({ key: swatch, label: t("groups.cover.swatchAria", { color: swatch }), style: { backgroundColor: swatch }, attrs: { "data-cover-swatch": swatch } }))}
+          />
           <label className="ml-1 inline-flex h-9 cursor-pointer items-center gap-2 rounded-full border border-border-soft px-3 text-label font-medium text-text-secondary hover:border-border">
             <input
               type="color"

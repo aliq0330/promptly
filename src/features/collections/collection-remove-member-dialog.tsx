@@ -1,9 +1,9 @@
 "use client";
 
+import { OptionGroup } from "@/components/ui/option-group";
 import { useId, useState } from "react";
 import { ConfirmDialog } from "@/features/groups/confirm-dialog";
 import { removeCollectionMember, type CollectionMember } from "@/lib/supabase/collection-members";
-import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 
 /**
@@ -57,32 +57,19 @@ export function RemoveMemberDialog({
       onCancel={onClose}
     >
       {member.itemCount > 0 && (
-        <div role="radiogroup" aria-label={t("collab.keepItems")} className="space-y-2" data-remove-member-options="">
-          <Option selected={!removeItems} title={t("collab.keepItems")} hint={t("collab.keepItemsHint")} onSelect={() => setRemoveItems(false)} disabled={busy} />
-          <Option selected={removeItems} title={t("collab.removeItemsOption")} hint={t("collab.removeItemsHint", { count: member.itemCount })} onSelect={() => setRemoveItems(true)} disabled={busy} />
+        <div data-remove-member-options="">
+          <OptionGroup<"keep" | "remove">
+            ariaLabel={t("collab.keepItems")}
+            value={removeItems ? "remove" : "keep"}
+            disabled={busy}
+            onChange={(key) => setRemoveItems(key === "remove")}
+            options={[
+              { key: "keep", label: t("collab.keepItems"), description: t("collab.keepItemsHint") },
+              { key: "remove", label: t("collab.removeItemsOption"), description: t("collab.removeItemsHint", { count: member.itemCount }) },
+            ]}
+          />
         </div>
       )}
     </ConfirmDialog>
-  );
-}
-
-function Option({ selected, title, hint, onSelect, disabled }: { selected: boolean; title: string; hint: string; onSelect: () => void; disabled: boolean }) {
-  return (
-    <button
-      type="button"
-      role="radio"
-      aria-checked={selected}
-      onClick={onSelect}
-      disabled={disabled}
-      className={cn("flex w-full items-start gap-3 rounded-md border p-3 text-left transition-colors", selected ? "border-primary bg-primary-soft" : "border-border hover:bg-surface-soft")}
-    >
-      <span className={cn("mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border", selected ? "border-primary" : "border-border-strong")}>
-        {selected && <span className="h-2 w-2 rounded-full bg-primary" />}
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="block text-small font-medium text-text">{title}</span>
-        <span className="mt-0.5 block text-caption text-text-muted">{hint}</span>
-      </span>
-    </button>
   );
 }

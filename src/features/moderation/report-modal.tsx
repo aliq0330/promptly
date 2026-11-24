@@ -1,5 +1,6 @@
 "use client";
 
+import { OptionGroup } from "@/components/ui/option-group";
 import { useEffect, useId, useRef, useState } from "react";
 import type { IconComponent } from "@/components/icons/icon";
 import { Ban } from "@/components/icons/ban";
@@ -226,54 +227,19 @@ export function ReportModal({ target, onClose, onReported }: { target: ReportTar
               <p id={`${titleId}-reasons`} className="mb-2 text-caption font-semibold text-text-muted">
                 {t("report.modal.reasonsLabel")}
               </p>
-              <div
-                role="radiogroup"
-                aria-labelledby={`${titleId}-reasons`}
-                className="flex flex-col gap-2"
-                onKeyDown={(event) => {
-                  // Oklarla nedenler arasında gez (radyo grubu davranışı): odaklı neden seçilir.
-                  const step = event.key === "ArrowDown" || event.key === "ArrowRight" ? 1 : event.key === "ArrowUp" || event.key === "ArrowLeft" ? -1 : 0;
-                  if (!step) return;
-                  const items = [...event.currentTarget.querySelectorAll<HTMLElement>("[data-report-reason]")];
-                  const index = items.findIndex((el) => el === document.activeElement);
-                  if (index < 0) return;
-                  event.preventDefault();
-                  const next = items[(index + step + items.length) % items.length];
-                  next.focus();
-                  setCode(next.getAttribute("data-report-reason") as ReportReasonCode);
-                }}
-              >
-                {reasons.map((reason) => {
-                  const Icon = REASON_ICON[reason];
-                  const on = code === reason;
-                  return (
-                    <button
-                      key={reason}
-                      type="button"
-                      role="radio"
-                      aria-checked={on}
-                      data-report-reason={reason}
-                      disabled={submitting}
-                      onClick={() => setCode(reason)}
-                      className={cn(
-                        "flex w-full items-start gap-3 rounded-lg border-[1.5px] px-4 py-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
-                        on ? "border-primary bg-primary-soft" : "border-transparent bg-surface-soft hover:border-border-strong",
-                      )}
-                    >
-                      <span className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-full", on ? "bg-primary text-primary-foreground" : "bg-surface text-text-secondary")} aria-hidden>
-                        <Icon size={20} />
-                      </span>
-                      <span className="min-w-0 flex-1">
-                        <span className="block text-body font-semibold leading-snug text-text">{t(REPORT_REASON_TITLE[reason])}</span>
-                        <span className="mt-0.5 block text-small text-text-secondary">{t(REASON_DESC[reason])}</span>
-                      </span>
-                      <span className={cn("mt-0.5 flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full border-2", on ? "border-primary bg-primary" : "border-text-muted")} aria-hidden>
-                        {on && <span className="h-2 w-2 rounded-full bg-primary-foreground" />}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
+              <OptionGroup<ReportReasonCode>
+                labelledBy={`${titleId}-reasons`}
+                value={code}
+                disabled={submitting}
+                onChange={setCode}
+                options={reasons.map((reason) => ({
+                  key: reason,
+                  icon: REASON_ICON[reason],
+                  label: t(REPORT_REASON_TITLE[reason]),
+                  description: t(REASON_DESC[reason]),
+                  attrs: { "data-report-reason": reason },
+                }))}
+              />
 
               {code && (
                 <div className="mt-4">

@@ -7,6 +7,7 @@ import { ChevronRight } from "@/components/icons/chevron-right";
 import { Search } from "@/components/icons/search";
 import { UserMinus } from "@/components/icons/user-minus";
 import { Button } from "@/components/ui/button";
+import { OptionGroup } from "@/components/ui/option-group";
 import { usePagedList } from "@/features/content/use-paged-list";
 import { PagedListState } from "@/features/feed/paged-list-state";
 import { ConfirmDialog } from "@/features/groups/confirm-dialog";
@@ -450,25 +451,22 @@ function RemoveMemberDialog({ ctx, member, onClose, onDone }: { ctx: TeamCtx; me
             ))}
           </div>
         </div>
-        <div className="space-y-2" role="radiogroup" aria-label={t("tm.members.contentFate")}>
-          <p className="text-small font-semibold text-text">{t("tm.members.contentFate")}</p>
-          {modes.map((m) => {
-            const on = mode === m.key;
-            return (
-              <div key={m.key} className={cn("flex items-center gap-3 rounded-lg border px-4 py-2.5", on ? "border-2 border-primary bg-primary-soft/40" : "border-border-soft")}>
-                <button type="button" role="radio" aria-checked={on} data-remove-mode={m.key} onClick={() => setMode(m.key)} className="flex min-w-0 flex-1 items-start gap-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
-                  <span className={cn("mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full border-2", on ? "border-primary" : "border-border-strong")} aria-hidden>
-                    {on && <span className="h-2.5 w-2.5 rounded-full bg-primary" />}
-                  </span>
-                  <span className="min-w-0">
-                    <span className="flex flex-wrap items-center gap-2 text-small font-semibold text-text">
-                      {t(m.title)}
-                      {m.badge && <span className="rounded-full bg-success-soft px-2 py-0.5 text-caption font-semibold text-success">{t("tm.members.recommended")}</span>}
-                    </span>
-                    <span className="block text-caption text-text-secondary">{m.hint}</span>
-                  </span>
-                </button>
-                {m.key === "member" && (
+        <div className="space-y-2">
+          <p id="remove-fate-label" className="text-small font-semibold text-text">
+            {t("tm.members.contentFate")}
+          </p>
+          <OptionGroup<"team" | "member" | "personal">
+            labelledBy="remove-fate-label"
+            value={mode}
+            onChange={setMode}
+            options={modes.map((m) => ({
+              key: m.key,
+              label: t(m.title),
+              description: m.hint,
+              badge: m.badge ? <span className="rounded-full bg-success-soft px-2 py-0.5 text-caption font-semibold text-success">{t("tm.members.recommended")}</span> : undefined,
+              attrs: { "data-remove-mode": m.key },
+              after:
+                m.key === "member" ? (
                   <select
                     value={owner}
                     onChange={(event) => {
@@ -486,10 +484,9 @@ function RemoveMemberDialog({ ctx, member, onClose, onDone }: { ctx: TeamCtx; me
                       </option>
                     ))}
                   </select>
-                )}
-              </div>
-            );
-          })}
+                ) : undefined,
+            }))}
+          />
         </div>
         <p className="rounded-lg bg-primary-soft px-4 py-2.5 text-caption text-primary">{t("tm.members.alwaysStays")}</p>
         <label className="flex items-center gap-3 text-small text-text">

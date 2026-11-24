@@ -8,6 +8,7 @@ import type { TranslationKey } from "@/lib/i18n/translations";
 import type { TeamRole } from "@/lib/teams";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { SwatchGroup } from "@/components/ui/swatch-group";
 
 /**
  * Ekip imi/bandı rengi (docs/history/406-*): DB `teams.tone` altı değeri kabul eder (CHECK; değişmedi), ama arayüz YALNIZ üç sakin görünüm sunar —
@@ -44,6 +45,22 @@ export function TeamMark({ name, tone, size = 40, className, solid = false }: { 
     >
       {initials}
     </span>
+  );
+}
+
+const TONE_LABEL: Record<TeamLook, TranslationKey> = { primary: "tm.tone.primary", sky: "tm.tone.sky", plum: "tm.tone.plum" };
+
+/** Ekip / grup rengi seçici: üç sakin görünüm, her biri monogramıyla (`SwatchGroup`, docs/history/453-*). Üç ekranda aynı kod yazılmıştı. */
+export function TeamToneSwatches({ value, onChange, name, size = 36 }: { value: string; onChange: (tone: TeamLook) => void; name: string; size?: number }) {
+  const { t } = useTranslation();
+  return (
+    <SwatchGroup<TeamLook>
+      ariaLabel={t("tm.create.tone")}
+      size="auto"
+      value={resolveTeamTone(value)}
+      onChange={onChange}
+      options={TEAM_TONES.map((tone) => ({ key: tone, label: t(TONE_LABEL[tone]), children: <TeamMark name={name || "?"} tone={tone} size={size} /> }))}
+    />
   );
 }
 

@@ -1,5 +1,6 @@
 "use client";
 
+import { OptionGroup } from "@/components/ui/option-group";
 import { useEffect, useState } from "react";
 import { Globe } from "@/components/icons/globe";
 import { Loader2 } from "@/components/icons/loader-2";
@@ -127,22 +128,15 @@ export function CollectionForm({
 
       <div className="space-y-1.5">
         <p className="text-caption font-semibold text-text-muted">{t("collection.privacyLabel")}</p>
-        <div className="space-y-2">
-          <VisibilityOption
-            icon={Globe}
-            title={t("collection.visibilityPublicShort")}
-            description={t("collection.visibilityPublicDescription")}
-            selected={visibility === "public"}
-            onSelect={() => setVisibility("public")}
-          />
-          <VisibilityOption
-            icon={Lock}
-            title={t("collection.visibilityPrivateShort")}
-            description={t("collection.visibilityPrivateDescription")}
-            selected={visibility === "private"}
-            onSelect={() => setVisibility("private")}
-          />
-        </div>
+        <OptionGroup<"public" | "private">
+          ariaLabel={t("collection.privacyLabel")}
+          value={visibility}
+          onChange={setVisibility}
+          options={[
+            { key: "public", icon: Globe, label: t("collection.visibilityPublicShort"), description: t("collection.visibilityPublicDescription") },
+            { key: "private", icon: Lock, label: t("collection.visibilityPrivateShort"), description: t("collection.visibilityPrivateDescription") },
+          ]}
+        />
       </div>
 
       {showSharing && (
@@ -197,48 +191,5 @@ export function CollectionForm({
         </Button>
       </div>
     </form>
-  );
-}
-
-function VisibilityOption({
-  icon: Icon,
-  title,
-  description,
-  selected,
-  onSelect,
-}: {
-  icon: typeof Globe;
-  title: string;
-  description: string;
-  selected: boolean;
-  onSelect: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      role="radio"
-      aria-checked={selected}
-      onClick={onSelect}
-      className={cn(
-        "flex w-full items-start gap-3 rounded-md border p-3 text-left transition-colors",
-        selected ? "border-primary bg-accent-surface" : "border-border hover:bg-accent-surface/50",
-      )}
-    >
-      <span
-        className={cn(
-          "mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border",
-          selected ? "border-primary" : "border-border",
-        )}
-      >
-        {selected && <span className="h-2 w-2 rounded-full bg-primary" />}
-      </span>
-      <span className="flex-1">
-        <span className="flex items-center gap-1.5 text-small font-medium text-text">
-          <Icon size={16} />
-          {title}
-        </span>
-        <span className="mt-0.5 block text-caption text-text-muted">{description}</span>
-      </span>
-    </button>
   );
 }

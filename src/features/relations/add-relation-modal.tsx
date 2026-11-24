@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { OptionGroup } from "@/components/ui/option-group";
 import { ArrowLeftRight } from "@/components/icons/arrow-left-right";
 import { Search } from "@/components/icons/search";
 import { X } from "@/components/icons/x";
@@ -110,24 +111,18 @@ export function AddRelationModal({
         </div>
 
         <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-4 py-4">
-          <fieldset className="space-y-2">
-            <legend className="text-label font-semibold text-text">{t("relations.add.typeStep")}</legend>
-            <div className="grid gap-2 sm:grid-cols-3">
-              {MANUAL_RELATION_TYPES.map((option) => (
-                <label
-                  key={option}
-                  className={cn(
-                    "flex cursor-pointer flex-col gap-1 rounded-lg border p-3 transition-colors has-checked:border-primary has-checked:bg-primary-soft",
-                    "border-border hover:border-border-strong",
-                  )}
-                >
-                  <input type="radio" name="relation-type" value={option} checked={type === option} onChange={() => setType(option)} className="sr-only" />
-                  <span className="text-small font-semibold text-text">{typeLabel(option)}</span>
-                  <span className="text-caption text-text-muted">{t(RELATION_TYPES[option].meaningKey)}</span>
-                </label>
-              ))}
-            </div>
-          </fieldset>
+          <div className="space-y-2">
+            <p id="relation-type-label" className="text-label font-semibold text-text">
+              {t("relations.add.typeStep")}
+            </p>
+            <OptionGroup<(typeof MANUAL_RELATION_TYPES)[number]>
+              labelledBy="relation-type-label"
+              columns={3}
+              value={type}
+              onChange={setType}
+              options={MANUAL_RELATION_TYPES.map((option) => ({ key: option, label: typeLabel(option), description: t(RELATION_TYPES[option].meaningKey) }))}
+            />
+          </div>
 
           <div className="space-y-2">
             <p className="text-label font-semibold text-text">{t("relations.add.contentStep")}</p>

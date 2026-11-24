@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import type { IconComponent } from "@/components/icons/icon";
-import { Check } from "@/components/icons/check";
 import { FileDown } from "@/components/icons/file-down";
 import { ImagePlus } from "@/components/icons/image-plus";
 import { Search } from "@/components/icons/search";
@@ -13,6 +12,7 @@ import { SquareTerminal } from "@/components/icons/square-terminal";
 import { Workflow } from "@/components/icons/workflow";
 import { X } from "@/components/icons/x";
 import { Button } from "@/components/ui/button";
+import { OptionGroup } from "@/components/ui/option-group";
 import { fieldControlClassName } from "@/components/ui/field";
 import { Modal } from "@/components/ui/modal";
 import { Tabs } from "@/components/ui/tabs";
@@ -210,43 +210,27 @@ export function ChatLibraryPicker({
           ) : items.length === 0 ? (
             <p className="mx-3 mt-2 rounded-lg border border-dashed border-border px-4 py-6 text-center text-small text-text-muted">{t("communities.feed.pickEmpty")}</p>
           ) : (
-            <ul role="radiogroup" aria-label={t("communities.feed.pickAria")}>
-              {items.map((item) => {
-                const isSelected = selected?.id === item.id;
-                return (
-                  <li key={item.id}>
-                    <button
-                      type="button"
-                      role="radio"
-                      aria-checked={isSelected}
-                      data-library-item={item.id}
-                      onClick={() => setSelected(item)}
-                      className={cn(
-                        "flex min-h-16 w-full items-center gap-3 rounded-xl px-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
-                        isSelected ? "bg-primary-soft" : "hover:bg-surface-soft",
-                      )}
-                    >
-                      <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary">
-                        <Icon size={24} aria-hidden />
-                      </span>
-                      <span className="min-w-0 flex-1">
-                        <span className="block truncate text-body font-semibold text-text">{item.title || t("communities.feed.untitled")}</span>
-                        <span className="block truncate text-small text-text-muted">{t(`communities.feed.type.${type}`)}</span>
-                      </span>
-                      <span
-                        aria-hidden
-                        className={cn(
-                          "flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2",
-                          isSelected ? "border-primary bg-primary text-primary-foreground" : "border-border-strong",
-                        )}
-                      >
-                        {isSelected && <Check size={16} />}
-                      </span>
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
+            <div className="px-3">
+              <OptionGroup<string>
+                ariaLabel={t("communities.feed.pickAria")}
+                value={selected?.id ?? null}
+                onChange={(id) => {
+                  const item = items.find((entry) => entry.id === id);
+                  if (item) setSelected(item);
+                }}
+                options={items.map((item) => ({
+                  key: item.id,
+                  leading: (
+                    <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-primary-soft text-primary">
+                      <Icon size={24} aria-hidden />
+                    </span>
+                  ),
+                  label: <span className="block truncate text-body font-semibold">{item.title || t("communities.feed.untitled")}</span>,
+                  description: <span className="block truncate text-small">{t(`communities.feed.type.${type}`)}</span>,
+                  attrs: { "data-library-item": item.id },
+                }))}
+              />
+            </div>
           )}
           {items !== null && items.length > 0 && <LoadMore failed={list.failed} hasMore={list.hasMore} loadingMore={list.loadingMore} onLoadMore={list.grow} />}
         </div>

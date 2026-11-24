@@ -1,5 +1,7 @@
 "use client";
 
+import type { PromptContentType } from "@/types";
+import { ChoiceGroup } from "@/components/ui/choice-group";
 import { useState } from "react";
 import { Check } from "@/components/icons/check";
 import { ChevronRight } from "@/components/icons/chevron-right";
@@ -97,32 +99,15 @@ export function TaxonomyPicker({
           )}
           <p className="text-caption text-text-secondary">{lockContentType ? lockedHint : t("taxonomy.categoryHint")}</p>
         </div>
-        <div role="radiogroup" aria-label={t("taxonomy.contentTypeFilter")} className={cn("grid gap-2", lockContentType ? "grid-cols-1 sm:max-w-[14rem]" : "grid-cols-2 sm:grid-cols-4")}>
-          {types.map((type) => {
-            const meta = CONTENT_TYPE_META[type];
-            const Icon = meta.icon;
-            const selected = value.contentType === type;
-            return (
-              <button
-                key={type}
-                type="button"
-                role="radio"
-                aria-checked={selected}
-                disabled={lockContentType}
-                data-taxonomy-type={type}
-                onClick={() => chooseType(type)}
-                className={cn(
-                  "flex min-h-11 items-center justify-center gap-2 rounded-lg border px-3 text-label font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
-                  selected ? "border-primary bg-primary-soft text-primary" : "border-border bg-surface text-text-secondary hover:border-border-strong hover:text-text",
-                  lockContentType && "cursor-default",
-                )}
-              >
-                <Icon size={16} aria-hidden />
-                {t(meta.labelKey)}
-              </button>
-            );
-          })}
-        </div>
+        <ChoiceGroup<PromptContentType>
+          ariaLabel={t("taxonomy.contentTypeFilter")}
+          variant="tile"
+          className={lockContentType ? "sm:max-w-[14rem]" : undefined}
+          value={value.contentType}
+          disabled={lockContentType}
+          onChange={chooseType}
+          options={types.map((type) => ({ key: type, label: t(CONTENT_TYPE_META[type].labelKey), icon: CONTENT_TYPE_META[type].icon, attrs: { "data-taxonomy-type": type } }))}
+        />
       </div>
 
       <div className="rounded-lg card-flat" data-taxonomy-path>

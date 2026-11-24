@@ -120,7 +120,7 @@ await scenario("2 create (defaults): RPC body, one-time reveal, copy, dismiss re
 
 await scenario("3 create with write access and no expiry sends write scopes and null expiry; the no-expiry hint shows", async ({ page, s }) => {
   await section(page).getByLabel("Ad").fill("Bot");
-  await section(page).getByLabel("Okuma + özel taslak yazma").check();
+  await section(page).getByRole("radio", { name: /^Okuma \+ özel taslak yazma/ }).check();
   await section(page).getByLabel("Geçerlilik").selectOption("never");
   await section(page).getByText(/Süresiz anahtar sızarsa/).waitFor();
   await section(page).getByRole("button", { name: "Anahtar oluştur" }).click();
@@ -134,7 +134,7 @@ await scenario("3 create with write access and no expiry sends write scopes and 
 
 await scenario("3b interact is an extra checkbox on top of read or write: read+interact and read+write+interact are sent; the badge reads Etkileşim", async ({ page, s }) => {
   await section(page).getByLabel("Ad").fill("Uzantı");
-  await section(page).getByLabel("Beğeni, kaydetme ve takip de yapabilsin").check();
+  await section(page).getByRole("checkbox", { name: /^Beğeni, kaydetme ve takip de yapabilsin/ }).check();
   await section(page).getByRole("button", { name: "Anahtar oluştur" }).click();
   await page.locator("[data-api-key-reveal]").waitFor();
   assert.deepEqual(s.calls.create, [{ p_name: "Uzantı", p_scopes: ["read", "interact"], p_expires_in_days: 90 }]);

@@ -14,6 +14,7 @@ import { Search } from "@/components/icons/search";
 import { LayoutGrid } from "@/components/icons/layout-grid";
 import { Undo2 } from "@/components/icons/undo-2";
 import { Crosshair } from "@/components/icons/crosshair";
+import { ChoiceGroup } from "@/components/ui/choice-group";
 import { Modal } from "@/components/ui/modal";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { createBoard, createBoardInGroup } from "@/lib/supabase/team-projects";
@@ -245,21 +246,17 @@ export function MovePopover({
       </button>
         </>
       )}
-      <div role="radiogroup" aria-label={t("tb.move.mode")} className="mx-1 mt-1 flex gap-1 rounded-xl bg-surface-soft p-1">
-        {[false, true].map((isCopy) => (
-          <button
-            key={String(isCopy)}
-            type="button"
-            role="radio"
-            aria-checked={copy === isCopy}
-            disabled={!isCopy && !canMove}
-            onClick={() => setCopy(isCopy)}
-            data-board-move-mode={isCopy ? "copy" : "move"}
-            className={cn("h-9 flex-1 rounded-lg text-small font-semibold disabled:opacity-50", copy === isCopy ? "bg-surface text-text shadow-xs" : "text-text-secondary")}
-          >
-            {t(isCopy ? "tb.move.copy" : "tb.move.move")}
-          </button>
-        ))}
+      <div className="mx-1 mt-1">
+        <ChoiceGroup<"move" | "copy">
+          ariaLabel={t("tb.move.mode")}
+          variant="segmented"
+          value={copy ? "copy" : "move"}
+          onChange={(key) => setCopy(key === "copy")}
+          options={[
+            { key: "move", label: t("tb.move.move"), disabled: !canMove, attrs: { "data-board-move-mode": "move" } },
+            { key: "copy", label: t("tb.move.copy"), attrs: { "data-board-move-mode": "copy" } },
+          ]}
+        />
       </div>
       <p className="px-2.5 pb-1 pt-1.5 text-caption leading-snug text-text-secondary">{t(copy ? "tb.move.hintCopy" : "tb.move.hintMove")}</p>
       {!canMove && <p className="px-2.5 pb-1 text-caption leading-snug text-warning">{t("tb.move.leadOnly")}</p>}

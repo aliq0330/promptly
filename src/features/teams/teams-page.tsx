@@ -43,7 +43,7 @@ import {
 import { fetchProjectTodos, listProjects, projectTodoAsTeamTodo, type ProjectSummary, type ProjectTodo } from "@/lib/supabase/team-projects";
 import { teamLink } from "@/lib/teams";
 import { cn, formatRelativeTime } from "@/lib/utils";
-import { TEAM_TONES, TeamMark, roleLabelKey } from "./team-ui";
+import { TeamMark, TeamToneSwatches, roleLabelKey } from "./team-ui";
 import { ProjectMini } from "./team-phone-home";
 import { CountBadge } from "@/components/ui/badge";
 import { BAND_TONE } from "./team-band";
@@ -454,20 +454,7 @@ export function CreateTeamModal({ onClose, onCreated }: { onClose: () => void; o
         </div>
         <div>
           <span className={fieldLabelClassName}>{t("tm.create.tone")}</span>
-          <div className="flex flex-wrap gap-2" role="radiogroup" aria-label={t("tm.create.tone")}>
-            {TEAM_TONES.map((option) => (
-              <button
-                key={option}
-                type="button"
-                role="radio"
-                aria-checked={tone === option}
-                onClick={() => setTone(option)}
-                className={`rounded-xl p-0.5 ${tone === option ? "ring-2 ring-primary" : ""}`}
-              >
-                <TeamMark name={name || "?"} tone={option} size={36} />
-              </button>
-            ))}
-          </div>
+          <TeamToneSwatches value={tone} onChange={setTone} name={name} />
         </div>
         <p className="text-caption text-text-muted">{t("tm.create.hint")}</p>
         {error && (

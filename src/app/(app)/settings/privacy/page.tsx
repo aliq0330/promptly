@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ChoiceCard } from "@/components/ui/field";
+import { OptionGroup } from "@/components/ui/option-group";
 import { useAuth } from "@/features/auth/auth-provider";
 import { SettingsCard, SettingsLinkRow, SettingsSubpage } from "@/features/settings/settings-ui";
 import { fetchOwnMessagePrivacy, updateMessagePrivacy, type MessagePrivacy } from "@/lib/supabase/profiles";
@@ -45,22 +45,15 @@ export default function PrivacySettingsPage() {
         {messagePrivacy === null ? (
           <p className="text-caption text-text-muted">{t("settings.loadingEllipsis")}</p>
         ) : (
-          <div className="space-y-2">
-            <ChoiceCard>
-              <input type="radio" name="message-privacy" checked={messagePrivacy === "everyone"} onChange={() => handlePrivacyChange("everyone")} className="mt-0.5" />
-              <span>
-                <span className="font-medium">{t("settings.everyone")}</span>
-                <span className="block text-caption text-text-muted">{t("settings.everyoneHint")}</span>
-              </span>
-            </ChoiceCard>
-            <ChoiceCard>
-              <input type="radio" name="message-privacy" checked={messagePrivacy === "followers_only"} onChange={() => handlePrivacyChange("followers_only")} className="mt-0.5" />
-              <span>
-                <span className="font-medium">{t("settings.followersOnly")}</span>
-                <span className="block text-caption text-text-muted">{t("settings.followersOnlyHint")}</span>
-              </span>
-            </ChoiceCard>
-          </div>
+          <OptionGroup<MessagePrivacy>
+            ariaLabel={t("settings.messagePrivacyTitle")}
+            value={messagePrivacy}
+            onChange={(value) => void handlePrivacyChange(value)}
+            options={[
+              { key: "everyone", label: t("settings.everyone"), description: t("settings.everyoneHint") },
+              { key: "followers_only", label: t("settings.followersOnly"), description: t("settings.followersOnlyHint") },
+            ]}
+          />
         )}
       </SettingsCard>
 

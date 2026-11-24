@@ -6,7 +6,7 @@ import { Pin } from "@/components/icons/pin";
 import { RotateCcw } from "@/components/icons/rotate-ccw";
 import { ShieldCheck } from "@/components/icons/shield-check";
 import { Button } from "@/components/ui/button";
-import { ChoiceCard } from "@/components/ui/field";
+import { OptionGroup } from "@/components/ui/option-group";
 import { useAsyncAction } from "./use-async-action";
 import { updateChatGroupOwnerSettings } from "@/lib/supabase/chat-groups";
 import { capabilitiesFor, DEFAULT_ROLE_PERMISSIONS } from "@/lib/chat-groups";
@@ -81,23 +81,16 @@ export function GroupOwnerSettings({
           <History size={16} aria-hidden /> {t("groups.owner.historyTitle")}
         </h3>
         <p className="text-caption text-text-muted">{t("groups.owner.historyHelp")}</p>
-        <fieldset className="space-y-2" disabled={save.busy}>
-          <legend className="sr-only">{t("groups.owner.historyTitle")}</legend>
-          <ChoiceCard>
-            <input type="radio" name="history-visible" checked={!history} onChange={() => setHistory(false)} className="mt-1 accent-[var(--color-primary)]" />
-            <span>
-              <span className="block font-medium">{t("groups.owner.historyHidden")}</span>
-              <span className="block text-caption text-text-muted">{t("groups.owner.historyHiddenHelp")}</span>
-            </span>
-          </ChoiceCard>
-          <ChoiceCard>
-            <input type="radio" name="history-visible" checked={history} onChange={() => setHistory(true)} className="mt-1 accent-[var(--color-primary)]" />
-            <span>
-              <span className="block font-medium">{t("groups.owner.historyVisible")}</span>
-              <span className="block text-caption text-text-muted">{t("groups.owner.historyVisibleHelp")}</span>
-            </span>
-          </ChoiceCard>
-        </fieldset>
+        <OptionGroup<"hidden" | "visible">
+          ariaLabel={t("groups.owner.historyTitle")}
+          value={history ? "visible" : "hidden"}
+          onChange={(key) => setHistory(key === "visible")}
+          disabled={save.busy}
+          options={[
+            { key: "hidden", label: t("groups.owner.historyHidden"), description: t("groups.owner.historyHiddenHelp") },
+            { key: "visible", label: t("groups.owner.historyVisible"), description: t("groups.owner.historyVisibleHelp") },
+          ]}
+        />
       </section>
       )}
 

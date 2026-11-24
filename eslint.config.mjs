@@ -34,6 +34,20 @@ const classRules = (skipPath) =>
     ];
   });
 const SWITCH_RULE = { selector: "JSXAttribute[name.name='role'][value.value='switch']", message: "Switch elle yazılmaz: components/ui/switch.tsx (Switch / SwitchRow)." };
+// Tek değer seçimi (docs/history/453-*): radyo yalnız ortak bileşenlerde yazılır — ChoiceGroup (kısa etiket / karo), OptionGroup (açıklamalı kart),
+// SwatchGroup (renk), MenuRadioGroup (menü satırı). `star-rating` (yıldız puanı) ve `taxonomy-picker` (kategori ağacı yaprağı) bilinçli istisnadır.
+const RADIO_RULES = [
+  { selector: "JSXAttribute[name.name='role'][value.value='radio']", message: "Radyo elle yazılmaz: ChoiceGroup (kısa etiket/karo), OptionGroup (açıklamalı kart), SwatchGroup (renk), MenuRadioGroup (menü satırı)." },
+  { selector: "JSXAttribute[name.name='type'][value.value='radio']", message: "<input type=\"radio\"> yazılmaz: OptionGroup (açıklamalı kart) ya da ChoiceGroup (kısa etiket) kullan." },
+];
+const RADIO_FILES = [
+  "src/components/ui/option-group.tsx",
+  "src/components/ui/choice-group.tsx",
+  "src/components/ui/swatch-group.tsx",
+  "src/components/ui/menu-radio.tsx",
+  "src/components/ui/star-rating.tsx",
+  "src/features/content/taxonomy-picker.tsx",
+];
 const skipFiles = [...new Set(FORBIDDEN_CLASSES.flatMap((rule) => rule.skip ?? []))];
 
 const eslintConfig = defineConfig([
@@ -41,17 +55,22 @@ const eslintConfig = defineConfig([
   ...nextTs,
   {
     files: ["src/**/*.tsx"],
-    ignores: ["src/lib/**", ...skipFiles, "src/components/ui/switch.tsx"],
-    rules: { "no-restricted-syntax": ["error", ...classRules(null), SWITCH_RULE] },
+    ignores: ["src/lib/**", ...skipFiles, "src/components/ui/switch.tsx", ...RADIO_FILES],
+    rules: { "no-restricted-syntax": ["error", ...classRules(null), SWITCH_RULE, ...RADIO_RULES] },
   },
   // Kuralın bilerek uygulanmadığı dosyalar: yalnız o kural çıkarılır, geri kalanı sürer.
   ...skipFiles.map((pattern) => ({
     files: [pattern],
-    rules: { "no-restricted-syntax": ["error", ...classRules(pattern), SWITCH_RULE] },
+    rules: { "no-restricted-syntax": ["error", ...classRules(pattern), SWITCH_RULE, ...RADIO_RULES] },
   })),
   {
     files: ["src/components/ui/switch.tsx"],
-    rules: { "no-restricted-syntax": ["error", ...classRules(null)] },
+    rules: { "no-restricted-syntax": ["error", ...classRules(null), ...RADIO_RULES] },
+  },
+  // Radyonun yazıldığı yer: yalnız Switch kuralı sürer.
+  {
+    files: RADIO_FILES,
+    rules: { "no-restricted-syntax": ["error", ...classRules(null), SWITCH_RULE] },
   },
 // Override default ignores of eslint-config-next.
   globalIgnores([
