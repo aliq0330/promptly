@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Tabs, type TabItem } from "@/components/ui/tabs";
 import { CONTROL_ICON_BUTTON } from "@/features/content/section-menu";
-import { HUB_GRID_CLASS, HUB_PAGE_CLASS, HubBand, HubControlRow, HubCreateButton } from "@/features/hub/hub-kit";
+import { HUB_GRID_CLASS, HUB_PAGE_CLASS, HubBand, HubControlRow, HubCreateButton, HubHeader } from "@/features/hub/hub-kit";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useAuthPrompt } from "@/features/auth/auth-prompt-provider";
 import { useRealMessages } from "@/features/messages/real-messages-provider";
@@ -137,14 +137,16 @@ export function CommunitiesPage() {
   return (
     <div className={cn(HUB_PAGE_CLASS, "space-y-4")}>
       {/* Hub düzeni (docs/history/379-*): üç alanda aynı bant + sekmeler + kontrol satırı + kart ızgarası. */}
-      <HubBand
-        icon={Users}
-        title={t("communities.page.title")}
-        description={t("hub.communities.intro")}
-        action={<HubCreateButton label={t("communities.page.create")} shortLabel={t("hub.communities.createShort")} onClick={() => requireAuth("create") && setCreateOpen(true)} attr={{ "data-create-community": true }} />}
-      />
+      <HubHeader>
+        <HubBand
+          icon={Users}
+          title={t("communities.page.title")}
+          description={t("hub.communities.intro")}
+          action={<HubCreateButton label={t("communities.page.create")} shortLabel={t("hub.communities.createShort")} onClick={() => requireAuth("create") && setCreateOpen(true)} attr={{ "data-create-community": true }} />}
+        />
 
-      {user && <Tabs items={tabs} active={activeTab} onChange={goTab} ariaLabel={t("communities.page.tabsAria")} />}
+        {user && <Tabs items={tabs} active={activeTab} onChange={goTab} ariaLabel={t("communities.page.tabsAria")} />}
+      </HubHeader>
 
       {/* Tek kontrol satırı: arama (Tüm topluluklar'da açılır) · "Tüm topluluklar" bağlantısı. */}
       {user && searchOpen ? (

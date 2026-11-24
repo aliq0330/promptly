@@ -26,13 +26,13 @@ import { TeamMark } from "./team-ui";
  * Telefonda aynı bant tek satırdır (geri · im · ad · Davet et · ⋯) ve sekmeler kaydırılır.
  */
 export const BAND_TONE: Record<string, string> = {
-  primary: "bg-primary-soft",
-  sky: "bg-[color-mix(in_srgb,var(--color-primary)_6%,var(--color-surface-soft))]",
-  plum: "bg-surface-soft",
-  // Eski kayıtlar (DB'de duran `secondary` / `success` / `warning`): sakin görünüme eşlenir (`resolveTeamTone`, team-ui.tsx).
-  secondary: "bg-primary-soft",
-  success: "bg-[color-mix(in_srgb,var(--color-primary)_6%,var(--color-surface-soft))]",
-  warning: "bg-surface-soft",
+  primary: "bg-surface",
+  sky: "bg-surface",
+  plum: "bg-surface",
+  // Eski kayıtlar (DB'de duran `secondary` / `success` / `warning`): hepsi düz yüzey (docs/history/458-*).
+  secondary: "bg-surface",
+  success: "bg-surface",
+  warning: "bg-surface",
 };
 
 export interface TeamTabItem {

@@ -25,7 +25,27 @@ import { Badge } from "@/components/ui/badge";
 /** Sayfa kabuğu: telefonda 12, tablette 24, masaüstünde 32 px kenar boşluğu — üç alanda aynı genişlik. */
 export const HUB_PAGE_CLASS = `mx-auto w-full ${PAGE_WIDTH_CLASS.hub} ${PAGE_GUTTER_CLASS} pb-16 pt-4 sm:pt-6 lg:pt-7`;
 
-const HUB_BAND_TONE = { primary: "bg-primary-soft text-primary", secondary: "bg-secondary-soft text-secondary", neutral: "bg-surface-soft text-text" } as const;
+/** Ağır/stabil düzen (docs/history/458-*): üç alanda aynı nötr simge karosu; `tone` imzası korunur ama artık renk taşımaz. */
+const HUB_BAND_TONE = { primary: "bg-surface-soft text-text-secondary", secondary: "bg-surface-soft text-text-secondary", neutral: "bg-surface-soft text-text-secondary" } as const;
+
+/**
+ * Düz başlık yüzeyi (Yön D "Merkez"): bant + sekmeler tek beyaz yüzeyde, sayfa kenarına kadar uzanır, altında tek ince çizgi.
+ * Sekmelerin kendi alt çizgisi şeffaflaşır (yüzeyin çizgisi tam genişliktedir). Yalnız görünümdür; içindeki bileşenlerin davranışı değişmez.
+ */
+export function HubHeader({ children, className, ...rest }: { children: ReactNode; className?: string; [data: `data-${string}`]: string | undefined }) {
+  return (
+    <div
+      className={cn(
+        "-mx-3 -mt-4 space-y-3 border-b border-border-soft bg-surface px-3 pt-4 sm:-mx-6 sm:-mt-6 sm:px-6 sm:pt-6 lg:-mx-8 lg:-mt-7 lg:px-8 lg:pt-7 [&_[role=tablist]]:border-transparent",
+        className,
+      )}
+      data-hub-header=""
+      {...rest}
+    >
+      {children}
+    </div>
+  );
+}
 
 /** Detay bandındaki ⋮ düğmesi (docs/history/420-*): üç alanda aynı 40 px kenarlıklı yuvarlak; menüyü kendi bileşeni çizer. */
 export const HUB_BAND_MENU_BUTTON_CLASS =
@@ -264,11 +284,10 @@ export function HubBadge({ children, tone = "neutral" }: { children: ReactNode; 
 
 /**
  * İç sayfa bandı: üstte tam genişlikli satır (solda geri oku + tür etiketleri, sağ üst köşede ⋮ `menu`), altında solda 16:9 (telefonda kare) kapak, ortada başlık + alt bilgi, `xl`+'ta sağda, daha dar
- * ekranda altta eylem satırı. `backdrop` kapağın bulanık kopyasıyla bandı boyar (verilmezse marka tonu).
+ * ekranda altta eylem satırı. `backdrop` artık yok sayılır (düz yüzey).
  */
 export function HubDetailBand({
   art,
-  backdrop,
   backHref,
   backLabel,
   backAttrs,
@@ -282,6 +301,7 @@ export function HubDetailBand({
   ...rest
 }: {
   art: ReactNode;
+  /** Eski çağıranlar için korunur; düz düzende bulanık kapak çizilmez (docs/history/458-*). */
   backdrop?: ReactNode;
   backHref?: string;
   backLabel?: string;
@@ -298,13 +318,7 @@ export function HubDetailBand({
   [data: `data-${string}`]: string | undefined;
 }) {
   return (
-    <header className={cn("relative isolate rounded-lg border border-border-soft bg-primary-soft", className)} data-hub-detail-band="" {...rest}>
-      {backdrop && (
-        <div aria-hidden className="absolute inset-0 -z-10 overflow-hidden rounded-lg">
-          <div className="absolute inset-0 scale-150 opacity-70 blur-3xl saturate-150">{backdrop}</div>
-          <div className="absolute inset-0 bg-background/55" />
-        </div>
-      )}
+    <header className={cn("relative isolate rounded-lg card-flat", className)} data-hub-detail-band="" {...rest}>
       <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-4 gap-y-3 p-4 md:gap-x-5 md:p-5 xl:grid-cols-[auto_minmax(0,1fr)_auto]">
         {/* Üst satır bandın tam genişliğidir: geri oku + etiketler SOLA, ⋮ menüsü SAĞ ÜST köşeye dayanır (telefonda da; menü paneli sağa hizalı açıldığı için ekran dışına taşmaz). */}
         {(backHref || kicker || menu) && (

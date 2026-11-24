@@ -16,7 +16,7 @@ import { fieldLabelClassName, Input } from "@/components/ui/field";
 import { useAuth } from "@/features/auth/auth-provider";
 import { usePagedList } from "@/features/content/use-paged-list";
 import { CONTROL_ICON_BUTTON } from "@/features/content/section-menu";
-import { HUB_CARD_CHIP_CLASS, HUB_GRID_CLASS, HUB_PAGE_CLASS, HubAttentionStrip, HubBadge, HubBand, HubCard, HubCardSkeleton, HubControlRow, HubCreateButton, HubFaces, HubGrid } from "@/features/hub/hub-kit";
+import { HUB_CARD_CHIP_CLASS, HUB_GRID_CLASS, HUB_PAGE_CLASS, HubAttentionStrip, HubBadge, HubBand, HubCard, HubCardSkeleton, HubControlRow, HubCreateButton, HubFaces, HubGrid, HubHeader } from "@/features/hub/hub-kit";
 import { Tabs, type TabItem } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { SearchField } from "@/components/ui/search-field";
@@ -130,15 +130,17 @@ function TeamsPageInner() {
 
   return (
     <div className={cn(HUB_PAGE_CLASS, "space-y-4", PHONE_HOME_BOTTOM_PAD, "md:pb-16")} data-testid="teams-page">
-      <HubBand
-        icon={Briefcase}
-        tone="neutral"
-        title={t("tm.title")}
-        description={t("hub.teams.intro")}
-        action={<HubCreateButton label={t("tm.create")} shortLabel={t("hub.teams.createShort")} onClick={() => setCreateOpen(true)} attr={{ "data-team-create": true, "data-team-create-phone": true }} />}
-      />
+      <HubHeader>
+        <HubBand
+          icon={Briefcase}
+          tone="neutral"
+          title={t("tm.title")}
+          description={t("hub.teams.intro")}
+          action={<HubCreateButton label={t("tm.create")} shortLabel={t("hub.teams.createShort")} onClick={() => setCreateOpen(true)} attr={{ "data-team-create": true, "data-team-create-phone": true }} />}
+        />
 
-      {tabItems.length > 1 && <Tabs items={tabItems} active={activeTab} onChange={setTab} ariaLabel={t("tm.filter.aria")} />}
+        {tabItems.length > 1 && <Tabs items={tabItems} active={activeTab} onChange={setTab} ariaLabel={t("tm.filter.aria")} />}
+      </HubHeader>
 
       {activeTab === "teams" && (
         <>

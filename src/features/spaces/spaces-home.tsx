@@ -37,7 +37,7 @@ import { isSpaceFilter, SPACE_KIND_LABEL, SPACE_PAGE_SIZE, SPACE_ROLE_LABEL, spa
 import { CreateSpaceModal } from "./space-modals";
 import { SpaceCard } from "./space-card";
 import { type SectionMenuItem, CONTROL_ICON_BUTTON } from "@/features/content/section-menu";
-import { HUB_GRID_CLASS, HUB_PAGE_CLASS, HubAttentionStrip, HubBand, HubCardSkeleton, HubControlRow, HubCreateButton } from "@/features/hub/hub-kit";
+import { HUB_GRID_CLASS, HUB_PAGE_CLASS, HubAttentionStrip, HubBand, HubCardSkeleton, HubControlRow, HubCreateButton, HubHeader } from "@/features/hub/hub-kit";
 import { Tabs } from "@/components/ui/tabs";
 import { SearchField } from "@/components/ui/search-field";
 import { SpacesFilterSheet, SpaceTemplates } from "./spaces-controls";
@@ -224,16 +224,18 @@ export function SpacesHome() {
   return (
     <div className={cn(HUB_PAGE_CLASS, "space-y-4")}>
       {/* Hub düzeni (docs/history/379-*): üç alanda aynı bant + sekmeler + kontrol satırı + kart ızgarası. */}
-      <HubBand
-        icon={SpacesIcon}
-        tone="secondary"
-        title={t("spaces.home.title")}
-        description={t("hub.spaces.intro")}
-        data-space-home-band=""
-        action={<HubCreateButton label={t("spaces.home.create")} shortLabel={t("hub.spaces.createShort")} onClick={() => openCreate()} testId="create-space" />}
-      />
+      <HubHeader>
+        <HubBand
+          icon={SpacesIcon}
+          tone="secondary"
+          title={t("spaces.home.title")}
+          description={t("hub.spaces.intro")}
+          data-space-home-band=""
+          action={<HubCreateButton label={t("spaces.home.create")} shortLabel={t("hub.spaces.createShort")} onClick={() => openCreate()} testId="create-space" />}
+        />
 
-      {user && <Tabs items={menuItems} active={showInvites ? "invites" : filter} onChange={setSection} ariaLabel={t("spaces.filter.label")} />}
+        {user && <Tabs items={menuItems} active={showInvites ? "invites" : filter} onChange={setSection} ariaLabel={t("spaces.filter.label")} />}
+      </HubHeader>
 
       {searchOpen || query ? (
         <form role="search" onSubmit={(event) => event.preventDefault()}>
