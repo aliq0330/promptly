@@ -139,3 +139,75 @@ export function OptionCheckbox({
     </div>
   );
 }
+
+export interface OptionTileItem<K extends string> {
+  key: K;
+  label: ReactNode;
+  /** One short line under the title (owner, step count). */
+  description?: ReactNode;
+  /** The picture: fills a 4:3 box (a thumbnail, a cover, or a type icon on the soft ground). */
+  art: ReactNode;
+  /** `data-*` attributes put on the radio button (tests, analytics). */
+  attrs?: { [data: `data-${string}`]: string | undefined };
+}
+
+/**
+ * Pick ONE item from a PICTURE grid (content pick lists where recognising the cover is the point — comment attachment picker):
+ * a `radiogroup` of tiles, two per row on a phone, three from `sm`. The checked tile gets a primary ring + tick; the title turns primary.
+ * Short labels are `ChoiceGroup`, options with explanations are `OptionGroup`. Arrow keys move + select.
+ */
+export function OptionTileGroup<K extends string>({
+  value,
+  options,
+  onChange,
+  ariaLabel,
+  labelledBy,
+  className,
+}: {
+  value: K | null;
+  options: OptionTileItem<K>[];
+  onChange: (key: K) => void;
+  ariaLabel?: string;
+  labelledBy?: string;
+  className?: string;
+}) {
+  const anyChecked = options.some((option) => option.key === value);
+  return (
+    <div role="radiogroup" aria-label={ariaLabel} aria-labelledby={labelledBy} onKeyDown={radioGroupKeyDown} className={cn("grid grid-cols-2 gap-3 sm:grid-cols-3", className)}>
+      {options.map((option, index) => {
+        const checked = option.key === value;
+        return (
+          <button
+            key={option.key}
+            type="button"
+            role="radio"
+            aria-checked={checked}
+            tabIndex={radioTabIndex(index, checked, anyChecked)}
+            data-option={option.key}
+            onClick={() => !checked && onChange(option.key)}
+            {...option.attrs}
+            className="flex min-w-0 flex-col gap-2 rounded-xl text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          >
+            <span
+              className={cn(
+                "relative block aspect-4/3 w-full overflow-hidden rounded-xl bg-primary-soft text-primary transition-shadow duration-200 ease-soft motion-reduce:transition-none",
+                checked && "ring-2 ring-primary ring-offset-2 ring-offset-surface",
+              )}
+            >
+              {option.art}
+              {checked && (
+                <span aria-hidden className="absolute right-2 top-2 grid h-6 w-6 place-items-center rounded-full bg-primary text-primary-foreground">
+                  <Check size={16} />
+                </span>
+              )}
+            </span>
+            <span className="min-w-0 px-0.5">
+              <span className={cn("line-clamp-2 block break-words text-small font-semibold leading-snug", checked ? "text-primary" : "text-text")}>{option.label}</span>
+              {option.description && <span className="mt-0.5 block truncate text-caption text-text-muted">{option.description}</span>}
+            </span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}

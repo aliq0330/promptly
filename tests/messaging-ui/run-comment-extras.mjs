@@ -229,8 +229,18 @@ await scenario("6. İçerik eki: seçici (Prompt/İstek/Workflow/Ayar paketi/Spa
   await picker.getByText("yalnızca herkese açık içerikler eklenebilir").waitFor();
   await picker.getByRole("tab", { name: "Benimkiler" }).waitFor();
   await picker.getByRole("tab", { name: "Kaydettiklerim" }).waitFor();
-  assert.equal(await picker.locator("[data-comment-content-add]").isDisabled(), true, "nothing picked yet");
-  await picker.locator(`[data-comment-content-item='${PUBLIC_PROMPT.id}']`).click();
+  assert.equal(await picker.locator("[data-comment-content-add]").count(), 0, "nothing picked yet: no Ekle button, the help line sits in its place");
+  // "Görsel ızgara" (docs/history/456-*): arama başlıktaki düğmeyle açılır, liste iki sütunlu karolardır.
+  assert.equal(await picker.locator("input[type='search']").count(), 0, "search is closed until its button is pressed");
+  assert.equal(await picker.locator("[role='radiogroup'] [role='radio']").count() > 0, true, "items are radio tiles");
+  const tile = picker.locator(`[data-comment-content-item='${PUBLIC_PROMPT.id}']`);
+  await tile.click();
+  assert.equal(await tile.getAttribute("aria-checked"), "true");
+  await picker.locator("[data-comment-content-selected]").getByText("Neon sokak portresi").waitFor();
+  await picker.locator("[data-comment-content-search-toggle]").click();
+  await picker.locator("input[type='search']").waitFor();
+  await picker.locator("[data-comment-content-search-toggle]").click();
+  assert.equal(await picker.locator("input[type='search']").count(), 0, "closing the search hides it");
   await picker.locator("[data-comment-content-add]").click();
   await picker.waitFor({ state: "detached" });
   const draft = section(page).locator("[data-comment-extras] [data-comment-attachment='prompt']");
@@ -357,6 +367,8 @@ await scenario("12. Dar ekran (390 px): yazma çubuğu + GIF seçici + içerik s
   await extra(page, "content").click();
   await page.locator("[data-comment-content-picker]").waitFor();
   assert.ok(await overflowFree(page), "content picker fits 390px");
+  await page.locator(`[data-comment-content-item='${PUBLIC_PROMPT.id}']`).click();
+  await page.waitForTimeout(500);
   await shot(page, "content-picker-phone");
 }, { viewport: PHONE });
 
