@@ -243,7 +243,7 @@ await scenario("12. telefon (390): Yanıtla satır içi çerçeveli kutuda açı
 await scenario("13. telefon: yorum kartları tam genişlik (sayfa kenar boşluğu hariç), yatay taşma yok; düzenleme de alttan kartta", async ({ page, db }) => {
   await page.getByText(/Mert:/).first().waitFor();
   const vw = 390;
-  const bubble = await node(page, "Mert:").locator("div.rounded-lg.border-border-soft").first().boundingBox();
+  const bubble = await node(page, "Mert:").locator("div.rounded-lg.border-border-strong").first().boundingBox();
   assert.ok(bubble.width >= vw - 40, `kart geniş (${bubble.width})`);
   assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1), "taşma yok");
   await openMenu(page, "Kendi yorumum");
