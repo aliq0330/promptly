@@ -13,13 +13,15 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Tabs, type TabItem } from "@/components/ui/tabs";
 import { CONTROL_ICON_BUTTON } from "@/features/content/section-menu";
-import { HUB_GRID_CLASS, HUB_PAGE_CLASS, HubBand, HubControlRow, HubCreateButton, HubHeader } from "@/features/hub/hub-kit";
+import { HUB_GRID_CLASS, HUB_PAGE_CLASS, HubBand, HubControlRow, HubCreateButton, HubHeader, HubTable, HubTableBody, HubViewToggle, useHubView } from "@/features/hub/hub-kit";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useAuthPrompt } from "@/features/auth/auth-prompt-provider";
 import { useRealMessages } from "@/features/messages/real-messages-provider";
 import { useAsyncAction } from "@/features/groups/use-async-action";
 import { useToast } from "@/features/groups/use-toast";
+import { useMediaQuery } from "@/lib/use-media-query";
 import { CommunityCard } from "./community-card";
+import { COMMUNITY_TABLE, CommunityRow } from "./community-row";
 import { HomeInviteNotice } from "./home-shelf";
 import type { JoinState } from "./community-join-button";
 import { CreateCommunityModal } from "./create-community-modal";
@@ -77,6 +79,7 @@ export function CommunitiesPage() {
   const [inviteReload, setInviteReload] = useState(0);
   const [query, setQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
+  const [hubView, setHubView] = useHubView("communities");
   const inviteCount = invitations?.length ?? null;
 
   const sectionParam = searchParams.get("section");
@@ -167,6 +170,7 @@ export function CommunitiesPage() {
             <button type="button" onClick={() => setSearchOpen(true)} aria-label={t("communities.page.searchOpen")} title={t("communities.page.searchOpen")} className={CONTROL_ICON_BUTTON}>
               <Search size={24} aria-hidden />
             </button>
+            {(view === "mine" || view === "managed") && <HubViewToggle view={hubView} onChange={setHubView} />}
             <Link href="/communities/all" aria-label={t("communities.all.button")} title={t("communities.all.button")} className={CONTROL_ICON_BUTTON} data-testid="communities-all-link">
               <LayoutGrid size={24} aria-hidden />
             </Link>
@@ -372,6 +376,8 @@ function MyCommunitiesView({ scope, onToast }: { scope: MyCommunityScope; onToas
   const [busyId, setBusyId] = useState<string | null>(null);
   const [unseen, setUnseen] = useState<Map<string, number>>(() => new Map());
   const action = useAsyncAction();
+  const [listView] = useHubView("communities");
+  const phone = useMediaQuery("(max-width: 767.98px)");
 
   // "N yeni" rozeti (docs/history/212-*): görmediğim gönderi sayısı; okunamazsa yalnız rozetler gizlenir.
   useEffect(() => {
@@ -460,22 +466,58 @@ function MyCommunitiesView({ scope, onToast }: { scope: MyCommunityScope; onToas
           {action.error}
         </InlineAlert>
       )}
-      <ul className={HUB_GRID_CLASS}>
-        {sortedItems.map((community) => {
-          const conversation = conversations.find((c) => c.id === community.id);
-          const hiddenInInbox = Boolean(conversation && (conversation.deletedAt || conversation.archivedAt));
-          return (
-            <CommunityCard
-              key={community.id}
-              community={community}
-              onStatusChange={(next) => changeStatus(community.id, next)}
-              onToast={onToast}
-              footerNote={hiddenInInbox ? t("communities.card.hiddenInInbox") : undefined}
-              unseen={unseen.get(community.id) ?? 0}
-            />
-          );
-        })}
-      </ul>
+      {listView === "table" ? (
+        <HubTable
+          label={t(scope === "managed" ? "communities.tab.managed" : "communities.tab.mine")}
+          {...COMMUNITY_TABLE}
+          head={
+            <>
+              <span>{t("hub.col.community")}</span>
+              <span className="max-lg:hidden">{t("hub.col.role")}</span>
+              <span className="max-lg:hidden">{t("hub.col.members")}</span>
+              <span className="max-lg:hidden">{t("hub.col.online")}</span>
+              <span>{t("hub.col.fresh")}</span>
+              <span className="max-lg:hidden">{t("hub.col.activity")}</span>
+              <span aria-hidden />
+            </>
+          }
+        >
+          <HubTableBody data-testid="communities-table">
+            {sortedItems.map((community) => {
+              const conversation = conversations.find((c) => c.id === community.id);
+              const hiddenInInbox = Boolean(conversation && (conversation.deletedAt || conversation.archivedAt));
+              return (
+                <CommunityRow
+                  key={community.id}
+                  community={community}
+                  onStatusChange={(next) => changeStatus(community.id, next)}
+                  onToast={onToast}
+                  footerNote={hiddenInInbox ? t("communities.card.hiddenInInbox") : undefined}
+                  unseen={unseen.get(community.id) ?? 0}
+                  phone={phone}
+                />
+              );
+            })}
+          </HubTableBody>
+        </HubTable>
+      ) : (
+        <ul className={HUB_GRID_CLASS}>
+          {sortedItems.map((community) => {
+            const conversation = conversations.find((c) => c.id === community.id);
+            const hiddenInInbox = Boolean(conversation && (conversation.deletedAt || conversation.archivedAt));
+            return (
+              <CommunityCard
+                key={community.id}
+                community={community}
+                onStatusChange={(next) => changeStatus(community.id, next)}
+                onToast={onToast}
+                footerNote={hiddenInInbox ? t("communities.card.hiddenInInbox") : undefined}
+                unseen={unseen.get(community.id) ?? 0}
+              />
+            );
+          })}
+        </ul>
+      )}
       {current.items.some((c) => conversations.find((x) => x.id === c.id && (x.deletedAt || x.archivedAt))) && (
         <ul className="space-y-1 rounded-lg card-flat px-4 py-3">
           {current.items

@@ -48,12 +48,15 @@ export function TeamBand({
   onInvite,
   onLeave,
   menuItems,
+  tabs,
 }: {
   team: TeamSummary;
   canInvite: boolean;
   onInvite: () => void;
   onLeave?: () => void;
   menuItems: { key: string; label: string; href: string }[];
+  /** Sekmeler (Yön D): bandın içinde, altta. */
+  tabs?: React.ReactNode;
 }) {
   const { t } = useTranslation();
   const [faces, setFaces] = useState<TeamMember[]>([]);
@@ -105,9 +108,11 @@ export function TeamBand({
       className={BAND_TONE[team.tone] ?? BAND_TONE.primary}
       backHref="/teams"
       backLabel={t("tm.page.backToTeams")}
+      crumbs={[{ label: t("tm.title"), href: "/teams" }, { label: team.name }]}
+      tabs={tabs}
       backAttrs={{ "data-team-back-phone": "" }}
       art={
-        <span aria-hidden className={cn("absolute inset-0 grid place-items-center", BAND_TONE[team.tone] ?? BAND_TONE.primary)}>
+        <span aria-hidden className="absolute inset-0 grid place-items-center bg-surface-soft">
           <TeamMark name={team.name} tone={team.tone} solid size={52} className="rounded-md" />
         </span>
       }

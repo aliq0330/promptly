@@ -26,7 +26,7 @@ import { SPACE_KIND_LABEL, spaceCapabilities, spaceHref } from "@/lib/spaces";
 import { DeleteSpaceDialog, SpaceSettingsModal } from "./space-modals";
 import { ShareModal } from "@/features/prompts/share-modal";
 import { PopoverMenu } from "@/components/ui/popover-menu";
-import { HUB_CARD_CHIP_CLASS, HubCard } from "@/features/hub/hub-kit";
+import { HUB_CARD_CHIP_CLASS, HUB_COL_LG, HUB_COL_MD, HUB_ROW_LINK_CLASS, HubCard, HubRow } from "@/features/hub/hub-kit";
 import { PaletteStrip, SpaceCoverArt, VisibilityBadge } from "./space-visuals";
 
 /**
@@ -191,24 +191,38 @@ export function SpaceCard({
   );
 
   if (layout === "list") {
+    // Tablo satırı (Yön D, docs/history/459-*): sütunlar `HubTable` şablonundadır (Ad · Tür · Görünürlük · Üyeler · Güncelleme · eylemler).
+    const ownerName = space.owner ? (space.ownerId === userId ? t("spaces.card.you") : space.owner.displayName) : null;
     return (
-      <li data-space-card={space.id} className="relative flex items-center gap-3 rounded-lg card-flat p-2.5 shadow-xs">
-        <Link href={href} className="flex min-w-0 flex-1 items-center gap-3 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
-          <SpaceCoverArt urls={art} iconSize={22} className="h-16 w-16 shrink-0 overflow-hidden rounded-md" />
-          <span className="min-w-0 flex-1 space-y-1">
-            <span className="flex min-w-0 items-center gap-2">
-              <span className="truncate font-display text-body font-bold text-text">{space.title}</span>
-              <VisibilityBadge visibility={space.visibility} className="max-sm:hidden" />
-            </span>
+      <HubRow data-space-card={space.id}>
+        <div className="flex min-w-0 items-center gap-3">
+          <SpaceCoverArt urls={art} iconSize={20} className="h-10 w-10 shrink-0 overflow-hidden rounded-md" />
+          <span className="min-w-0 flex-1">
+            <h3 className="min-w-0 font-display text-body font-bold text-text">
+              <Link href={href} className={cn("block truncate", HUB_ROW_LINK_CLASS)}>
+                {space.title}
+              </Link>
+            </h3>
             {counts}
-            {owner}
+            {ownerName && <span className="block truncate text-caption text-text-muted lg:hidden">{ownerName}</span>}
           </span>
-        </Link>
-        {pinned}
-        {menu}
-        {error && <p role="alert" className="absolute -bottom-5 left-3 text-caption text-danger">{error}</p>}
+        </div>
+        <span className={cn("truncate text-small text-text-secondary", HUB_COL_LG)}>{t(SPACE_KIND_LABEL[space.kind])}</span>
+        <span className={cn("flex", HUB_COL_MD)}>
+          <VisibilityBadge visibility={space.visibility} />
+        </span>
+        <span className={cn("flex min-w-0 items-center gap-2 text-small text-text-secondary", HUB_COL_LG)}>
+          {space.owner && <Avatar src={space.owner.avatarUrl} alt="" size={20} />}
+          <span className="truncate">{space.memberCount !== null && space.memberCount > 1 ? t("spaces.count.members", { count: space.memberCount }) : ownerName}</span>
+        </span>
+        <span className={cn("whitespace-nowrap text-small text-text-secondary", HUB_COL_MD)}>{formatRelativeTime(space.updatedAt, language)}</span>
+        <span className="relative z-10 flex items-center justify-end gap-1">
+          {pinned}
+          {menu}
+        </span>
+        {error && <p role="alert" className="col-span-full pt-1 text-caption text-danger">{error}</p>}
         {dialogs}
-      </li>
+      </HubRow>
     );
   }
 

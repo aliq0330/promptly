@@ -16,7 +16,7 @@ import { fieldLabelClassName, Input } from "@/components/ui/field";
 import { useAuth } from "@/features/auth/auth-provider";
 import { usePagedList } from "@/features/content/use-paged-list";
 import { CONTROL_ICON_BUTTON } from "@/features/content/section-menu";
-import { HUB_CARD_CHIP_CLASS, HUB_GRID_CLASS, HUB_PAGE_CLASS, HubAttentionStrip, HubBadge, HubBand, HubCard, HubCardSkeleton, HubControlRow, HubCreateButton, HubFaces, HubGrid, HubHeader } from "@/features/hub/hub-kit";
+import { HUB_CARD_CHIP_CLASS, HUB_GRID_CLASS, HUB_PAGE_CLASS, HubAttentionStrip, HubBadge, HubBand, HubCard, HubCardSkeleton, HubControlRow, HubCreateButton, HubFaces, HubGrid, HubHeader, HubRow, HubTable, HubTableBody, HubViewToggle, HUB_COL_LG, HUB_ROW_LINK_CLASS, useHubView } from "@/features/hub/hub-kit";
 import { Tabs, type TabItem } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { SearchField } from "@/components/ui/search-field";
@@ -60,6 +60,7 @@ function TeamsPageInner() {
   const [createOpen, setCreateOpen] = useState(false);
   const [filter, setFilter] = useState<"all" | "managed">("all");
   const [searchOpen, setSearchOpen] = useState(false);
+  const [hubView, setHubView] = useHubView("teams");
   const [query, setQuery] = useState("");
   const list = usePagedList<TeamSummary>(`teams2|${user?.id ?? ""}`, Boolean(user), (offset) => listMyTeams(offset));
   const [invites, setInvites] = useState<TeamInvitation[]>([]);
@@ -161,6 +162,7 @@ function TeamsPageInner() {
             <button type="button" onClick={() => setSearchOpen((open) => !open)} aria-label={t("header.searchAriaLabel")} aria-pressed={searchOpen} data-teams-search className={cn(CONTROL_ICON_BUTTON, searchOpen && "bg-surface-soft")}>
               <Search size={24} aria-hidden />
             </button>
+            <HubViewToggle view={hubView} onChange={setHubView} />
           </HubControlRow>
           {searchOpen && (
             <SearchField
@@ -224,6 +226,30 @@ function TeamsPageInner() {
           {list.items.length === 0 && !list.failed ? (
             <EmptyState icon={Briefcase} scene="team" title={t("tm.empty.title")} description={t("tm.empty.body")} action={{ label: t("tm.create"), onClick: () => setCreateOpen(true) }} />
           ) : (
+            hubView === "table" ? (
+              <HubTable
+                label={t("tm.title")}
+                cols="minmax(0,1fr) 5.5rem 7.5rem 5rem 7rem 3rem 11rem"
+                colsMd="minmax(0,1fr) 8rem 4rem"
+                head={
+                  <>
+                    <span>{t("hub.col.team")}</span>
+                    <span className="max-lg:hidden">{t("hub.col.role")}</span>
+                    <span className="max-lg:hidden">{t("hub.col.members")}</span>
+                    <span className="max-lg:hidden">{t("hub.col.projects")}</span>
+                    <span>{t("hub.col.approvals")}</span>
+                    <span>{t("hub.col.chat")}</span>
+                    <span className="max-lg:hidden">{t("hub.col.activity")}</span>
+                  </>
+                }
+              >
+                <HubTableBody data-testid="teams-list">
+                  {visibleTeams.map((team) => (
+                    <TeamRow key={team.id} team={team} approvals={approvalsByTeam.get(team.id) ?? 0} phone={phone} />
+                  ))}
+                </HubTableBody>
+              </HubTable>
+            ) : (
             <HubGrid data-testid="teams-list">
               {visibleTeams.map((team) => (
                 <TeamCard key={team.id} team={team} approvals={approvalsByTeam.get(team.id) ?? 0} />
@@ -247,6 +273,7 @@ function TeamsPageInner() {
                 </button>
               </li>
             </HubGrid>
+            )
           )}
         </PagedListState>
       )}
@@ -395,6 +422,73 @@ function TeamCard({ team, approvals }: { team: TeamSummary; approvals: number })
         </>
       }
     />
+  );
+}
+
+/** Ekip satırı (Yön D, docs/history/459-*): `TeamCard`ın tablo karşılığı — aynı veri ve aynı test öznitelikleri. Telefonda rol · üye · proje adın altına iner. */
+function TeamRow({ team, approvals, phone }: { team: TeamSummary; approvals: number; phone: boolean }) {
+  const { t, language } = useTranslation();
+  const preview = team.membersPreview ?? [];
+  const more = Math.max(0, team.memberCount - preview.length);
+  const approvalChip =
+    approvals > 0 ? (
+      <Link href={teamLink(team.id, "projects")} className="relative z-10 tap-area w-fit rounded-full" data-team-chip="approvals">
+        <Badge variant="warning">{t("tm.home.pendingApprovals", { count: approvals })}</Badge>
+      </Link>
+    ) : null;
+  return (
+    <HubRow data-team-card={team.id}>
+      <div className="flex min-w-0 items-center gap-3">
+        <TeamMark name={team.name} tone={team.tone} size={40} solid className="shrink-0 rounded-lg" />
+        <span className="min-w-0 flex-1">
+          <h3 className="min-w-0 font-display text-body font-bold text-text">
+            <Link href={teamLink(team.id)} className={cn("block truncate", HUB_ROW_LINK_CLASS)}>
+              <span data-team-open-spaces>{team.name}</span>
+            </Link>
+          </h3>
+          <span className="flex min-w-0 items-center gap-2 text-caption text-text-muted">
+            <VisibilityTag icon={Lock} label={t("tm.header.inviteOnly")} data-team-visibility="" />
+          </span>
+          {/* Telefonda rol · üye · proje sütunları yoktur: özet adın altına iner (yalnız telefonda çizilir; masaüstünde metin tek yerde durur). */}
+          {phone && (
+            <>
+              <span className="block truncate text-caption text-text-muted">{`${t(roleLabelKey(team.myRole))} · ${t("tm.card.members", { count: team.memberCount })} · ${t("tp.header.projects", { count: team.spaceCount })}`}</span>
+              {approvalChip && <span className="mt-1 flex">{approvalChip}</span>}
+            </>
+          )}
+        </span>
+      </div>
+      <span className={cn("flex", HUB_COL_LG)}>
+        <HubBadge tone={team.myRole === "owner" || team.myRole === "admin" ? "success" : "neutral"}>{t(roleLabelKey(team.myRole))}</HubBadge>
+      </span>
+      <span className={cn("flex min-w-0 items-center gap-2 text-small text-text-secondary", HUB_COL_LG)} data-team-avatars={preview.length > 0 ? "" : undefined}>
+        {preview.length > 0 && (
+          <HubFaces more={more}>
+            {preview.slice(0, 2).map((person) => (
+              <Avatar key={person.userId} src={person.avatarUrl} alt={person.displayName || person.username} size={24} />
+            ))}
+          </HubFaces>
+        )}
+        <span className="truncate">{t("tm.card.members", { count: team.memberCount })}</span>
+      </span>
+      <span className={cn("truncate text-small text-text-secondary", HUB_COL_LG)}>{t("tp.header.projects", { count: team.spaceCount })}</span>
+      {!phone && <span className="flex">{approvalChip}</span>}
+      <span className="relative z-10 flex justify-end">
+        <Link
+          href={teamLink(team.id, "chat")}
+          data-team-open-chat
+          data-team-chip={team.unreadCount > 0 ? "unread" : undefined}
+          aria-label={t("tm.card.openChat")}
+          className="tap-area inline-flex items-center gap-1.5 rounded-full p-1.5 text-text-secondary hover:bg-surface-soft"
+        >
+          <MessageCircle size={16} aria-hidden />
+          {team.unreadCount > 0 && <CountBadge>{team.unreadCount}</CountBadge>}
+        </Link>
+      </span>
+      <span className={cn("truncate text-small text-text-secondary", HUB_COL_LG)} title={team.recent ? recentLine(t, language, team.recent) : undefined}>
+        {team.recent ? recentLine(t, language, team.recent) : formatRelativeTime(team.lastActivityAt, language)}
+      </span>
+    </HubRow>
   );
 }
 

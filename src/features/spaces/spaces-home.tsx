@@ -37,7 +37,7 @@ import { isSpaceFilter, SPACE_KIND_LABEL, SPACE_PAGE_SIZE, SPACE_ROLE_LABEL, spa
 import { CreateSpaceModal } from "./space-modals";
 import { SpaceCard } from "./space-card";
 import { type SectionMenuItem, CONTROL_ICON_BUTTON } from "@/features/content/section-menu";
-import { HUB_GRID_CLASS, HUB_PAGE_CLASS, HubAttentionStrip, HubBand, HubCardSkeleton, HubControlRow, HubCreateButton, HubHeader } from "@/features/hub/hub-kit";
+import { HUB_GRID_CLASS, HUB_PAGE_CLASS, HubAttentionStrip, HubBand, HubCardSkeleton, HubControlRow, HubCreateButton, HubHeader, HubStatStrip, HubTable, HubTableBody } from "@/features/hub/hub-kit";
 import { Tabs } from "@/components/ui/tabs";
 import { SearchField } from "@/components/ui/search-field";
 import { SpacesFilterSheet, SpaceTemplates } from "./spaces-controls";
@@ -56,9 +56,9 @@ const VIEW_KEY = "promptly-spaces-view";
 
 function readView(): "grid" | "list" {
   try {
-    return localStorage.getItem(VIEW_KEY) === "list" ? "list" : "grid";
+    return localStorage.getItem(VIEW_KEY) === "grid" ? "grid" : "list";
   } catch {
-    return "grid";
+    return "list";
   }
 }
 
@@ -80,7 +80,8 @@ export function SpacesHome() {
   const [sort, setSort] = useState<SpaceSort>("updated");
   const [query, setQuery] = useState("");
   const [debounced, setDebounced] = useState("");
-  const [view, setView] = useState<"grid" | "list">("grid");
+  const [view, setView] = useState<"grid" | "list">("list");
+  const [renderedAt] = useState(() => Date.now());
   const [items, setItems] = useState<SpaceSummary[] | null>(null);
   const [error, setError] = useState(false);
   const [hasMore, setHasMore] = useState(false);
@@ -288,6 +289,18 @@ export function SpacesHome() {
         </HubAttentionStrip>
       )}
 
+      {/* Özet şeridi (Yön D): yüklenmiş Space'lerden hesaplanır; daha fazla sayfa varsa sayılar "+" ile biter. */}
+      {user && section === "all" && !debounced && !showInvites && items !== null && items.length > 0 && (
+        <HubStatStrip
+          items={[
+            { key: "spaces", label: t("hub.stat.spaces"), value: `${items.length}${hasMore ? "+" : ""}` },
+            { key: "images", label: t("hub.stat.images"), value: `${items.reduce((sum, item) => sum + item.imageCount, 0)}${hasMore ? "+" : ""}` },
+            { key: "shared", label: t("hub.stat.shared"), value: `${items.filter((item) => (item.memberCount ?? 0) > 1).length}${hasMore ? "+" : ""}` },
+            { key: "week", label: t("hub.stat.week"), value: `${items.filter((item) => renderedAt - Date.parse(item.updatedAt) < 7 * 86_400_000).length}${hasMore ? "+" : ""}` },
+          ]}
+        />
+      )}
+
       {showTemplates && <SpaceTemplates onPick={(kind) => openCreate(kind)} />}
 
       {showRecent && (
@@ -338,7 +351,7 @@ export function SpacesHome() {
             <EmptyState icon={SpacesIcon} scene="offline" title={t("spaces.home.loadError")} action={{ label: t("common.retry"), onClick: () => setReloadKey((k) => k + 1) }} compact />
           ) : items === null ? (
             <ul className={view === "grid" ? HUB_GRID_CLASS : "space-y-2"}>
-              {Array.from({ length: 6 }, (_, index) => (view === "grid" ? <HubCardSkeleton key={index} /> : <li key={index} className="h-20 skeleton-shimmer rounded-lg" />))}
+              {Array.from({ length: 6 }, (_, index) => (view === "grid" ? <HubCardSkeleton key={index} /> : <li key={index} className="h-16 skeleton-shimmer rounded-lg" />))}
             </ul>
           ) : isEmptyLibrary && user ? (
             <FirstSpaceEmpty onCreate={() => openCreate()} />
@@ -352,11 +365,35 @@ export function SpacesHome() {
             />
           ) : (
             <>
-              <ul data-testid="spaces-list" data-view={view} className={view === "grid" ? HUB_GRID_CLASS : "space-y-2"}>
-                {shown.map((space) => (
-                  <SpaceCard key={space.id} space={space} layout={view} userId={user?.id ?? null} palette={palettes.get(space.id)} onChange={updateOne} onRemove={removeOne} />
-                ))}
-              </ul>
+              {view === "list" ? (
+                <HubTable
+                  label={t(FILTER_LABEL[effectiveFilter])}
+                  cols="minmax(0,1fr) 7rem 8rem 9rem 8rem 6rem"
+                  colsMd="minmax(0,1fr) 8rem 8rem 6rem"
+                  head={
+                    <>
+                      <span>{t("hub.col.name")}</span>
+                      <span className="max-lg:hidden">{t("hub.col.type")}</span>
+                      <span className="max-md:hidden">{t("hub.col.visibility")}</span>
+                      <span className="max-lg:hidden">{t("hub.col.members")}</span>
+                      <span className="max-md:hidden">{t("hub.col.updated")}</span>
+                      <span aria-hidden />
+                    </>
+                  }
+                >
+                  <HubTableBody data-testid="spaces-list" data-view="list">
+                    {shown.map((space) => (
+                      <SpaceCard key={space.id} space={space} layout="list" userId={user?.id ?? null} palette={palettes.get(space.id)} onChange={updateOne} onRemove={removeOne} />
+                    ))}
+                  </HubTableBody>
+                </HubTable>
+              ) : (
+                <ul data-testid="spaces-list" data-view="grid" className={HUB_GRID_CLASS}>
+                  {shown.map((space) => (
+                    <SpaceCard key={space.id} space={space} layout="grid" userId={user?.id ?? null} palette={palettes.get(space.id)} onChange={updateOne} onRemove={removeOne} />
+                  ))}
+                </ul>
+              )}
               {hasMore && (
                 <LoadMoreButton wrapperClassName="mt-6 flex justify-center" label={t("spaces.home.loadMore")} loading={loadingMore} onLoadMore={() => void loadMore()} />
               )}

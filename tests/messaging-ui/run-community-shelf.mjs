@@ -80,6 +80,12 @@ await scenario("2. Topluluklarım: kartlar, yeni olan önce; 'N yeni' rozeti (99
   assert.equal(await page.locator(`[data-community-card="${id(2)}"]`).getByText("4 yeni").count(), 1);
   assert.equal(await page.locator(`[data-community-card="${id(3)}"]`).getByText("99+ yeni").count(), 1);
   assert.equal(await page.locator(`[data-community-card="${id(1)}"] [data-shelf-unseen]`).count(), 0, "yeni yoksa rozet yok");
+  await shot(page, "2-table");
+  // Varsayılan Tablo (Yön D, docs/history/459-*): satır başlığı aynı bağlantıdır; Kart görünümüne geçince kapak 16:9 çizilir.
+  assert.match(await page.locator(`[data-community-card="${id(2)}"] h3 a`).getAttribute("href"), new RegExp(`/communities/local/?\\?id=${id(2)}`));
+  await page.locator("[data-hub-view-toggle]").click();
+  await page.locator(`[data-community-card="${id(1)}"] .aspect-video`).first().waitFor();
+  await shot(page, "2-cards");
   const cover = await page.locator(`[data-community-card="${id(1)}"] .aspect-video`).first().boundingBox();
   assert.ok(Math.abs(cover.width / cover.height - 16 / 9) < 0.05, "kapak 16:9");
   assert.match(await page.locator(`[data-community-card="${id(2)}"] h3 a`).getAttribute("href"), new RegExp(`/communities/local/?\\?id=${id(2)}`));

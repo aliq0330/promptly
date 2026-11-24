@@ -8,7 +8,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Briefcase } from "@/components/icons/briefcase";
 import { useMediaQuery } from "@/lib/use-media-query";
 import { cn } from "@/lib/utils";
-import { HUB_PAGE_CLASS } from "@/features/hub/hub-kit";
+import { HUB_PAGE_CLASS, HubStatStrip } from "@/features/hub/hub-kit";
 import { InviteDialog } from "./team-invites";
 import { useAuth } from "@/features/auth/auth-provider";
 import { LanguageTermScope, useTranslation } from "@/lib/i18n/language-provider";
@@ -198,12 +198,29 @@ function TeamPageInner() {
     <div className={boardMode ? "mx-auto w-full max-w-none" : cn(HUB_PAGE_CLASS, "space-y-4")} data-testid="team-page" data-team-id={team.id} data-board-mode={boardMode ? "" : undefined}>
       {!hideChrome && (
         <div className="space-y-4" data-team-chrome>
-          <TeamBand team={team} canInvite={can("manage_members") && !isGuest} onInvite={() => setInviteOpen(true)} onLeave={team.myRole !== "owner" ? () => setLeaveOpen(true) : undefined} menuItems={menuItems} />
-          <TeamTabs teamId={team.id} items={items} active={tab} ariaLabel={t("tm.tab.aria")} />
+          <TeamBand
+            team={team}
+            canInvite={can("manage_members") && !isGuest}
+            onInvite={() => setInviteOpen(true)}
+            onLeave={team.myRole !== "owner" ? () => setLeaveOpen(true) : undefined}
+            menuItems={menuItems}
+            tabs={<TeamTabs teamId={team.id} items={items} active={tab} ariaLabel={t("tm.tab.aria")} />}
+          />
         </div>
       )}
       {isGuest && team.guestUntil && !hideChrome && (
         <p className="rounded-lg bg-warning-soft px-3 py-2 text-small text-warning">{t("tm.guest.banner", { date: new Date(team.guestUntil).toLocaleDateString() })}</p>
+      )}
+      {/* Özet şeridi (Yön D): Genel bakış'ın tepesinde; konuk yalnız proje ve üye sayısını görür. */}
+      {tab === "projects" && !drilled && !hideChrome && (
+        <HubStatStrip
+          items={[
+            { key: "projects", label: t("hub.stat.projects"), value: team.spaceCount },
+            ...(isGuest ? [] : [{ key: "approvals", label: t("hub.stat.approvals"), value: approvals }]),
+            { key: "members", label: t("hub.stat.members"), value: team.memberCount },
+            ...(isGuest ? [] : [{ key: "unread", label: t("hub.stat.unread"), value: team.unreadCount }]),
+          ]}
+        />
       )}
       <div data-team-tab={tab}>
         {body}

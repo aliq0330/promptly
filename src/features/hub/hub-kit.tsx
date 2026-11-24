@@ -1,8 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import type { ReactNode } from "react";
+import { useSyncExternalStore, type CSSProperties, type ReactNode } from "react";
 import { ArrowLeft } from "@/components/icons/arrow-left";
+import { ChevronRight } from "@/components/icons/chevron-right";
+import { LayoutDashboard } from "@/components/icons/layout-dashboard";
+import { List } from "@/components/icons/list";
 import type { IconComponent } from "@/components/icons/icon";
 import { Plus } from "@/components/icons/plus";
 import { Button, buttonClassName } from "@/components/ui/button";
@@ -11,6 +14,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { PAGE_GUTTER_CLASS, PAGE_WIDTH_CLASS } from "@/components/ui/page-header";
 import { Badge } from "@/components/ui/badge";
+import { CONTROL_ICON_BUTTON } from "@/features/content/section-menu";
+import { useTranslation } from "@/lib/i18n/language-provider";
 
 /**
  * Hub düzeni (docs/history/379-*): Spaces, Topluluklar ve Ekipler'in ana sayfaları ile iç sayfaları TEK iskeleti paylaşır.
@@ -81,6 +86,134 @@ export function HubBand({
       </div>
       {action}
     </div>
+  );
+}
+
+/** Özet şeridi (Yön D): tek çerçevede 2–4 kutu (etiket + büyük sayı). Telefonda 2×2, `lg`+'ta tek satır. Sayılar çağıranın elindeki GERÇEK değerlerdir. */
+export function HubStatStrip({ items, className }: { items: { key: string; label: string; value: ReactNode }[]; className?: string }) {
+  return (
+    <dl className={cn("grid grid-cols-2 rounded-lg card-flat", items.length >= 4 ? "lg:grid-cols-4" : items.length === 3 ? "lg:grid-cols-3" : undefined, className)} data-hub-stats="">
+      {items.map((item, index) => (
+        <div key={item.key} className={cn("min-w-0 border-border-soft px-4 py-3", index > 0 && "lg:border-l", index % 2 === 1 && "max-lg:border-l", index >= 2 && "max-lg:border-t")} data-hub-stat={item.key}>
+          <dt className="truncate text-small text-text-muted">{item.label}</dt>
+          <dd className="mt-0.5 font-display text-h2 font-bold text-text">{item.value}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
+/**
+ * Tablo (Yön D, docs/history/459-*): üç alanın liste ekranlarında ortak çizgili tablo. Sütun şablonları üç kırılım içindir
+ * (`cols` masaüstü · `colsMd` tablet · `colsSm` telefon); satırdaki hücreler `HUB_COL_LG` (yalnız masaüstü) ya da `HUB_COL_MD`
+ * (tablet ve masaüstü) ile saklanır — saklanan hücre sayısı şablondaki sütun sayısına uymalıdır. Başlık satırı telefonda görünmez.
+ */
+export const HUB_ROW_GRID = "grid grid-cols-[var(--hub-cols-sm)] items-center gap-x-4 px-4 md:grid-cols-[var(--hub-cols-md)] lg:grid-cols-[var(--hub-cols)]";
+export const HUB_COL_MD = "max-md:hidden";
+export const HUB_COL_LG = "max-lg:hidden";
+
+export function HubTable({
+  label,
+  cols,
+  colsMd,
+  colsSm = "minmax(0,1fr) auto",
+  head,
+  children,
+  footer,
+  className,
+  ...rest
+}: {
+  label: string;
+  cols: string;
+  colsMd?: string;
+  colsSm?: string;
+  head?: ReactNode;
+  children: ReactNode;
+  footer?: ReactNode;
+  className?: string;
+  [data: `data-${string}`]: string | undefined;
+}) {
+  const style = { "--hub-cols": cols, "--hub-cols-md": colsMd ?? cols, "--hub-cols-sm": colsSm } as CSSProperties;
+  return (
+    <div role="table" aria-label={label} style={style} className={cn("overflow-hidden rounded-lg card-flat", className)} data-hub-table="" {...rest}>
+      {head && (
+        <div role="row" className={cn(HUB_ROW_GRID, "min-h-10 bg-surface-soft text-caption font-semibold text-text-muted max-md:hidden")}>
+          {head}
+        </div>
+      )}
+      {children}
+      {footer && <div className="border-t border-border-soft bg-surface-soft px-4 py-2.5 text-small text-text-muted">{footer}</div>}
+    </div>
+  );
+}
+
+/** Tablo gövdesi (`ul role=rowgroup`): satırlar `HubRow` (`li role=row`). */
+export function HubTableBody({ children, className, ...rest }: { children: ReactNode; className?: string; [data: `data-${string}`]: string | undefined }) {
+  return (
+    <ul role="rowgroup" className={className} {...rest}>
+      {children}
+    </ul>
+  );
+}
+
+/** Satır: sütun şablonunu üstten alır; adın bağlantısı satırı kaplar (`HUB_ROW_LINK_CLASS`), satırdaki düğmeler `relative z-10` ile üstte kalır. */
+export function HubRow({ children, className, ...rest }: { children: ReactNode; className?: string; [data: `data-${string}`]: string | undefined }) {
+  return (
+    <li
+      role="row"
+      className={cn(HUB_ROW_GRID, "relative min-h-16 border-t border-border-soft py-2 transition-colors first:border-t-0 hover:bg-surface-soft focus-within:bg-surface-soft", className)}
+      data-hub-card=""
+      {...rest}
+    >
+      {children}
+    </li>
+  );
+}
+export const HUB_ROW_LINK_CLASS = "after:absolute after:inset-0 focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-inset focus-visible:after:ring-primary";
+
+/** Liste görünümü tercihi (tablo ↔ kart): alan başına cihazda saklanır; aynı alanı okuyan tüm bileşenler birlikte güncellenir. */
+export type HubView = "table" | "cards";
+const hubViewListeners = new Set<() => void>();
+const hubViewKey = (area: string) => `promptly-hub-view-${area}`;
+export function readHubView(area: string): HubView {
+  try {
+    return localStorage.getItem(hubViewKey(area)) === "cards" ? "cards" : "table";
+  } catch {
+    return "table";
+  }
+}
+export function useHubView(area: string): [HubView, (next: HubView) => void] {
+  const view = useSyncExternalStore(
+    (notify) => {
+      hubViewListeners.add(notify);
+      window.addEventListener("storage", notify);
+      return () => {
+        hubViewListeners.delete(notify);
+        window.removeEventListener("storage", notify);
+      };
+    },
+    () => readHubView(area),
+    () => "table" as HubView,
+  );
+  const set = (next: HubView) => {
+    try {
+      localStorage.setItem(hubViewKey(area), next);
+    } catch {
+      // Tercih yalnız bu sayfa açıkken kalır.
+    }
+    hubViewListeners.forEach((notify) => notify());
+  };
+  return [view, set];
+}
+
+/** Kontrol satırındaki tablo ↔ kart anahtarı (tek simge düğmesi: şu an olmayan görünümü önerir). */
+export function HubViewToggle({ view, onChange }: { view: HubView; onChange: (next: HubView) => void }) {
+  const { t } = useTranslation();
+  const label = t(view === "table" ? "hub.view.cards" : "hub.view.table");
+  return (
+    <button type="button" onClick={() => onChange(view === "table" ? "cards" : "table")} aria-label={label} title={label} data-hub-view-toggle={view} className={CONTROL_ICON_BUTTON}>
+      {view === "table" ? <LayoutDashboard size={24} aria-hidden /> : <List size={24} aria-hidden />}
+    </button>
   );
 }
 
@@ -284,29 +417,31 @@ export function HubBadge({ children, tone = "neutral" }: { children: ReactNode; 
 
 /**
  * İç sayfa bandı: üstte tam genişlikli satır (solda geri oku + tür etiketleri, sağ üst köşede ⋮ `menu`), altında solda 16:9 (telefonda kare) kapak, ortada başlık + alt bilgi, `xl`+'ta sağda, daha dar
- * ekranda altta eylem satırı. `backdrop` artık yok sayılır (düz yüzey).
+ * ekranda altta eylem satırı. Düz yüzey: bulanık kapak arka planı yoktur (docs/history/458-*).
  */
 export function HubDetailBand({
   art,
   backHref,
   backLabel,
   backAttrs,
+  crumbs,
   kicker,
   title,
   byline,
   description,
   actions,
   menu,
+  tabs,
   className,
   ...rest
 }: {
   art: ReactNode;
-  /** Eski çağıranlar için korunur; düz düzende bulanık kapak çizilmez (docs/history/458-*). */
-  backdrop?: ReactNode;
   backHref?: string;
   backLabel?: string;
   /** Geri bağlantısına eklenen veri öznitelikleri. */
   backAttrs?: Record<`data-${string}`, string>;
+  /** Sayfa yolu (Yön D): "Spaces › Ad". Son öğe bağlantısızdır; telefonda gizlenir. */
+  crumbs?: { label: string; href?: string }[];
   /** Başlığın üstündeki tür/görünürlük etiketleri. */
   kicker?: ReactNode;
   title: ReactNode;
@@ -314,20 +449,41 @@ export function HubDetailBand({
   description?: ReactNode;
   actions?: ReactNode;
   menu?: ReactNode;
+  /** Sekmeler (Yön D): bandın altında, ince çizgiyle ayrılmış satırda; sekmelerin kendi alt çizgisi şeffaflaşır. */
+  tabs?: ReactNode;
   className?: string;
   [data: `data-${string}`]: string | undefined;
 }) {
+  const { t } = useTranslation();
   return (
     <header className={cn("relative isolate rounded-lg card-flat", className)} data-hub-detail-band="" {...rest}>
       <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-4 gap-y-3 p-4 md:gap-x-5 md:p-5 xl:grid-cols-[auto_minmax(0,1fr)_auto]">
         {/* Üst satır bandın tam genişliğidir: geri oku + etiketler SOLA, ⋮ menüsü SAĞ ÜST köşeye dayanır (telefonda da; menü paneli sağa hizalı açıldığı için ekran dışına taşmaz). */}
-        {(backHref || kicker || menu) && (
+        {(backHref || kicker || menu || (crumbs && crumbs.length > 0)) && (
           <div className="col-span-full flex min-w-0 items-start justify-between gap-2" data-hub-band-top="">
             <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-caption text-text-secondary">
               {backHref && (
                 <Link href={backHref} aria-label={backLabel} className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface/70 text-text hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary" data-hub-back="" {...backAttrs}>
                   <ArrowLeft size={16} aria-hidden />
                 </Link>
+              )}
+              {crumbs && crumbs.length > 0 && (
+                <nav aria-label={t("hub.crumbs")} className="flex min-w-0 items-center gap-1 max-sm:hidden" data-hub-crumbs="">
+                  {crumbs.map((crumb, index) => (
+                    <span key={`${index}-${crumb.label}`} className="flex min-w-0 items-center gap-1">
+                      {index > 0 && <ChevronRight size={12} aria-hidden className="shrink-0 text-text-muted" />}
+                      {crumb.href ? (
+                        <Link href={crumb.href} className="truncate hover:text-text hover:underline">
+                          {crumb.label}
+                        </Link>
+                      ) : (
+                        <span className="truncate font-semibold text-text" aria-current="page">
+                          {crumb.label}
+                        </span>
+                      )}
+                    </span>
+                  ))}
+                </nav>
               )}
               {kicker}
             </div>
@@ -348,6 +504,11 @@ export function HubDetailBand({
           </div>
         )}
       </div>
+      {tabs && (
+        <div className="border-t border-border-soft px-2 md:px-4 [&_[role=tablist]]:border-transparent" data-hub-band-tabs="">
+          {tabs}
+        </div>
+      )}
     </header>
   );
 }

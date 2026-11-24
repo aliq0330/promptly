@@ -26,7 +26,6 @@ import { UsersRound } from "@/components/icons/users-round";
 import { Avatar } from "@/components/ui/avatar";
 import { Button, buttonClassName } from "@/components/ui/button";
 import { DetailSkeleton, NotFoundBlock } from "@/components/ui/detail-skeleton";
-import { StorageImg } from "@/components/ui/storage-media";
 import { usePageTitle } from "@/components/layout/page-title";
 import { Tabs } from "@/components/ui/tabs";
 import { PhoneSubBar } from "@/features/content/phone-sections";
@@ -256,6 +255,22 @@ function SpaceView({ owner, initialFavorite }: { owner: SpacePerson | null; init
     { key: "leave", label: t("spaces.card.leave"), icon: LogOut, onSelect: () => setDialog("leave"), danger: true, hidden: !caps.leave },
     { key: "delete", label: t("spaces.card.delete"), icon: Trash2, onSelect: () => setDialog("delete"), danger: true, hidden: !caps.delete },
   ];
+  // Altı çizgili sekmeler (docs/history/371-*; Yön D'de bandın içinde): simge + ad + sayı, dar ekranda kaydırılır.
+  const spaceTabs = (
+    <div data-space-tabs="">
+      <Tabs
+        ariaLabel={t("spaces.page.tabsAria")}
+        active={tab}
+        onChange={(next) => goTo(next)}
+        items={visibleTabs.map((key) => ({
+          key,
+          label: t(SPACE_TAB_LABEL[key]),
+          icon: SPACE_TAB_ICON[key],
+          count: key === "images" ? images.length : key === "prompts" ? items.filter((i) => i.kind === "prompt").length : key === "notes" ? noteCount : key === "palette" ? palettes.length : key === "comments" ? space.commentCount : undefined,
+        }))}
+      />
+    </div>
+  );
   // Telefonda Genel bakış dışındaki sekmeler bandın yerine tek üst çubukla açılır (docs/history/371-*; ekip projesindeki iç sayfalarla aynı kalıp).
   const compactPhone = phone && tab !== "overview" && tab !== "board";
 
@@ -283,9 +298,10 @@ function SpaceView({ owner, initialFavorite }: { owner: SpacePerson | null; init
       ) : (
         <HubDetailBand
           data-space-band=""
-          backdrop={coverUrls[0] ? <StorageImg src={coverUrls[0]} alt="" className="h-full w-full object-cover" /> : undefined}
           backHref="/spaces"
           backLabel={t("hub.back")}
+          crumbs={[{ label: t("spaces.home.title"), href: "/spaces" }, { label: space.title }]}
+          tabs={spaceTabs}
           art={<SpaceCoverArt urls={coverUrls} className="absolute inset-0 h-full w-full" iconSize={40} />}
           kicker={
             <>
@@ -380,20 +396,8 @@ function SpaceView({ owner, initialFavorite }: { owner: SpacePerson | null; init
           </p>
         )}
 
-        {/* Altı çizgili sekmeler (docs/history/371-*; ekip projesiyle aynı kalıp): simge + ad + sayı, dar ekranda kaydırılır. */}
-        <div className="mt-4" data-space-tabs="">
-          <Tabs
-            ariaLabel={t("spaces.page.tabsAria")}
-            active={tab}
-            onChange={(next) => goTo(next)}
-            items={visibleTabs.map((key) => ({
-              key,
-              label: t(SPACE_TAB_LABEL[key]),
-              icon: SPACE_TAB_ICON[key],
-              count: key === "images" ? images.length : key === "prompts" ? items.filter((i) => i.kind === "prompt").length : key === "notes" ? noteCount : key === "palette" ? palettes.length : key === "comments" ? space.commentCount : undefined,
-            }))}
-          />
-        </div>
+        {/* Telefonda Genel bakış dışı sekmeler tek üst çubukla açılır (compactPhone): sekmeler bandın içinde değil, burada kalır. */}
+        {compactPhone && <div className="mt-4">{spaceTabs}</div>}
 
         <div className="pt-5" role="tabpanel" aria-label={t(SPACE_TAB_LABEL[tab])}>
           {tab === "overview" && <OverviewTab onNavigate={goTo} />}

@@ -12,9 +12,10 @@ import { Flag } from "@/components/icons/flag";
 import { Link2 } from "@/components/icons/link-2";
 import { DropdownMenu, MenuItem } from "@/components/ui/dropdown-menu";
 import { useReport } from "@/features/moderation/report-provider";
-import { absoluteUrl } from "@/lib/utils";
+import { absoluteUrl, formatCount } from "@/lib/utils";
 import { Tabs, type TabItem } from "@/components/ui/tabs";
-import { HUB_BAND_MENU_BUTTON_CLASS, HUB_PAGE_CLASS, HubDetailBand, HubDetailLayout } from "@/features/hub/hub-kit";
+import { HUB_BAND_MENU_BUTTON_CLASS, HUB_PAGE_CLASS, HubDetailBand, HubDetailLayout, HubStatStrip } from "@/features/hub/hub-kit";
+import { useCommunityPresenceCount } from "@/features/presence/community-presence";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonClassName } from "@/components/ui/button";
 import { DetailSkeleton, NotFoundBlock } from "@/components/ui/detail-skeleton";
@@ -178,9 +179,10 @@ function CommunityPageInner() {
     <div className={HUB_PAGE_CLASS}>
       <HubDetailBand
         data-testid="community-header"
-        backdrop={<CommunityCover coverUrl={g.coverUrl} coverColor={g.coverColor} avatarUrl={g.avatarUrl} className="h-full sm:h-full" />}
         backHref="/communities"
         backLabel={t("hub.back")}
+        crumbs={[{ label: t("communities.page.title"), href: "/communities" }, { label: g.name }]}
+        tabs={tab ? <Tabs items={tabs} active={tab} onChange={goTab} ariaLabel={t("communities.detail.tabsAria")} /> : undefined}
         art={
           <>
             <CommunityCover coverUrl={g.coverUrl} coverColor={g.coverColor} avatarUrl={g.avatarUrl} className="absolute inset-0 h-full sm:h-full" />
@@ -278,10 +280,10 @@ function CommunityPageInner() {
           <CommunityGate group={g} gate={ready.gate} onChanged={reload} onToast={show} />
         ) : (
           <>
-            <Tabs items={tabs} active={tab} onChange={goTab} ariaLabel={t("communities.detail.tabsAria")} />
             {/* Sekmenin kendi eylem yuvası (Akış'ta "Gönderi oluştur" simgesi buraya portal edilir). */}
             <div ref={setActionsEl} className="flex items-center justify-end gap-1.5 empty:hidden" data-community-actions-slot />
             {!role && <CommunityGate group={g} gate={ready.gate} onChanged={reload} onToast={show} compact />}
+            {tab === "feed" && <CommunityStats group={g} />}
             <HubDetailLayout
               aside={tab === "feed" || tab === "events" ? <CommunityAside group={g} people={people} onReadRules={() => goTab("about")} /> : undefined}
               asideLabel={t("communities.aside.pageLabel")}
@@ -305,4 +307,19 @@ function CommunityPageInner() {
     </div>
   );
   return body;
+}
+
+/** Özet şeridi (Yön D): üye · çevrimiçi · gönderi — sayılar topluluk satırından ve canlı varlık sayacından gelir. */
+function CommunityStats({ group }: { group: { id: string; memberCount: number; postCount: number } }) {
+  const { t } = useTranslation();
+  const online = useCommunityPresenceCount(group.id);
+  return (
+    <HubStatStrip
+      items={[
+        { key: "members", label: t("hub.stat.members"), value: formatCount(group.memberCount) },
+        { key: "online", label: t("hub.stat.online"), value: online === null ? "—" : formatCount(online) },
+        { key: "posts", label: t("hub.stat.posts"), value: formatCount(group.postCount) },
+      ]}
+    />
+  );
 }
