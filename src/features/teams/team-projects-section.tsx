@@ -357,19 +357,21 @@ function CreateProjectDialog({ teamId, onClose, onCreated }: { teamId: string; o
           <span className="mb-1.5 block text-label font-semibold text-text">{t("tp.create.whoSees")}</span>
           <ChoiceGroup
             ariaLabel={t("tp.create.whoSees")}
+            variant="segmented"
+            showHint
             value={mode}
             onChange={setMode}
             options={[
-              { key: "selected", label: t("tp.access.mode.selected") },
-              { key: "all", label: t("tp.access.mode.all") },
+              { key: "selected", label: t("tp.access.mode.selected"), hint: t("tp.access.mode.selectedHint") },
+              { key: "all", label: t("tp.access.mode.all"), hint: t("tp.access.mode.allHint") },
             ]}
           />
-          <p className="mt-1.5 text-caption text-text-muted">{t(mode === "selected" ? "tp.access.mode.selectedHint" : "tp.access.mode.allHint")}</p>
           {mode === "all" && (
             <div className="mt-3">
               <span className="mb-1.5 block text-caption font-semibold text-text-secondary">{t("tp.access.baseRole")}</span>
               <ChoiceGroup
                 ariaLabel={t("tp.access.baseRole")}
+                variant="segmented"
                 value={baseRole}
                 onChange={setBaseRole}
                 options={[

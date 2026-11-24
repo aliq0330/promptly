@@ -1,5 +1,6 @@
 "use client";
 
+import { OptionGroup } from "@/components/ui/option-group";
 import Link from "next/link";
 import { useEffect, useId, useMemo, useState } from "react";
 import { Check } from "@/components/icons/check";
@@ -128,37 +129,29 @@ export function WorkflowImportModal({
               </Link>
             </div>
           ) : (
-            <ul className="space-y-2" role="radiogroup" aria-labelledby={groupId}>
-              {list.items.map((workflow) => {
+            <OptionGroup<string>
+              labelledBy={groupId}
+              value={selectedId}
+              onChange={setSelectedId}
+              options={list.items.map((workflow) => {
                 const on = workflowObjectsOn(items, workflow.id).length > 0;
-                const active = workflow.id === selectedId;
-                return (
-                  <li key={workflow.id}>
-                    <button
-                      type="button"
-                      role="radio"
-                      aria-checked={active}
-                      onClick={() => setSelectedId(workflow.id)}
-                      className={cn("flex w-full items-center gap-3 rounded-xl border bg-surface px-3 py-2.5 text-left transition-colors", active ? "border-primary ring-1 ring-primary" : "border-border hover:bg-surface-soft")}
-                    >
-                      <span className={cn("h-4 w-4 shrink-0 rounded-full border-2", active ? "border-[5px] border-primary" : "border-border-strong")} aria-hidden />
-                      <span className="min-w-0 flex-1">
-                        <span className="block truncate text-small font-semibold text-text">{workflow.title}</span>
-                        <span className="block truncate text-caption text-text-muted">
-                          {t("workflow.stepCount", { count: workflow.stepCount })} · {workflow.visibility === "public" ? t("visibility.public") : t("visibility.private")}
-                        </span>
-                      </span>
-                      {on && (
-                        <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-primary-soft px-2 py-0.5 text-caption font-semibold text-primary">
-                          <Check size={12} aria-hidden /> {t("wfSpace.import.onBoard")}
-                        </span>
-                      )}
-                      {workflow.visibility === "private" && !on && <Lock size={16} className="shrink-0 text-text-muted" aria-label={t("visibility.private")} />}
-                    </button>
-                  </li>
-                );
+                return {
+                  key: workflow.id,
+                  label: <span className="truncate">{workflow.title}</span>,
+                  description: (
+                    <span className="block truncate">
+                      {t("workflow.stepCount", { count: workflow.stepCount })} · {workflow.visibility === "public" ? t("visibility.public") : t("visibility.private")}
+                    </span>
+                  ),
+                  badge: on ? (
+                    <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-primary-soft px-2 py-0.5 text-caption font-semibold text-primary">
+                      <Check size={12} aria-hidden /> {t("wfSpace.import.onBoard")}
+                    </span>
+                  ) : undefined,
+                  after: workflow.visibility === "private" && !on ? <Lock size={16} className="shrink-0 text-text-muted" aria-label={t("visibility.private")} /> : undefined,
+                };
               })}
-            </ul>
+            />
           )}
         </PagedListState>
         <p id={groupId} className="mt-3 text-caption text-text-muted">

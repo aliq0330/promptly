@@ -5,6 +5,7 @@ import { Search } from "@/components/icons/search";
 import { SlidersHorizontal } from "@/components/icons/sliders-horizontal";
 import { X } from "@/components/icons/x";
 import { Modal } from "@/components/ui/modal";
+import { OptionGroup } from "@/components/ui/option-group";
 import { Chip } from "@/components/ui/chip";
 import { fieldInputClassName } from "@/components/ui/field";
 import { StorageImg } from "@/components/ui/storage-media";
@@ -20,7 +21,6 @@ import { resolvePresetFields } from "@/lib/preset-utils";
 import { joinPromptParts } from "@/lib/prompt-parts";
 import { fetchRecentPresets, fetchSavedPresets } from "@/lib/supabase/presets";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import { cn } from "@/lib/utils";
 import type { Preset, Prompt } from "@/types";
 import { DialogShell } from "@/components/ui/dialog-shell";
 import { iconButtonClassName } from "@/components/ui/icon-button";
@@ -190,41 +190,27 @@ function PromptTrySheet({
           {visible.length === 0 ? (
             <p className="rounded-lg border border-dashed border-border bg-surface-soft p-4 text-small text-text-muted">{t("studio.noResults")}</p>
           ) : (
-            <ul role="radiogroup" aria-label={t("promptTry.listAria")} className="space-y-1.5">
-              {visible.map(({ preset: item, fit }) => {
-                const selected = item.id === preset?.id;
-                return (
-                  <li key={item.id}>
-                    <button
-                      type="button"
-                      role="radio"
-                      aria-checked={selected}
-                      data-preset-option={item.id}
-                      onClick={() => {
-                        setPickedId(item.id);
-                        setOffFields([]);
-                      }}
-                      className={cn(
-                        "flex min-h-16 w-full items-center gap-3 rounded-lg border p-2 text-left transition-colors duration-200",
-                        selected ? "border-primary bg-primary-soft/50 ring-1 ring-primary" : "border-border-soft bg-background hover:border-border-strong hover:bg-surface-soft",
-                      )}
-                    >
-                      {item.coverUrl ? (
-                        <StorageImg src={item.coverUrl} alt="" className="h-12 w-12 shrink-0 rounded-md bg-surface-soft object-cover" />
-                      ) : (
-                        <span aria-hidden className="grid h-12 w-12 shrink-0 place-items-center rounded-md bg-primary-soft text-primary">
-                          <SlidersHorizontal size={20} />
-                        </span>
-                      )}
-                      <span className="min-w-0 flex-1">
-                        <span className="block truncate text-small font-semibold text-text">{item.title}</span>
-                        <FitBadge fit={fit} preset={item} />
-                      </span>
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
+            <OptionGroup<string>
+              ariaLabel={t("promptTry.listAria")}
+              value={preset?.id ?? null}
+              onChange={(id) => {
+                setPickedId(id);
+                setOffFields([]);
+              }}
+              options={visible.map(({ preset: item, fit }) => ({
+                key: item.id,
+                leading: item.coverUrl ? (
+                  <StorageImg src={item.coverUrl} alt="" className="h-12 w-12 shrink-0 rounded-md bg-surface-soft object-cover" />
+                ) : (
+                  <span aria-hidden className="grid h-12 w-12 shrink-0 place-items-center rounded-md bg-primary-soft text-primary">
+                    <SlidersHorizontal size={20} />
+                  </span>
+                ),
+                label: <span className="block truncate font-semibold">{item.title}</span>,
+                description: <FitBadge fit={fit} preset={item} />,
+                attrs: { "data-preset-option": item.id },
+              }))}
+            />
           )}
           {preset && (
             <div className="space-y-3">

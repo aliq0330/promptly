@@ -330,7 +330,6 @@ export function GroupSettingsSection({
           value={group.visibility}
           currentLabel={t("groups.settings.visibilityCurrent")}
           disabled={visibilityAction.busy}
-          name="settings-visibility"
           options={COMMUNITY_VISIBILITY_OPTIONS}
           onChange={(next) => {
             if (next === group.visibility) return;

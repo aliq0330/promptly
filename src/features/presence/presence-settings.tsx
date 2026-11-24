@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChoiceCard } from "@/components/ui/field";
+import { OptionGroup } from "@/components/ui/option-group";
 import { SettingsCard } from "@/features/settings/settings-ui";
 import { PRESENCE_AUDIENCES, PRESENCE_MODES, type PresenceAudience, type PresenceMode } from "@/lib/presence";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -59,38 +59,26 @@ export function PresenceSettingsCard() {
         </p>
       ) : (
         <div className="space-y-4" data-presence-settings="ready">
-          <fieldset className="space-y-2" disabled={busy}>
-            <legend className="sr-only">{t("presence.settingsTitle")}</legend>
-            {PRESENCE_MODES.map((mode) => (
-              <ChoiceCard key={mode}>
-                <input type="radio" name="presence-mode" value={mode} checked={(optimistic?.mode ?? me.mode) === mode} onChange={() => void change({ mode })} className="mt-0.5" />
-                <span>
-                  <span className="font-medium">{t(MODE_LABEL[mode].label)}</span>
-                  <span className="block text-caption text-text-muted">{t(MODE_LABEL[mode].hint)}</span>
-                </span>
-              </ChoiceCard>
-            ))}
-          </fieldset>
+          <OptionGroup<PresenceMode>
+            ariaLabel={t("presence.settingsTitle")}
+            value={optimistic?.mode ?? me.mode}
+            disabled={busy}
+            onChange={(mode) => void change({ mode })}
+            options={PRESENCE_MODES.map((mode) => ({ key: mode, label: t(MODE_LABEL[mode].label), description: t(MODE_LABEL[mode].hint), attrs: { "data-presence-mode": mode } }))}
+          />
 
-          <fieldset className="space-y-2" disabled={busy}>
-            <legend className="mb-1 text-small font-medium text-text">{t("presence.audienceHint")}</legend>
-            {PRESENCE_AUDIENCES.map((audience) => (
-              <ChoiceCard key={audience}>
-                <input
-                  type="radio"
-                  name="presence-audience"
-                  value={audience}
-                  checked={(optimistic?.audience ?? me.audience) === audience}
-                  onChange={() => void change({ audience })}
-                  className="mt-0.5"
-                />
-                <span>
-                  <span className="font-medium">{t(AUDIENCE_LABEL[audience].label)}</span>
-                  <span className="block text-caption text-text-muted">{t(AUDIENCE_LABEL[audience].hint)}</span>
-                </span>
-              </ChoiceCard>
-            ))}
-          </fieldset>
+          <div className="space-y-2">
+            <p id="presence-audience-label" className="text-small font-medium text-text">
+              {t("presence.audienceHint")}
+            </p>
+            <OptionGroup<PresenceAudience>
+              labelledBy="presence-audience-label"
+              value={optimistic?.audience ?? me.audience}
+              disabled={busy}
+              onChange={(audience) => void change({ audience })}
+              options={PRESENCE_AUDIENCES.map((audience) => ({ key: audience, label: t(AUDIENCE_LABEL[audience].label), description: t(AUDIENCE_LABEL[audience].hint), attrs: { "data-presence-audience": audience } }))}
+            />
+          </div>
 
           <p className="rounded-lg bg-surface-soft px-4 py-3 text-caption leading-relaxed text-text-secondary">{t("presence.reciprocity")}</p>
           <p aria-live="polite" className="min-h-4 text-caption">

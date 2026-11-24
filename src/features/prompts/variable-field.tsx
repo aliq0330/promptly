@@ -1,5 +1,6 @@
 "use client";
 
+import { ChoiceGroup } from "@/components/ui/choice-group";
 import { Check } from "@/components/icons/check";
 import { Chip, ChipRow } from "@/components/ui/chip";
 import { cn } from "@/lib/utils";
@@ -210,21 +211,8 @@ function Control({
       );
     }
     return (
-      <div id={id} role="radiogroup" aria-labelledby={labelId}>
-        <ChipRow>
-          {variable.options.map((option) => (
-            <Chip
-              key={option.value}
-              role="radio"
-              aria-checked={value === option.value}
-              aria-pressed={undefined}
-              selected={value === option.value}
-              onClick={() => onChange(option.value)}
-            >
-              {option.label}
-            </Chip>
-          ))}
-        </ChipRow>
+      <div id={id}>
+        <ChoiceGroup<string> labelledBy={labelId} value={value} onChange={onChange} options={variable.options.map((option) => ({ key: option.value, label: option.label }))} />
       </div>
     );
   }

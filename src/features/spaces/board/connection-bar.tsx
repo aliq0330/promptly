@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import type { IconComponent } from "@/components/icons/icon";
 import { ArrowLeftRight } from "@/components/icons/arrow-left-right";
 import { ArrowRight } from "@/components/icons/arrow-right";
-import { Check } from "@/components/icons/check";
 import { Minus } from "@/components/icons/minus";
 import { Spline } from "@/components/icons/spline";
 import { Trash2 } from "@/components/icons/trash-2";
@@ -13,7 +12,8 @@ import { Ellipsis } from "@/components/icons/ellipsis";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { CONNECTOR_ARROWS, CONNECTOR_ROUTES, CONNECTOR_STYLES } from "@/lib/space-connectors";
 import type { SpaceConnection, SpaceConnectionPatch } from "@/lib/supabase/spaces";
-import { SPACE_COLORS } from "@/lib/spaces";
+import { SwatchGroup } from "@/components/ui/swatch-group";
+import { SPACE_COLORS, type SpaceColor } from "@/lib/spaces";
 import { cn } from "@/lib/utils";
 import { PopoverMenu } from "@/components/ui/popover-menu";
 import { SPACE_COLOR_CLASS } from "../space-visuals";
@@ -94,22 +94,14 @@ export function ConnectionBar({
               items={CONNECTOR_ROUTES.map((route) => ({ key: route, label: `${connection.route === route ? "✓ " : ""}${t(`spaces.connect.route.${route}`)}`, icon: ROUTE_ICON[route], onSelect: () => onPatch({ route }) }))}
             />
             <span aria-hidden className="mx-0.5 h-5 w-px shrink-0 bg-border-soft" />
-            <div role="radiogroup" aria-label={t("spaces.connect.color")} className="flex shrink-0 items-center gap-1 px-1">
-              {SPACE_COLORS.map((color) => (
-                <button
-                  key={color}
-                  type="button"
-                  role="radio"
-                  aria-checked={connection.color === color}
-                  aria-label={t(`spaces.color.${color}`)}
-                  title={t(`spaces.color.${color}`)}
-                  onClick={() => onPatch({ color })}
-                  data-small-target="" className={cn("flex h-6 w-6 items-center justify-center rounded-full ring-offset-2 ring-offset-surface", SPACE_COLOR_CLASS[color].dot, connection.color === color && "ring-2 ring-primary")}
-                >
-                  {connection.color === color && <Check size={12} className="text-background" aria-hidden />}
-                </button>
-              ))}
-            </div>
+            <SwatchGroup<SpaceColor>
+              ariaLabel={t("spaces.connect.color")}
+              size="sm"
+              className="shrink-0 px-1"
+              value={connection.color}
+              onChange={(color) => onPatch({ color })}
+              options={SPACE_COLORS.map((color) => ({ key: color, label: t(`spaces.color.${color}`), className: SPACE_COLOR_CLASS[color].dot }))}
+            />
             <span aria-hidden className="mx-0.5 h-5 w-px shrink-0 bg-border-soft" />
             <BarButton icon={ArrowLeftRight} label={t("spaces.connect.reverse")} onClick={onReverse} />
             <BarButton icon={Trash2} label={t("spaces.connect.delete")} onClick={onDelete} danger />

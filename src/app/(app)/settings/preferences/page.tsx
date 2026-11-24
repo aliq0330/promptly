@@ -1,12 +1,13 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { ChoiceCard } from "@/components/ui/field";
+import { ChoiceGroup } from "@/components/ui/choice-group";
 import { AppearancePicker } from "@/components/theme/appearance-picker";
 import { useAuth } from "@/features/auth/auth-provider";
 import { openWelcomeTour } from "@/features/onboarding/welcome-tour";
 import { SettingsCard, SettingsSubpage } from "@/features/settings/settings-ui";
 import { useTranslation } from "@/lib/i18n/language-provider";
+import type { Language } from "@/lib/i18n/translations";
 
 /** Ayarlar → Tercihler: görünüm (açık/koyu mod — tek palet, docs/history/342-*), dil, tanıtım turu. */
 export default function PreferencesSettingsPage() {
@@ -20,17 +21,18 @@ export default function PreferencesSettingsPage() {
         <AppearancePicker />
       </SettingsCard>
       <SettingsCard title={t("settings.languageTitle")} hint={t("settings.languageHint")}>
-        <div className="grid gap-2 sm:grid-cols-2">
-          {/* Dil adları kendi biçimiyle gösterilir (çevrilmez): İngilizce'deyken "Türkçe"yi "Turkish" yapmak geri dönüş yolunu gizlerdi. */}
-          <ChoiceCard className="items-center">
-            <input type="radio" name="language" checked={language === "tr"} onChange={() => setLanguage("tr")} />
-            <span className="font-medium">Türkçe</span>
-          </ChoiceCard>
-          <ChoiceCard className="items-center">
-            <input type="radio" name="language" checked={language === "en"} onChange={() => setLanguage("en")} />
-            <span className="font-medium">English</span>
-          </ChoiceCard>
-        </div>
+        {/* Dil adları kendi biçimiyle gösterilir (çevrilmez): İngilizce'deyken "Türkçe"yi "Turkish" yapmak geri dönüş yolunu gizlerdi. */}
+        <ChoiceGroup<Language>
+          ariaLabel={t("settings.languageTitle")}
+          value={language}
+          onChange={setLanguage}
+          variant="segmented"
+          className="max-w-xs"
+          options={[
+            { key: "tr", label: "Türkçe" },
+            { key: "en", label: "English" },
+          ]}
+        />
       </SettingsCard>
       <SettingsCard title={t("tour.replayTitle")} hint={t("tour.replayHint")}>
         <Button type="button" variant="outline" onClick={openWelcomeTour}>

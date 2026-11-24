@@ -1,5 +1,7 @@
 "use client";
 
+import { ChoiceGroup } from "@/components/ui/choice-group";
+import { OptionGroup } from "@/components/ui/option-group";
 import { LineArtScene } from "@/components/line-art/line-art-scene";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -616,10 +618,16 @@ export function StudioView() {
             <h2 id="studio-run-title" className={STUDIO_LABEL}>
               {t("studio.runTitle")}
             </h2>
-            <div role="radiogroup" aria-label={t("studio.runTitle")} className="grid gap-2 sm:grid-cols-2">
-              <RunModeOption selected={runMode === "run"} onSelect={() => setRunMode("run")} icon={<Play size={20} aria-hidden />} title={t("studio.optionRun")} hint={t("studio.optionRunHint")} />
-              <RunModeOption selected={runMode === "api"} onSelect={() => setRunMode("api")} icon={<KeyRound size={20} aria-hidden />} title={t("studio.optionApi")} hint={t("studio.optionApiHint")} />
-            </div>
+            <OptionGroup<"run" | "api">
+              ariaLabel={t("studio.runTitle")}
+              columns={2}
+              value={runMode}
+              onChange={setRunMode}
+              options={[
+                { key: "run", icon: Play, label: t("studio.optionRun"), description: t("studio.optionRunHint") },
+                { key: "api", icon: KeyRound, label: t("studio.optionApi"), description: t("studio.optionApiHint") },
+              ]}
+            />
 
             {runMode === "run" && (
               <div data-run-panel className="space-y-3 rounded-lg bg-surface-soft p-4">
@@ -639,13 +647,17 @@ export function StudioView() {
             <div className="space-y-4">
             <div>
               <span className={fieldLabelClassName}>{t("generate.kind")}</span>
-              <ChipRow>
-                {(["image", "text"] as const).map((k) => (
-                  <Chip key={k} selected={kind === k} onClick={() => setKind(k)}>
-                    {t(k === "image" ? "generate.kindImage" : "generate.kindText")}
-                  </Chip>
-                ))}
-              </ChipRow>
+              <ChoiceGroup<"image" | "text">
+                ariaLabel={t("generate.kind")}
+                variant="segmented"
+                className="max-w-xs"
+                value={kind}
+                onChange={setKind}
+                options={[
+                  { key: "image", label: t("generate.kindImage") },
+                  { key: "text", label: t("generate.kindText") },
+                ]}
+              />
             </div>
             <div className="grid gap-3 sm:grid-cols-3">
               <div>
@@ -886,29 +898,6 @@ export function StudioView() {
         <StudioSourcePicker kind="prompt" onPick={(key) => pickSource("prompt", key)} onClose={() => setSourcePicker(null)} />
       )}
     </PageContainer>
-  );
-}
-
-function RunModeOption({ selected, onSelect, icon, title, hint }: { selected: boolean; onSelect: () => void; icon: React.ReactNode; title: string; hint: string }) {
-  return (
-    <button
-      type="button"
-      role="radio"
-      aria-checked={selected}
-      onClick={onSelect}
-      className={cn(
-        "flex items-start gap-3 rounded-lg border p-3 text-left transition-colors duration-200",
-        selected ? "border-primary bg-primary-soft/50 ring-1 ring-primary" : "border-border-soft bg-background hover:border-border-strong hover:bg-surface-soft",
-      )}
-    >
-      <span aria-hidden className={cn("grid h-9 w-9 shrink-0 place-items-center rounded-md", selected ? "bg-primary text-primary-foreground" : "bg-surface-soft text-text-secondary")}>
-        {icon}
-      </span>
-      <span className="min-w-0">
-        <span className="block text-small font-semibold text-text">{title}</span>
-        <span className="block text-caption text-text-muted">{hint}</span>
-      </span>
-    </button>
   );
 }
 

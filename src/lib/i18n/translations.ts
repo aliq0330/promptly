@@ -3177,6 +3177,7 @@ export const translations = {
   "groups.cover.color": { tr: "Renk", en: "Colour" },
   "groups.cover.photo": { tr: "Fotoğraf", en: "Photo" },
   "groups.cover.swatchAria": { tr: "Kapak rengi {{color}}", en: "Cover colour {{color}}" },
+  "groups.cover.swatchesAria": { tr: "Kapak renkleri", en: "Cover colours" },
   "groups.cover.custom": { tr: "Özel renk", en: "Custom colour" },
   "groups.cover.customAria": { tr: "Özel kapak rengi seç", en: "Pick a custom cover colour" },
   "groups.cover.photoPick": { tr: "Fotoğraf seç", en: "Choose a photo" },

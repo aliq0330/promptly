@@ -19,6 +19,7 @@ import { ConfirmDialog } from "@/features/groups/confirm-dialog";
 import { FormError } from "@/features/spaces/space-forms";
 import { SpaceDialog } from "@/features/spaces/space-modals";
 import { useSpaceContext } from "@/features/spaces/space-provider";
+import { SwatchGroup } from "@/components/ui/swatch-group";
 import { SPACE_COLOR_CLASS } from "@/features/spaces/space-visuals";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
@@ -193,21 +194,13 @@ export function EmptyFolder({ name, canAdd, onAdd, onPick }: { name: string; can
 function ColorPicker({ value, onChange, disabled }: { value: SpaceColor; onChange: (color: SpaceColor) => void; disabled?: boolean }) {
   const { t } = useTranslation();
   return (
-    <div role="radiogroup" aria-label={t("spaces.notes.color")} className="flex flex-wrap gap-3">
-      {SPACE_COLORS.map((color) => (
-        <button
-          key={color}
-          type="button"
-          role="radio"
-          aria-checked={value === color}
-          aria-label={t(`spaces.color.${color}` as TranslationKey)}
-          disabled={disabled}
-          onClick={() => onChange(color)}
-          data-group-color={color}
-          className={cn("h-9 w-9 rounded-full transition-shadow", SPACE_COLOR_CLASS[color].dot, value === color && "ring-2 ring-primary ring-offset-2 ring-offset-surface")}
-        />
-      ))}
-    </div>
+    <SwatchGroup<SpaceColor>
+      ariaLabel={t("spaces.notes.color")}
+      value={value}
+      disabled={disabled}
+      onChange={onChange}
+      options={SPACE_COLORS.map((color) => ({ key: color, label: t(`spaces.color.${color}` as TranslationKey), className: SPACE_COLOR_CLASS[color].dot, attrs: { "data-group-color": color } }))}
+    />
   );
 }
 

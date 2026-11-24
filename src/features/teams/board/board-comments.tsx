@@ -30,6 +30,7 @@ import { formatRelativeTime, cn } from "@/lib/utils";
 import type { SpaceItem } from "@/lib/supabase/spaces";
 import type { ProjectPerson } from "@/lib/supabase/team-projects";
 import { InlineAlert } from "@/components/ui/inline-alert";
+import { ChoiceGroup } from "@/components/ui/choice-group";
 import { SwitchRow } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 
@@ -414,34 +415,26 @@ export function CommentsPanel({
         </button>
       </header>
       <div className="shrink-0 space-y-3 px-4 pb-3">
-        <div role="radiogroup" aria-label={t("tb.comments.scope")} className="flex gap-1 rounded-xl bg-surface-soft p-1">
-          {[false, true].map((all) => (
-            <button
-              key={String(all)}
-              type="button"
-              role="radio"
-              aria-checked={allScope === all}
-              onClick={() => onScope(all)}
-              className={cn("h-9 flex-1 rounded-lg text-small font-semibold", allScope === all ? "bg-surface text-text shadow-xs" : "text-text-secondary")}
-            >
-              {t(all ? "tb.comments.scopeAll" : "tb.comments.scopeBoard")}
-            </button>
-          ))}
-        </div>
-        <div className="flex gap-2">
-          {(["open", "resolved"] as const).map((key) => (
-            <button
-              key={key}
-              type="button"
-              aria-pressed={filter === key}
-              onClick={() => setFilter(key)}
-              data-comment-filter={key}
-              className={cn("h-9 rounded-full border px-4 text-small font-semibold", filter === key ? "border-transparent bg-primary-soft text-primary" : "border-border-soft text-text-secondary")}
-            >
-              {t(key === "open" ? "tb.comments.open" : "tb.comments.resolved")} <span className="tabular-nums opacity-80">{key === "open" ? openCount : resolvedCount}</span>
-            </button>
-          ))}
-        </div>
+        <ChoiceGroup<"board" | "all">
+          ariaLabel={t("tb.comments.scope")}
+          variant="segmented"
+          value={allScope ? "all" : "board"}
+          onChange={(key) => onScope(key === "all")}
+          options={[
+            { key: "board", label: t("tb.comments.scopeBoard") },
+            { key: "all", label: t("tb.comments.scopeAll") },
+          ]}
+        />
+        <ChoiceGroup<"open" | "resolved">
+          ariaLabel={t("tb.comments.open")}
+          variant="segmented"
+          value={filter}
+          onChange={setFilter}
+          options={[
+            { key: "open", label: `${t("tb.comments.open")} ${openCount}`, attrs: { "data-comment-filter": "open" } },
+            { key: "resolved", label: `${t("tb.comments.resolved")} ${resolvedCount}`, attrs: { "data-comment-filter": "resolved" } },
+          ]}
+        />
         {onTogglePins && (
           <SwitchRow
             checked={Boolean(pinsHidden)}

@@ -19,6 +19,9 @@ export const teamSystemTranslations = {
   "tm.create.name": { tr: "Ekip adı", en: "Team name" },
   "tm.create.description": { tr: "Açıklama (isteğe bağlı)", en: "Description (optional)" },
   "tm.create.tone": { tr: "Renk", en: "Colour" },
+  "tm.tone.primary": { tr: "Mavi", en: "Blue" },
+  "tm.tone.sky": { tr: "Pus", en: "Slate" },
+  "tm.tone.plum": { tr: "Nötr", en: "Neutral" },
   "tm.create.hint": {
     tr: "Ekibin Genel ve Duyurular kanalları hazır açılır. Sonra projeler oluşturabilir, kullanıcı adıyla ya da bağlantıyla üye davet edebilirsin.",
     en: "Your team starts with the General and Announcements channels. Then create projects and invite people by username or with a link.",

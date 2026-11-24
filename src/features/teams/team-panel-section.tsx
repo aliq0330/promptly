@@ -72,6 +72,7 @@ export function TeamPanelSection({ ctx }: { ctx: TeamCtx }) {
   const range = (
     <ChoiceGroup<"7" | "30" | "90">
       ariaLabel={t("tm.panel.range")}
+      variant="segmented"
       value={String(days) as "7" | "30" | "90"}
       onChange={(k) => setDays(Number(k) as 7 | 30 | 90)}
       options={(["7", "30", "90"] as const).map((k) => ({ key: k, label: t("tm.panel.days", { count: Number(k) }) }))}

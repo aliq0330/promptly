@@ -35,6 +35,7 @@ import {
 } from "@/lib/spaces";
 import { createSpaceGroup, deleteSpaceGroup, updateSpaceGroup, type NewSpaceItem, type SpaceItem, type SpaceSources } from "@/lib/supabase/spaces";
 import type { TranslationKey } from "@/lib/i18n/translations";
+import { SwatchGroup } from "@/components/ui/swatch-group";
 import type { Preset, Prompt, PromptRequest, Skill, Workflow } from "@/types";
 import { useSpaceContext } from "./space-provider";
 import { FormError, SubmitButton } from "./space-forms";
@@ -480,23 +481,17 @@ export function ItemDetailModal({ itemId, onClose, onShowOnBoard, drawer }: { it
 export function ColorChoice({ value, onChange, name }: { value: SpaceColor; onChange: (color: SpaceColor) => void; name: string }) {
   const { t } = useTranslation();
   return (
-    <fieldset>
-      <legend className={fieldLabelClassName}>{t("spaces.notes.color")}</legend>
-      <div className="flex flex-wrap gap-2">
-        {SPACE_COLORS.map((color) => (
-          <label key={color} className="cursor-pointer">
-            <input type="radio" name={name} value={color} checked={value === color} onChange={() => onChange(color)} className="peer sr-only" />
-            <span
-              title={t(`spaces.color.${color}` as TranslationKey)}
-              className={cn("flex h-9 w-9 items-center justify-center rounded-full border-2 peer-checked:ring-2 peer-checked:ring-primary peer-focus-visible:ring-2 peer-focus-visible:ring-primary", SPACE_COLOR_CLASS[color].surface, SPACE_COLOR_CLASS[color].border)}
-            >
-              <span className={cn("h-3 w-3 rounded-full", SPACE_COLOR_CLASS[color].dot)} />
-              <span className="sr-only">{t(`spaces.color.${color}` as TranslationKey)}</span>
-            </span>
-          </label>
-        ))}
-      </div>
-    </fieldset>
+    <div>
+      <p id={`${name}-label`} className={fieldLabelClassName}>
+        {t("spaces.notes.color")}
+      </p>
+      <SwatchGroup<SpaceColor>
+        ariaLabel={t("spaces.notes.color")}
+        value={value}
+        onChange={onChange}
+        options={SPACE_COLORS.map((color) => ({ key: color, label: t(`spaces.color.${color}` as TranslationKey), className: SPACE_COLOR_CLASS[color].dot, attrs: { "data-note-color": color } }))}
+      />
+    </div>
   );
 }
 

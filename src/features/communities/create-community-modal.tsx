@@ -4,7 +4,8 @@ import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { Camera } from "@/components/icons/camera";
 import { X } from "@/components/icons/x";
 import { Button } from "@/components/ui/button";
-import { ChoiceCard, fieldControlClassName, fieldInputClassName, fieldLabelClassName, Input } from "@/components/ui/field";
+import { ChoiceGroup } from "@/components/ui/choice-group";
+import { fieldControlClassName, fieldInputClassName, fieldLabelClassName, Input } from "@/components/ui/field";
 import { Modal } from "@/components/ui/modal";
 import { useAuth } from "@/features/auth/auth-provider";
 import { GroupAvatar } from "@/features/groups/group-avatar";
@@ -275,30 +276,40 @@ export function CreateCommunityModal({ onClose, onCreated }: { onClose: () => vo
 
           <CommunityTopicFields idPrefix="community" domain={domain} onDomainChange={setDomain} category={category} onCategoryChange={setCategory} disabled={busy} />
 
-          <fieldset className="space-y-2">
-            <legend className={fieldLabelClassName}>{t("communities.create.chatPolicyLabel")}</legend>
-            <ChoiceCard>
-              <input type="radio" name="community-posting" checked={postingPolicy === "members"} onChange={() => setPostingPolicy("members")} disabled={busy} className="mt-1 accent-[var(--color-primary)]" />
-              <span className="font-medium">{t("communities.policy.everyone")}</span>
-            </ChoiceCard>
-            <ChoiceCard>
-              <input type="radio" name="community-posting" checked={postingPolicy === "admins"} onChange={() => setPostingPolicy("admins")} disabled={busy} className="mt-1 accent-[var(--color-primary)]" />
-              <span className="font-medium">{t("communities.policy.staff")}</span>
-            </ChoiceCard>
-          </fieldset>
+          <div>
+            <p id="community-posting-label" className={`${fieldLabelClassName} mb-2`}>
+              {t("communities.create.chatPolicyLabel")}
+            </p>
+            <ChoiceGroup<GroupPostingPolicy>
+              labelledBy="community-posting-label"
+              variant="segmented"
+              value={postingPolicy}
+              onChange={setPostingPolicy}
+              disabled={busy}
+              options={[
+                { key: "members", label: t("communities.policy.everyone") },
+                { key: "admins", label: t("communities.policy.staff") },
+              ]}
+            />
+          </div>
 
-          <fieldset className="space-y-2">
-            <legend className={fieldLabelClassName}>{t("communities.create.feedPolicyLabel")}</legend>
-            <ChoiceCard>
-              <input type="radio" name="community-feed" checked={feedPolicy === "members"} onChange={() => setFeedPolicy("members")} disabled={busy} className="mt-1 accent-[var(--color-primary)]" />
-              <span className="font-medium">{t("communities.policy.everyone")}</span>
-            </ChoiceCard>
-            <ChoiceCard>
-              <input type="radio" name="community-feed" checked={feedPolicy === "admins"} onChange={() => setFeedPolicy("admins")} disabled={busy} className="mt-1 accent-[var(--color-primary)]" />
-              <span className="font-medium">{t("communities.policy.staff")}</span>
-            </ChoiceCard>
-            <p className="text-caption text-text-muted">{t("communities.create.feedPolicyHelp")}</p>
-          </fieldset>
+          <div>
+            <p id="community-feed-label" className={`${fieldLabelClassName} mb-2`}>
+              {t("communities.create.feedPolicyLabel")}
+            </p>
+            <ChoiceGroup<CommunityFeedPolicy>
+              labelledBy="community-feed-label"
+              variant="segmented"
+              value={feedPolicy}
+              onChange={setFeedPolicy}
+              disabled={busy}
+              options={[
+                { key: "members", label: t("communities.policy.everyone") },
+                { key: "admins", label: t("communities.policy.staff") },
+              ]}
+            />
+            <p className="mt-2 text-caption text-text-muted">{t("communities.create.feedPolicyHelp")}</p>
+          </div>
 
           <div>
             <label htmlFor="community-rules" className={fieldLabelClassName}>

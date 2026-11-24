@@ -5,7 +5,9 @@ import { ImagePlus } from "@/components/icons/image-plus";
 import { Loader2 } from "@/components/icons/loader-2";
 import { X } from "@/components/icons/x";
 import { Button } from "@/components/ui/button";
-import { ChoiceCard, fieldControlClassName, fieldLabelClassName, Input } from "@/components/ui/field";
+import { ChoiceGroup } from "@/components/ui/choice-group";
+import { fieldControlClassName, fieldLabelClassName, Input } from "@/components/ui/field";
+import { OptionGroup } from "@/components/ui/option-group";
 import { imageSourceProblem } from "@/lib/image-processing";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
@@ -94,71 +96,55 @@ export function DescriptionField({ value, onChange }: { value: string; onChange:
 export function KindField({ value, onChange, kinds = SPACE_KINDS }: { value: SpaceKind; onChange: (value: SpaceKind) => void; kinds?: readonly SpaceKind[] }) {
   const { t } = useTranslation();
   return (
-    <fieldset>
-      <legend className={fieldLabelClassName}>{t("spaces.form.kind")}</legend>
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-        {kinds.map((kind) => {
-          const Icon = KIND_ICON[kind];
-          return (
-            <label
-              key={kind}
-              className="flex min-h-11 cursor-pointer items-center gap-2 rounded-lg card-inset px-3 py-2 text-small text-text transition-colors hover:border-border-strong has-checked:border-primary/50 has-checked:bg-primary-soft/40"
-            >
-              <input type="radio" name="space-kind" value={kind} checked={value === kind} onChange={() => onChange(kind)} className="sr-only" />
-              <Icon size={16} className="shrink-0 text-primary" aria-hidden />
-              <span className="min-w-0 truncate">{t(SPACE_KIND_LABEL[kind])}</span>
-            </label>
-          );
-        })}
-      </div>
-    </fieldset>
+    <div>
+      <p id="space-kind-label" className={fieldLabelClassName}>
+        {t("spaces.form.kind")}
+      </p>
+      <ChoiceGroup<SpaceKind>
+        labelledBy="space-kind-label"
+        variant="tile"
+        value={value}
+        onChange={onChange}
+        options={kinds.map((kind) => ({ key: kind, label: t(SPACE_KIND_LABEL[kind]), icon: KIND_ICON[kind] }))}
+      />
+    </div>
   );
 }
 
-export function VisibilityField({ value, onChange, name = "space-visibility" }: { value: SpaceVisibility; onChange: (value: SpaceVisibility) => void; name?: string }) {
+export function VisibilityField({ value, onChange }: { value: SpaceVisibility; onChange: (value: SpaceVisibility) => void; name?: string }) {
   const { t } = useTranslation();
   return (
-    <fieldset className="space-y-2">
-      <legend className={fieldLabelClassName}>{t("spaces.form.visibility")}</legend>
-      {SPACE_VISIBILITIES.map((visibility) => {
-        const Icon = VISIBILITY_ICON[visibility];
-        return (
-          <ChoiceCard key={visibility}>
-            <input type="radio" name={name} value={visibility} checked={value === visibility} onChange={() => onChange(visibility)} className="mt-1 accent-primary" />
-            <Icon size={16} className="mt-0.5 shrink-0 text-primary" aria-hidden />
-            <span className="min-w-0">
-              <span className="block font-medium">{t(SPACE_VISIBILITY_LABEL[visibility])}</span>
-              <span className="block text-caption text-text-muted">{t(VISIBILITY_HELP[visibility])}</span>
-            </span>
-          </ChoiceCard>
-        );
-      })}
-    </fieldset>
+    <div>
+      <p id="space-visibility-label" className={fieldLabelClassName}>
+        {t("spaces.form.visibility")}
+      </p>
+      <OptionGroup<SpaceVisibility>
+        labelledBy="space-visibility-label"
+        value={value}
+        onChange={onChange}
+        options={SPACE_VISIBILITIES.map((visibility) => ({ key: visibility, icon: VISIBILITY_ICON[visibility], label: t(SPACE_VISIBILITY_LABEL[visibility]), description: t(VISIBILITY_HELP[visibility]) }))}
+      />
+    </div>
   );
 }
 
 export function TemplateField({ kind, value, onChange }: { kind: SpaceKind; value: "empty" | "template"; onChange: (value: "empty" | "template") => void }) {
   const { t } = useTranslation();
   return (
-    <fieldset className="space-y-2">
-      <legend className={fieldLabelClassName}>{t("spaces.form.template")}</legend>
-      <ChoiceCard>
-        <input type="radio" name="space-template" checked={value === "empty"} onChange={() => onChange("empty")} className="mt-1 accent-primary" />
-        <span>
-          <span className="block font-medium">{t("spaces.form.templateEmpty")}</span>
-          <span className="block text-caption text-text-muted">{t("spaces.form.templateEmptyHelp")}</span>
-        </span>
-      </ChoiceCard>
-      <ChoiceCard>
-        <input type="radio" name="space-template" checked={value === "template"} onChange={() => onChange("template")} className="mt-1 accent-primary" />
-        <span className="min-w-0">
-          <span className="block font-medium">{t("spaces.form.templateBoard")}</span>
-          <span className="block text-caption text-text-muted">
-            {t("spaces.form.templateBoardHelp", { groups: SPACE_TEMPLATE_GROUPS[kind].map((key) => t(key)).join(" · ") })}
-          </span>
-        </span>
-      </ChoiceCard>
-    </fieldset>
+    <div>
+      <p id="space-template-label" className={fieldLabelClassName}>
+        {t("spaces.form.template")}
+      </p>
+      <OptionGroup<"empty" | "template">
+        labelledBy="space-template-label"
+        value={value}
+        onChange={onChange}
+        options={[
+          { key: "empty", label: t("spaces.form.templateEmpty"), description: t("spaces.form.templateEmptyHelp") },
+          { key: "template", label: t("spaces.form.templateBoard"), description: t("spaces.form.templateBoardHelp", { groups: SPACE_TEMPLATE_GROUPS[kind].map((key) => t(key)).join(" · ") }) },
+        ]}
+      />
+    </div>
   );
 }
 

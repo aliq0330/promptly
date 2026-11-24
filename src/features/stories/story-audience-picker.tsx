@@ -6,11 +6,12 @@ import { Loader2 } from "@/components/icons/loader-2";
 import { UserCheck } from "@/components/icons/user-check";
 import { Users } from "@/components/icons/users";
 import { Globe } from "@/components/icons/globe";
+import { ChoiceGroup } from "@/components/ui/choice-group";
+import { OptionGroup } from "@/components/ui/option-group";
 import { GroupAvatar } from "@/features/groups/group-avatar";
 import { listMyCommunities, type CommunitySummary } from "@/lib/supabase/communities";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
-import { cn } from "@/lib/utils";
 import type { StoryAudience } from "@/types";
 
 const OPTIONS: { value: StoryAudience; icon: typeof Globe2; label: TranslationKey; hint: TranslationKey }[] = [
@@ -53,53 +54,39 @@ export function StoryAudiencePicker({
   }, [needsCommunities, communities]);
 
   return (
-    <fieldset className="space-y-2">
-      <legend className="mb-1.5 text-label font-semibold text-text">{t("stories.audience.title")}</legend>
-      <div className="grid grid-cols-3 gap-2">
-        {OPTIONS.map(({ value, icon: Icon, label }) => (
-          <button
-            key={value}
-            type="button"
-            aria-pressed={audience === value}
-            onClick={() => onChange(value, value === "community" ? communityId : null)}
-            className={cn(
-              "flex min-h-11 flex-col items-center justify-center gap-1 rounded-md border px-2 py-2 text-caption font-medium transition-colors duration-200 ease-soft",
-              audience === value ? "border-primary bg-primary-soft text-primary" : "border-border bg-surface text-text-secondary hover:border-border-strong",
-            )}
-          >
-            <Icon size={16} aria-hidden />
-            {t(label)}
-          </button>
+    <div className="space-y-2">
+      <p id="story-audience-label" className="mb-1.5 text-label font-semibold text-text">
+        {t("stories.audience.title")}
+      </p>
+      <ChoiceGroup<StoryAudience>
+        labelledBy="story-audience-label"
+        variant="tile"
+        showHint
+        value={audience}
+        onChange={(value) => onChange(value, value === "community" ? communityId : null)}
+        options={OPTIONS.map(({ value, icon, label, hint }) => ({ key: value, label: t(label), hint: t(hint), icon }))}
+      />
+      {needsCommunities &&
+        (communities === null ? (
+          <p className="flex items-center gap-2 px-2 py-3 text-small text-text-muted">
+            <Loader2 size={16} className="animate-spin" aria-hidden /> {t("common.loading")}
+          </p>
+        ) : communities.length === 0 ? (
+          <p className="px-2 py-3 text-small text-text-muted">{failed ? t("stories.error.generic") : t("stories.audience.noCommunities")}</p>
+        ) : (
+          <div className="max-h-56 overflow-y-auto">
+            <OptionGroup<string>
+              ariaLabel={t("stories.audience.community")}
+              value={communityId}
+              onChange={(id) => onChange("community", id)}
+              options={communities.map((community) => ({
+                key: community.id,
+                leading: <GroupAvatar name={community.name} avatarUrl={community.avatarUrl} size={32} />,
+                label: <span className="truncate">{community.name}</span>,
+              }))}
+            />
+          </div>
         ))}
-      </div>
-      <p className="text-caption text-text-muted">{t(OPTIONS.find((o) => o.value === audience)!.hint)}</p>
-      {needsCommunities && (
-        <div className="max-h-56 space-y-1 overflow-y-auto rounded-md card-flat p-1.5">
-          {communities === null ? (
-            <p className="flex items-center gap-2 px-2 py-3 text-small text-text-muted">
-              <Loader2 size={16} className="animate-spin" aria-hidden /> {t("common.loading")}
-            </p>
-          ) : communities.length === 0 ? (
-            <p className="px-2 py-3 text-small text-text-muted">{failed ? t("stories.error.generic") : t("stories.audience.noCommunities")}</p>
-          ) : (
-            communities.map((community) => (
-              <button
-                key={community.id}
-                type="button"
-                aria-pressed={communityId === community.id}
-                onClick={() => onChange("community", community.id)}
-                className={cn(
-                  "flex min-h-11 w-full items-center gap-3 rounded-sm px-2 py-1.5 text-left text-small transition-colors",
-                  communityId === community.id ? "bg-primary-soft text-primary" : "text-text hover:bg-surface-soft",
-                )}
-              >
-                <GroupAvatar name={community.name} avatarUrl={community.avatarUrl} size={32} />
-                <span className="min-w-0 flex-1 truncate font-medium">{community.name}</span>
-              </button>
-            ))
-          )}
-        </div>
-      )}
-    </fieldset>
+    </div>
   );
 }

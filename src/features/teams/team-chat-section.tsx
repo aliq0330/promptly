@@ -483,6 +483,8 @@ function NewChannelDialog({ ctx, onClose, onCreated }: { ctx: TeamCtx; onClose: 
           <span className={fieldLabelClassName}>{t("tm.chat.whoJoins")}</span>
           <ChoiceGroup<ChannelMode>
             ariaLabel={t("tm.chat.whoJoins")}
+            variant="segmented"
+            showHint
             value={mode}
             onChange={setMode}
             options={[
@@ -490,7 +492,6 @@ function NewChannelDialog({ ctx, onClose, onCreated }: { ctx: TeamCtx; onClose: 
               { key: "private", label: t("tm.chat.mode.private"), hint: t("tm.chat.mode.privateHint") },
             ]}
           />
-          <p className="mt-1.5 text-caption text-text-muted">{t(`tm.chat.mode.${mode}Hint` as "tm.chat.mode.openHint")}</p>
         </div>
         {mode === "space" && (
           <Select value={space} onChange={(e) => setSpace(e.target.value)} aria-label={t("tm.chat.pickSpace")}>
@@ -506,11 +507,11 @@ function NewChannelDialog({ ctx, onClose, onCreated }: { ctx: TeamCtx; onClose: 
         <div className="grid gap-3 sm:grid-cols-2">
           <div>
             <span className={fieldLabelClassName}>{t("tm.chat.posting")}</span>
-            <ChoiceGroup<"members" | "admins"> ariaLabel={t("tm.chat.posting")} value={posting} onChange={setPosting} options={[{ key: "members", label: t("tm.chat.posting.members") }, { key: "admins", label: t("tm.chat.posting.admins") }]} />
+            <ChoiceGroup<"members" | "admins"> ariaLabel={t("tm.chat.posting")} variant="segmented" value={posting} onChange={setPosting} options={[{ key: "members", label: t("tm.chat.posting.members") }, { key: "admins", label: t("tm.chat.posting.admins") }]} />
           </div>
           <div>
             <span className={fieldLabelClassName}>{t("tm.chat.notify")}</span>
-            <ChoiceGroup<"all" | "mentions" | "none"> ariaLabel={t("tm.chat.notify")} value={notify} onChange={setNotify} options={[{ key: "all", label: t("tm.chat.notify.all") }, { key: "mentions", label: t("tm.chat.notify.mentions") }, { key: "none", label: t("tm.chat.notify.none") }]} />
+            <ChoiceGroup<"all" | "mentions" | "none"> ariaLabel={t("tm.chat.notify")} variant="segmented" value={notify} onChange={setNotify} options={[{ key: "all", label: t("tm.chat.notify.all") }, { key: "mentions", label: t("tm.chat.notify.mentions") }, { key: "none", label: t("tm.chat.notify.none") }]} />
           </div>
         </div>
         {error && (
@@ -605,7 +606,7 @@ function ChannelSettingsDialog({ ctx, channel, onClose, onChanged }: { ctx: Team
           </div>
           <div>
             <span className={fieldLabelClassName}>{t("tm.chat.posting")}</span>
-            <ChoiceGroup<"members" | "admins"> ariaLabel={t("tm.chat.posting")} value={posting} onChange={setPosting} options={[{ key: "members", label: t("tm.chat.posting.members") }, { key: "admins", label: t("tm.chat.posting.admins") }]} />
+            <ChoiceGroup<"members" | "admins"> ariaLabel={t("tm.chat.posting")} variant="segmented" value={posting} onChange={setPosting} options={[{ key: "members", label: t("tm.chat.posting.members") }, { key: "admins", label: t("tm.chat.posting.admins") }]} />
           </div>
           {channel.mode === "private" && loaded && (
             <div>

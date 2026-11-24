@@ -36,6 +36,11 @@ const METRICS = [
   className("transitionAll", "transition-all", /(^|[^\w-])transition-all(?![\w-])/g),
   className("hoverScale", "hover:scale-*", /hover:scale-\d+/g),
   className("rawSwitch", 'role="switch" (Switch dışında)', /role="switch"/g, { allow: ["components/ui/switch.tsx"] }),
+  // Tek değer seçimi (docs/history/453-*): radyo yalnız ortak bileşenlerde (ChoiceGroup / OptionGroup / SwatchGroup / MenuRadioGroup); yıldız puanı ve kategori ağacı yaprağı bilinçli istisna.
+  className("rawRadio", 'role="radio" / type="radio" (ortak seçim bileşenleri dışında)', /(?<!\[)\b(role|type)="radio"/g, {
+    allow: ["components/ui/option-group.tsx", "components/ui/choice-group.tsx", "components/ui/swatch-group.tsx", "components/ui/menu-radio.tsx", "components/ui/star-rating.tsx", "features/content/taxonomy-picker.tsx"],
+    tsxOnly: true,
+  }),
   className("statusAlpha", "durum rengi alfa zemin (bg-*/10|12|15)", /bg-(success|warning|danger)\/(10|12|15)(?![\w-])/g),
   className("zArbitrary", "ham z-[…]", /(^|[^\w-])z-\[\d+\]/g),
   className("fontBoldSmall", "12–13px metinde font-bold/extrabold", /text-(caption|label)[^"'`]*\bfont-(bold|extrabold)\b|\bfont-(bold|extrabold)\b[^"'`]*text-(caption|label)/g),

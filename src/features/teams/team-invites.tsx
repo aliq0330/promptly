@@ -100,6 +100,7 @@ export function InviteDialog({ ctx, onClose, onDone, initial = "user", initialRo
       <div className="space-y-4">
         <ChoiceGroup<"user" | "link">
           ariaLabel={t("tm.invite.title")}
+          variant="segmented"
           value={mode}
           onChange={(next) => {
             setMode(next);
@@ -122,8 +123,7 @@ export function InviteDialog({ ctx, onClose, onDone, initial = "user", initialRo
         )}
         <div>
           <span className={fieldLabelClassName}>{t("tm.invite.role")}</span>
-          <ChoiceGroup<TeamRole> ariaLabel={t("tm.invite.role")} value={role} onChange={setRole} options={roles.map((key) => ({ key, label: t(roleLabelKey(key)) }))} />
-          <p className="mt-1.5 text-caption text-text-muted">{t(`tm.invite.roleHint.${role}` as "tm.invite.roleHint.member")}</p>
+          <ChoiceGroup<TeamRole> ariaLabel={t("tm.invite.role")} showHint value={role} onChange={setRole} options={roles.map((key) => ({ key, label: t(roleLabelKey(key)), hint: t(`tm.invite.roleHint.${key}` as "tm.invite.roleHint.member") }))} />
         </div>
         {role === "guest" && mode === "user" && (
           <div className="grid gap-3 sm:grid-cols-2">

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Loader2 } from "@/components/icons/loader-2";
 import { X } from "@/components/icons/x";
 import { Button } from "@/components/ui/button";
+import { OptionGroup } from "@/components/ui/option-group";
 import { fieldControlClassName, fieldLabelClassName } from "@/components/ui/field";
 import { Modal } from "@/components/ui/modal";
 import { Tabs } from "@/components/ui/tabs";
@@ -13,7 +14,6 @@ import { COMMUNITY_NOTE_MAX } from "@/lib/communities";
 import { LoadMore } from "@/features/feed/load-more";
 import { useShareableContent } from "@/features/communities/use-shareable-content";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import { cn } from "@/lib/utils";
 import { InlineAlert } from "@/components/ui/inline-alert";
 import { DialogShell } from "@/components/ui/dialog-shell";
 import { SKILLS_MENU_ENABLED } from "@/lib/skills/flag";
@@ -82,31 +82,18 @@ export function ShareToCommunityModal({ communityId, userId, onClose, onShared }
             ) : items.length === 0 ? (
               <p className="rounded-lg border border-dashed border-border px-4 py-6 text-center text-small text-text-muted">{t("communities.feed.pickEmpty")}</p>
             ) : (
-              <ul className="space-y-1.5" role="radiogroup" aria-label={t("communities.feed.pickAria")}>
-                {items.map((item) => (
-                  <li key={item.id}>
-                    <label
-                      className={cn(
-                        "flex cursor-pointer items-center gap-3 rounded-lg border px-4 py-2.5 text-small transition-colors",
-                        selected?.id === item.id ? "border-primary/50 bg-primary-soft/40" : "border-border-soft bg-background hover:border-border-strong",
-                      )}
-                    >
-                      <input
-                        type="radio"
-                        name="share-content"
-                        checked={selected?.id === item.id}
-                        onChange={() => undefined}
-                        onClick={() => {
-                          setSelected({ id: item.id, title: item.title || t("communities.feed.untitled") });
-                          setNoteOpen(true);
-                        }}
-                        className="accent-[var(--color-primary)]"
-                      />
-                      <span className="min-w-0 break-words">{item.title || t("communities.feed.untitled")}</span>
-                    </label>
-                  </li>
-                ))}
-              </ul>
+              <OptionGroup<string>
+                ariaLabel={t("communities.feed.pickAria")}
+                value={selected?.id ?? null}
+                reselect
+                onChange={(id) => {
+                  const item = items.find((entry) => entry.id === id);
+                  if (!item) return;
+                  setSelected({ id: item.id, title: item.title || t("communities.feed.untitled") });
+                  setNoteOpen(true);
+                }}
+                options={items.map((item) => ({ key: item.id, label: <span className="break-words">{item.title || t("communities.feed.untitled")}</span>, attrs: { "data-share-item": item.id } }))}
+              />
             )}
             {items !== null && items.length > 0 && (
               <LoadMore failed={list.failed} hasMore={list.hasMore} loadingMore={list.loadingMore} onLoadMore={list.grow} />

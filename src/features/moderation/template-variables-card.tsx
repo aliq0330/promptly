@@ -4,6 +4,7 @@ import { useMemo, useRef, useState } from "react";
 import { Braces } from "@/components/icons/braces";
 import { Loader2 } from "@/components/icons/loader-2";
 import { Button } from "@/components/ui/button";
+import { OptionGroup } from "@/components/ui/option-group";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import {
   convertTemplateVariables,
@@ -114,23 +115,21 @@ export function TemplateVariablesCard() {
         </div>
       </div>
 
-      <fieldset className="space-y-1.5" disabled={busy}>
-        <legend className="text-label font-semibold text-text">{t("exchange.template.scopeLabel")}</legend>
-        <label className="flex cursor-pointer items-start gap-2 text-small text-text">
-          <input type="radio" name="template-scope" checked={scope === "own"} onChange={() => setScope("own")} className="mt-1 accent-primary" data-testid="template-scope-own" />
-          <span>
-            <span className="block font-semibold">{t("exchange.template.scopeOwn")}</span>
-            <span className="block text-caption text-text-secondary">{t("exchange.template.scopeOwnHint")}</span>
-          </span>
-        </label>
-        <label className="flex cursor-pointer items-start gap-2 text-small text-text">
-          <input type="radio" name="template-scope" checked={scope === "all"} onChange={() => setScope("all")} className="mt-1 accent-primary" data-testid="template-scope-all" />
-          <span>
-            <span className="block font-semibold">{t("exchange.template.scopeAll")}</span>
-            <span className="block text-caption text-warning">{t("exchange.template.scopeAllHint")}</span>
-          </span>
-        </label>
-      </fieldset>
+      <div className="space-y-1.5">
+        <p id="template-scope-label" className="text-label font-semibold text-text">
+          {t("exchange.template.scopeLabel")}
+        </p>
+        <OptionGroup<"own" | "all">
+          labelledBy="template-scope-label"
+          value={scope}
+          onChange={setScope}
+          disabled={busy}
+          options={[
+            { key: "own", label: t("exchange.template.scopeOwn"), description: t("exchange.template.scopeOwnHint"), attrs: { "data-testid": "template-scope-own" } },
+            { key: "all", label: t("exchange.template.scopeAll"), description: <span className="text-warning">{t("exchange.template.scopeAllHint")}</span>, attrs: { "data-testid": "template-scope-all" } },
+          ]}
+        />
+      </div>
 
       <Button type="button" size="sm" variant="outline" onClick={() => void runScan()} disabled={busy} data-testid="template-scan">
         {scanning && <Loader2 size={16} className="animate-spin" />}

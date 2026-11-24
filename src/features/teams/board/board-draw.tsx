@@ -2,9 +2,12 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { ChoiceGroup } from "@/components/ui/choice-group";
+import { SwatchGroup } from "@/components/ui/swatch-group";
 import { SpaceDialog } from "@/features/spaces/space-modals";
 import { SPACE_COLOR_CLASS } from "@/features/spaces/space-visuals";
 import { useTranslation } from "@/lib/i18n/language-provider";
+import type { TranslationKey } from "@/lib/i18n/translations";
 import { SPACE_COLORS, SPACE_ITEM_BODY_MAX, SPACE_ITEM_TITLE_MAX, type SpaceColor } from "@/lib/spaces";
 import { parseShape, parseText, STROKE_WIDTHS, TEXT_SIZES, TEXT_SIZE_PX, type ShapeData, type TextData, type TextSize } from "@/lib/team-board";
 import type { SpaceItem } from "@/lib/supabase/spaces";
@@ -102,22 +105,8 @@ export function DrawingBody({ item, lowDetail }: { item: SpaceItem; lowDetail: b
 // ---------------------------------------------------------------------------------------------
 
 function ColorRow({ value, onChange, label }: { value: SpaceColor; onChange: (color: SpaceColor) => void; label: string }) {
-  return (
-    <div role="radiogroup" aria-label={label} className="flex flex-wrap gap-2">
-      {SPACE_COLORS.map((color) => (
-        <button
-          key={color}
-          type="button"
-          role="radio"
-          aria-checked={value === color}
-          aria-label={color}
-          onClick={() => onChange(color)}
-          className={cn("h-9 w-9 rounded-full border-2 transition-transform", value === color ? "scale-110 border-text" : "border-transparent")}
-          style={{ background: COLOR_VAR[color] }}
-        />
-      ))}
-    </div>
-  );
+  const { t } = useTranslation();
+  return <SwatchGroup<SpaceColor> ariaLabel={label} value={value} onChange={onChange} options={SPACE_COLORS.map((color) => ({ key: color, label: t(`spaces.color.${color}` as TranslationKey), style: { background: COLOR_VAR[color] } }))} />;
 }
 
 export interface TextValues {
@@ -179,19 +168,13 @@ export function TextItemDialog({ item, onClose, onSave }: { item: SpaceItem | nu
         </label>
         <div className="space-y-1.5">
           <span className="text-small font-semibold text-text">{t("tb.text.size")}</span>
-          <div role="radiogroup" aria-label={t("tb.text.size")} className="flex gap-2">
-            {TEXT_SIZES.map((option) => (
-              <button
-                key={option}
-                type="button"
-                role="radio"
-                aria-checked={size === option}
-                onClick={() => setSize(option)}
-                className={cn("h-10 min-w-12 rounded-full border px-3 font-semibold", size === option ? "border-transparent bg-primary-soft text-primary" : "border-border bg-surface text-text-secondary")}
-              >
-                {t(`tb.text.size.${option}` as const)}
-              </button>
-            ))}
+          <div className="flex flex-wrap items-center gap-2">
+            <ChoiceGroup<TextSize>
+              ariaLabel={t("tb.text.size")}
+              value={size}
+              onChange={setSize}
+              options={TEXT_SIZES.map((option) => ({ key: option, label: t(`tb.text.size.${option}` as const) }))}
+            />
             <button type="button" aria-pressed={bold} onClick={() => setBold((value) => !value)} className={cn("h-10 rounded-full border px-4 font-semibold", bold ? "border-transparent bg-primary-soft text-primary" : "border-border bg-surface text-text-secondary")}>
               B
             </button>
@@ -281,20 +264,13 @@ export function StyleControls({ items, onPatch }: { items: SpaceItem[]; onPatch:
   const textData = texts[0] ? parseText(texts[0].data) : null;
   return (
     <div className="flex shrink-0 items-center gap-1 px-1" data-board-style="">
-      <div role="radiogroup" aria-label={t("tb.style.color")} className="flex items-center gap-1">
-        {SPACE_COLORS.map((color) => (
-          <button
-            key={color}
-            type="button"
-            role="radio"
-            aria-checked={first.color === color}
-            aria-label={color}
-            onClick={() => onPatch(() => ({ color }))}
-            data-small-target="" className={cn("h-5 w-5 rounded-full border-2", first.color === color ? "border-text" : "border-transparent")}
-            style={{ background: COLOR_VAR[color] }}
-          />
-        ))}
-      </div>
+      <SwatchGroup<SpaceColor>
+        ariaLabel={t("tb.style.color")}
+        size="sm"
+        value={first.color}
+        onChange={(color) => onPatch(() => ({ color }))}
+        options={SPACE_COLORS.map((color) => ({ key: color, label: t(`spaces.color.${color}` as TranslationKey), style: { background: COLOR_VAR[color] } }))}
+      />
       {shapeData && (
         <>
           <span aria-hidden className="mx-1 h-5 w-px bg-border-soft" />
