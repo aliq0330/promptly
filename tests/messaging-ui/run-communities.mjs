@@ -536,7 +536,7 @@ await scenario("17. Yönetim · Özet: gerçek veriden sayılar, gizlilik notu; 
   await page.getByText("Toplam üye").waitFor();
   await page.getByText("340").first().waitFor();
   assert.equal(calls(db, "community_stats", "RPC")[0].body.p_days, 30);
-  await page.getByRole("tab", { name: "90 gün" }).click();
+  await page.getByRole("radio", { name: "90 gün" }).click();
   await page.waitForTimeout(300);
   assert.ok(calls(db, "community_stats", "RPC").some((c) => c.body.p_days === 90));
   assert.equal(await page.locator("[role=img][aria-label*='toplam']").count(), 3, "three daily charts (new members, posts, messages) with accessible totals");
@@ -555,7 +555,7 @@ await scenario("17b. Yönetim · Moderasyon kuyruğu: reddet / içeriği kaldır
   await dlg(page).getByRole("button", { name: "İçeriği kaldır" }).click();
   await page.getByText("Bekleyen rapor yok.").waitFor();
   assert.equal(calls(db, "resolve_community_report", "RPC")[1].body.p_action, "remove");
-  await page.getByRole("tab", { name: "Kapanan" }).click();
+  await page.getByRole("radio", { name: "Kapanan" }).click();
   await page.getByText("Reddedildi").waitFor();
 }, {
   setup: (db) => {
@@ -1010,7 +1010,7 @@ await scenario("31. Görünürlük seçici (oluştur): seçili düzey vurgulanı
   await page.keyboard.press("ArrowUp");
   assert.equal(await d.getByRole("radio", { name: /^Herkese açık/ }).isChecked(), true, "arrow keys move the selection");
   assert.equal(await d.getByText("Seçili", { exact: true }).count(), 1);
-  assert.ok((await d.getByText("Seçili", { exact: true }).locator("xpath=ancestor::label").innerText()).startsWith("Herkese açık"), "the badge moved with the selection");
+  assert.ok((await d.getByText("Seçili", { exact: true }).locator("xpath=ancestor::button[@role='radio']").innerText()).startsWith("Herkese açık"), "the badge moved with the selection");
 });
 
 for (const [label, viewport] of [["mobil 390x800", { width: 390, height: 800 }], ["tablet 820x1100", { width: 820, height: 1100 }]]) {
@@ -1025,7 +1025,7 @@ for (const [label, viewport] of [["mobil 390x800", { width: 390, height: 800 }],
       assert.equal(tableVisible, false);
       assert.equal(await d.getByText("İstek gönderilir, yönetici onaylar").first().isVisible(), true, "facts are shown inside each card on small screens");
     } else assert.equal(tableVisible, true);
-    const heights = await d.getByRole("radio").evaluateAll((els) => els.map((el) => Math.round(el.closest("label").getBoundingClientRect().height)));
+    const heights = await d.getByRole("radio").evaluateAll((els) => els.map((el) => Math.round(el.getBoundingClientRect().height)));
     assert.ok(heights.every((h) => h >= 36), `option cards too small: ${heights}`);
   }, { viewport });
 }
