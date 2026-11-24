@@ -21,7 +21,7 @@ import type { PromptComment } from "@/types";
 import type { CommentTree } from "./comment-node";
 
 /**
- * Yorumun ⋮ menüsü (docs/history/451-*). Herkes için: bağlantıyı kopyala, düzenlenmişse düzenleme geçmişi, başlığı takip et, yazarın bildirimlerini
+ * Yorumun ⋮ menüsü (docs/history/452-*). Herkes için: bağlantıyı kopyala, düzenlenmişse düzenleme geçmişi, başlığı takip et, yazarın bildirimlerini
  * sessize al, şikâyet et. Kendi yorumunda ayrıca düzenle ve sil; içerik sahibinde (ana yorumda) sabitle / sabitlemeyi kaldır.
  * Her işlem mevcut tek yolu çağırır (sabitleme `set_comment_pinned`, silme iki adımlı onay, şikâyet merkezi pencere, sessize alma `mute-store`).
  */

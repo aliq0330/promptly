@@ -107,7 +107,7 @@ export function CommentSection({
     pinError,
   } = useCommentThread(target, { highlightCommentId, spaceOwnerId, contentOwnerId: ownerId, onChange });
 
-  // Yorum takibi + ⋮ menüsü + düzenleme geçmişi (docs/history/451-*).
+  // Yorum takibi + ⋮ menüsü + düzenleme geçmişi (docs/history/452-*).
   const follow = useCommentFollow(target);
   const toast = useToast();
   const [historyFor, setHistoryFor] = useState<PromptComment | null>(null);

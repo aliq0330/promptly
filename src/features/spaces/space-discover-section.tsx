@@ -86,7 +86,7 @@ interface SectionState {
 }
 
 /** Herkese açık (başkalarının) Space'ler: `list_spaces('public')`, ofsetle sayfalanır; palet çizgisi ayrı tek sorgu. */
-function usePublicSpaces(enabled: boolean) {
+export function usePublicSpaces(enabled: boolean) {
   const [retry, setRetry] = useState(0);
   const [state, setState] = useState<SectionState>({ spaces: [], palettes: new Map(), stats: new Map(), hasMore: false, failed: false, loading: true, loadingMore: false });
   const offset = useRef(0);

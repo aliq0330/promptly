@@ -11,7 +11,7 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import { fetchMyCommentFollowList, setCommentFollow, type CommentFollowRow } from "@/lib/supabase/comment-follow";
 
 /**
- * Ayarlar → Bildirimler → "Takip ettiğin yorumlar" (docs/history/451-*): içeriğin tüm yorumlarını ya da tek bir yorum başlığını takip ettiğin yerler;
+ * Ayarlar → Bildirimler → "Takip ettiğin yorumlar" (docs/history/452-*): içeriğin tüm yorumlarını ya da tek bir yorum başlığını takip ettiğin yerler;
  * "Takibi bırak" `set_comment_subscription`'ı kapatır. Yorum yazınca / yanıt alınca otomatik eklenenler "otomatik" etiketi taşır.
  */
 export function CommentFollowSettings() {

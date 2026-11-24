@@ -52,7 +52,7 @@ async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lan
 }
 
 const section = (page) => page.locator("#comments");
-// Yorum eylemleri ⋮ menüsündedir (docs/history/451-*): menüyü aç, öğeyi seç.
+// Yorum eylemleri ⋮ menüsündedir (docs/history/452-*): menüyü aç, öğeyi seç.
 const menuName = /^(Sabitle|Pin)$/;
 const unpinName = /Sabitlemeyi kaldır|Unpin/;
 const openMenu = (comment) => comment.getByRole("button", { name: /Yorum menüsü|Comment menu/ }).first().click();

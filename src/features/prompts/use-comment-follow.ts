@@ -7,7 +7,7 @@ import { fetchMyCommentFollows, setCommentFollow } from "@/lib/supabase/comment-
 import type { CommentTarget } from "./use-comment-thread";
 
 /**
- * Bir içeriğin yorum takibi (docs/history/451-*): içeriğin TÜM yorumlarını (`content`) ya da tek bir üst düzey yorum başlığını (`thread`) takip etmek.
+ * Bir içeriğin yorum takibi (docs/history/452-*): içeriğin TÜM yorumlarını (`content`) ya da tek bir üst düzey yorum başlığını (`thread`) takip etmek.
  * Durum açılışta bir kez okunur (yalnız oturumlu ve takip edilebilir hedefte), değişiklikler iyimser yazılır, sunucu reddederse geri alınır.
  * `supported` false ise (sonuç, topluluk gönderisi, alıntı, Space etkinliği) arayüz "Takip et" çizmez.
  */

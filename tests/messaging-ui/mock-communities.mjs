@@ -519,7 +519,7 @@ export function setupCommunities(db) {
         return json(201, COMMENT_COLS(row));
       }
     }
-    // ---- yorum düzenleme geçmişi ve takibi (docs/history/451-*) ----
+    // ---- yorum düzenleme geçmişi ve takibi (docs/history/452-*) ----
     if (table === "prompt_comments" && method === "PATCH") {
       const id = eq(q, "id");
       const target = db.comments.find((c) => c.id === id);

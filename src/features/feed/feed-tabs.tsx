@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { LoadMoreButton } from "@/features/feed/load-more";
 import { Clock } from "@/components/icons/clock";
 import { LayoutGrid } from "@/components/icons/layout-grid";
@@ -44,6 +44,12 @@ import { useFollowedTools } from "@/features/tools/followed-tools-store";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import { GRID_COLUMNS_ASIDE } from "@/lib/grid-columns";
+import { FollowingFeed } from "@/features/following/following-feed";
+import { FollowFeedSettingsList } from "@/features/following/following-rail";
+import { FollowManageModal } from "@/features/following/follow-manage-modal";
+import { setHomeTab, useFollowFeedState } from "@/features/following/follow-feed-store";
+import { Button } from "@/components/ui/button";
+import { FeaturedPostCard, useFeaturedPosts } from "./featured-post-card";
 
 /**
  * Home is the viewer's own feed (docs/history/221-*; Keşfet is where new things are found). Two views, both real server queries
@@ -90,7 +96,13 @@ function restoredTab(): TabKey | null {
 
 export function FeedTabs({ layout = "grid" }: { layout?: "grid" | "home" } = {}) {
   const { t } = useTranslation();
-  const [chosen, setChosen] = useState<TabKey | null>(restoredTab);
+  // The open tab lives in the shared store (docs/history/451-*): the right rail follows it and "Sana Özel'e geç" inside the following feed switches it.
+  const { tab: storedTab } = useFollowFeedState();
+  useEffect(() => {
+    const restored = restoredTab();
+    if (restored) setHomeTab(restored);
+  }, []);
+  const [manageOpen, setManageOpen] = useState(false);
   const [kind, setKind] = useState<KindFilter>("all");
   // Content type only (category / subcategory stay empty on Home): Görsel · Metin · Ses · Video, a view filter like the kind chips.
   const [taxonomy, setTaxonomy] = useState<TaxonomyFilterValue>(EMPTY_TAXONOMY_FILTER);
@@ -101,9 +113,9 @@ export function FeedTabs({ layout = "grid" }: { layout?: "grid" | "home" } = {})
   const followedTagStore = useFollowedTags();
   const followedToolStore = useFollowedTools();
   // "Sana özel" is the default (while the session is restored we assume the signed-in case); a guest sees its login prompt.
-  const active: TabKey = chosen ?? "forYou";
+  const active: TabKey = storedTab;
   const setActive = (tab: TabKey) => {
-    setChosen(tab);
+    setHomeTab(tab);
     try {
       window.sessionStorage.setItem(TAB_MEMORY_KEY, tab);
     } catch {
@@ -135,15 +147,17 @@ export function FeedTabs({ layout = "grid" }: { layout?: "grid" | "home" } = {})
       tags: followedFilter.tags,
       tools: followedFilter.tools,
     },
-    !isForYou && enabled,
-    // "N yeni gönderi" hapı yalnız Ana Sayfa'nın Takip Ettiklerim sekmesinde (docs/history/435-*).
-    { watchNew: layout === "home" },
+    // Takip Ettiklerin artık etkinlik akışıdır (`FollowingFeed`, docs/history/451-*); bu liste yalnız Ana Sayfa dışındaki "grid" düzeninde kullanılır.
+    !isForYou && enabled && layout !== "home",
+    { watchNew: false },
   );
   const forYou = useForYouPages({ kind: feedKind, taxonomy }, isForYou && enabled);
   const feed = isForYou ? { ...forYou, retry: forYou.refresh } : feedPages;
   // "İlgimi çekiyor / çekmiyor" (docs/history/275-*): Sana özel only (Takip Ettiklerim is the strictly chronological list of people they chose).
   // Sana özel never lists a post already answered, so there is nothing to read first; an answer of "çekmiyor" collapses the card with "Geri al".
   const interest = useInterestFeedback(forYou.items, { enabled: isForYou && enabled, loadExisting: false, hideOnDislike: true });
+  // "Öne çıkan" büyük kart (docs/history/451-*): yalnız Sana Özel, en çok 8 gönderide bir.
+  const featuredPosts = useFeaturedPosts(forYou.items, isForYou && enabled && layout === "home");
   // "Takip edilecek kişiler" (docs/history/285-*): a strip of people between the posts of BOTH tabs — signed in only.
   const creatorStrips = useCreatorStrips(enabled);
   // Nothing to learn from yet (no interests, no followed person, tag or AI tool): "Sana özel" shows its first-time card instead of guessing.
@@ -180,6 +194,14 @@ export function FeedTabs({ layout = "grid" }: { layout?: "grid" | "home" } = {})
       </SheetSection>
       {filtersShown && <FollowedFilterSections value={followedFilter} onChange={setPicked} people={followedPeople} />}
       {isForYou && user && <ForYouSheetSection onRefresh={forYou.refresh} onOpenSettings={() => setForYouSettingsOpen(true)} refreshing={forYou.refreshing} />}
+      {!isForYou && user && layout === "home" && (
+        <SheetSection title={t("follow.settings.title")}>
+          <FollowFeedSettingsList />
+          <Button variant="outline" size="sm" className="mt-2" onClick={() => setManageOpen(true)} aria-haspopup="dialog">
+            {t("follow.manage.open")}
+          </Button>
+        </SheetSection>
+      )}
     </>
   );
   const typeNarrowed = taxonomy.contentType !== null;
@@ -199,7 +221,8 @@ export function FeedTabs({ layout = "grid" }: { layout?: "grid" | "home" } = {})
 
   return (
     <section className="space-y-4" aria-label={t("feed.ariaLabel")}>
-      {!isForYou && <NewPostsPill count={feedPages.newCount} plus={feedPages.newPlus} onClick={() => void feedPages.showNew()} />}
+      {!isForYou && layout !== "home" && <NewPostsPill count={feedPages.newCount} plus={feedPages.newPlus} onClick={() => void feedPages.showNew()} />}
+      {manageOpen && <FollowManageModal onClose={() => setManageOpen(false)} />}
       {layout === "home" ? (
         // Meydan "Bölüm balonları" (docs/history/207-*): the two views as tiles; once they scroll away they fold into a bar pinned under the header.
         <SectionNav
@@ -239,7 +262,17 @@ export function FeedTabs({ layout = "grid" }: { layout?: "grid" | "home" } = {})
       {coldStart && <ForYouSetupBanner onOpen={() => setForYouSettingsOpen(true)} />}
       {forYouSettingsOpen && <ForYouSettingsModal onClose={() => setForYouSettingsOpen(false)} onChanged={forYou.refresh} />}
 
-      {needsLogin ? (
+      {!isForYou && layout === "home" && enabled ? (
+        <FollowingFeed
+          kinds={kind === "all" ? null : [kind]}
+          authors={followedFilter.people}
+          tags={followedFilter.tags}
+          tools={followedFilter.tools}
+          contentType={taxonomy.contentType}
+          narrowed={kind !== "all" || followedCount > 0 || taxonomy.contentType !== null}
+          onClearNarrowing={clearFilters}
+        />
+      ) : needsLogin ? (
         <EmptyState scene="inbox"
           icon={isForYou ? UserStar : UserCheck}
           title={isForYou ? t("feed.emptyForYouLoginTitle") : t("feed.emptyFollowingTitle")}
@@ -263,6 +296,15 @@ export function FeedTabs({ layout = "grid" }: { layout?: "grid" | "home" } = {})
             items={feed.items}
             interest={isForYou ? interest : undefined}
             creatorStrips={creatorStrips}
+            featured={
+              isForYou
+                ? {
+                    keys: featuredPosts.keys,
+                    render: (item) =>
+                      item.kind === "prompt" ? <FeaturedPostCard prompt={item.data} stats={featuredPosts.stats.get(item.data.id)} /> : null,
+                  }
+                : undefined
+            }
             layout={layout}
             // "Sana özel": every card says why it is here, and a re-ranking (new interests) glides the cards into place.
             itemNote={isForYou ? (item) => <ForYouReasonNote item={item} reason={forYou.reasons[`${item.kind}-${item.data.id}`]} /> : undefined}

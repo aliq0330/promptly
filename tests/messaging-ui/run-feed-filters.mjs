@@ -321,7 +321,7 @@ await scenario("4. Sayfalama ve süzgeç: süzgeç değişince ilk sayfa baştan
   await page.getByRole("button", { name: "Daha fazla yükle" }).click({ timeout: 1500 }).catch(() => {});
   await waitTitles(page, all);
   const more = state.feedCalls.filter((c) => c.p_scope === "following" && c.p_after_id);
-  assert.equal(more[0].p_after_id, pid(18), "sonraki sayfa son satırın imlecinden");
+  assert.equal(more[0].p_after_id, pid(20), "sonraki sayfa son satırın imlecinden (Takip Ettiklerin sayfası 20 etkinlik, docs/history/451-*)");
   // Süzgeç → yeni sorgu: imleç yok, önceki sayfaların kartları gitti, yalnız Bob'un listesi.
   // (Liste kısaysa sonraki sayfa kendiliğinden gelir; sorgunun KENDİSİ — ilk çağrı — imleçsiz olmalı.)
   const firstFollowingAfter = (mark) => state.feedCalls.slice(mark).find((c) => c.p_scope === "following");
@@ -474,7 +474,7 @@ await scenario("11. Keşfet sıralama: Önerilen (varsayılan, recommended) · E
   await page.goto(`${BASE}/discover`);
   await waitFor(() => state.feedCalls.length > 0);
   await sectionMenu(page).waitFor();
-  assert.deepEqual(await sortNames(page), ["Önerilen", "En yeni", "Popüler"]);
+  assert.deepEqual(await sortNames(page), ["Önerilen", "En yeni", "Popüler", "Yükselen"]);
   await openFilter(page);
   assert.equal(await sortRadios(page).first().getAttribute("aria-checked"), "true", "Önerilen seçili");
   await closeFilter(page);
@@ -487,7 +487,7 @@ await scenario("11. Keşfet sıralama: Önerilen (varsayılan, recommended) · E
   // Promptlar: ek olarak En çok kullanılan (kopyalama sayacı gerçek).
   await openSection(page, "Promptlar");
   await waitFor(() => lastDiscoverCall(state).p_kinds?.[0] === "prompt");
-  assert.deepEqual(await sortNames(page), ["Önerilen", "En yeni", "Popüler", "En çok kullanılan", "Kanıtlanmış"]);
+  assert.deepEqual(await sortNames(page), ["Önerilen", "En yeni", "Popüler", "Yükselen", "En çok kullanılan", "Kanıtlanmış"]);
   await pickSort(page, "En çok kullanılan");
   await waitFor(() => lastDiscoverCall(state).p_order === "used");
   assert.equal(lastDiscoverCall(state).p_order, "used");
@@ -504,7 +504,7 @@ await scenario("11. Keşfet sıralama: Önerilen (varsayılan, recommended) · E
   await openSection(page, "İstekler");
   await waitFor(() => lastDiscoverCall(state).p_kinds?.[0] === "request");
   assert.equal(lastDiscoverCall(state).p_order, "recommended");
-  assert.deepEqual(await sortNames(page), ["Önerilen", "En yeni", "Popüler"]);
+  assert.deepEqual(await sortNames(page), ["Önerilen", "En yeni", "Popüler", "Yükselen"]);
   const provenBefore = state.provenCalls.length;
   await page.waitForTimeout(400);
   assert.equal(state.provenCalls.length, provenBefore, "Kanıtlanmış İstekler'de sorgulanmaz");
@@ -644,7 +644,7 @@ await scenario("17. İngilizce + telefon: bölümler, sıralama ve süzgeç çev
   const names = await sectionNames(page);
   for (const wanted of ["All", "Prompts", "AI tools", "Tags", "Creators", "Communities"]) assert.ok(names.includes(wanted), `${wanted}: ${names.join(" | ")}`);
   await openFilter(page);
-  assert.deepEqual((await sortRadios(page).allInnerTexts()).map((x) => x.trim()), ["Recommended", "Newest", "Popular"]);
+  assert.deepEqual((await sortRadios(page).allInnerTexts()).map((x) => x.trim()), ["Recommended", "Newest", "Popular", "Rising"]);
   await page.getByRole("dialog").getByRole("heading", { name: "AI tool" }).waitFor();
   await closeFilter(page);
   assert.equal(await overflowFree(page), true);

@@ -1,4 +1,4 @@
--- Yorumlar: düzenleme geçmişi + yorum takibi (docs/history/451-*).
+-- Yorumlar: düzenleme geçmişi + yorum takibi (docs/history/452-*).
 --
 -- (1) `comment_versions`: bir yorumun gövdesi değişince ESKİ gövde burada saklanır; yorumu okuyabilen herkes `comment_history` ile görür.
 --     Silme (soft-delete `body=''`, `deleted_at`) geçmişe yazılmaz ve silinen yorumun geçmişi okunmaz; en çok 30 sürüm tutulur.

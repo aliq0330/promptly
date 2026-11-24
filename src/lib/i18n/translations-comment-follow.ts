@@ -1,5 +1,5 @@
 /**
- * Yorum menüsü, düzenleme geçmişi ve yorum takibi (docs/history/451-*) — TR/EN metinleri. `translations.ts` bu nesneyi açar
+ * Yorum menüsü, düzenleme geçmişi ve yorum takibi (docs/history/452-*) — TR/EN metinleri. `translations.ts` bu nesneyi açar
  * (`...commentFollowTranslations`). Kullanıcı yorumları çevrilmez.
  */
 export const commentFollowTranslations = {

@@ -148,3 +148,8 @@ test("proven (docs/history/307-*): Keşfet's 'most-proven' sort maps to it, keys
   assert.equal(isAfterCursor("proven", row(500000, "2026-09-19T09:00:00.000000+00:00", "a"), cursor), true, "same score: older is after");
   assert.equal(feedSortRank("proven", { likeCount: 99, copyCount: 99 }), 0);
 });
+
+test("rising (docs/history/451-*): Keşfet's 'rising' sort maps to it, keyset is the descending triple, the client ranks it 0 (the database decides)", () => {
+  assert.equal(feedOrderForSort("rising"), "rising");
+  assert.equal(feedSortRank("rising", { likeCount: 99 }), 0);
+});

@@ -163,6 +163,34 @@ export async function installMock(context, db, opts = {}) {
     const roleOf = (gid, uid = signedIn) => db.member(gid, uid)?.role ?? null;
     const err = (code) => json(400, { code: "P0001", message: code, details: "", hint: "" });
     if (table.startsWith("rpc/") && db.rpc[table.slice(4)]) { const r = db.rpc[table.slice(4)](body, db, signedIn); return json(r.status ?? 200, r.body ?? null); }
+    // Takip Ettiklerin (docs/history/451-*): `following_activity_page` kişilerin paylaşımlarını sunucuda `feed_page('following', 'newest')`
+    // ile toplar; paketin kendi `feed_page` taklidi varsa ona aynı biçimde (süzgeç anahtarları yalnız doluyken) köprülenir, satırlar
+    // "post" etkinliğine çevrilir. Gruplama / sürüm / Space etkinliği bu kaba taklitte yoktur (SQL testi: supabase/tests/following-activity.sql).
+    if (table === "rpc/following_activity_page") {
+      if (!db.rpc.feed_page) return json(200, []);
+      const call = {
+        p_scope: "following",
+        p_order: "newest",
+        p_kind: "all",
+        p_kinds: body.p_kinds ?? null,
+        p_content_type: body.p_content_type ?? null,
+        p_category: null,
+        p_subcategory: null,
+        p_limit: body.p_limit ?? 20,
+        p_after_rank: null,
+        p_after_created_at: body.p_before_at ?? null,
+        p_after_id: body.p_before_key ? body.p_before_key.split(":").pop() : null,
+      };
+      for (const key of ["p_authors", "p_tags", "p_tools"]) if (body[key]?.length) call[key] = body[key];
+      const r = db.rpc.feed_page(call, db, signedIn);
+      const list = Array.isArray(r.body) ? r.body : [];
+      return json(200, list.map((row) => ({
+        event_key: `p:${row.kind}:${row.id}`, event_kind: "post", source: "people", actor_id: null, occurred_at: row.created_at,
+        item_kind: row.kind, item_id: row.id, member_ids: null, detail: null,
+      })));
+    }
+    if (table === "rpc/following_activity_summary" || table === "rpc/follow_feed_visit") return json(200, null);
+    if (table === "rpc/follow_feed_settings_get" || table === "rpc/list_spaces" || table === "rpc/discover_trending_topics" || table === "rpc/discover_rising_tools") return json(200, []);
     // Topluluk uçları (docs/history/175-*): mock-communities.mjs `db.extraRoutes`'u kurar.
     if (db.extraRoutes) {
       let used = false;

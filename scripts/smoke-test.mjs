@@ -47,9 +47,9 @@ const CHECKS = [
   { name: "rpc my_room_pins ziyaretçiye KAPALI olmalı (oda sabitleme, docs/history/381-*)", rpc: "my_room_pins", body: { p_community_id: "00000000-0000-4000-8000-000000000000" }, mustBeDenied: true },
   { name: "calls ziyaretçiye KAPALI olmalı (1-1 arama geçmişi yalnız arayan/aranan, docs/history/449-*)", get: () => `calls?select=${encodeURIComponent("id,caller_id,callee_id,status")}&limit=1`, mustBeDenied: true },
   { name: "rpc call_start ziyaretçiye KAPALI olmalı (1-1 arama, docs/history/449-*)", rpc: "call_start", body: { p_conversation_id: "00000000-0000-4000-8000-000000000000", p_type: "audio" }, mustBeDenied: true },
-  { name: "rpc comment_history ziyaretçiye açık (yorum düzenleme geçmişi, docs/history/451-*)", rpc: "comment_history", body: { p_comment_id: "00000000-0000-4000-8000-000000000000" } },
-  { name: "rpc set_comment_subscription ziyaretçiye KAPALI olmalı (yorum takibi, docs/history/451-*)", rpc: "set_comment_subscription", body: { p_kind: "prompt", p_target: "00000000-0000-4000-8000-000000000000", p_comment: null, p_on: true }, mustBeDenied: true },
-  { name: "rpc my_comment_subscriptions ziyaretçiye KAPALI olmalı (yorum takibi listesi, docs/history/451-*)", rpc: "my_comment_subscriptions", body: {}, mustBeDenied: true },
+  { name: "rpc comment_history ziyaretçiye açık (yorum düzenleme geçmişi, docs/history/452-*)", rpc: "comment_history", body: { p_comment_id: "00000000-0000-4000-8000-000000000000" } },
+  { name: "rpc set_comment_subscription ziyaretçiye KAPALI olmalı (yorum takibi, docs/history/452-*)", rpc: "set_comment_subscription", body: { p_kind: "prompt", p_target: "00000000-0000-4000-8000-000000000000", p_comment: null, p_on: true }, mustBeDenied: true },
+  { name: "rpc my_comment_subscriptions ziyaretçiye KAPALI olmalı (yorum takibi listesi, docs/history/452-*)", rpc: "my_comment_subscriptions", body: {}, mustBeDenied: true },
   { name: "rpc get_my_call_settings ziyaretçiye KAPALI olmalı (arama ayarları, docs/history/450-*)", rpc: "get_my_call_settings", body: {}, mustBeDenied: true },
   { name: "rpc set_my_call_settings ziyaretçiye KAPALI olmalı (arama ayarları, docs/history/450-*)", rpc: "set_my_call_settings", body: { p_privacy: "everyone", p_notify_missed: true }, mustBeDenied: true },
   { name: "call_settings ziyaretçiye KAPALI olmalı (docs/history/450-*)", get: () => `call_settings?select=${encodeURIComponent("user_id,privacy")}&limit=1`, mustBeDenied: true },
@@ -244,6 +244,15 @@ const CHECKS = [
   // Rahatsız etme saatleri (docs/history/435-*): yalnız oturumlu; tablo istemciye hiç açık değil.
   { name: "rpc get_my_quiet_hours ziyaretçiye KAPALI olmalı (docs/history/435-*)", rpc: "get_my_quiet_hours", body: {}, mustBeDenied: true },
   { name: "notification_quiet_hours ziyaretçiye KAPALI olmalı (docs/history/435-*)", get: () => `notification_quiet_hours?select=user_id&limit=1`, mustBeDenied: true },
+  // Takip Ettiklerin etkinlik akışı (docs/history/451-*): yalnız oturumlu; ziyaretçi reddedilir (var olduğunu da gösterir).
+  { name: "rpc following_activity_page ziyaretçiye KAPALI olmalı (docs/history/451-*)", rpc: "following_activity_page", body: { p_limit: 1 }, mustBeDenied: true },
+  { name: "rpc following_activity_summary ziyaretçiye KAPALI olmalı (docs/history/451-*)", rpc: "following_activity_summary", body: {}, mustBeDenied: true },
+  { name: "rpc follow_feed_visit ziyaretçiye KAPALI olmalı (docs/history/451-*)", rpc: "follow_feed_visit", body: { p_peek: true }, mustBeDenied: true },
+  // Keşfet editoryal açılışı (docs/history/451-*): ziyaretçiye açık okuma RPC'leri.
+  { name: "rpc discover_weekly_stats (docs/history/451-*)", rpc: "discover_weekly_stats", body: {} },
+  { name: "rpc discover_trending_topics (docs/history/451-*)", rpc: "discover_trending_topics", body: { p_limit: 1 } },
+  { name: "rpc discover_rising_tools (docs/history/451-*)", rpc: "discover_rising_tools", body: { p_limit: 1 } },
+  { name: "rpc feed_page_rising (Keşfet → Yükselen, docs/history/451-*)", rpc: "feed_page_rising", body: { p_limit: 1 } },
 ];
 
 const headers = { apikey: key, Authorization: `Bearer ${key}`, "Content-Type": "application/json" };

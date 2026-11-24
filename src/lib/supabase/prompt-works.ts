@@ -66,3 +66,25 @@ export async function setPromptWorks(promptId: string, works: boolean | null): P
   // Sunucu yeni sayıları ve oyumu döndürür; `can_vote` bu çağrıdan sonra da doğrudur (oy verebildiysem hâlâ verebilirim).
   return { ...parseState(row), canVote: true };
 }
+
+/**
+ * Birden çok promptun "Çalıştı mı?" sayıları (Sana Özel'in "Öne çıkan" kartı, docs/history/451-*). `prompt_works_stats` okuma = o promptu
+ * okuyabilen (RLS); oy tablosu kapalı kalır. Hata = boş (kart büyümez, akış bozulmaz).
+ */
+export async function fetchWorksStatsByIds(ids: string[]): Promise<Map<string, { yes: number; no: number }>> {
+  const out = new Map<string, { yes: number; no: number }>();
+  for (const part of chunk(ids, 100)) {
+    const { data, error } = await supabase.from("prompt_works_stats").select("prompt_id, yes_count, no_count").in("prompt_id", part);
+    if (error) continue;
+    for (const row of (data ?? []) as { prompt_id: string; yes_count: number; no_count: number }[]) {
+      out.set(row.prompt_id, { yes: row.yes_count, no: row.no_count });
+    }
+  }
+  return out;
+}
+
+/** Bir promptun kullanıcı sonucu sayısı (öne çıkan kartta). */
+export async function fetchResultCount(promptId: string): Promise<number | null> {
+  const { count, error } = await supabase.from("prompt_results").select("id", { count: "exact", head: true }).eq("prompt_id", promptId);
+  return error ? null : (count ?? 0);
+}

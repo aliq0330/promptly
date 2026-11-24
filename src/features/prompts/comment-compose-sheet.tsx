@@ -12,7 +12,7 @@ import { CommentExtrasPreview, CommentExtrasToolbar, type CommentExtrasControlle
 import { useId } from "react";
 
 /**
- * Telefonda yanıt yazma / yorum düzenleme: alttan açılan kart (docs/history/451-*). Tam ekran sayfa açılmaz — yanıtlanan yorumun özeti kartın
+ * Telefonda yanıt yazma / yorum düzenleme: alttan açılan kart (docs/history/452-*). Tam ekran sayfa açılmaz — yanıtlanan yorumun özeti kartın
  * üstünde görünür, başlık ve Vazgeç/Gönder sabit, kart yukarı sürüklenince %90'a büyür (ortak `Modal` davranışı). Masaüstünde yanıt/düzenleme
  * satır içidir; bu bileşen yalnız telefonda (`< sm`) çizilir.
  */

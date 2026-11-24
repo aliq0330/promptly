@@ -29,7 +29,7 @@ const isDeletedComment = (comment: PromptComment) => Boolean(comment.deletedAt);
 
 /**
  * Yanıtlar bu seviyeye kadar girintili ve kancalıdır (üst yorum → yanıt → yanıtın yanıtı); daha derin yanıtlar girinti kazanmaz (telefonda da okunur
- * kalsın) — "@kime yanıt verdiği" ipucu ilişkiyi gösterir (docs/history/451-*).
+ * kalsın) — "@kime yanıt verdiği" ipucu ilişkiyi gösterir (docs/history/452-*).
  */
 const MAX_INDENT_DEPTH = 2;
 
@@ -88,7 +88,7 @@ export interface CommentTree {
   /** Yalnız içerik sahibinde: üst düzey yorumu sabitler / sabitlemeyi kaldırır. */
   onTogglePin?: (id: string) => void;
   /**
-   * Yorumun ⋮ menüsü, düzenleme geçmişi ve yorum takibi (docs/history/451-*). Yalnız detay sayfasındaki yorum bölümü verir; Odak'ın yorum
+   * Yorumun ⋮ menüsü, düzenleme geçmişi ve yorum takibi (docs/history/452-*). Yalnız detay sayfasındaki yorum bölümü verir; Odak'ın yorum
    * sayfası vermez ve satır içi işlemler eskisi gibi kalır.
    */
   menu?: {
@@ -169,7 +169,7 @@ const FIELD_CLASS =
 
 /**
  * Bir yanıtın sarmalayıcısı: kendi KISA kancası (üst yorumdan inen çizgiden kavisle yanıta girer, ucunda nokta) ve — son yanıt değilse — çizginin devamı.
- * Çizgi arka plana yakın, 2 px; yanıtlar arasında uzun çizgi yoktur (docs/history/451-*). Girinti telefonda küçüktür, kutular tam genişliğe yakın kalır.
+ * Çizgi arka plana yakın, 2 px; yanıtlar arasında uzun çizgi yoktur (docs/history/452-*). Girinti telefonda küçüktür, kutular tam genişliğe yakın kalır.
  */
 function replyWrapClass(last: boolean): string {
   return cn(

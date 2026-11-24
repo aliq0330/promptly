@@ -1,4 +1,4 @@
-// Yorum bölümü yeniden tasarımı (docs/history/451-*): kancalı yanıtlar, ⋮ menüsü, düzenleme + geçmiş, yorum takibi, telefonda alttan kart — ağ taklitli arayüz testi.
+// Yorum bölümü yeniden tasarımı (docs/history/452-*): kancalı yanıtlar, ⋮ menüsü, düzenleme + geçmiş, yorum takibi, telefonda alttan kart — ağ taklitli arayüz testi.
 // Gerçek Supabase'e / gerçek cihaza KARŞI DENENMEDİ. Veritabanı kuralları: supabase/tests/comment-history-follow.sql.
 //   NEXT_PUBLIC_SUPABASE_URL=https://example.supabase.co NEXT_PUBLIC_SUPABASE_ANON_KEY=dummy npm run build
 //   CHROMIUM_PATH=… node tests/messaging-ui/run-comment-redesign.mjs

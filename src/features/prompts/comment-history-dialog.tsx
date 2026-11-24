@@ -14,7 +14,7 @@ import { cn, formatRelativeTime } from "@/lib/utils";
 import type { PromptComment } from "@/types";
 
 /**
- * Yorumun düzenleme geçmişi (docs/history/451-*): şimdiki sürüm üstte, altında önceki sürümler yazıldıkları zamanla. Yorumu okuyabilen herkes görür
+ * Yorumun düzenleme geçmişi (docs/history/452-*): şimdiki sürüm üstte, altında önceki sürümler yazıldıkları zamanla. Yorumu okuyabilen herkes görür
  * (`comment_history`). Önceki sürümler yalnız bu özellikten SONRAKİ düzenlemeler için tutulur; eski düzenlemelerde liste boş olabilir ve bunu söyler.
  */
 export function CommentHistoryDialog({ comment, onClose }: { comment: PromptComment; onClose: () => void }) {

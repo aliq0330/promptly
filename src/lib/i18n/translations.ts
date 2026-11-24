@@ -55,6 +55,7 @@ import { notificationCenterTranslations } from "./translations-notification-cent
 import { hubTranslations } from "./translations-hub";
 import { messageDockTranslations } from "./translations-message-dock";
 import { callsTranslations } from "./translations-calls";
+import { feedV2Translations } from "./translations-feed-v2";
 import { presenceTranslations } from "./translations-presence";
 import { collabTranslations } from "./translations-collab";
 
@@ -3361,6 +3362,7 @@ export const translations = {
   ...hubTranslations,
   ...messageDockTranslations,
   ...callsTranslations,
+  ...feedV2Translations,
   ...presenceTranslations,
   ...collabTranslations,
   "report.modal.title": { tr: "İçeriği şikâyet et", en: "Report content" },
