@@ -164,7 +164,7 @@ function CommentAttachments({ comment, tree }: { comment: PromptComment; tree: C
 }
 
 /** Yorum kutusu: ince, arka plana yakın kenarlık, dolgu yok (panel yok). */
-const BUBBLE_CLASS = "rounded-lg border border-border-strong px-4 py-3";
+const BUBBLE_CLASS = "rounded-lg border border-border px-4 py-3";
 /**
  * Bir yanıtın sarmalayıcısı: kendi KISA kancası (üst yorumdan inen çizgiden kavisle yanıta girer, ucunda nokta) ve — son yanıt değilse — çizginin devamı.
  * Çizgi arka plana yakın, 2 px; yanıtlar arasında uzun çizgi yoktur (docs/history/452-*). Girinti telefonda küçüktür, kutular tam genişliğe yakın kalır.
@@ -314,7 +314,7 @@ function ThreadCommentNode({ comment, depth, tree }: { comment: PromptComment; d
                 ) : (
                   <div className="mt-1.5">
                     {comment.rating ? <CommentRating comment={comment} tree={tree} isOwn={isOwn} /> : null}
-                    <p className="break-words text-h3 font-semibold text-text">
+                    <p className="break-words text-h3 text-text">
                       {showParentHint && (
                         <span className="mr-1 inline-flex items-center gap-0.5 text-caption font-medium text-primary">
                           <Reply size={12} />@{parent.author.username}
