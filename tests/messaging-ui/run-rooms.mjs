@@ -262,10 +262,10 @@ await scenario("10. Oda ekle: boş ad hata verir; politika seçimi 'ne olacak' c
   assert.equal(db.roomCalls.filter((c) => c.fn === "create").length, 0, "geçersiz ad sunucuya gitmez");
   await d.getByLabel("Oda adı").fill("Prompt İpuçları");
   assert.match(await d.locator("[data-room-outcome]").innerText(), /herkes yazabilir/);
-  await d.getByLabel("Yalnız yönetim").check();
+  await d.getByRole("radio", { name: "Yalnız yönetim" }).first().click();
   assert.match(await d.locator("[data-room-outcome]").innerText(), /yalnızca yönetim yazabilir/);
   await d.getByRole("button", { name: "Bölüm", exact: false }).click();
-  await d.getByLabel("Yeni bölüm…").check();
+  await d.getByRole("radio", { name: "Yeni bölüm…" }).click();
   await d.getByLabel("Bölüm adı").fill("Atölye");
   await d.getByRole("radio", { name: "Duyuru" }).click();
   await d.getByRole("button", { name: "Oda oluştur" }).click();
@@ -346,7 +346,7 @@ await scenario("11d. Düzenle: yeni ad update RPC'sine gider; Bölüme taşı ya
   await menu("Destek");
   await page.getByRole("menuitem", { name: "Bölüme taşı" }).click();
   await dlg(page).getByRole("radio", { name: "Üretim" }).waitFor();
-  await dlg(page).getByLabel("Yönetim").check();
+  await dlg(page).getByRole("radio", { name: "Yönetim" }).click();
   await dlg(page).getByRole("button", { name: "Kaydet" }).click();
   await page.waitForTimeout(400);
   const moved = db.roomCalls.filter((c) => c.fn === "update").pop().body.p_patch;
