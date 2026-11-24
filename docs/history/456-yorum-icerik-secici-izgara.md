@@ -1,5 +1,7 @@
 # 456 — Yorum içerik seçicisi: görsel ızgara
 
+> ⚠ 457 ile yerini "tek şerit"e bıraktı (`OptionTileGroup` kaldırıldı); tarihçe olarak durur.
+
 **Ne değişti:** Yorum kutusundaki ataçın açtığı "İçerik ekle" penceresi (`CommentContentPicker`, `features/prompts/comment-extras.tsx`) üç yönden sadeleşti. Kullanıcı altı mockup yönü arasından "B — Görsel ızgara"yı seçti.
 
 - **Liste iki sütunlu görsel ızgara** (`OptionTileGroup`, `components/ui/option-group.tsx`; `sm`+ üç sütun): içeriğin gerçek küçük resmi (prompt/istek/workflow/ayar paketi görseli, Space kapağı; yoksa tür simgesi), altında en çok iki satır başlık; "Kaydettiklerim"de sahibin adı, workflow'da adım sayısı. Küçük resimler görünen içerikler için TEK sorguyla (`fetchAttachmentCards`) okunur, her kimlik bir kez sorulur; hata olursa simge kalır.

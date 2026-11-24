@@ -37,7 +37,7 @@ export const commentExtrasTranslations = {
     en: "You haven't saved any public content of this type.",
   },
   "commentExtras.picker.add": { tr: "Ekle", en: "Attach" },
-  "commentExtras.picker.selected": { tr: "Seçili", en: "Selected" },
+  "commentExtras.picker.pickOne": { tr: "Bir içerik seç", en: "Pick an item" },
 
   // --- GIF seçici (GIPHY) ---
   "gif.title": { tr: "GIF ekle", en: "Add a GIF" },
