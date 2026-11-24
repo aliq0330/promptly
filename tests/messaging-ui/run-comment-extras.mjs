@@ -399,7 +399,8 @@ await scenario("20. GIPHY önbelleği: seçiciyi kapatıp yeniden açmak ve ayn�
 const MINE_PHOTO = `${ME}/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa.png`;
 const editOf = async (page, text) => {
   await section(page).getByText(text).waitFor();
-  await section(page).getByRole("button", { name: "Düzenle" }).first().click();
+  await section(page).getByRole("button", { name: "Yorum menüsü" }).first().click();
+  await page.getByRole("menuitem", { name: "Düzenle", exact: true }).click();
 };
 
 await scenario("17. Düzenleme: mevcut GIF + içerik eki ile açılır; GIF başka GIF ile değiştirilir, ek kaldırılır → PATCH altı sütunu da yazar (ek sütunları null), 'düzenlendi' görünür", async ({ page, state }) => {
@@ -457,7 +458,8 @@ await scenario("19. Düzenleme: metinli yoruma içerik eki eklenir (PATCH attach
   await section(page).locator("a[data-comment-attachment='prompt']").waitFor();
   assert.deepEqual(state.patches[0].body, { body: "Sadece metin", media_kind: null, media_ref: null, media_width: null, media_height: null, attach_type: "prompt", attach_id: PUBLIC_PROMPT.id });
   // Şimdi metni boşalt: ek var → Kaydet açık, gövde ''
-  await section(page).getByRole("button", { name: "Düzenle" }).first().click();
+  await section(page).getByRole("button", { name: "Yorum menüsü" }).first().click();
+  await page.getByRole("menuitem", { name: "Düzenle", exact: true }).click();
   await section(page).locator("textarea").fill("");
   assert.equal(await section(page).getByRole("button", { name: "Kaydet" }).isDisabled(), false, "an attachment alone is enough");
   await section(page).getByRole("button", { name: "Kaydet" }).click();

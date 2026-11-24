@@ -58,7 +58,7 @@ export function QuoteShareButton({ quote, label }: { quote: Quote; label?: strin
 }
 
 /**
- * Alıntı sayfasının ÜST etkileşim satırı (docs/history/452-*): alıntılayanın notunun hemen altında — beğeni · yorum (aşağıdaki yorumlara atlar) · istatistik · paylaş.
+ * Alıntı sayfasının ÜST etkileşim satırı (docs/history/453-*): alıntılayanın notunun hemen altında — beğeni · yorum (aşağıdaki yorumlara atlar) · istatistik · paylaş.
  * Hepsi ALINTININDIR (orijinalin sayaçlarına karışmaz); yanındaki ipucu bunu söyler.
  */
 export function QuoteActionBar({ quote }: { quote: Quote }) {

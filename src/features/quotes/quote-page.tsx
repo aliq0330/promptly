@@ -29,7 +29,7 @@ import { QuoteDeleteDialog, QuoteReportDialog } from "./quote-menu";
 import { QuoteScopeProvider } from "./quote-scope";
 
 /**
- * `/quotes/local?id=<alıntı>`: bir alıntının kendi sayfası (docs/history/217-*, düzen docs/history/452-*). Üstte ALINTIYA ait her şey (alıntılayan, not,
+ * `/quotes/local?id=<alıntı>`: bir alıntının kendi sayfası (docs/history/217-*, düzen docs/history/453-*). Üstte ALINTIYA ait her şey (alıntılayan, not,
  * beğeni · yorum · istatistik · paylaş, ⋮ menüsü); ortada "Alıntılanan içerik" çerçevesi — içinde alıntılanan içeriğin NORMAL detay sayfası (Albüm bandı, iki sütun,
  * prompt metni, Kopyala; `QuoteScope embedded`: detay bileşenleri kendi eylem çubuğunu/yorumlarını/⋮ menüsünü çizmez); altta ALINTININ yorumları.
  * Beğeni/yorum/istatistik/paylaş orijinale karışmaz (`QuoteScope`). Space'in detay sayfası yok: kapak kolajı + başlık çerçevede. Alıntıyı okuyamayan

@@ -147,7 +147,7 @@ await scenario("1. Ana Sayfa: alıntı normal gönderi kartıyla akışta — no
   await card.waitFor();
   await card.locator("[data-quote-note]").waitFor();
   assert.match(await card.innerText(), /alıntıladı/);
-  // İç içe düzen (docs/history/452-*): DIŞ kart alıntıya, İÇ kart orijinal içeriğe ait — başlık, tür etiketi ve ORİJİNAL yazar iç kartta.
+  // İç içe düzen (docs/history/453-*): DIŞ kart alıntıya, İÇ kart orijinal içeriğe ait — başlık, tür etiketi ve ORİJİNAL yazar iç kartta.
   const inner = card.locator("[data-quote-original-card]");
   await inner.waitFor();
   assert.match(await inner.innerText(), /Ay ışığında bekleyen kitsune/);
@@ -176,7 +176,7 @@ await scenario("2. Alıntı sayfası: üstte alıntılayan + not, 'Orijinal içe
   // Topluluk gönderisiyle AYNI yapı: alıntılanan içeriğin NORMAL detay sayfası (Albüm bandı: başlık + prompt metni) altta çizilir.
   await page.getByRole("heading", { name: "Ay ışığında bekleyen kitsune" }).first().waitFor();
   await page.getByText("cinematic portrait, soft light").first().waitFor();
-  // Sayfa düzeni (docs/history/452-*): alıntının beğeni/yorum/paylaş satırı notun hemen altında (çerçevenin ÜSTÜNDE), orijinal "Alıntılanan içerik" çerçevesinde
+  // Sayfa düzeni (docs/history/453-*): alıntının beğeni/yorum/paylaş satırı notun hemen altında (çerçevenin ÜSTÜNDE), orijinal "Alıntılanan içerik" çerçevesinde
   // (kendi eylem çubuğu ve yorumları çizilmez), alıntının yorumları çerçevenin ALTINDA.
   const bar = page.locator("[data-quote-engagement]");
   assert.equal(await bar.count(), 1);

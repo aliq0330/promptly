@@ -20,7 +20,7 @@ import { QuoteCommentLink, QuoteLike } from "./quote-engagement";
 import { QuoteMenu } from "./quote-menu";
 
 /**
- * Alıntının akıştaki kartı (docs/history/217-*, iç içe düzen docs/history/452-*): DIŞ kart ALINTININDIR — alıntılayan ("Bob alıntıladı · 2 ay önce"), notu ve
+ * Alıntının akıştaki kartı (docs/history/217-*, iç içe düzen docs/history/453-*): DIŞ kart ALINTININDIR — alıntılayan ("Bob alıntıladı · 2 ay önce"), notu ve
  * ALINTININ sayaçları (beğeni/yorum; alıntılanan içeriğinki değil); İÇ kart alıntılanan ORİJİNAL içeriktir — kapağı/çıktısı, tür etiketi, başlığı ve
  * ORİJİNAL YAZARI (kendi bağlantısıyla orijinal içeriğin sayfasını açar). Dış karta (alıntılayanın satırı dışında bir yere) tıklamak alıntının sayfasını açar.
  * İçerik gittiyse iç kartın yerine "artık görünmüyor" kutusu çizilir. Kartın iç yerleşimi diğer gönderi kartlarından (`ContentCardPost`) bilerek ayrıdır: alıntı

@@ -44,7 +44,7 @@ export function DetailShell({
   /** "fade" while a card's cover is morphing into the art (a rising page would shift the measured target). */
   entrance?: "rise" | "fade";
 }) {
-  // Alıntı sayfasındaki çerçevenin içinde (docs/history/452-*) sayfa alt boşluğu küçülür: altında alıntının yorumları vardır.
+  // Alıntı sayfasındaki çerçevenin içinde (docs/history/453-*) sayfa alt boşluğu küçülür: altında alıntının yorumları vardır.
   const embedded = Boolean(useQuoteScope()?.embedded);
   return (
     <div className={cn("w-full", embedded ? "pb-6" : "pb-16", entrance === "fade" ? "animate-fade-in" : "animate-rise-in")}>
@@ -579,7 +579,7 @@ export function DetailTags({ tags, className }: { tags: Tag[]; className?: strin
 /** The comments: the content column's last section, jump target `#comments` (pass `EngageComments … headless`). */
 export function DetailComments({ children }: { children: ReactNode }) {
   const { t } = useTranslation();
-  // Alıntı sayfasında yorumlar ALINTININDIR ve çerçevenin altında sayfanın kendisince çizilir (docs/history/452-*).
+  // Alıntı sayfasında yorumlar ALINTININDIR ve çerçevenin altında sayfanın kendisince çizilir (docs/history/453-*).
   if (useQuoteScope()?.embedded) return null;
   return (
     <DetailSection id="comments" title={t("comments.title")}>

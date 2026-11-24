@@ -236,7 +236,7 @@ await scenario("4b. Alıntı sayfası (Space): diğer türlerle AYNI iskelet —
   assert.match((await page.getByRole("link", { name: "Panoyu gez" }).first().getAttribute("href")) ?? "", /tab=board/);
   assert.match((await page.getByRole("link", { name: /Space'i aç/ }).first().getAttribute("href")) ?? "", /\/spaces\/local\/?\?id=/);
   await page.getByText("paylaştı").first().waitFor();
-  // Düzen docs/history/452-*: alıntının beğeni/yorum/paylaş satırı üstte, Space önizlemesi "Alıntılanan içerik" çerçevesinde (kendi eylem satırı yalnız birincil eylemleri taşır), alıntının yorumları çerçevenin altında.
+  // Düzen docs/history/453-*: alıntının beğeni/yorum/paylaş satırı üstte, Space önizlemesi "Alıntılanan içerik" çerçevesinde (kendi eylem satırı yalnız birincil eylemleri taşır), alıntının yorumları çerçevenin altında.
   const frame = page.locator("[data-quote-original]");
   await frame.locator("[data-space-preview]").waitFor();
   assert.equal(await frame.locator("section[aria-label='Alıntının yorumları']").count(), 0, "comments are not inside the quoted-content frame");

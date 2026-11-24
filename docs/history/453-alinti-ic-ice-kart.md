@@ -1,4 +1,4 @@
-# 452 — Alıntı: iç içe kart + "Alıntılanan içerik" çerçeveli sayfa
+# 453 — Alıntı: iç içe kart + "Alıntılanan içerik" çerçeveli sayfa
 
 **Durum:** uygulandı (yalnız istemci; migration/Edge Function yok). Ağ taklitli `run-quotes` 12/12; gerçek Supabase'e karşı denenmedi.
 
