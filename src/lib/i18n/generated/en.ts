@@ -6234,7 +6234,7 @@ const dictionary: Record<string, string> = {
   "commentExtras.picker.help": "Only public content can be attached, so everyone who reads the comment can see it.",
   "commentExtras.picker.savedEmpty": "You haven't saved any public content of this type.",
   "commentExtras.picker.add": "Attach",
-  "commentExtras.picker.pickOne": "Pick an item",
+  "commentExtras.picker.selected": "Selected",
   "gif.title": "Add a GIF",
   "gif.search": "Search GIFs",
   "gif.clearSearch": "Clear search",

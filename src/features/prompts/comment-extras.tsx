@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ImageOff } from "@/components/icons/image-off";
 import { ImagePlus } from "@/components/icons/image-plus";
 import { Loader2 } from "@/components/icons/loader-2";
@@ -8,7 +8,8 @@ import { Paperclip } from "@/components/icons/paperclip";
 import { Search } from "@/components/icons/search";
 import { X } from "@/components/icons/x";
 import { Button } from "@/components/ui/button";
-import { OptionGroup } from "@/components/ui/option-group";
+import { OptionTileGroup } from "@/components/ui/option-group";
+import { StorageImage } from "@/components/ui/storage-media";
 import { fieldControlClassName } from "@/components/ui/field";
 import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { Modal } from "@/components/ui/modal";
@@ -18,8 +19,9 @@ import { CHAT_LIBRARY_TYPES, useChatShareable, type ChatLibraryType } from "@/fe
 import { GifPicker } from "@/features/gif/gif-picker";
 import { LoadMore } from "@/features/feed/load-more";
 import { useGrowingList } from "@/features/content/use-growing-list";
+import { SpaceCoverArt } from "@/features/spaces/space-visuals";
 import { getCachedCommentMediaUrl, removeCommentPhotos, resolveCommentMediaUrls, uploadCommentPhoto } from "@/lib/supabase/comment-media";
-import { fetchSavedPickableWindow, SAVED_SOURCE_TYPES, type PickableContent } from "@/lib/supabase/comment-attachments";
+import { attachmentKey, fetchAttachmentCards, fetchSavedPickableWindow, SAVED_SOURCE_TYPES, type AttachmentCard, type PickableContent } from "@/lib/supabase/comment-attachments";
 import { ALLOWED_IMAGE_MIME, MessageImageError, prepareMessageImage, sniffImageMime, type PreparedMessageImage } from "@/lib/supabase/message-images";
 import { giphyUrl, type GifItem } from "@/lib/giphy";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -442,9 +444,52 @@ function CommentPhoto({ path, width, height, className }: { path: string; width:
 
 type Source = "mine" | "saved";
 
+/** Seçici ızgarasındaki kartların küçük resimleri: görünen içerikler için TEK sorgu (`fetchAttachmentCards`), her kimlik bir kez sorulur; hata olursa tür simgesi kalır. */
+function usePickerCards(items: PickableContent[] | null) {
+  const [cards, setCards] = useState<Map<string, AttachmentCard>>(new Map());
+  const asked = useRef<Set<string>>(new Set());
+  const mounted = useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
+  const key = items === null ? "" : items.map(attachmentKey).join("|");
+  useEffect(() => {
+    if (!items) return;
+    const todo = items.filter((item) => !asked.current.has(attachmentKey(item)));
+    if (todo.length === 0) return;
+    for (const item of todo) asked.current.add(attachmentKey(item));
+    fetchAttachmentCards(todo.map(({ type, id }) => ({ type, id })))
+      .then(({ cards: got }) => {
+        if (!mounted.current || got.size === 0) return;
+        setCards((prev) => new Map([...prev, ...got]));
+      })
+      .catch((err) => console.error("usePickerCards", err));
+    // `key` kimlik listesinin özeti: `items` her çizimde yeni dizidir.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key]);
+  return cards;
+}
+
+/** Izgara kartının görseli: prompt/istek/workflow/ayar paketi görseli, Space kapağı; yoksa tür simgesi. */
+function PickerArt({ item, card }: { item: PickableContent; card: AttachmentCard | undefined }) {
+  const Icon = ATTACHMENT_ICONS[item.type];
+  if (item.type === "space") return <SpaceCoverArt urls={card?.thumbnailUrl ? [card.thumbnailUrl] : []} className="h-full w-full" iconSize={32} />;
+  if (card?.thumbnailUrl) return <StorageImage src={card.thumbnailUrl} alt="" fill sizes="(min-width: 640px) 160px, 45vw" className="object-cover" />;
+  return (
+    <span className="flex h-full w-full items-center justify-center">
+      <Icon size={32} aria-hidden />
+    </span>
+  );
+}
+
 /**
- * Yoruma içerik ekle: tür sekmeleri · "Benimkiler / Kaydettiklerim" · başlık araması · tek seçim. Yalnız yayında + herkese açık + topluluğa özgü olmayan
- * içerik listelenir (yorumu okuyan herkes görebilsin; sunucu da aynı kuralı denetler). İstek ve Space kaydedilemediği için o türlerde yalnız "Benimkiler" var.
+ * Yoruma içerik ekle (docs/history/456-*, "Görsel ızgara"): tür sekmeleri · "Benimkiler / Kaydettiklerim" · iki sütunlu görselli ızgara · tek seçim.
+ * Arama başlıktaki düğmeyle açılır; seçilince alttaki şerit seçilenin adını ve "Ekle"yi gösterir, seçim yokken aynı yerde yardım metni durur
+ * (pencere boyu değişmez). Yalnız yayında + herkese açık + topluluğa özgü olmayan içerik listelenir (yorumu okuyan herkes görebilsin; sunucu da
+ * aynı kuralı denetler). İstek ve Space kaydedilemediği için o türlerde yalnız "Benimkiler" var.
  */
 export function CommentContentPicker({ userId, onPick, onClose }: { userId: string; onPick: (item: PickableContent) => void; onClose: () => void }) {
   const { t } = useTranslation();
@@ -453,6 +498,8 @@ export function CommentContentPicker({ userId, onPick, onClose }: { userId: stri
   const canSave = SAVED_SOURCE_TYPES.includes(type);
   const activeSource: Source = canSave ? source : "mine";
   const [selected, setSelected] = useState<PickableContent | null>(null);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const searchRef = useRef<HTMLInputElement>(null);
 
   const mine = useChatShareable(userId, type);
   const [savedSearch, setSavedSearch] = useState("");
@@ -470,9 +517,13 @@ export function CommentContentPicker({ userId, onPick, onClose }: { userId: stri
   const search = activeSource === "mine" ? mine.search : savedSearch;
   const setSearch = activeSource === "mine" ? mine.setSearch : setSavedSearch;
   const list = activeSource === "mine" ? mine.list : saved;
-  const items: PickableContent[] | null = list.items === null ? null : list.items.map((item) => ({ id: item.id, type: item.type, title: item.title }));
+  const items: PickableContent[] | null = useMemo(() => (list.items === null ? null : list.items.map((item) => ({ id: item.id, type: item.type, title: item.title }))), [list.items]);
   const loadError = list.failed && items !== null && items.length === 0;
-  const Icon = ATTACHMENT_ICONS[type];
+  const cards = usePickerCards(items);
+
+  useEffect(() => {
+    if (searchOpen) searchRef.current?.focus();
+  }, [searchOpen]);
 
   function changeType(next: ChatLibraryType) {
     setType(next);
@@ -484,6 +535,13 @@ export function CommentContentPicker({ userId, onPick, onClose }: { userId: stri
     setSource(next);
     setSelected(null);
   }
+  function toggleSearch() {
+    if (searchOpen) {
+      mine.setSearch("");
+      setSavedSearch("");
+    }
+    setSearchOpen((open) => !open);
+  }
 
   return (
     <Modal onClose={onClose} labelledBy="comment-content-title">
@@ -492,12 +550,23 @@ export function CommentContentPicker({ userId, onPick, onClose }: { userId: stri
           <h2 id="comment-content-title" className="font-display text-h3 font-bold text-text">
             {t("commentExtras.picker.title")}
           </h2>
-          <button type="button" onClick={onClose} aria-label={t("common.close")} className={iconButtonClassName(false, "h-9 w-9")}>
-            <X size={20} aria-hidden />
-          </button>
+          <div className="flex items-center gap-1">
+            <button type="button" onClick={toggleSearch} aria-label={t("communities.feed.pickSearch")} aria-expanded={searchOpen} data-comment-content-search-toggle className={iconButtonClassName(searchOpen, "h-9 w-9")}>
+              <Search size={20} aria-hidden />
+            </button>
+            <button type="button" onClick={onClose} aria-label={t("common.close")} className={iconButtonClassName(false, "h-9 w-9")}>
+              <X size={20} aria-hidden />
+            </button>
+          </div>
         </div>
         <div className="shrink-0 space-y-3 px-5 pb-2 pt-2">
-          <Tabs variant="segmented" ariaLabel={t("communities.feed.typeAria")} active={type} onChange={changeType} items={CHAT_LIBRARY_TYPES.map(({ type: value }) => ({ key: value, label: t(`communities.feed.type.${value}`) }))} />
+          <Tabs
+            variant="pill"
+            ariaLabel={t("communities.feed.typeAria")}
+            active={type}
+            onChange={changeType}
+            items={CHAT_LIBRARY_TYPES.map(({ type: value, icon }) => ({ key: value, label: t(`communities.feed.type.${value}`), icon }))}
+          />
           {canSave && (
             <Tabs
               variant="underline"
@@ -510,56 +579,65 @@ export function CommentContentPicker({ userId, onPick, onClose }: { userId: stri
               ]}
             />
           )}
-          <label className="relative block">
-            <span className="sr-only">{t("communities.feed.pickSearch")}</span>
-            <Search size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted" aria-hidden />
-            <input type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder={t("communities.feed.pickSearch")} className={cn(fieldControlClassName, "h-11 pl-10")} />
-          </label>
-          <p className="text-caption text-text-muted">{t("commentExtras.picker.help")}</p>
+          {searchOpen && (
+            <label className="relative block">
+              <span className="sr-only">{t("communities.feed.pickSearch")}</span>
+              <Search size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted" aria-hidden />
+              <input ref={searchRef} type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder={t("communities.feed.pickSearch")} className={cn(fieldControlClassName, "h-11 pl-10")} />
+            </label>
+          )}
         </div>
-        <div className="min-h-[8rem] flex-1 overflow-y-auto px-2 pb-2">
+        <div className="min-h-[8rem] flex-1 overflow-y-auto px-5 pb-3 pt-1">
           {loadError ? (
             <p role="alert" className="px-3 py-6 text-center text-small text-danger">
               {t("communities.feed.pickLoadError")}
             </p>
           ) : items === null || list.loading ? (
-            <div className="mx-3 mt-2 h-20 skeleton-shimmer rounded-lg" aria-busy="true" />
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3" aria-busy="true">
+              {[0, 1, 2, 3].map((n) => (
+                <div key={n} className="aspect-4/3 skeleton-shimmer rounded-xl" />
+              ))}
+            </div>
           ) : items.length === 0 ? (
-            <p className="mx-3 mt-2 rounded-lg border border-dashed border-border px-4 py-6 text-center text-small text-text-muted">
+            <p className="mt-2 rounded-lg border border-dashed border-border px-4 py-6 text-center text-small text-text-muted">
               {activeSource === "saved" ? t("commentExtras.picker.savedEmpty") : t("communities.feed.pickEmpty")}
             </p>
           ) : (
-            <div className="px-3">
-              <OptionGroup<string>
-                ariaLabel={t("communities.feed.pickAria")}
-                value={selected?.id ?? null}
-                onChange={(id) => {
-                  const item = items.find((entry) => entry.id === id);
-                  if (item) setSelected(item);
-                }}
-                options={items.map((item) => ({
+            <OptionTileGroup<string>
+              ariaLabel={t("communities.feed.pickAria")}
+              value={selected?.id ?? null}
+              onChange={(id) => {
+                const item = items.find((entry) => entry.id === id);
+                if (item) setSelected(item);
+              }}
+              options={items.map((item) => {
+                const card = cards.get(attachmentKey(item));
+                return {
                   key: item.id,
-                  leading: (
-                    <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-primary-soft text-primary">
-                      <Icon size={24} aria-hidden />
-                    </span>
-                  ),
-                  label: <span className="block truncate text-body font-semibold">{item.title || t("communities.feed.untitled")}</span>,
-                  description: <span className="block truncate text-small">{t(`communities.feed.type.${type}`)}</span>,
+                  art: <PickerArt item={item} card={card} />,
+                  label: item.title || t("communities.feed.untitled"),
+                  description: card?.stepCount ? t("commentExtras.stepCount", { count: card.stepCount }) : activeSource === "saved" ? card?.ownerName : undefined,
                   attrs: { "data-comment-content-item": item.id },
-                }))}
-              />
-            </div>
+                };
+              })}
+            />
           )}
           {items !== null && items.length > 0 && <LoadMore failed={list.failed} hasMore={list.hasMore} loadingMore={list.loadingMore} onLoadMore={list.grow} />}
         </div>
-        <div data-dialog-footer className="flex shrink-0 gap-2 border-t border-border-soft px-5 py-3">
-          <Button type="button" variant="ghost" size="lg" onClick={onClose}>
-            {t("common.cancel")}
-          </Button>
-          <Button type="button" size="lg" className="flex-1" disabled={!selected} onClick={() => selected && onPick(selected)} data-comment-content-add>
-            {selected ? t("commentExtras.picker.add") : t("commentExtras.picker.pickOne")}
-          </Button>
+        <div data-dialog-footer className="flex min-h-20 shrink-0 items-center gap-3 border-t border-border-soft px-5 py-3">
+          {selected ? (
+            <>
+              <span className="min-w-0 flex-1" data-comment-content-selected>
+                <span className="block text-caption text-text-muted">{t("commentExtras.picker.selected")}</span>
+                <span className="block truncate text-small font-semibold text-text">{selected.title || t("communities.feed.untitled")}</span>
+              </span>
+              <Button type="button" size="lg" onClick={() => onPick(selected)} data-comment-content-add>
+                {t("commentExtras.picker.add")}
+              </Button>
+            </>
+          ) : (
+            <p className="w-full text-center text-caption text-text-muted">{t("commentExtras.picker.help")}</p>
+          )}
         </div>
       </DialogShell>
     </Modal>
