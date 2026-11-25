@@ -108,7 +108,7 @@ await scenario("1. boş kütüphane: ilk Space boş durumu + örnek (gerçek ver
   await page.getByRole("heading", { level: 1, name: "Neon şehir" }).waitFor();
 });
 
-await scenario("2. liste: kartlar, süzgeç RPC'ye gider, arama gecikmeli, liste görünümü, favori, davet kabul", async ({ page, db }) => {
+await scenario("2. liste: kartlar, süzgeç RPC'ye gider, arama gecikmeli, liste görünümü, Sabitle yok, davet kabul", async ({ page, db }) => {
   await page.goto(`${BASE}/spaces`);
   await page.getByTestId("spaces-list").waitFor();
   assert.equal(await page.locator("[data-space-card]").count(), 2);
@@ -123,9 +123,7 @@ await scenario("2. liste: kartlar, süzgeç RPC'ye gider, arama gecikmeli, liste
   await page.getByRole("button", { name: "Temizle" }).click();
   await page.getByRole("button", { name: "Liste" }).click();
   await page.locator('[data-view="list"]').waitFor();
-  await page.locator(`[data-space-card="${SID(1)}"]`).getByRole("button", { name: "Sabitle" }).click();
-  await waitFor(() => calls(db, "RPC", "set_space_favorite").length === 1);
-  assert.equal(calls(db, "RPC", "set_space_favorite")[0].body.p_favorite, true);
+  assert.equal(await page.locator('[data-space-card] [aria-label="Sabitle"]').count(), 0, "Sabitle yok (docs/history/459-*)");
   // Davet: tek satırlık kart → "Davetler" bölümü → kabul → Space'e gider.
   await page.getByTestId("space-invites-banner").click();
   await page.getByTestId("space-invitations").getByRole("button", { name: "Kabul et" }).click();
@@ -139,34 +137,36 @@ await scenario("2. liste: kartlar, süzgeç RPC'ye gider, arama gecikmeli, liste
   },
 });
 
-await scenario("3. ziyaretçi: yalnız herkese açık süzgeç; oluştur giriş penceresi açar; yazma çağrısı yok", async ({ page, db }) => {
+
+await scenario("3. ziyaretçi: hiçbir Space listelenmez (hepsi özel); oluştur giriş penceresi açar; yazma çağrısı yok", async ({ page, db }) => {
   await page.goto(`${BASE}/spaces`);
-  await page.getByTestId("spaces-list").waitFor();
-  assert.ok(calls(db, "RPC", "list_spaces").every((c) => c.body.p_filter === "public"));
+  await page.getByText("Space'ler özeldir.").waitFor();
+  assert.equal(calls(db, "RPC", "list_spaces").length, 0, "ziyaretçi için liste sorgusu yok");
   assert.equal(await page.getByRole("tablist", { name: "Space süzgeci" }).count(), 0);
   await page.getByTestId("create-space").click();
   await page.getByRole("dialog").getByRole("link", { name: "Giriş yap" }).first().waitFor();
   assert.equal(calls(db, "RPC", "create_space").length, 0);
 }, { guest: true, setup: (db) => db.addSpace(1, { title: "Açık Space", owner: U.bob.id, visibility: "public" }) });
 
-// ---------------------------------------------------------------- Space sayfası
-
-await scenario("4. görüntüleyici (herkese açık, üye değil): Üyeler sekmesi yok, düzenleme düğmeleri yok, gizli not görünmez", async ({ page }) => {
+await scenario("4. üye olmayan (sunucuda 'herkese açık' görünse bile) Space'i göremez; sosyal yüzeyler yok: Yorumlar/Etkinlik sekmesi, Paylaş, Sabitle, görünürlük rozeti", async ({ page }) => {
   await page.goto(`${BASE}/spaces/local?id=${SID(1)}`);
-  await page.getByRole("heading", { level: 1, name: "Ejderha Dünyası" }).waitFor();
-  assert.ok(!(await spaceTabNames(page)).includes("Üyeler"), "Üyeler bölümü yok");
-  await pickSpaceTab(page, /Notlar/);
-  await page.getByTestId("space-notes").waitFor();
-  assert.equal(await page.getByTestId("new-note").count(), 0, "yeni not düğmesi yok");
-  assert.equal(await page.locator('[data-note="Gizli plan"]').count(), 0, "gizli not yok");
-  assert.equal(await page.locator('[data-note="Işık notu"]').count(), 1);
-}, {
-  setup: (db) => {
-    boardWith(db, 1, { owner: U.bob.id, visibility: "public" });
-    db.spaceItems.forEach((i) => (i.created_by = U.bob.id));
-    db.addItem(SID(1), { kind: "note", title: "Gizli plan", is_private: true });
-  },
-});
+  await page.getByText("Bu Space'e erişemiyorsun").waitFor();
+}, { setup: (db) => boardWith(db, 1, { owner: U.bob.id, visibility: "public" }) });
+
+await scenario("4b. sahip: Space sayfasında Yorumlar/Etkinlik sekmesi, Paylaş, Sabitle ve görünürlük rozeti YOK (docs/history/459-*)", async ({ page }) => {
+  await page.goto(`${BASE}/spaces/local?id=${SID(1)}`);
+  await spaceTabs(page).waitFor();
+  const names = await spaceTabNames(page);
+  assert.deepEqual(names, ["Genel bakış", "Pano", "Görseller", "Promptlar", "Palet", "Notlar", "Üyeler"]);
+  assert.equal(await page.locator("[data-space-visibility]").count(), 0, "görünürlük rozeti yok");
+  assert.equal(await page.locator("[data-space-rating-chip]").count(), 0, "puan rozeti yok");
+  await page.locator("[data-space-actions]").getByRole("button", { name: "Paylaş" }).count().then((n) => assert.equal(n, 0, "Paylaş düğmesi yok"));
+  await page.locator("[data-detail-menu]").getByRole("button").first().click();
+  assert.equal(await page.getByRole("menuitem", { name: "Sabitle" }).count(), 0, "Sabitle yok");
+  assert.equal(await page.getByRole("menuitem", { name: "Paylaş" }).count(), 0, "menüde Paylaş yok");
+}, { setup: (db) => boardWith(db, 1) });
+
+// ---------------------------------------------------------------- Space sayfası
 
 await scenario("5. erişilemeyen Space: tek tip 'erişemiyorsun' bloğu (varlık sızmaz)", async ({ page }) => {
   await page.goto(`${BASE}/spaces/local?id=${SID(9)}`);
@@ -348,41 +348,6 @@ await scenario("15. üyeler: sahip davet eder; bilinmeyen kullanıcı adında ç
   await page.getByText("Bu kullanıcı adıyla davet edilebilecek biri yok.").waitFor();
 }, { setup: (db) => db.addSpace(1, { members: [[U.bob, "editor"]] }) });
 
-await scenario("16. paylaşım: 'Bağlantıya sahip olanlar' → bağlantı oluştur (bir kez gösterilir) → iptal", async ({ page, db }) => {
-  await page.goto(`${BASE}/spaces/local?id=${SID(1)}`);
-  await page.getByRole("button", { name: "Paylaş" }).click();
-  const modal = page.getByTestId("share-space-modal");
-  await modal.getByText("Bağlantıya sahip olanlar").click();
-  await waitFor(() => db.spaces[0].visibility === "link");
-  await modal.getByRole("button", { name: "Bağlantı oluştur" }).click();
-  const url = await page.getByTestId("space-link-url").inputValue();
-  assert.match(url, /\/spaces\/link#tok_/);
-  await modal.getByRole("button", { name: "Bağlantıyı iptal et" }).click();
-  await modal.getByText("Etkin bağlantı yok.").waitFor();
-  assert.ok(db.spaceLinks.every((l) => l.revoked_at));
-}, { setup: (db) => db.addSpace(1) });
-
-await scenario("17. bağlantı sayfası: geçerli token → Space; geçersiz → tek tip hata", async ({ page, db }) => {
-  await page.goto(`${BASE}/spaces/link#tok_${"x".repeat(30)}0`);
-  await page.waitForURL(new RegExp(`id=${SID(1)}`));
-  await page.getByRole("heading", { level: 1, name: "Paylaşılan" }).waitFor();
-  assert.equal(calls(db, "RPC", "open_space_link").length, 1);
-  await page.goto(`${BASE}/spaces/link#${"y".repeat(40)}`);
-  await page.getByText("Bu bağlantı geçerli değil").waitFor();
-}, {
-  setup: (db) => {
-    db.addSpace(1, { title: "Paylaşılan", owner: U.bob.id, visibility: "link" });
-    db.spaceLinks.push({ id: "L1", space_id: SID(1), token: `tok_${"x".repeat(30)}0`, created_at: "2026-09-20T10:00:00Z", revoked_at: null });
-  },
-});
-
-await scenario("18. bağlantı sayfası (ziyaretçi): giriş ister, token giriş adresine KONMAZ", async ({ page }) => {
-  await page.goto(`${BASE}/spaces/link#tok_${"x".repeat(30)}0`);
-  await page.getByText("Görüntülemek için giriş yap").waitFor();
-  const href = await page.getByTestId("space-link-page").getByRole("link", { name: "Giriş yap" }).getAttribute("href");
-  assert.ok(!href.includes("tok_"), `token sızmadı: ${href}`);
-}, { guest: true });
-
 // ---------------------------------------------------------------- Promptly entegrasyonu
 
 await scenario("19. prompt detayı ⋮ → Space'e ekle: görsel + prompt kartı seçilir, kaynağa başvurulur, sonuçta 'Space'i aç'", async ({ page, db }) => {
@@ -441,131 +406,6 @@ await scenario("24. palet: görselden renk çıkarılamazsa (saydam) dürüst ha
   assert.equal(db.spacePalettes.length, 0);
 }, { setup: (db) => { db.addSpace(1); db.addItem(SID(1), { kind: "image", media_url: MEDIA(SID(1), 1), title: "Kare" }); } });
 
-// ---------------------------------------------------------------- Albüm düzeni + keşif (docs/history/214-*)
-
-const palette = (spaceId, colors, over = {}) => ({ id: crypto.randomUUID(), space_id: spaceId, name: over.name ?? "Gece", description: "", colors, source: "manual", source_item_id: null, position: over.position ?? 0, created_by: ME, created_at: "2026-09-20T10:00:00Z" });
-
-await scenario("25. ziyaretçi Space'i vitrin olarak görür: Görseller açılır, Genel bakış yok, 'Panoyu gez', bant paleti HEX kopyalar, Paylaş adresi verir", async ({ page, context }) => {
-  await context.grantPermissions(["clipboard-read", "clipboard-write"]);
-  await page.goto(`${BASE}/spaces/local?id=${SID(1)}`);
-  await page.getByRole("heading", { level: 1, name: "Ejderha Dünyası" }).waitFor();
-  const visitorNames = await spaceTabNames(page);
-  assert.ok(!visitorNames.includes("Genel bakış"), "ziyaretçiye genel bakış yok");
-  assert.match(await spaceTabs(page).getByRole("tab", { selected: true }).innerText(), /^Görseller/, "vitrin Görseller ile açılır");
-  assert.ok(!visitorNames.includes("Notlar"), "notu olmayan Space'te Notlar bölümü yok");
-  await page.getByRole("button", { name: "Panoyu gez" }).waitFor();
-  const strip = page.locator("[data-space-band-palette]");
-  await strip.getByText("Gece").waitFor();
-  await strip.getByRole("button", { name: "#ff5fa2 kopyala" }).click();
-  assert.equal(await page.evaluate(() => navigator.clipboard.readText()), "#ff5fa2");
-  // Paylaş tek pencereyi açar (docs/history/215-*): ziyaretçi ayar görmez, "Başka yerde paylaş" adresi verir.
-  await page.locator("[data-space-actions]").getByRole("button", { name: "Paylaş" }).click();
-  await page.locator('[data-share-modal="space"]').waitFor();
-  assert.equal(await page.locator("[data-space-feed-toggle]").count(), 0);
-  await page.locator("[data-share-link]").click();
-  await waitFor(async () => (await page.evaluate(() => navigator.clipboard.readText())).includes(`/spaces/local?id=${SID(1)}`));
-  assert.ok((await page.evaluate(() => navigator.clipboard.readText())).includes(`/spaces/local?id=${SID(1)}`));
-}, {
-  setup: (db) => {
-    db.addSpace(1, { title: "Ejderha Dünyası", owner: U.bob.id, visibility: "public" });
-    db.addItem(SID(1), { kind: "image", media_url: MEDIA(SID(1), 1), created_by: U.bob.id });
-    db.spacePalettes.push(palette(SID(1), ["#ff5fa2", "#22d3c5", "#7c5cff"]));
-  },
-});
-
-await scenario("25b. ziyaretçi vitrini: Görseller coverflow ile açılır (yan görsel öne gelir, ortadaki ayrıntıyı açar)", async ({ page }) => {
-  await page.goto(`${BASE}/spaces/local?id=${SID(1)}`);
-  await page.getByRole("heading", { level: 1, name: "Ejderha Dünyası" }).waitFor();
-  const showcase = page.getByTestId("space-showcase");
-  await showcase.waitFor();
-  await page.waitForFunction(() => document.querySelectorAll("[data-coverflow-card]").length === 4);
-  assert.equal(await page.locator("[data-coverflow-card][data-active]").getAttribute("data-coverflow-card"), "0");
-  await page.locator('[data-coverflow-card="1"]').click();
-  await page.waitForFunction(() => document.querySelector("[data-coverflow-card][data-active]")?.getAttribute("data-coverflow-card") === "1");
-  // Aynı görseller altındaki ızgarada da durur (coverflow yalnız kapak).
-  assert.equal(await page.locator("[data-image-item]").count(), 4);
-  await page.locator('[data-coverflow-card="1"]').click();
-  await page.getByRole("dialog").waitFor();
-  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1), true);
-}, {
-  setup: (db) => {
-    db.addSpace(1, { title: "Ejderha Dünyası", owner: U.bob.id, visibility: "public" });
-    for (let i = 1; i <= 4; i++) db.addItem(SID(1), { kind: "image", media_url: MEDIA(SID(1), i), title: `Görsel ${i}`, created_by: U.bob.id });
-  },
-});
-
-await scenario("25c. üç görselden azında coverflow yok (ızgara kalır)", async ({ page }) => {
-  await page.goto(`${BASE}/spaces/local?id=${SID(1)}`);
-  await page.getByTestId("space-images").waitFor();
-  assert.equal(await page.getByTestId("space-showcase").count(), 0);
-}, {
-  setup: (db) => {
-    db.addSpace(1, { title: "Ejderha Dünyası", owner: U.bob.id, visibility: "public" });
-    for (let i = 1; i <= 2; i++) db.addItem(SID(1), { kind: "image", media_url: MEDIA(SID(1), i), created_by: U.bob.id });
-  },
-});
-
-await scenario("26. sahip: bant paleti + ⋮ → Sabitle (set_space_favorite); ana sayfa kartı Albüm bandı + palet çizgisi + Sabitli", async ({ page, db }) => {
-  await page.goto(`${BASE}/spaces/local?id=${SID(1)}`);
-  await page.getByRole("heading", { level: 1, name: "Ejderha Dünyası" }).waitFor();
-  await spaceTabs(page).getByRole("tab", { name: /Genel bakış/ }).waitFor();
-  await page.locator("[data-space-band-palette]").waitFor();
-  await page.locator("[data-detail-menu]").getByRole("button").click();
-  await page.getByRole("menuitem", { name: "Sabitle" }).click();
-  await waitFor(() => calls(db, "RPC", "set_space_favorite").length === 1);
-  assert.equal(calls(db, "RPC", "set_space_favorite")[0].body.p_favorite, true);
-  await page.goto(`${BASE}/spaces`);
-  const card = page.locator(`[data-space-card="${SID(1)}"]`);
-  await card.locator("[data-palette-strip]").waitFor();
-  await card.getByRole("button", { name: "Sabitlemeyi kaldır" }).waitFor();
-  await pickSection(page, "Sabitli");
-  await waitFor(() => calls(db, "RPC", "list_spaces").some((c) => c.body.p_filter === "favorites"));
-}, {
-  setup: (db) => {
-    boardWith(db, 1);
-    db.spacePalettes.push(palette(SID(1), ["#111111", "#eeeeee"]));
-  },
-});
-
-await scenario("27. prompt detayı: 'Bu prompt şu Space'lerde' yalnız herkese açık + arşivsiz Space'i listeler", async ({ page, db }) => {
-  await page.goto(`${BASE}${PAGES.prompt}`);
-  const list = page.getByTestId("prompt-in-spaces");
-  await list.waitFor();
-  assert.ok(calls(db, "RPC", "list_public_spaces").some((c) => c.body.p_prompt === ID.prompt));
-  assert.deepEqual(await list.locator("a").evaluateAll((links) => links.map((a) => a.textContent.includes("Açık vitrin"))), [true]);
-  await list.getByRole("link").first().click();
-  await page.waitForURL(new RegExp(`spaces/local/?\\?id=${SID(1)}`));
-}, {
-  setup: (db) => {
-    db.addSpace(1, { title: "Açık vitrin", owner: U.bob.id, visibility: "public" });
-    db.addSpace(2, { title: "Kendi özelim", visibility: "private" });
-    db.addSpace(3, { title: "Arşivli açık", owner: U.bob.id, visibility: "public", archived: true });
-    for (const n of [1, 2, 3]) db.addItem(SID(n), { kind: "prompt", prompt_id: ID.prompt, created_by: db.spaces[n - 1].owner_id });
-  },
-});
-
-await scenario("28. profil: herkese açık Space varsa 'Spaces' sekmesi (yalnız herkese açık olanlar); yoksa sekme yok", async ({ page, db }) => {
-  await page.goto(`${BASE}/profile/real?username=${U.bob.username}`);
-  await page.locator("[data-section-menu]").click();
-  await page.getByRole("radio", { name: /Spaces/ }).click();
-  const grid = page.getByTestId("profile-spaces");
-  await grid.waitFor();
-  assert.equal(await grid.locator("[data-space-card]").count(), 1);
-  await grid.getByText("Bob'un açık Space'i").waitFor();
-  assert.ok(calls(db, "RPC", "list_public_spaces").some((c) => c.body.p_owner === U.bob.id));
-  await page.goto(`${BASE}/profile/real?username=${U.carol.username}`);
-  await page.getByRole("heading", { level: 1 }).first().waitFor();
-  await waitFor(() => calls(db, "RPC", "list_public_spaces").some((c) => c.body.p_owner === U.carol.id));
-  await page.waitForTimeout(300);
-  await page.locator("[data-section-menu]").click();
-  await page.getByRole("radio", { name: /Hakkında/ }).first().waitFor();
-  assert.equal(await page.getByRole("radio", { name: /Spaces/ }).count(), 0);
-}, {
-  setup: (db) => {
-    db.addSpace(1, { title: "Bob'un açık Space'i", owner: U.bob.id, visibility: "public" });
-    db.addSpace(2, { title: "Bob'un özeli", owner: U.bob.id, visibility: "private" });
-  },
-});
 
 // ---------------------------------------------------------------- dil + telefon
 
@@ -636,16 +476,16 @@ await scenario("30. Yeni Space penceresi (iOS klavyesi): dokunmatikte başlık k
   assert.ok(restored.height >= 800, `katman tam ekrana döndü: ${restored.height}`);
 }, { viewport: { width: 390, height: 844 }, touch: true });
 
-await scenario("31. ana sayfa (docs/history/231-*, 371-*): bant + altı çizgili sekmeler (davet sayaçlı) + simgeler; tür karosu Yeni Space'i o türle açar; filtre sayfası sıralama/tür/görünürlük; görünüm anahtarı; hiçbir özellik eksik değil", async ({ page, db }) => {
+await scenario("31. ana sayfa (docs/history/231-*, 371-*): bant + altı çizgili sekmeler (davet sayaçlı) + simgeler; tür karosu Yeni Space'i o türle açar; filtre sayfası sıralama/tür; görünüm anahtarı; hiçbir özellik eksik değil", async ({ page, db }) => {
   await page.goto(`${BASE}/spaces`);
   await page.getByRole("heading", { level: 1, name: "Spaces" }).waitFor();
   await page.getByTestId("spaces-list").waitFor();
   if (process.env.SHOTS) await page.screenshot({ path: `${process.env.SHOTS}/spaces-new-desktop.png` });
   await page.getByRole("tab", { name: /Davetler/ }).waitFor();
   await page.getByTestId("space-invites-banner").waitFor();
-  // Menü: yedi seçenek, davet sayaçlı.
+  // Menü: beş seçenek (Tümü · Benim · Paylaşılan · Arşiv · Davetler), davet sayaçlı.
   const sectionTabs = page.getByRole("tablist", { name: "Space süzgeci" });
-  assert.equal(await sectionTabs.getByRole("tab").count(), 7);
+  assert.equal(await sectionTabs.getByRole("tab").count(), 5);
   assert.match(await sectionTabs.getByRole("tab", { name: /Davetler/ }).textContent(), /Davetler\s*1/);
   await page.keyboard.press("Escape");
   // Tür karosu → Yeni Space penceresi o türle.

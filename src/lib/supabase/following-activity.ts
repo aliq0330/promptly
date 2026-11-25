@@ -14,12 +14,13 @@ import type { PromptContentType, PromptRequest, PromptResult, UserProfile } from
  * o saatte eklenen görseller. Okunamayan (silinmiş / engellenmiş) öğe sessizce düşer.
  */
 
-export type ActivitySource = "all" | "people" | "tags" | "tools" | "spaces";
+export type ActivitySource = "all" | "people" | "tags" | "tools";
 export type { ActivityCursor };
 
 interface ActivityRow {
   event_key: string;
   event_kind: "post" | "group" | "version" | "space_activity" | "result";
+  /** `space_activity` eski bir olay türüdür (Space'ler artık özel; docs/history/459-*): gelirse ayıklanır. */
   source: "people" | "tag" | "tool" | "space";
   actor_id: string;
   occurred_at: string;
@@ -51,14 +52,6 @@ export type ActivityEvent =
       /** Prompt metninin bir önceki sürüme göre farkı; başka türde (workflow, ayar paketi, Skill) yok. */
       diff: DiffLine[] | null;
       newVariables: string[];
-    })
-  | (EventBase & {
-      kind: "space_activity";
-      space: { id: string; title: string };
-      count: number;
-      actions: string[];
-      note: string | null;
-      images: string[];
     })
   | (EventBase & { kind: "result"; result: PromptResult });
 
@@ -132,12 +125,11 @@ async function hydrateEvents(list: DedupedRow[]): Promise<ActivityEvent[]> {
   }
   // 2) Yazar bilgisi paylaşımda zaten var; diğer satırların kişisi ayrıca.
   const actorIds = [...new Set(list.filter((entry) => entry.kind !== "post" && entry.kind !== "group").map((entry) => entry.row.actor_id))];
-  const [items, actors, results, versionTexts, spaceImages] = await Promise.all([
+  const [items, actors, results, versionTexts] = await Promise.all([
     hydrateFeedRows([...refs.values()]),
     fetchProfilesByIds(actorIds),
     Promise.all(list.filter((entry) => entry.kind === "result" && entry.row.item_id).map((entry) => fetchResultById(entry.row.item_id as string))),
     fetchVersionTexts(list.filter((entry) => entry.kind === "version" && entry.row.item_kind === "prompt").map((entry) => entry.row)),
-    fetchSpaceImages(list.filter((entry) => entry.kind === "space_activity").map((entry) => entry.row)),
   ]);
   const itemsByKey = new Map(items.map((item) => [itemKey(item.kind, item.data.id), item]));
   // İsteğe yanıt olan promptların istekleri (tek sorgu).
@@ -188,17 +180,6 @@ async function hydrateEvents(list: DedupedRow[]): Promise<ActivityEvent[]> {
         diff: texts ? diffLines(texts.before, texts.after) : null,
         newVariables: texts ? addedVariables(texts.before, texts.after) : [],
       });
-    } else if (entry.kind === "space_activity" && row.item_id) {
-      events.push({
-        ...base,
-        kind: "space_activity",
-        actor: actorById.get(row.actor_id) ?? null,
-        space: { id: row.item_id, title: String(row.detail?.title ?? "") },
-        count: Number(row.detail?.count ?? 0),
-        actions: Array.isArray(row.detail?.actions) ? (row.detail?.actions as string[]) : [],
-        note: typeof row.detail?.note === "string" ? (row.detail.note as string) : null,
-        images: spaceImages.get(row.event_key) ?? [],
-      });
     } else if (entry.kind === "result" && row.item_id) {
       const result = resultById.get(row.item_id);
       if (!result) continue;
@@ -236,33 +217,6 @@ async function fetchVersionTexts(rows: ActivityRow[]): Promise<Map<string, { bef
   return out;
 }
 
-/** Space etkinliğinde o saat içinde o kişinin eklediği görseller (en çok 6; `space-media` kimlik adresi, `StorageImg` imzalar). */
-async function fetchSpaceImages(rows: ActivityRow[]): Promise<Map<string, string[]>> {
-  const out = new Map<string, string[]>();
-  await Promise.all(
-    rows.map(async (row) => {
-      const from = typeof row.detail?.from === "string" ? (row.detail.from as string) : null;
-      const to = typeof row.detail?.to === "string" ? (row.detail.to as string) : null;
-      if (!row.item_id || !from || !to) return;
-      const fromAt = new Date(new Date(from).getTime() - 60_000).toISOString();
-      const toAt = new Date(new Date(to).getTime() + 60_000).toISOString();
-      const { data } = await supabase
-        .from("space_items")
-        .select("media_url")
-        .eq("space_id", row.item_id)
-        .eq("created_by", row.actor_id)
-        .eq("kind", "image")
-        .gte("created_at", fromAt)
-        .lte("created_at", toAt)
-        .order("created_at", { ascending: false })
-        .limit(6);
-      const urls = ((data ?? []) as { media_url: string | null }[]).map((item) => item.media_url).filter((url): url is string => Boolean(url));
-      out.set(row.event_key, urls);
-    }),
-  );
-  return out;
-}
-
 // ---------------------------------------------------------------------------------------------------------------------------
 // Tercihler, ziyaret, kişi modu, özet, kişi listesi
 // ---------------------------------------------------------------------------------------------------------------------------
@@ -272,7 +226,6 @@ export interface FollowFeedSettings {
   includeTags: boolean;
   includeTools: boolean;
   showVersions: boolean;
-  showSpaceActivity: boolean;
   showResults: boolean;
 }
 export const DEFAULT_FOLLOW_FEED_SETTINGS: FollowFeedSettings = {
@@ -280,7 +233,6 @@ export const DEFAULT_FOLLOW_FEED_SETTINGS: FollowFeedSettings = {
   includeTags: true,
   includeTools: false,
   showVersions: true,
-  showSpaceActivity: true,
   showResults: false,
 };
 
@@ -294,7 +246,6 @@ export async function fetchFollowFeedSettings(): Promise<FollowFeedSettings> {
     includeTags: row.include_tags ?? true,
     includeTools: row.include_tools ?? false,
     showVersions: row.show_versions ?? true,
-    showSpaceActivity: row.show_space_activity ?? true,
     showResults: row.show_results ?? false,
   };
 }
@@ -305,7 +256,7 @@ export async function updateFollowFeedSettings(patch: Partial<FollowFeedSettings
     p_include_tags: patch.includeTags ?? null,
     p_include_tools: patch.includeTools ?? null,
     p_show_versions: patch.showVersions ?? null,
-    p_show_space_activity: patch.showSpaceActivity ?? null,
+    p_show_space_activity: null, // Space etkinliği kalktı (docs/history/459-*); RPC parametresi eski imza için durur
     p_show_results: patch.showResults ?? null,
   });
   if (error) throw new Error(error.message);

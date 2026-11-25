@@ -42,7 +42,7 @@ test("kimlik çıkarıcılar", () => {
 
 test("bağlı içerik yalnız önizlenebilen türlerde", () => {
   assert.deepEqual(linkedContent({ targetHref: "/prompts/local?id=P&hl=post:P" }), { type: "prompt", id: "P" });
-  assert.deepEqual(linkedContent({ targetHref: "/spaces/local?id=S" }), { type: "space", id: "S" });
+  assert.equal(linkedContent({ targetHref: "/spaces/local?id=S" }), null);
   assert.equal(linkedContent({ targetHref: "/quotes/local?id=Q" }), null);
   assert.equal(linkedContent({ targetHref: "/profile/real?username=a" }), null);
 });

@@ -6,7 +6,6 @@ import { Crown } from "@/components/icons/crown";
 import { Eye } from "@/components/icons/eye";
 import { Loader2 } from "@/components/icons/loader-2";
 import { LogOut } from "@/components/icons/log-out";
-import { Share2 } from "@/components/icons/share-2";
 import { UserMinus } from "@/components/icons/user-minus";
 import { UserPlus } from "@/components/icons/user-plus";
 import { X } from "@/components/icons/x";
@@ -14,10 +13,11 @@ import { Pencil } from "@/components/icons/pencil";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { fieldInputClassName, fieldLabelClassName, Input } from "@/components/ui/field";
+import { Lock } from "@/components/icons/lock";
 import { ConfirmDialog } from "@/features/groups/confirm-dialog";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn, formatRelativeTime, profileHref } from "@/lib/utils";
-import { SPACE_ROLE_LABEL, SPACE_VISIBILITY_LABEL, type SpaceRole } from "@/lib/spaces";
+import { SPACE_ROLE_LABEL, type SpaceRole } from "@/lib/spaces";
 import {
   fetchPendingSpaceInvitations,
   fetchSpaceMembers,
@@ -30,8 +30,6 @@ import {
 } from "@/lib/supabase/spaces";
 import { useSpaceContext } from "../space-provider";
 import { FormError } from "../space-forms";
-import { ShareSpaceModal } from "../space-modals";
-import { VisibilityBadge } from "../space-visuals";
 import { PersonRow } from "@/components/ui/person-row";
 
 const ROLE_ICON: Record<SpaceRole, typeof Crown> = { owner: Crown, editor: Pencil, viewer: Eye };
@@ -44,7 +42,7 @@ const ROLE_ICON: Record<SpaceRole, typeof Crown> = { owner: Crown, editor: Penci
 export function MembersTab() {
   const { t, language } = useTranslation();
   const router = useRouter();
-  const { space, setSpace, caps, userId } = useSpaceContext();
+  const { space, caps, userId } = useSpaceContext();
   const [members, setMembers] = useState<SpaceMember[] | null>(null);
   const [invites, setInvites] = useState<SpaceInvitation[]>([]);
   const [failed, setFailed] = useState(false);
@@ -54,7 +52,6 @@ export function MembersTab() {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [confirm, setConfirm] = useState<null | { kind: "remove"; member: SpaceMember } | { kind: "leave" }>(null);
-  const [shareOpen, setShareOpen] = useState(false);
   const inputId = useId();
   const roleId = useId();
 
@@ -242,14 +239,11 @@ export function MembersTab() {
       <aside className="space-y-4 lg:sticky lg:top-24 lg:self-start">
         <section className="space-y-2 rounded-lg card-flat p-4">
           <h2 className="text-label font-semibold text-text-muted">{t("spaces.members.access")}</h2>
-          <VisibilityBadge visibility={space.visibility} />
-          <p className="text-small text-text-secondary">{t(SPACE_VISIBILITY_LABEL[space.visibility])}</p>
-          {caps.share && (
-            <Button variant="outline" size="sm" onClick={() => setShareOpen(true)}>
-              <Share2 size={16} aria-hidden />
-              {t("spaces.members.shareSettings")}
-            </Button>
-          )}
+          <p className="flex items-center gap-1.5 text-small font-semibold text-text">
+            <Lock size={16} className="shrink-0 text-text-muted" aria-hidden />
+            {t("spaces.visibility.private")}
+          </p>
+          <p className="text-small text-text-secondary">{t("spaces.members.accessPrivate")}</p>
         </section>
         <section className="space-y-2 rounded-lg card-flat p-4 text-small text-text-secondary">
           <h2 className="text-label font-semibold text-text-muted">{t("spaces.members.rolesTitle")}</h2>
@@ -316,7 +310,6 @@ export function MembersTab() {
           }}
         />
       )}
-      {shareOpen && <ShareSpaceModal space={space} onClose={() => setShareOpen(false)} onChanged={setSpace} />}
     </div>
   );
 }

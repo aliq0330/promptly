@@ -6,7 +6,7 @@ import { Modal } from "@/components/ui/modal";
 import { ScrollRow } from "@/components/ui/scroll-row";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
-import { SPACE_KIND_LABEL, SPACE_KINDS, SPACE_SORTS, SPACE_VISIBILITIES, SPACE_VISIBILITY_LABEL, type SpaceKind, type SpaceSort, type SpaceVisibility } from "@/lib/spaces";
+import { SPACE_KIND_LABEL, SPACE_KINDS, SPACE_SORTS, type SpaceKind, type SpaceSort } from "@/lib/spaces";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import { SPACE_KIND_ICON, SPACE_KIND_TINT } from "./space-visuals";
 import { DialogShell } from "@/components/ui/dialog-shell";
@@ -20,7 +20,7 @@ const SORT_LABEL: Record<SpaceSort, TranslationKey> = {
 };
 
 /**
- * "Filtrele ve sırala" (docs/history/231-*): sıralama (eski açılır liste) + tür + görünürlük. Tür ve görünürlük yüklenmiş Space'ler üzerinde
+ * "Filtrele ve sırala" (docs/history/231-*): sıralama (eski açılır liste) + tür. Tür yüklenmiş Space'ler üzerinde
  * çalışır (sunucu RPC'si yalnız bölüm/sıralama/arama bilir); "Daha fazla" sonraki sayfayı getirir.
  */
 export function SpacesFilterSheet({
@@ -28,8 +28,6 @@ export function SpacesFilterSheet({
   onSort,
   kind,
   onKind,
-  visibility,
-  onVisibility,
   signedIn,
   onReset,
   onClose,
@@ -38,14 +36,12 @@ export function SpacesFilterSheet({
   onSort: (sort: SpaceSort) => void;
   kind: SpaceKind | null;
   onKind: (kind: SpaceKind | null) => void;
-  visibility: SpaceVisibility | null;
-  onVisibility: (visibility: SpaceVisibility | null) => void;
   signedIn: boolean;
   onReset: () => void;
   onClose: () => void;
 }) {
   const { t } = useTranslation();
-  const dirty = sort !== "updated" || kind !== null || visibility !== null;
+  const dirty = sort !== "updated" || kind !== null;
   return (
     <Modal onClose={onClose} labelledBy="spaces-filter-title">
       <DialogShell role="document" className="flex max-h-[85dvh] w-full max-w-md flex-col rounded-lg card-flat shadow-pop">
@@ -77,19 +73,6 @@ export function SpacesFilterSheet({
               {SPACE_KINDS.map((key) => (
                 <Chip key={key} selected={kind === key} onClick={() => onKind(kind === key ? null : key)}>
                   {t(SPACE_KIND_LABEL[key])}
-                </Chip>
-              ))}
-            </div>
-          </fieldset>
-          <fieldset className="space-y-2">
-            <legend className="text-label font-semibold text-text-muted">{t("spaces.filter.visibility")}</legend>
-            <div className="flex flex-wrap gap-2">
-              <Chip selected={visibility === null} onClick={() => onVisibility(null)}>
-                {t("spaces.filter.all")}
-              </Chip>
-              {SPACE_VISIBILITIES.map((key) => (
-                <Chip key={key} selected={visibility === key} onClick={() => onVisibility(visibility === key ? null : key)}>
-                  {t(SPACE_VISIBILITY_LABEL[key])}
                 </Chip>
               ))}
             </div>

@@ -3,7 +3,6 @@ import { fetchPromptsByIds } from "./prompts";
 import { fetchRequestsByIds } from "./requests";
 import { fetchWorkflowsByIds } from "./workflows";
 import { fetchPresetsByIds } from "./presets";
-import { fetchSpaceFeedCards } from "./spaces";
 import { fetchSkillsByIds } from "./skills";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import { translateForRuntime } from "@/lib/i18n/runtime";
@@ -62,7 +61,6 @@ const ERROR_KEYS: Record<string, TranslationKey> = {
   blocked: "quotes.error.blocked",
   already_quoted: "quotes.error.alreadyQuoted",
   quote_rate_limit: "quotes.error.rateLimit",
-  space_too_empty: "quotes.error.spaceTooEmpty",
 };
 
 export function toQuoteError(error: { message?: string } | null): Error {
@@ -96,12 +94,11 @@ export async function fetchQuotesByIds(ids: string[]): Promise<Quote[]> {
   if (error) throw new Error(error.message);
   const rows = (data ?? []) as QuoteCardRow[];
   const idsOf = (type: QuoteContentType) => [...new Set(rows.filter((row) => row.content_type === type).map((row) => row.target_id))];
-  const [prompts, requests, workflows, presets, spaces, skills] = await Promise.all([
+  const [prompts, requests, workflows, presets, skills] = await Promise.all([
     fetchPromptsByIds(idsOf("prompt")),
     fetchRequestsByIds(idsOf("request")),
     fetchWorkflowsByIds(idsOf("workflow")),
     fetchPresetsByIds(idsOf("preset")),
-    fetchSpaceFeedCards(idsOf("space")).catch(() => []),
     fetchSkillsByIds(idsOf("skill")),
   ]);
   const skillById = new Map(skills.map((skill) => [skill.id, skill]));
@@ -110,7 +107,6 @@ export async function fetchQuotesByIds(ids: string[]): Promise<Quote[]> {
   for (const data of requests) content.set(`request-${data.id}`, { type: "request", data });
   for (const data of workflows) content.set(`workflow-${data.id}`, { type: "workflow", data });
   for (const data of presets) content.set(`preset-${data.id}`, { type: "preset", data });
-  for (const data of spaces) content.set(`space-${data.id}`, { type: "space", data });
 
   const byId = new Map<string, Quote>();
   for (const row of rows) {
@@ -143,20 +139,6 @@ export async function createQuote(type: QuoteContentType, contentId: string, not
   const { data, error } = await supabase.rpc("create_quote", { p_content_type: type, p_content_id: contentId, p_note: note.trim() || null });
   if (error) throw toQuoteError(error);
   return String(data);
-}
-
-/** Kullanıcının bir Space'e ait kendi (en eski) alıntısının kimliği; yoksa `null`. Sahibin "Akışta paylaş" anahtarı budur (docs/history/241-*). */
-export async function fetchOwnSpaceQuoteId(spaceId: string, userId: string): Promise<string | null> {
-  const { data, error } = await supabase
-    .from("content_quotes")
-    .select("id")
-    .eq("author_id", userId)
-    .eq("space_id", spaceId)
-    .order("created_at", { ascending: true })
-    .limit(1)
-    .maybeSingle();
-  if (error) throw toQuoteError(error);
-  return data ? String((data as { id: string }).id) : null;
 }
 
 /** Kendi alıntını siler; "0 satır etkilendi" sessiz başarı sayılmaz. */

@@ -15,8 +15,6 @@ interface CommentRow {
   created_at: string;
   edited_at: string | null;
   deleted_at: string | null;
-  rating?: number | null;
-  space_activity_id?: string | null;
   /** Yorum medyası/eki (docs/history/308-*): sütunlar yoksa (migration gecikti) gelmez. */
   media_kind?: string | null;
   media_ref?: string | null;
@@ -30,7 +28,7 @@ interface CommentRow {
 }
 
 const COMMENT_SELECT = `
-  id, body, parent_id, like_count, created_at, edited_at, deleted_at, rating, space_activity_id, media_kind, media_ref, media_width, media_height, attach_type, attach_id, pinned_at,
+  id, body, parent_id, like_count, created_at, edited_at, deleted_at, media_kind, media_ref, media_width, media_height, attach_type, attach_id, pinned_at,
   profiles:author_id ( id, username, display_name, avatar_url, cover_url, bio, website, follower_count, following_count, created_at, interests )
 `;
 
@@ -39,7 +37,7 @@ export { mapCommentAttachment, mapCommentMedia };
 
 function mapCommentRow(
   row: CommentRow,
-  target: { promptId: string } | { requestId: string } | { resultId: string } | { workflowId: string } | { presetId: string } | { skillId: string } | { communityPostId: string } | { spaceId: string } | { quoteId: string },
+  target: { promptId: string } | { requestId: string } | { resultId: string } | { workflowId: string } | { presetId: string } | { skillId: string } | { communityPostId: string } | { quoteId: string },
 ): PromptComment {
   return {
     id: row.id,
@@ -51,8 +49,6 @@ function mapCommentRow(
     createdAt: row.created_at,
     editedAt: row.edited_at,
     deletedAt: row.deleted_at,
-    rating: row.rating ?? null,
-    ...(row.space_activity_id ? { spaceActivityId: row.space_activity_id } : {}),
     media: mapCommentMedia(row),
     attachment: mapCommentAttachment(row),
     pinnedAt: row.pinned_at ?? null,
@@ -178,50 +174,6 @@ export async function postCommentOnCommunityPost(
   return mapCommentRow(data as unknown as CommentRow, { communityPostId });
 }
 
-/** Sunucunun bilerek fırlattığı Space yorum kodları (rating tekilliği, sahip, arşiv) kullanıcıya çevrilir. */
-function spaceCommentError(error: { message?: string } | null): Error {
-  const message = error?.message ?? "";
-  if (/prompt_comments_space_rating_uniq/.test(message)) return new Error(translateForRuntime("comments.error.alreadyRated"));
-  if (/space_rating_owner/.test(message)) return new Error(translateForRuntime("comments.error.ratingOwner"));
-  if (/space_archived/.test(message)) return new Error(translateForRuntime("comments.error.archived"));
-  return new Error(message || translateForRuntime("comments.postFailed"));
-}
-
-/**
- * Space'e yorum (docs/history/242-*): `rating` yalnız ana yorumda (1–5; kişi başına tek, sahibi veremez), `activityId` verilirse yorum o etkinliğe düşer.
- * Sunucu tetikleyicisi okuma/engel/arşiv kurallarını doğrular; `spaces.comment_count` ya da `space_activity.comment_count` tetikleyiciyle tutulur.
- */
-export async function postCommentOnSpace(
-  spaceId: string,
-  authorId: string,
-  body: string,
-  parentId: string | null,
-  options: { rating?: number | null; activityId?: string | null } & CommentExtras = {},
-): Promise<PromptComment> {
-  const { data, error } = await supabase
-    .from("prompt_comments")
-    .insert({
-      space_id: spaceId,
-      author_id: authorId,
-      body,
-      parent_id: parentId,
-      ...(options.activityId ? { space_activity_id: options.activityId } : {}),
-      ...(options.rating ? { rating: options.rating } : {}),
-      ...extrasColumns(options),
-    })
-    .select(COMMENT_SELECT)
-    .single();
-  if (error || !data) throw spaceCommentError(error);
-  return mapCommentRow(data as unknown as CommentRow, { spaceId });
-}
-
-/** Kendi puanlı yorumunun puanını değiştirir ("0 satır etkilendi" sessiz başarı sayılmaz). */
-export async function updateCommentRating(commentId: string, authorId: string, rating: number): Promise<void> {
-  const { data, error } = await supabase.from("prompt_comments").update({ rating }).eq("id", commentId).eq("author_id", authorId).select("id").maybeSingle();
-  if (error) throw spaceCommentError(error);
-  if (!data) throw new Error(translateForRuntime("comments.error.rateFailed"));
-}
-
 /** Alıntıya yorum: sunucu tetikleyicisi hedefin halka açıklığını ve engeli doğrular; `content_quotes.comment_count` tetikleyiciyle tutulur. */
 export async function postCommentOnQuote(quoteId: string, authorId: string, body: string, parentId: string | null, extras?: CommentExtras): Promise<PromptComment> {
   const { data, error } = await supabase
@@ -275,15 +227,14 @@ export async function deleteComment(commentId: string): Promise<void> {
 
 export const COMMENTS_PAGE = 20;
 
-export type CommentScopeKind = "prompt" | "request" | "result" | "workflow" | "preset" | "skill" | "community_post" | "space" | "space_activity" | "quote";
-/** Which discussion a thread belongs to (`spaceId` is also needed for a Space activity). */
+export type CommentScopeKind = "prompt" | "request" | "result" | "workflow" | "preset" | "skill" | "community_post" | "quote";
+/** Which discussion a thread belongs to. */
 export interface CommentScope {
   kind: CommentScopeKind;
   id: string;
-  spaceId?: string;
 }
 
-const SCOPE_COLUMN: Record<Exclude<CommentScopeKind, "space" | "space_activity">, string> = {
+const SCOPE_COLUMN: Record<CommentScopeKind, string> = {
   prompt: "prompt_id",
   request: "request_id",
   result: "result_id",
@@ -301,8 +252,6 @@ interface Filterable {
 /** The filters that pin a `prompt_comments` query to one discussion. */
 function applyScope<Q>(query: Q, scope: CommentScope): Q {
   const q = query as unknown as Filterable;
-  if (scope.kind === "space") return q.eq("space_id", scope.id).is("space_activity_id", null) as unknown as Q;
-  if (scope.kind === "space_activity") return q.eq("space_id", scope.spaceId ?? "").eq("space_activity_id", scope.id) as unknown as Q;
   return q.eq(SCOPE_COLUMN[scope.kind], scope.id) as unknown as Q;
 }
 
@@ -316,7 +265,6 @@ function targetOf(scope: CommentScope): Parameters<typeof mapCommentRow>[1] {
     case "skill": return { skillId: scope.id };
     case "community_post": return { communityPostId: scope.id };
     case "quote": return { quoteId: scope.id };
-    default: return { spaceId: scope.kind === "space" ? scope.id : (scope.spaceId ?? "") };
   }
 }
 
@@ -390,19 +338,4 @@ export async function fetchCommentThread(scope: CommentScope, commentId: string)
   if (!scoped) return [];
   const replies = await fetchDescendants([current.id], scope);
   return withoutBlocked([mapCommentRow(current, targetOf(scope)), ...replies], (c) => c.author.id);
-}
-
-/** A Space allows one rating per person: the viewer's own rated comment is always loaded, even when it sits on a page not read yet. */
-export async function fetchOwnRatedSpaceComment(spaceId: string, userId: string): Promise<PromptComment | null> {
-  const { data } = await supabase
-    .from("prompt_comments")
-    .select(COMMENT_SELECT)
-    .eq("space_id", spaceId)
-    .is("space_activity_id", null)
-    .eq("author_id", userId)
-    .not("rating", "is", null)
-    .is("parent_id", null)
-    .limit(1);
-  const row = (data?.[0] ?? null) as unknown as CommentRow | null;
-  return row ? mapCommentRow(row, { spaceId }) : null;
 }

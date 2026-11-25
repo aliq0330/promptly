@@ -1078,7 +1078,6 @@ export const translations = {
   "share.announce.title": { tr: "Topluluklarda alıntıla", en: "Quote in communities" },
   "share.announce.hint": { tr: "Üyesi olduğun topluluklarda gönderi olarak göster (içerik kopyalanmaz)", en: "Show it as a post in communities you're in (it isn't copied)" },
   "share.announce.notPublic": { tr: "Alıntılamak için önce herkese açık yayınla", en: "Publish it publicly first to quote it" },
-  "share.announce.spaceNotPublic": { tr: "Alıntılamak için Space herkese açık olmalı", en: "The Space must be public to quote it" },
   "share.announce.noCommunities": { tr: "Henüz bir topluluğa üye değilsin.", en: "You're not in any community yet." },
   "share.announce.notePlaceholder": { tr: "Not ekle (isteğe bağlı)", en: "Add a note (optional)" },
   "share.announce.submit": { tr: "{{count}} toplulukta alıntıla", en: "Quote in {{count}} communities" },
@@ -1086,7 +1085,6 @@ export const translations = {
   "share.forYourself": { tr: "Kendin için", en: "For yourself" },
   "share.addToSpace": { tr: "Space'e ekle", en: "Add to Space" },
   "share.saveToCollection": { tr: "Koleksiyona kaydet", en: "Save to a collection" },
-  "share.spaceSettings": { tr: "Kim görsün?", en: "Who can see it?" },
 
   // ---- Auth (shared across pages) ----
   "auth.loginRequiredTitle": { tr: "Giriş yapmalısın", en: "You need to log in" },

@@ -33,7 +33,7 @@ import {
   type MySpaceInvitation,
   type SpaceSummary,
 } from "@/lib/supabase/spaces";
-import { isSpaceFilter, SPACE_KIND_LABEL, SPACE_PAGE_SIZE, SPACE_ROLE_LABEL, spaceHref, type SpaceFilter, type SpaceKind, type SpaceSort, type SpaceVisibility } from "@/lib/spaces";
+import { isSpaceFilter, SPACE_KIND_LABEL, SPACE_PAGE_SIZE, SPACE_ROLE_LABEL, spaceHref, type SpaceFilter, type SpaceKind, type SpaceSort } from "@/lib/spaces";
 import { CreateSpaceModal } from "./space-modals";
 import { SpaceCard } from "./space-card";
 import { type SectionMenuItem, CONTROL_ICON_BUTTON } from "@/features/content/section-menu";
@@ -47,8 +47,6 @@ const FILTER_LABEL: Record<SpaceFilter, TranslationKey> = {
   all: "spaces.filter.all",
   mine: "spaces.filter.mine",
   shared: "spaces.filter.shared",
-  favorites: "spaces.filter.favorites",
-  public: "spaces.filter.public",
   archived: "spaces.filter.archived",
 };
 
@@ -64,10 +62,10 @@ function readView(): "grid" | "list" {
 
 /**
  * Spaces ana sayfası (docs/history/213-*, Albüm düzeni 214-*, sade düzen 231-*): büyük başlık; tek kontrol satırı — "Tümü ▾" bölüm menüsü
- * (Tümü · Benim · Paylaşılan · Sabitli · Herkese açık · Arşiv; bekleyen davet varsa nokta + sayaçlı "Davetler"), arama (proje adı/açıklaması +
+ * (Tümü · Benim · Paylaşılan · Arşiv; bekleyen davet varsa nokta + sayaçlı "Davetler"), arama (proje adı/açıklaması +
  * içindeki görsel/prompt/not metinleri, sunucuda), filtre/sıralama sayfası, ızgara/liste anahtarı ve "+"; "Yeni bir Space başlatın" tür
- * karoları, tek satırlık davet kartı, "Son açılanlar" rafı, Albüm kartları ve kademeli yükleme. Ziyaretçi yalnız herkese açık Space'leri
- * görür; oluşturmak giriş ister.
+ * karoları, tek satırlık davet kartı, "Son açılanlar" rafı, Albüm kartları ve kademeli yükleme. Space'ler özeldir (docs/history/459-*):
+ * ziyaretçi hiçbir Space görmez, giriş ister.
  */
 export function SpacesHome() {
   const { t, language } = useTranslation();
@@ -94,15 +92,13 @@ export function SpacesHome() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
   const [kindFilter, setKindFilter] = useState<SpaceKind | null>(null);
-  const [visibilityFilter, setVisibilityFilter] = useState<SpaceVisibility | null>(null);
   const requestId = useRef(0);
   const askedPalettes = useRef(new Set<string>());
 
   // Davet bölümü yalnız bekleyen davet varken vardır; son davet yanıtlanınca Tümü'ne dönülür.
   const filter: SpaceFilter = section === "invites" ? "all" : section;
   const showInvites = section === "invites" && invites.length > 0;
-  // Ziyaretçi yalnız herkese açık süzgeci kullanabilir.
-  const effectiveFilter: SpaceFilter = user ? filter : "public";
+  const effectiveFilter: SpaceFilter = filter;
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- localStorage is read after mount (static export: no window during prerender)
@@ -117,7 +113,13 @@ export function SpacesHome() {
   useEffect(() => {
     if (authLoading) return;
     const id = ++requestId.current;
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- back to the loading state for a new query; the response fills it
+    // Ziyaretçiye Space listelenmez (hepsi özel): yükleme yapmadan boş durum + giriş çağrısı.
+    if (!user) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- guests have nothing to load
+      setItems([]);
+      setHasMore(false);
+      return;
+    }
     setItems(null);
     setError(false);
     listSpaces({ filter: effectiveFilter, query: debounced, sort, limit: SPACE_PAGE_SIZE, offset: 0 })
@@ -127,7 +129,7 @@ export function SpacesHome() {
         setHasMore(list.length === SPACE_PAGE_SIZE);
       })
       .catch(() => id === requestId.current && setError(true));
-  }, [authLoading, effectiveFilter, debounced, sort, reloadKey]);
+  }, [authLoading, user, effectiveFilter, debounced, sort, reloadKey]);
 
   const signedIn = Boolean(user);
   useEffect(() => {
@@ -206,14 +208,12 @@ export function SpacesHome() {
     { key: "all", label: t("spaces.filter.all") },
     { key: "mine", label: t("spaces.nav.mine") },
     { key: "shared", label: t("spaces.nav.shared") },
-    { key: "favorites", label: t("spaces.filter.favorites") },
-    { key: "public", label: t("spaces.filter.public") },
     { key: "archived", label: t("spaces.filter.archived") },
     ...(invites.length > 0 ? [{ key: "invites" as const, label: t("spaces.nav.invites"), count: invites.length }] : []),
   ];
-  // Tür/görünürlük süzgeci yüklenmiş Space'ler üzerinde çalışır.
-  const shown = items?.filter((item) => (!kindFilter || item.kind === kindFilter) && (!visibilityFilter || item.visibility === visibilityFilter)) ?? null;
-  const filtersActive = sort !== "updated" || kindFilter !== null || visibilityFilter !== null;
+  // Tür süzgeci yüklenmiş Space'ler üzerinde çalışır.
+  const shown = items?.filter((item) => !kindFilter || item.kind === kindFilter) ?? null;
+  const filtersActive = sort !== "updated" || kindFilter !== null;
 
   const showRecent = Boolean(user) && section === "all" && !debounced && recent.length > 0;
   const isEmptyLibrary = items !== null && items.length === 0 && !debounced && (effectiveFilter === "all" || effectiveFilter === "mine");
@@ -370,13 +370,10 @@ export function SpacesHome() {
           onSort={setSort}
           kind={kindFilter}
           onKind={setKindFilter}
-          visibility={visibilityFilter}
-          onVisibility={setVisibilityFilter}
           signedIn={Boolean(user)}
           onReset={() => {
             setSort("updated");
             setKindFilter(null);
-            setVisibilityFilter(null);
           }}
           onClose={() => setFilterOpen(false)}
         />

@@ -277,7 +277,6 @@ export const communityTranslations = {
   "communities.feed.shared.workflow": { tr: "bir workflow paylaştı", en: "shared a workflow" },
   "communities.feed.shared.preset": { tr: "bir ayar paketi paylaştı", en: "shared a preset" },
   "communities.feed.shared.skill": { tr: "bir Skill paylaştı", en: "shared a skill" },
-  "communities.feed.shared.space": { tr: "bir Space paylaştı", en: "shared a Space" },
   "communities.feed.type.prompt": { tr: "Prompt", en: "Prompt" },
   "communities.feed.type.request": { tr: "İstek", en: "Request" },
   "communities.feed.type.workflow": { tr: "Workflow", en: "Workflow" },

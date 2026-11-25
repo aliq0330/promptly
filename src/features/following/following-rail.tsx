@@ -19,7 +19,6 @@ const SETTING_ROWS: { key: keyof FollowFeedSettings; label: TranslationKey; hint
   { key: "includeTags", label: "follow.settings.tags", hint: "follow.settings.tagsHint" },
   { key: "includeTools", label: "follow.settings.tools", hint: "follow.settings.toolsHint" },
   { key: "showVersions", label: "follow.settings.versions", hint: "follow.settings.versionsHint" },
-  { key: "showSpaceActivity", label: "follow.settings.spaces", hint: "follow.settings.spacesHint" },
   { key: "showResults", label: "follow.settings.results", hint: "follow.settings.resultsHint" },
 ];
 
@@ -109,7 +108,6 @@ export function FollowingRail() {
               { value: summary.following, label: t("follow.rail.people") },
               { value: summary.tagsFollowed, label: t("follow.rail.tags") },
               { value: summary.toolsFollowed, label: t("follow.rail.tools") },
-              { value: summary.spacesFollowed, label: t("follow.rail.spaces") },
             ].map((item) => (
               <div key={item.label} className="rounded-md bg-surface px-2 py-3">
                 <dt className="sr-only">{item.label}</dt>

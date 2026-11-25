@@ -18,7 +18,7 @@ import { presetHref, promptHref, requestHref, skillHref, workflowHref } from "@/
 import { DialogShell } from "@/components/ui/dialog-shell";
 import { SKILLS_MENU_ENABLED } from "@/lib/skills/flag";
 
-const TYPES: CommunityPostType[] = SKILLS_MENU_ENABLED ? ["prompt", "request", "workflow", "preset", "skill", "space"] : ["prompt", "request", "workflow", "preset", "space"];
+const TYPES: CommunityPostType[] = SKILLS_MENU_ENABLED ? ["prompt", "request", "workflow", "preset", "skill"] : ["prompt", "request", "workflow", "preset"];
 
 function hrefOf(type: CommunityPostType, id: string): string {
   if (type === "prompt") return promptHref({ id });

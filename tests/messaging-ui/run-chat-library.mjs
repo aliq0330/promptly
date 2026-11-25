@@ -62,7 +62,7 @@ const openLibrary = async (page, type) => { await plus(page).click(); await page
 const lastMessage = (db) => db.messages.at(-1);
 const send = async (page) => { await page.getByRole("button", { name: "Mesaj gönder" }).click(); };
 
-await scenario("1. '+' alt sayfası: Fotoğraf yükle · Prompt içe aktar · Kütüphaneden paylaş (Prompt · İstek · Workflow · Ayar paketi · Space)", async ({ page }) => {
+await scenario("1. '+' alt sayfası: Fotoğraf yükle · Prompt içe aktar · Kütüphaneden paylaş (Prompt · İstek · Workflow · Ayar paketi · Skill; Space paylaşılmaz — docs/history/459-*)", async ({ page }) => {
   await openThread(page);
   await plus(page).click();
   const sheet = page.locator("[data-chat-attach]");
@@ -70,7 +70,7 @@ await scenario("1. '+' alt sayfası: Fotoğraf yükle · Prompt içe aktar · K�
   await sheet.getByText("Fotoğraf yükle").waitFor();
   await sheet.getByText("Prompt içe aktar").waitFor();
   await sheet.getByText("Kütüphaneden paylaş").waitFor();
-  assert.deepEqual(await sheet.locator("[data-attach-library]").evaluateAll((els) => els.map((el) => el.getAttribute("data-attach-library"))), ["prompt", "request", "workflow", "preset", "space"]);
+  assert.deepEqual(await sheet.locator("[data-attach-library]").evaluateAll((els) => els.map((el) => el.getAttribute("data-attach-library"))), ["prompt", "request", "workflow", "preset", "skill"]);
 }, { setup: seed });
 
 await scenario("2. Fotoğraf yükle: dosya seçiciyi açar (aynı hazırlık hattı)", async ({ page }) => {
@@ -119,24 +119,6 @@ await scenario("5. Kütüphaneden workflow: sekme değişince liste değişir; g
   await send(page);
   await page.locator("[data-shared-card='ready']").first().waitFor();
   assert.match(lastMessage(db).body, new RegExp(`^Ürün fotoğrafından kampanya görseli\\nhttps?://.*/workflows/local\\?id=${ID.workflow}$`));
-}, { setup: seed });
-
-await scenario("6. Kütüphaneden Space: seçilir, mesaj başlık + Space bağlantısı olarak gider ve Space kartı çizilir", async ({ page, db }) => {
-  await openThread(page);
-  await openLibrary(page, "space");
-  const picker = page.locator("[data-chat-library]");
-  await picker.getByText("Sahil moodboard").waitFor();
-  await picker.locator("[data-library-item]").first().click();
-  await picker.locator("[data-library-add]").click();
-  await page.waitForURL(new RegExp(`shareSpaceId=${SPACE_ID}`));
-  await page.getByText(/Sahil moodboard — /).first().waitFor();
-  await send(page);
-  const card = page.locator("[data-shared-card='ready']", { hasText: "Sahil moodboard" });
-  await card.waitFor();
-  assert.match(lastMessage(db).body, new RegExp(`^Sahil moodboard\\nhttps?://.*/spaces/local\\?id=${SPACE_ID}$`));
-  assert.match((await card.locator("a[data-shared-open]").getAttribute("href")) ?? "", /\/spaces\/local\/?\?id=/);
-  assert.equal(await card.locator("[data-shared-type]").innerText(), "Space");
-  assert.equal(await card.locator("button").count(), 0, "Space kaydedilmez: Kaydet yok");
 }, { setup: seed });
 
 await scenario("7. Paylaşımdan vazgeçmek: bannerdaki × ile ek kalkar, sade mesaj gönderilebilir", async ({ page, db }) => {

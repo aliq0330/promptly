@@ -19,7 +19,6 @@ import { CHAT_LIBRARY_TYPES, useChatShareable, type ChatLibraryType } from "@/fe
 import { GifPicker } from "@/features/gif/gif-picker";
 import { LoadMore } from "@/features/feed/load-more";
 import { useGrowingList } from "@/features/content/use-growing-list";
-import { SpaceCoverArt } from "@/features/spaces/space-visuals";
 import { getCachedCommentMediaUrl, removeCommentPhotos, resolveCommentMediaUrls, uploadCommentPhoto } from "@/lib/supabase/comment-media";
 import { attachmentKey, fetchAttachmentCards, fetchSavedPickableWindow, SAVED_SOURCE_TYPES, type AttachmentCard, type PickableContent } from "@/lib/supabase/comment-attachments";
 import { ALLOWED_IMAGE_MIME, MessageImageError, prepareMessageImage, sniffImageMime, type PreparedMessageImage } from "@/lib/supabase/message-images";
@@ -473,14 +472,12 @@ function usePickerCards(items: PickableContent[] | null) {
   return cards;
 }
 
-/** Satırın küçük resmi: prompt/istek/workflow/ayar paketi görseli, Space kapağı; yoksa tür simgesi. */
+/** Satırın küçük resmi: prompt/istek/workflow/ayar paketi görseli; yoksa tür simgesi. */
 function PickerThumb({ item, card }: { item: PickableContent; card: AttachmentCard | undefined }) {
   const Icon = ATTACHMENT_ICONS[item.type];
   return (
     <span className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-md bg-primary-soft text-primary">
-      {item.type === "space" ? (
-        <SpaceCoverArt urls={card?.thumbnailUrl ? [card.thumbnailUrl] : []} className="h-full w-full" iconSize={24} />
-      ) : card?.thumbnailUrl ? (
+      {card?.thumbnailUrl ? (
         <StorageImage src={card.thumbnailUrl} alt="" fill sizes="48px" className="object-cover" />
       ) : (
         <Icon size={24} aria-hidden />
@@ -492,7 +489,7 @@ function PickerThumb({ item, card }: { item: PickableContent; card: AttachmentCa
 /**
  * Yoruma içerik ekle (docs/history/457-*, "Tek şerit"): tek satırda tür menüsü + arama, altında "Benimkiler / Kaydettiklerim", küçük resimli satırlar,
  * altbilgide Vazgeç + Ekle ve her zaman görünen yardım metni. Yalnız yayında + herkese açık + topluluğa özgü olmayan içerik listelenir (yorumu okuyan
- * herkes görebilsin; sunucu da aynı kuralı denetler). İstek ve Space kaydedilemediği için o türlerde yalnız "Benimkiler" var (kaynak anahtarı çizilmez).
+ * herkes görebilsin; sunucu da aynı kuralı denetler). İstek kaydedilemediği için o türlerde yalnız "Benimkiler" var (kaynak anahtarı çizilmez).
  */
 export function CommentContentPicker({ userId, onPick, onClose }: { userId: string; onPick: (item: PickableContent) => void; onClose: () => void }) {
   const { t } = useTranslation();

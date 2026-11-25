@@ -460,13 +460,14 @@ const openSection = async (page, name) => {
   await page.getByRole("radio", { name, exact: true }).click();
 };
 
-await scenario("10. Keşfet bölümleri: dört içerik kategorisi + Spaces/Alıntılar + AI Araçları · Etiketler · Yaratıcılar · Topluluklar", async ({ page }) => {
+await scenario("10. Keşfet bölümleri: dört içerik kategorisi + Alıntılar + AI Araçları · Etiketler · Yaratıcılar · Topluluklar", async ({ page }) => {
   await page.goto(`${BASE}/discover`);
   await sectionMenu(page).waitFor();
   const names = await sectionNames(page);
   assert.equal(names[0], "Tümü");
-  for (const wanted of ["Promptlar", "AI Araçları", "Etiketler", "Yaratıcılar", "Topluluklar", "Spaces"]) assert.ok(names.includes(wanted), `${wanted} bölümü var: ${names.join(" | ")}`);
-  assert.ok(names.indexOf("Promptlar") < names.indexOf("AI Araçları") && names.indexOf("Spaces") < names.indexOf("AI Araçları"), "içerikler önce, takip edilecekler sonra");
+  for (const wanted of ["Promptlar", "AI Araçları", "Etiketler", "Yaratıcılar", "Topluluklar"]) assert.ok(names.includes(wanted), `${wanted} bölümü var: ${names.join(" | ")}`);
+  assert.ok(!names.includes("Spaces"), "Spaces bölümü yok (docs/history/459-*)");
+  assert.ok(names.indexOf("Promptlar") < names.indexOf("AI Araçları"), "içerikler önce, takip edilecekler sonra");
   assert.equal(await overflowFree(page), true);
 });
 

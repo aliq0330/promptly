@@ -79,8 +79,8 @@ select public._check(1, 'p_has_media null / false = no filter: same rows as the 
   and (select array_agg(id order by created_at desc, id desc) from public._fm(null)) =
       (select array_agg(id order by created_at desc, id desc) from public.feed_page('all', 'newest', null, null, null, null, 50, null, null, null)),
   public._titles(null));
-select public._check(2, 'without the filter every public kind shows (text and picture-less ones too); private/draft never',
-  public._titles(false) ~ 'T1' and public._titles(false) ~ 'I1' and public._titles(false) ~ 'W2' and public._titles(false) ~ 'Space1' and public._titles(false) ~ 'quote'
+select public._check(2, 'without the filter every public kind shows (Space no longer, docs/history/459-*) (text and picture-less ones too); private/draft never',
+  public._titles(false) ~ 'T1' and public._titles(false) ~ 'I1' and public._titles(false) ~ 'W2' and public._titles(false) !~ 'Space1' and public._titles(false) ~ 'quote'
   and public._titles(false) !~ 'PRIV|DRAFT',
   public._titles(false));
 

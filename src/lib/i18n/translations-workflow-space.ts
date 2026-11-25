@@ -26,10 +26,6 @@ export const workflowSpaceTranslations = {
   "wfSpace.import.create": { tr: "Workflow oluştur", en: "Create workflow" },
   "wfSpace.import.onBoard": { tr: "Panoda", en: "On board" },
   "wfSpace.import.preview": { tr: "Önizleme", en: "Preview" },
-  "wfSpace.import.privateWarn": {
-    tr: "Bu workflow \"Sadece ben\". Adım kartlarının başlık ve girdi/çıktıları bu Space'i açan herkese görünür olur. İstersen Space'i özel tut ya da workflow'u önce herkese açık yap.",
-    en: "This workflow is \"Only me\". The step cards' titles and inputs/outputs will be visible to everyone who opens this Space. You may want to keep the Space private or make the workflow public first.",
-  },
   "wfSpace.import.submit": { tr: "Panoya aktar", en: "Add to board" },
   "wfSpace.import.loadFailed": { tr: "Workflow yüklenemedi. Biraz sonra tekrar dene.", en: "Couldn't load the workflow. Try again in a moment." },
 
@@ -49,10 +45,6 @@ export const workflowSpaceTranslations = {
   "wfSpace.field.newSpace": { tr: "Yeni Space oluştur", en: "Create a new Space" },
   "wfSpace.field.newSpaceHint": { tr: "Workflow'un adıyla, özel olarak başlar.", en: "Starts private, named after the workflow." },
   "wfSpace.field.loadFailed": { tr: "Space'lerin yüklenemedi.", en: "Couldn't load your Spaces." },
-  "wfSpace.field.notePublic": {
-    tr: "Space herkese açık: workflow sayfasında panonun önizlemesi herkese görünür.",
-    en: "The Space is public: the board preview shows on the workflow page for everyone.",
-  },
   "wfSpace.field.noteSpacePrivate": {
     tr: "Bu Space herkese açık değil: workflow sayfasında önizleme yalnız Space üyelerine görünür. Space'i herkese açık yapabilirsin.",
     en: "This Space isn't public: the preview on the workflow page is only visible to Space members. You can make the Space public.",
@@ -71,7 +63,6 @@ export const workflowSpaceTranslations = {
   "wfSpace.preview.heading": { tr: "Space panosu", en: "Space board" },
   "wfSpace.preview.boardAria": { tr: "Space panosunun salt okunur önizlemesi", en: "Read-only preview of the Space board" },
   "wfSpace.preview.spacesAria": { tr: "Bu workflow'un bağlı olduğu Space'ler", en: "Spaces this workflow is linked to" },
-  "wfSpace.preview.public": { tr: "Herkese açık Space", en: "Public Space" },
   "wfSpace.preview.private": { tr: "Yalnız sen ve üyeler görür", en: "Only you and members can see this" },
   "wfSpace.preview.readOnly": { tr: "Salt okunur önizleme", en: "Read-only preview" },
   "wfSpace.preview.open": { tr: "Panoyu aç", en: "Open board" },

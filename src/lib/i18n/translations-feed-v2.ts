@@ -23,7 +23,6 @@ export const feedV2Translations = {
   "follow.source.people": { tr: "Kişiler", en: "People" },
   "follow.source.tags": { tr: "Etiketler", en: "Tags" },
   "follow.source.tools": { tr: "Araçlar", en: "Tools" },
-  "follow.source.spaces": { tr: "Spaces", en: "Spaces" },
   "follow.people.aria": { tr: "Kişiye göre daralt", en: "Narrow to one person" },
   "follow.people.everyone": { tr: "Herkes", en: "Everyone" },
 
@@ -54,10 +53,6 @@ export const feedV2Translations = {
   "follow.diffAria": { tr: "Bir önceki sürüme göre değişen satırlar", en: "Lines changed since the previous version" },
   "follow.newVariables": { tr: "Yeni değişken:", en: "New variable:" },
   "follow.openVersions": { tr: "Tüm sürümler", en: "All versions" },
-  "follow.space.imagesAdded": { tr: "{{space}} Space'ine {{count}} görsel ekledi", en: "added {{count}} images to {{space}}" },
-  "follow.space.changed": { tr: "{{space}} Space'inde {{count}} değişiklik yaptı", en: "made {{count}} changes in {{space}}" },
-  "follow.space.badge": { tr: "Üyesi olduğun Space", en: "A Space you're in" },
-  "follow.space.open": { tr: "Space'i aç", en: "Open Space" },
   "follow.openPrompt": { tr: "Promptu aç: {{title}}", en: "Open the prompt: {{title}}" },
 
   // Boş durumlar ve son
@@ -77,7 +72,6 @@ export const feedV2Translations = {
   "follow.rail.people": { tr: "kişi", en: "people" },
   "follow.rail.tags": { tr: "Etiketler", en: "Tags" },
   "follow.rail.tools": { tr: "AI aracı", en: "AI tools" },
-  "follow.rail.spaces": { tr: "Spaces", en: "Spaces" },
   "follow.settings.title": { tr: "Akışta neler görünsün", en: "What shows in this feed" },
   "follow.settings.group": { tr: "Aynı kişinin paylaşımlarını topla", en: "Group one person's posts" },
   "follow.settings.groupHint": { tr: "3 saat içinde 3 ve daha fazla paylaşım tek satır olur", en: "3 or more posts within 3 hours become one row" },
@@ -87,8 +81,6 @@ export const feedV2Translations = {
   "follow.settings.toolsHint": { tr: "O araçla yapılmış yeni promptlar", en: "New prompts made with those tools" },
   "follow.settings.versions": { tr: "Sürüm güncellemeleri", en: "Version updates" },
   "follow.settings.versionsHint": { tr: "Prompt, workflow, ayar paketi ve Skill değişince", en: "When a prompt, workflow, preset or Skill changes" },
-  "follow.settings.spaces": { tr: "Space etkinlikleri", en: "Space activity" },
-  "follow.settings.spacesHint": { tr: "Üyesi olduğun ve sabitlediğin Space'lerden", en: "From Spaces you're in or pinned" },
   "follow.settings.results": { tr: "Sonuç paylaşımları", en: "Shared results" },
   "follow.settings.resultsHint": { tr: "Başkasının promptuyla yapılanlar", en: "Made with someone's prompt" },
 
@@ -108,8 +100,6 @@ export const feedV2Translations = {
   "follow.manage.noTags": { tr: "Takip ettiğin etiket yok.", en: "You don't follow any tags." },
   "follow.manage.noTools": { tr: "Takip ettiğin AI aracı yok.", en: "You don't follow any AI tools." },
   "follow.manage.unfollow": { tr: "Takibi bırak", en: "Unfollow" },
-  "follow.manage.spacesHint": { tr: "Space'ler takip edilmez. Bu akışta üyesi olduğun ve sabitlediğin Space'lerdeki etkinlikler görünür.", en: "Spaces can't be followed. This feed shows activity in Spaces you're a member of or have pinned." },
-  "follow.manage.openSpaces": { tr: "Space'lerine git", en: "Go to your Spaces" },
   "follow.manage.muteHint": { tr: "Sessize aldığın kişiyi takip etmeye devam edersin; yalnız bu akışta görünmez. Karşı taraf bilmez.", en: "You keep following people you mute; they're only hidden from this feed. They aren't told." },
   "follow.mode.all": { tr: "Hepsi", en: "All" },
   "follow.mode.highlights": { tr: "Öne çıkanlar", en: "Highlights" },
@@ -150,8 +140,6 @@ export const feedV2Translations = {
   "discover.ed.toolsHint": { tr: "Promptlarda en çok kullanılan modeller ve son 8 hafta", en: "The models used most in prompts, last 8 weeks" },
   "discover.ed.toolUses": { tr: "{{count}} prompt", en: "{{count}} prompts" },
   "discover.ed.last8": { tr: "Son 8 hafta", en: "Last 8 weeks" },
-  "discover.ed.spaces": { tr: "Spaces", en: "Spaces" },
-  "discover.ed.spacesHint": { tr: "Herkese açık yaratıcı projeler: pano, paletler, notlar", en: "Public creative projects: boards, palettes, notes" },
   "discover.ed.skills": { tr: "Skill'ler", en: "Skills" },
   "discover.ed.skillsHint": { tr: "Yapay zekâ ajanına bir işi öğreten paketler", en: "Packages that teach an AI agent a job" },
   "discover.ed.seeAll": { tr: "Tümünü gör", en: "See all" },

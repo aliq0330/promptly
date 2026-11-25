@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import { OptionGroup } from "@/components/ui/option-group";
-import { Globe } from "@/components/icons/globe";
 import { Lock } from "@/components/icons/lock";
 import { Plus } from "@/components/icons/plus";
 import { FormDisclosure } from "@/features/content/compose-form";
@@ -94,14 +93,12 @@ export function WorkflowSpaceField({
 }) {
   const { t } = useTranslation();
   const selected = choice.spaceId && choice.spaceId !== "new" ? (spaces?.find((space) => space.id === choice.spaceId) ?? null) : null;
-  const spaceIsPublic = selected ? selected.visibility === "public" : false;
   const summary = !choice.enabled ? t("wfSpace.field.off") : choice.spaceId === "new" ? t("wfSpace.field.newSpace") : (selected?.title ?? t("compose.notChosen"));
 
   let note: { text: string; warn: boolean } | null = null;
   if (choice.enabled && choice.spaceId) {
     if (workflowVisibility === "private") note = { text: t("wfSpace.field.noteWorkflowPrivate"), warn: true };
-    else if (choice.spaceId === "new" || (selected && !spaceIsPublic)) note = { text: t("wfSpace.field.noteSpacePrivate"), warn: true };
-    else if (selected) note = { text: t("wfSpace.field.notePublic"), warn: false };
+    else if (choice.spaceId === "new" || selected) note = { text: t("wfSpace.field.noteSpacePrivate"), warn: false };
   }
 
   const layers: { key: "showLinks" | "showImages" | "showIo" | "showRelations"; label: string; hint: string; disabled?: boolean }[] = [
@@ -143,12 +140,6 @@ export function WorkflowSpaceField({
                         {t("spaces.count.images", { count: space.imageCount })} · {t("spaces.count.prompts", { count: space.promptCount })}
                       </span>
                     ),
-                    badge: (
-                      <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-surface-soft px-2 py-0.5 text-caption font-semibold text-text-secondary">
-                        {space.visibility === "public" ? <Globe size={12} aria-hidden /> : <Lock size={12} aria-hidden />}
-                        {t(space.visibility === "public" ? "spaces.visibility.public" : space.visibility === "link" ? "spaces.visibility.link" : "spaces.visibility.private")}
-                      </span>
-                    ),
                   })),
                   {
                     key: "new",
@@ -182,7 +173,7 @@ export function WorkflowSpaceField({
 
             {note && (
               <p role="status" className={cn("flex items-start gap-2 rounded-xl px-3 py-2 text-small text-text-secondary", note.warn ? "bg-warning-soft" : "bg-primary-soft")}>
-                {note.warn ? <Lock size={16} className="mt-0.5 shrink-0 text-warning" aria-hidden /> : <Globe size={16} className="mt-0.5 shrink-0 text-primary" aria-hidden />}
+                <Lock size={16} className={cn("mt-0.5 shrink-0", note.warn ? "text-warning" : "text-primary")} aria-hidden />
                 {note.text}
               </p>
             )}

@@ -23,7 +23,6 @@ import { FollowButton } from "@/features/profile/follow-button";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { SKILL_COMPAT_LABEL, SKILL_LICENSE_LABEL, skillCategoryName, skillLabelText } from "@/lib/skills/categories";
 import { formatBytes } from "@/lib/skills/paths";
-import { SkillSpacesAside } from "@/features/spaces/public-spaces";
 import { SkillTextBlock } from "./skill-text-block";
 import { SkillCoverImage } from "./skill-cover";
 import { fetchSkillTags } from "@/lib/supabase/skills";
@@ -197,7 +196,6 @@ export function SkillDetailView({ skillId }: { skillId?: string } = {}) {
       <SkillLinkedSkills skillId={skill.id} aside />
       <SkillRelatedSection skillId={skill.id} aside />
       <SimilarSkills skillId={skill.id} />
-      {published && <SkillSpacesAside skillId={skill.id} />}
     </DetailAside>
   );
 

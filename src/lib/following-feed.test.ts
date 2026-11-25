@@ -82,9 +82,9 @@ test("addedVariables: only new {names}", () => {
 });
 
 test("summaryParts / summaryTotal: zero kinds are left out", () => {
-  const counts = { posts: 9, versions: 0, spaces: 1, tags: 2 };
-  assert.deepEqual(summaryParts(counts).map((part) => part.key), ["posts", "spaces", "tags"]);
-  assert.equal(summaryTotal(counts), 12);
+  const counts = { posts: 9, versions: 0, tags: 2 };
+  assert.deepEqual(summaryParts(counts).map((part) => part.key), ["posts", "tags"]);
+  assert.equal(summaryTotal(counts), 11);
 });
 
 test("isFeaturedWorthy: at least 10 votes and 80 % yes", () => {

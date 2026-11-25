@@ -5,7 +5,6 @@ import type { IconComponent } from "@/components/icons/icon";
 import { ArrowUpRight } from "@/components/icons/arrow-up-right";
 import { Loader2 } from "@/components/icons/loader-2";
 import { Lock } from "@/components/icons/lock";
-import { Shapes } from "@/components/icons/shapes";
 import { SlidersHorizontal } from "@/components/icons/sliders-horizontal";
 import { Sparkles } from "@/components/icons/sparkles";
 import { SquareTerminal } from "@/components/icons/square-terminal";
@@ -14,10 +13,8 @@ import { X } from "@/components/icons/x";
 import { Badge } from "@/components/ui/badge";
 import { StorageImage } from "@/components/ui/storage-media";
 import { STATUS_LABELS, STATUS_VARIANTS } from "@/features/requests/request-card";
-import { SpaceCoverArt } from "@/features/spaces/space-visuals";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { AttachmentCard } from "@/lib/supabase/comment-attachments";
-import { spaceHref } from "@/lib/spaces";
 import { presetHref, promptHref, requestHref, skillHref, workflowHref, cn } from "@/lib/utils";
 import { GraduationCap } from "@/components/icons/graduation-cap";
 import type { CommentAttachment, CommentAttachmentType } from "@/types";
@@ -27,7 +24,6 @@ export const ATTACHMENT_ICONS: Record<CommentAttachmentType, IconComponent> = {
   request: Sparkles,
   workflow: WorkflowIcon,
   preset: SlidersHorizontal,
-  space: Shapes,
   skill: GraduationCap,
 };
 
@@ -37,8 +33,7 @@ export function attachmentHref(type: CommentAttachmentType, id: string): string 
     case "request": return requestHref({ id });
     case "workflow": return workflowHref({ id });
     case "preset": return presetHref({ id });
-    case "skill": return skillHref({ id });
-    default: return spaceHref(id);
+    default: return skillHref({ id });
   }
 }
 
@@ -100,9 +95,7 @@ export function CompactContentCard({
   const body = (
     <>
       <span className="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-primary-soft text-primary">
-        {attachment.type === "space" ? (
-          <SpaceCoverArt urls={card.thumbnailUrl ? [card.thumbnailUrl] : []} className="h-full w-full" iconSize={22} />
-        ) : card.thumbnailUrl ? (
+        {card.thumbnailUrl ? (
           <StorageImage src={card.thumbnailUrl} alt="" fill sizes="56px" className="object-cover" />
         ) : (
           <Icon size={24} aria-hidden />

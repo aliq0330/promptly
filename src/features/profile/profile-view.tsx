@@ -9,7 +9,6 @@ import { Plus } from "@/components/icons/plus";
 import { Quote as QuoteIcon } from "@/components/icons/quote";
 import { Bookmark } from "@/components/icons/bookmark";
 import { Search } from "@/components/icons/search";
-import { Shapes } from "@/components/icons/shapes";
 import { SlidersHorizontal } from "@/components/icons/sliders-horizontal";
 import { SearchX } from "@/components/icons/search-x";
 import { Sparkles } from "@/components/icons/sparkles";
@@ -52,7 +51,6 @@ import { SKILLS_MENU_ENABLED } from "@/lib/skills/flag";
 import { fetchProfileSkillCount } from "@/lib/supabase/skills";
 import type { Collection, Prompt, PromptContentType, UserProfile } from "@/types";
 import { CONTENT_GRID_ITEM_CLASS, ContentGrid, ContentGridColumns, GRID_COLUMNS_ASIDE } from "@/features/content/content-card";
-import { ProfileSpacesPanel, usePublicSpaces, type PublicSpaces } from "@/features/spaces/public-spaces";
 import { ProfileQuotesPanel } from "@/features/quotes/profile-quotes-panel";
 import { ProfileResultsPanel } from "./profile-results-panel";
 import { fetchProfileResultCount } from "@/lib/supabase/prompt-results";
@@ -73,7 +71,7 @@ function sortPrompts(prompts: Prompt[], sort: ProfileSortKey): Prompt[] {
 }
 
 /** One flat set of sections since Meydan (docs/history/190-*). Since docs/history/272-* ALL of them sit in ONE "Promptlar ▾" menu pill (the tabs + "Daha fazla" of 243-* are gone), like Topluluklar / Spaces. */
-export type ProfileTabKey = "prompts" | "requests" | "workflows" | "presets" | "skills" | "drafts" | "saved" | "collections" | "spaces" | "quotes" | "results" | "liked" | "about";
+export type ProfileTabKey = "prompts" | "requests" | "workflows" | "presets" | "skills" | "drafts" | "saved" | "collections" | "quotes" | "results" | "liked" | "about";
 
 export function ProfileView({
   user,
@@ -106,12 +104,6 @@ export function ProfileView({
       cancelled = true;
     };
   }, [user.id]);
-
-  // Herkese açık Space'ler (docs/history/214-*): sahibi dahil herkes için aynı vitrin; hiç yoksa sekme yok.
-  const fetchedSpaces = usePublicSpaces({ ownerId: user.id });
-  const [spacesOverride, setSpacesOverride] = useState<{ owner: string; data: PublicSpaces } | null>(null);
-  const publicSpaces = spacesOverride?.owner === user.id ? spacesOverride.data : fetchedSpaces;
-  const spaceCount = publicSpaces?.spaces.length ?? 0;
 
   // Alıntılar (docs/history/217-*): kişinin alıntıladığı gönderiler; hiç yoksa başkasının profilinde sekme yok (kendi profilinde boş durum + ipucu).
   const [quoteCount, setQuoteCount] = useState(0);
@@ -211,7 +203,6 @@ export function ProfileView({
       base.push(firstOfGroup ? { ...item, dividerBefore: true } : item);
       firstOfGroup = false;
     };
-    if (spaceCount > 0) group({ key: "spaces", label: t("spaces.discover.profileTab"), icon: Shapes, meta: spaceCount });
     if (isOwnProfile) {
       group({ key: "drafts", label: t("profile.tabDrafts"), icon: FileText });
       group({ key: "saved", label: t("profile.tabSaved"), icon: Bookmark });
@@ -220,7 +211,7 @@ export function ProfileView({
     if (!isOwnProfile && publicCollections.length > 0) group({ key: "collections", label: t("profile.tabCollections"), icon: Folder, meta: publicCollections.length });
     base.push({ key: "about", label: t("profile.tabAbout"), icon: Info, dividerBefore: true });
     return base;
-  }, [postCounts, skillCount, quoteCount, resultCount, isOwnProfile, liked.total, publicCollections.length, spaceCount, t]);
+  }, [postCounts, skillCount, quoteCount, resultCount, isOwnProfile, liked.total, publicCollections.length, t]);
 
   const normalizedSearch = search.trim().toLocaleLowerCase("tr");
 
@@ -389,8 +380,6 @@ export function ProfileView({
                   <CollectionCard key={collection.id} collection={collection} readOnly />
                 ))}
               </div>
-            ) : activeTab === "spaces" && publicSpaces ? (
-              <ProfileSpacesPanel data={publicSpaces} onChange={(data) => setSpacesOverride({ owner: user.id, data })} />
             ) : activeTab === "drafts" ? (
               // Owner-only (the tab itself is only ever offered when
               // isOwnProfile, see `tabs` above) — all four content types'

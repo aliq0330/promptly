@@ -10,7 +10,6 @@ import {
   deleteComment,
   fetchCommentThread,
   fetchCommentThreadPage,
-  fetchOwnRatedSpaceComment,
   type CommentScope,
   postCommentOnCommunityPost,
   postCommentOnPreset,
@@ -20,8 +19,6 @@ import {
   postCommentOnRequest,
   postCommentOnResult,
   updateComment,
-  updateCommentRating,
-  postCommentOnSpace,
   postCommentOnQuote,
   setCommentPinned,
 } from "@/lib/supabase/comments";
@@ -45,10 +42,6 @@ export type CommentTarget =
   | { presetId: string }
   | { skillId: string }
   | { communityPostId: string }
-  /** Space'in GENEL yorumları: 1–5 puan yorumla birlikte verilir (docs/history/242-*). */
-  | { spaceId: string; spaceActivityId?: undefined }
-  /** Space'in bir ETKİNLİĞİNE düşen yorumlar (puan yok). */
-  | { spaceId: string; spaceActivityId: string }
   | { quoteId: string };
 
 /** How long a jumped-to comment/reply stays visually flashed before fading back to normal — long enough to notice, short enough not to nag (Aşama 5: "göz yoran yanıp sönme veya aşırı hareket kullanma"). */
@@ -66,16 +59,13 @@ export function useCommentThread(
   target: CommentTarget,
   {
     highlightCommentId = null,
-    spaceOwnerId = null,
     contentOwnerId = null,
     onChange,
   }: {
     highlightCommentId?: string | null;
-    /** Space yorumlarında: sahibi kendini puanlayamaz. */
-    spaceOwnerId?: string | null;
     /** Prompt/istek/workflow/ayar paketi yazarı (docs/history/385-*): yorumu sabitleyebilir, yorumlarında "Yazar" rozeti çıkar. Verilmezse sabitleme yüzeyi yoktur. */
     contentOwnerId?: string | null;
-    /** Yorum/puan eklendi, değişti ya da silindi (Space puan özeti yeniden okunsun diye). */
+    /** Yorum eklendi, değişti ya da silindi. */
     onChange?: () => void;
   } = {},
 ) {
@@ -84,8 +74,6 @@ export function useCommentThread(
   const { requireAuth } = useAuthPrompt();
   const { profile: ownProfile } = useOwnProfile();
   const [draft, setDraft] = useState("");
-  // Space'in genel yorumlarında 1–5 puan yorumla birlikte verilir (0 = puansız).
-  const [draftRating, setDraftRating] = useState(0);
   // Yorumda fotoğraf · GIF · içerik eki (docs/history/308-*): ana yazma kutusunun ve yanıt kutusunun ayrı ek durumu.
   const composerExtras = useCommentExtras();
   const replyExtras = useCommentExtras();
@@ -133,7 +121,7 @@ export function useCommentThread(
   const highlightTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const processedHighlightId = useRef<string | null>(null);
 
-  const targetKind: "prompt" | "request" | "result" | "workflow" | "preset" | "skill" | "community_post" | "space" | "space_activity" | "quote" =
+  const targetKind: "prompt" | "request" | "result" | "workflow" | "preset" | "skill" | "community_post" | "quote" =
     "promptId" in target
       ? "prompt"
       : "requestId" in target
@@ -146,13 +134,9 @@ export function useCommentThread(
             ? "skill"
             : "communityPostId" in target
               ? "community_post"
-              : "spaceId" in target
-                ? target.spaceActivityId
-                  ? "space_activity"
-                  : "space"
-                : "quoteId" in target
-                  ? "quote"
-                  : "result";
+              : "quoteId" in target
+                ? "quote"
+                : "result";
   const targetId =
     "promptId" in target
       ? target.promptId
@@ -166,27 +150,23 @@ export function useCommentThread(
             ? target.skillId
             : "communityPostId" in target
               ? target.communityPostId
-              : "spaceId" in target
-                ? (target.spaceActivityId ?? target.spaceId)
-                : "quoteId" in target
-                  ? target.quoteId
-                  : target.resultId;
+              : "quoteId" in target
+                ? target.quoteId
+                : target.resultId;
 
-  const scope: CommentScope = { kind: targetKind, id: targetId, spaceId: "spaceId" in target ? target.spaceId : undefined };
+  const scope: CommentScope = { kind: targetKind, id: targetId };
   const scopeRef = useRef(scope);
   useEffect(() => {
     scopeRef.current = scope;
   });
 
-  function postCommentForTarget(kind: typeof targetKind, id: string, userId: string, body: string, parentId: string | null, rating: number | null = null, extras?: CommentExtras) {
+  function postCommentForTarget(kind: typeof targetKind, id: string, userId: string, body: string, parentId: string | null, extras?: CommentExtras) {
     if (kind === "prompt") return postCommentOnPrompt(id, userId, body, parentId, extras);
     if (kind === "request") return postCommentOnRequest(id, userId, body, parentId, extras);
     if (kind === "workflow") return postCommentOnWorkflow(id, userId, body, parentId, extras);
     if (kind === "preset") return postCommentOnPreset(id, userId, body, parentId, extras);
     if (kind === "skill") return postCommentOnSkill(id, userId, body, parentId, extras);
     if (kind === "community_post") return postCommentOnCommunityPost(id, userId, body, parentId, extras);
-    if (kind === "space") return postCommentOnSpace(id, userId, body, parentId, { rating, ...extras });
-    if (kind === "space_activity" && "spaceId" in target) return postCommentOnSpace(target.spaceId, userId, body, parentId, { activityId: id, ...extras });
     if (kind === "quote") return postCommentOnQuote(id, userId, body, parentId, extras);
     return postCommentOnResult(id, userId, body, parentId, extras);
   }
@@ -195,10 +175,10 @@ export function useCommentThread(
    * Ekleri hazırlayıp (fotoğraf yüklenir) yorumu yazar. Yorum yazılamazsa yüklenen dosya geri silinir; yazılırsa ek durumu boşaltılır.
    * Hata çağırana fırlar (her yazma kutusu kendi hata satırını gösterir).
    */
-  async function postWithExtras(extrasState: ReturnType<typeof useCommentExtras>, userId: string, body: string, parentId: string | null, rating: number | null) {
+  async function postWithExtras(extrasState: ReturnType<typeof useCommentExtras>, userId: string, body: string, parentId: string | null) {
     const { extras, uploadedPath } = await extrasState.prepare(userId);
     try {
-      const posted = await postCommentForTarget(targetKind, targetId, userId, body, parentId, rating, extras);
+      const posted = await postCommentForTarget(targetKind, targetId, userId, body, parentId, extras);
       extrasState.clear();
       return posted;
     } catch (err) {
@@ -217,11 +197,6 @@ export function useCommentThread(
     (async () => {
       const first = await fetchCommentThreadPage(scopeRef.current, 0, undefined, sort);
       let result = first.comments;
-      // Space'te kişi başına tek puan: kişinin kendi puanlı yorumu başka bir sayfada olsa da yüklenir.
-      if (targetKind === "space" && user) {
-        const mine = await fetchOwnRatedSpaceComment(targetId, user.id).catch(() => null);
-        if (mine) result = mergeComments(result, [mine]);
-      }
       // Bildirimden gelen yorum henüz okunmamış bir sayfadaysa kök yorumu ve altı ayrıca yüklenir.
       if (highlightCommentId && !result.some((c) => c.id === highlightCommentId)) {
         result = mergeComments(result, await fetchCommentThread(scopeRef.current, highlightCommentId).catch(() => []));
@@ -274,7 +249,6 @@ export function useCommentThread(
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [targetKind, targetId, user?.id, highlightCommentId, reloadKey, sort]);
 
   /** The next page of top-level comments (with their replies), appended — also by itself when the end of the list scrolls into view. */
@@ -355,10 +329,6 @@ export function useCommentThread(
     };
   }, [loaded, loadFailed, user?.id, targetKind, targetId]);
   const canPin = Boolean(contentOwnerId) && user?.id === contentOwnerId && (targetKind === "prompt" || targetKind === "request" || targetKind === "workflow" || targetKind === "preset" || targetKind === "skill");
-  const ratingEnabled = targetKind === "space";
-  // Kişi başına tek puan: kullanıcının zaten puanlı (silinmemiş) yorumu varsa yeni yorumda puan verilmez, mevcut puan yorumundaki yıldızlardan değişir.
-  const myRatedComment = useMemo(() => (user ? comments.find((c) => c.author.id === user.id && c.rating && !c.deletedAt) ?? null : null), [comments, user]);
-  const isSpaceOwner = Boolean(spaceOwnerId) && user?.id === spaceOwnerId;
 
   const registerNodeRef = useCallback((id: string, el: HTMLDivElement | null) => {
     if (el) nodeRefs.current.set(id, el);
@@ -405,7 +375,7 @@ export function useCommentThread(
     setIsPostingReply(true);
     setReplyError(null);
     try {
-      const posted = await postWithExtras(replyExtras, user.id, trimmed, parentId, null);
+      const posted = await postWithExtras(replyExtras, user.id, trimmed, parentId);
       bumpCommentCount(targetId, 1);
       setComments((prev) => [...prev, posted]);
       setExpandedIds((prev) => new Set(prev).add(parentId));
@@ -423,17 +393,14 @@ export function useCommentThread(
   async function submitComment() {
     const trimmed = draft.trim();
     if ((!trimmed && !composerExtras.hasExtras) || composerExtras.isPreparing || !user) return;
-    // Yalnız puan verip yazı yazmayan kişi: yorum yazısı zorunlu (puan yorumla birlikte görünür).
 
     setIsPosting(true);
     setPostError(null);
     try {
-      const rating = ratingEnabled && !myRatedComment && !isSpaceOwner && draftRating > 0 ? draftRating : null;
-      const posted = await postWithExtras(composerExtras, user.id, trimmed, null, rating);
+      const posted = await postWithExtras(composerExtras, user.id, trimmed, null);
       bumpCommentCount(targetId, 1);
       setComments((prev) => [...prev, posted]);
       setDraft("");
-      setDraftRating(0);
       setShowAll(true);
       onChange?.();
     } catch (err) {
@@ -511,7 +478,7 @@ export function useCommentThread(
       // in the list anymore next time this thread is fetched fresh, and a
       // soft delete needs exactly this placeholder treatment right now.
       const deletedAt = new Date().toISOString();
-      const markDeleted = () => setComments((prev) => prev.map((c) => (c.id === id ? { ...c, body: "", deletedAt, rating: null } : c)));
+      const markDeleted = () => setComments((prev) => prev.map((c) => (c.id === id ? { ...c, body: "", deletedAt } : c)));
       // Yanıtı olmayan yorum gerçekten silinmiştir: yer tutucu bırakmak yerine kayıp solar, satır kapanır (docs/history/335-*).
       if (childrenByParent.has(id)) markDeleted();
       else exit(id, () => setComments((prev) => prev.filter((c) => c.id !== id)));
@@ -538,21 +505,6 @@ export function useCommentThread(
     } catch (err) {
       setComments(snapshot);
       setPinError(err instanceof Error ? err.message : t("comments.pinFailed"));
-    }
-  }
-
-  /** Kendi puanlı yorumunun yıldızlarını değiştirir (iyimser; hata olursa geri alınır). */
-  async function rateComment(id: string, rating: number) {
-    if (!user || rating < 1 || rating > 5) return;
-    const previous = comments.find((c) => c.id === id)?.rating ?? null;
-    setComments((prev) => prev.map((c) => (c.id === id ? { ...c, rating } : c)));
-    setPostError(null);
-    try {
-      await updateCommentRating(id, user.id, rating);
-      onChange?.();
-    } catch (err) {
-      setComments((prev) => prev.map((c) => (c.id === id ? { ...c, rating: previous } : c)));
-      setPostError(err instanceof Error ? err.message : t("comments.error.rateFailed"));
     }
   }
 
@@ -586,7 +538,6 @@ export function useCommentThread(
     isLeavingId: isLeaving,
     registerNodeRef,
     highlightedId,
-    onRate: ratingEnabled ? rateComment : undefined,
     replyExtras,
     editExtras,
     attachmentStateFor,
@@ -606,11 +557,6 @@ export function useCommentThread(
     tree,
     draft,
     setDraft,
-    ratingEnabled,
-    draftRating,
-    setDraftRating,
-    myRatedComment,
-    isSpaceOwner,
     submitComment,
     composerExtras,
     isPosting,

@@ -150,11 +150,10 @@ select public._check(20, 'düzenleyici: öğe ekler, düzenler, yerleşimi kayde
   and public._cnt($q$with u as (update public.space_items set body = 'güncel' where id = 'b0000000-0000-4000-8000-000000000003' returning 1) select count(*) from u$q$) = 1
   and public._val(format($q$select array_length(public.space_save_layout(%L, '[{"id":"b0000000-0000-4000-8000-000000000001","x":120,"y":-40,"w":300,"h":220,"z":3},{"id":"b0000000-0000-4000-8000-0000000000ff","x":1,"y":1}]'::jsonb), 1)$q$, public._g('S'))) = '1'
   and public._val($q$select x || ',' || y || ',' || w || ',' || z from public.space_items where id = 'b0000000-0000-4000-8000-000000000001'$q$) = '120,-40,300,3');
-select public._check(21, 'düzenleyici sahip yetkilerini devralmaz: ad/görünürlük değiştiremez, silemez, davet/bağlantı/rol yapamaz',
+select public._check(21, 'düzenleyici sahip yetkilerini devralmaz: ad/görünürlük değiştiremez, silemez, davet/rol yapamaz',
   public._cnt(format($q$with u as (update public.spaces set title = 'ele geçir', visibility = 'public' where id = %L returning 1) select count(*) from u$q$, public._g('S'))) = 0
   and public._cnt(format($q$with d as (delete from public.spaces where id = %L returning 1) select count(*) from d$q$, public._g('S'))) = 0
   and public._try(format($q$select public.invite_space_member(%L, 'dave', 'viewer')$q$, public._g('S'))) like '%space_forbidden%'
-  and public._try(format($q$select public.create_space_link(%L)$q$, public._g('S'))) like '%space_forbidden%'
   and public._try(format($q$select public.set_space_member_role(%L, %L, 'editor')$q$, public._g('S'), :carol)) like '%space_forbidden%');
 select public._as_user(:carol);
 select public._check(22, 'görüntüleyici okur ama düzenleyemez (ekleme hata, güncelleme/silme 0 satır, yerleşim reddedilir)',
@@ -174,7 +173,8 @@ select public._check(24, 'yabancı özel Space''in hiçbir parçasını göremez
   and public._cnt(format($q$select count(*) from public.space_groups where space_id = %L$q$, public._g('S'))) = 0
   and public._cnt(format($q$select count(*) from public.space_members where space_id = %L$q$, public._g('S'))) = 0
   and public._cnt(format($q$select count(*) from public.space_activity where space_id = %L$q$, public._g('S'))) = 0
-  and public._try(format($q$select public.set_space_favorite(%L, true)$q$, public._g('S'))) like '%space_not_found%');
+  and public._try(format($q$select public.touch_space(%L)$q$, public._g('S'))) = 'ok'
+  and public._cnt(format($q$select count(*) from public.space_user_state where space_id = %L$q$, public._g('S'))) = 0);
 
 -- ============================================================================
 -- 4. Paletler + gruplar
@@ -196,16 +196,16 @@ select public._check(27, 'görüntüleyici palet ekleyemez',
 -- ============================================================================
 select public._as_user(:alice);
 update public.spaces set visibility = 'public' where id = public._g('S');
+select public._check(28, 'görünürlük her zaman özel kalır ("herkese açık" yazılsa da)',
+  public._val(format($q$select visibility from public.spaces where id = %L$q$, public._g('S'))) = 'private');
 set role anon;
 select public._as_user('');
-select public._check(28, 'herkese açık Space ziyaretçiye görünür; gizli not ve üye listesi görünmez (etkinlik varsayılan olarak görünür — 242; "yalnız üyeler" ayarı space-comments-activity.sql)',
-  public._cnt(format($q$select count(*) from public.spaces where id = %L$q$, public._g('S'))) = 1
-  and public._cnt(format($q$select count(*) from public.space_items where space_id = %L and kind = 'note'$q$, public._g('S'))) = 2
-  and public._cnt($q$select count(*) from public.space_items where id = 'b0000000-0000-4000-8000-000000000004'$q$) = 0
-  and public._cnt(format($q$select count(*) from public.space_members where space_id = %L$q$, public._g('S'))) <= 0);
-select public._check(29, 'ziyaretçi herkese açık Space''lerde listeler ve arar; yazamaz',
-  public._cnt($q$select count(*) from public.list_spaces('public')$q$) = 1
-  and public._cnt($q$select count(*) from public.list_spaces('public', 'ejderha')$q$) = 1
+select public._check(29, 'ziyaretçi Space''i, notları, üye listesini görmez; hiçbir Space listelemez/aramaz; yazamaz',
+  public._cnt(format($q$select count(*) from public.spaces where id = %L$q$, public._g('S'))) = 0
+  and public._cnt(format($q$select count(*) from public.space_items where space_id = %L$q$, public._g('S'))) = 0
+  and public._cnt(format($q$select count(*) from public.space_members where space_id = %L$q$, public._g('S'))) = 0
+  and public._cnt($q$select count(*) from public.list_spaces('public')$q$) = 0
+  and public._cnt($q$select count(*) from public.list_spaces('all', 'ejderha')$q$) = 0
   and public._try(format($q$insert into public.space_items (space_id, kind, title, created_by) values (%L, 'note', 'x', null)$q$, public._g('S'))) like '%permission denied%');
 set role authenticated;
 select public._as_user(:erin);
@@ -213,11 +213,9 @@ select public._check(30, 'sahibinin engellediği kullanıcı herkese açık Spac
   public._cnt(format($q$select count(*) from public.spaces where id = %L$q$, public._g('S'))) = 0
   and public._cnt($q$select count(*) from public.list_spaces('public')$q$) = 0);
 select public._as_user(:dave);
-select public._check(31, 'yabancı herkese açık Space''i favoriler, son açılanlara ekler; ama yazamaz',
-  public._try(format($q$select public.set_space_favorite(%L, true)$q$, public._g('S'))) = 'ok'
-  and public._try(format($q$select public.touch_space(%L)$q$, public._g('S'))) = 'ok'
-  and public._cnt($q$select count(*) from public.list_spaces('favorites')$q$) = 1
-  and public._cnt($q$select count(*) from public.list_spaces('recent')$q$) = 1
+select public._check(31, 'yabancı (üye olmayan) Space''i okuyamaz, favorileyemez/son açılanlara ekleyemez, yazamaz',
+  public._cnt(format($q$select count(*) from public.spaces where id = %L$q$, public._g('S'))) = 0
+  and public._try(format($q$select public.set_space_favorite(%L, true)$q$, public._g('S'))) like '%does not exist%'
   and public._cnt($q$select count(*) from public.list_spaces('all')$q$) = 0
   and public._cnt($q$with u as (update public.space_items set title = 'x' returning 1) select count(*) from u$q$) = 0);
 
@@ -239,54 +237,18 @@ select public._check(34, 'paylaşılanlar süzgeci: düzenleyiciye görünür, "
   and public._cnt($q$select count(*) from public.list_spaces('mine')$q$) = 0);
 
 -- ============================================================================
--- 7. Bağlantıya sahip olanlar
+-- 7. Bağlantı/paylaşım kalktı (docs/history/459-*)
 -- ============================================================================
 select public._as_user(:alice);
-select public._check(35, 'bağlantı yalnız "bağlantı" görünürlüğünde oluşturulur',
-  public._try(format($q$select public.create_space_link(%L)$q$, public._g('S'))) like '%space_not_link_visible%');
+select public._check(35, 'bağlantı RPC''leri kalktı',
+  public._try(format($q$select public.create_space_link(%L)$q$, public._g('S'))) like '%does not exist%'
+  and public._try($q$select public.open_space_link('x')$q$) like '%does not exist%');
 update public.spaces set visibility = 'link' where id = public._g('S');
-select public._set('TOK1', public.create_space_link(public._g('S')) ->> 'token');
-select public._check(36, 'ham token saklanmaz (yalnız özet) ve istemci bağlantı tablosunu okuyamaz',
-  public._q(format($q$select count(*) from public.space_share_links where token_hash = %L$q$, public._gt('TOK1'))) = '0'
-  and public._try($q$select count(*) from public.space_share_links$q$) like '%permission denied%');
+select public._check(36, '"bağlantı" görünürlüğü yazılsa da Space özel kalır ve yabancıya açılmaz',
+  public._val(format($q$select visibility from public.spaces where id = %L$q$, public._g('S'))) = 'private');
 select public._as_user(:frank);
-select public._check(37, 'bağlantıyı açmadan okunamaz; yanlış token tek tip hata',
-  public._cnt(format($q$select count(*) from public.spaces where id = %L$q$, public._g('S'))) = 0
-  and public._try($q$select public.open_space_link('yanlis-token-yanlis-token-yanlis')$q$) like '%space_link_invalid%'
-  and public._try($q$select public.open_space_link('kisa')$q$) like '%space_link_invalid%');
-select public._check(38, 'bağlantıyla okur (gizli notu görmez), yazamaz',
-  public._val(format($q$select public.open_space_link(%L)$q$, public._gt('TOK1'))) = public._g('S')::text
-  and public._cnt(format($q$select count(*) from public.spaces where id = %L$q$, public._g('S'))) = 1
-  and public._cnt($q$select count(*) from public.space_items where id = 'b0000000-0000-4000-8000-000000000004'$q$) = 0
-  and public._try(format($q$insert into public.space_items (space_id, kind, title, created_by) values (%L, 'note', 'x', auth.uid())$q$, public._g('S'))) like '%row-level security%');
-select public._as_user(:alice);
-select public._check(39, 'sahip bağlantı durumunu görür (açan sayısı); iptal eder',
-  public._val(format($q$select active || '/' || opened_count from public.space_link_status(%L)$q$, public._g('S'))) = 'true/1'
-  and public._val(format($q$select public.revoke_space_link(%L)$q$, public._g('S'))) = '1');
-select public._as_user(:frank);
-select public._check(40, 'iptal edilen bağlantı erişim vermez (önceki hak da düşer)',
-  public._cnt(format($q$select count(*) from public.spaces where id = %L$q$, public._g('S'))) = 0
-  and public._try(format($q$select public.open_space_link(%L)$q$, public._gt('TOK1'))) like '%space_link_invalid%');
-select public._as_user(:alice);
-select public._set('TOK2', public.create_space_link(public._g('S')) ->> 'token');
-select public._as_user(:frank);
-select public.open_space_link(public._gt('TOK2'));
-select public._as_user(:alice);
-update public.spaces set visibility = 'private' where id = public._g('S');
-select public._as_user(:frank);
-select public._check(41, 'özele çevirmek açık bağlantıyı iptal eder; geri "bağlantı"ya dönmek eskisini canlandırmaz',
+select public._check(37, 'üye olmayan okuyamaz',
   public._cnt(format($q$select count(*) from public.spaces where id = %L$q$, public._g('S'))) = 0);
-select public._as_user(:alice);
-update public.spaces set visibility = 'link' where id = public._g('S');
-select public._as_user(:frank);
-select public._check(42, '… (bağlantı görünürlüğüne dönüldü, eski hak yine geçersiz)',
-  public._cnt(format($q$select count(*) from public.spaces where id = %L$q$, public._g('S'))) = 0
-  and public._try(format($q$select public.open_space_link(%L)$q$, public._gt('TOK2'))) like '%space_link_invalid%');
-set role anon;
-select public._as_user('');
-select public._check(43, 'ziyaretçi bağlantı açamaz (oturum gerekir)',
-  public._try(format($q$select public.open_space_link(%L)$q$, public._gt('TOK2'))) like '%permission denied%');
-set role authenticated;
 
 -- ============================================================================
 -- 8. Arşiv, roller, ayrılma
@@ -331,8 +293,8 @@ select public._check(50, 'Space okunamıyorsa dosyası da okunamaz (link görün
 select public._as_user(:alice);
 update public.spaces set visibility = 'public' where id = public._g('S');
 select public._as_user(:dave);
-select public._check(51, 'herkese açık Space''in dosyası okunur; yabancı silemez',
-  public._cnt($q$select count(*) from storage.objects where bucket_id = 'space-media'$q$) = 2
+select public._check(51, 'Space dosyası yalnız üyeye açık: yabancı ne okur ne siler',
+  public._cnt($q$select count(*) from storage.objects where bucket_id = 'space-media'$q$) = 0
   and public._cnt($q$with d as (delete from storage.objects where bucket_id = 'space-media' returning 1) select count(*) from d$q$) = 0);
 reset role;
 select public._check(52, 'yetim taraması: öğede kullanılan dosya yetim değil, kullanılmayan yetim',
@@ -350,7 +312,7 @@ select public._check(53, 'kapak: Space''teki görsel öğe seçilir; başka Spac
   and public._try(format($q$update public.spaces set owner_id = %L where id = %L$q$, :bobby, public._g('S'))) like '%space_invalid%');
 select public._as_user(:carol);
 update public.prompts set visibility = 'private' where id = 'a0000000-0000-4000-8000-0000000000a3';
-select public._as_user(:dave);
+select public._as_user(:alice);
 select public._check(54, 'kaynak gizlenince öğe kalır ama içeriği başkasına okunmaz (metin kopyalanmadı)',
   public._cnt($q$select count(*) from public.space_items where id = 'b0000000-0000-4000-8000-000000000002'$q$) = 1
   and public._cnt($q$select count(*) from public.prompts where id = 'a0000000-0000-4000-8000-0000000000a3'$q$) = 0

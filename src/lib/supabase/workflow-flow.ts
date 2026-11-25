@@ -112,9 +112,9 @@ interface LinkRpcRow {
   updated_at: string;
 }
 
-/** Önizleme sırası: önce herkese açık + arşivsiz (en yeni başta), sonra okuyucunun yalnız kendi görebildikleri (en yeni başta). */
+/** Önizleme sırası: arşivsizler önce, her grupta en yeni başta (Space'ler özel; docs/history/459-*). */
 export function sortWorkflowSpaceLinks(links: WorkflowSpaceLink[]): WorkflowSpaceLink[] {
-  const rank = (link: WorkflowSpaceLink) => (link.visibility === "public" && !link.archived ? 0 : 1);
+  const rank = (link: WorkflowSpaceLink) => (link.archived ? 1 : 0);
   return [...links].sort((x, y) => rank(x) - rank(y) || y.updatedAt.localeCompare(x.updatedAt));
 }
 

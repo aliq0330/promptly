@@ -5,7 +5,6 @@ import { Pin } from "@/components/icons/pin";
 import { Badge } from "@/components/ui/badge";
 import { ContentCard, ContentCardPost, ContentCardTitle } from "@/features/content/content-card";
 import { ContentTypePill } from "@/features/content/content-type-label";
-import { PaletteStrip, SpaceCoverArt } from "@/features/spaces/space-visuals";
 import { OutputPosterPreview, OutputThumbnailStrip } from "@/features/prompts/multi-image-output-options";
 import { PlayableCardArt } from "@/features/prompts/playable-card-art";
 import { PostCommentLink, PostLike, PostSave, type EngageMode } from "./post-engagement";
@@ -23,7 +22,6 @@ const SHARED_LABEL: Record<CommunityPost["contentType"], TranslationKey> = {
   request: "communities.feed.shared.request",
   workflow: "communities.feed.shared.workflow",
   preset: "communities.feed.shared.preset",
-  space: "communities.feed.shared.space",
   skill: "communities.feed.shared.skill",
 };
 
@@ -55,7 +53,7 @@ export function ApplicationCard({
         author={post.author}
         meta={`${t(SHARED_LABEL[post.contentType])} · ${formatRelativeTime(post.createdAt, language)}`}
         typeIcon={summary?.typeIcon}
-        titleInArt={Boolean(summary && summary.type !== "space" && summary.media.length === 0 && !summary.promptText)}
+        titleInArt={Boolean(summary && summary.media.length === 0 && !summary.promptText)}
         status={
           <>
             {post.kind !== "legacy" && <Badge variant="default">{t("communities.post.badge.application")}</Badge>}
@@ -70,9 +68,7 @@ export function ApplicationCard({
         menu={menu}
         art={
           summary ? (
-            summary.type === "space" ? (
-              <SpaceCoverArt urls={summary.spaceArt ?? []} className="aspect-[4/3] w-full overflow-hidden" iconSize={40} />
-            ) : summary.playable && poster ? (
+            summary.playable && poster ? (
               post.content?.type === "prompt" ? <PlayableCardArt prompt={post.content.data} poster={poster} /> : <OutputPosterPreview media={poster} />
             ) : summary.media.length > 0 ? (
               <OutputThumbnailStrip media={summary.media} />
@@ -95,7 +91,6 @@ export function ApplicationCard({
           </div>
         }
       >
-        {summary?.palette && summary.palette.length > 0 && <PaletteStrip colors={summary.palette} className="h-1.5" />}
         {post.note && <p data-post-note className="whitespace-pre-wrap break-words rounded-lg bg-surface/80 px-3 py-2.5 text-small text-text-secondary">{post.note}</p>}
       </ContentCardPost>
     </ContentCard>

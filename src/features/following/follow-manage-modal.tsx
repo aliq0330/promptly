@@ -28,11 +28,11 @@ import {
 import { cn, formatRelativeTime, profileHref, tagHref } from "@/lib/utils";
 import { reloadFollowFeed } from "./follow-feed-store";
 
-type ManageTab = "people" | "tags" | "tools" | "spaces";
+type ManageTab = "people" | "tags" | "tools";
 type RowChoice = "all" | "highlights" | "muted" | "unfollow";
 
 /**
- * "Takip ettiklerini yönet" (docs/history/451-*): Kişiler · Etiketler · AI araçları · Spaces. Kişi başına akışta ne görüneceği
+ * "Takip ettiklerini yönet" (docs/history/451-*): Kişiler · Etiketler · AI araçları. Kişi başına akışta ne görüneceği
  * (Hepsi · Öne çıkanlar · Sessiz) ya da takibi bırakma. Sessize alınan kişi takip edilmeye devam eder, yalnız bu akışta görünmez; karşı taraf bilmez.
  * Mod yazımı yalnız `set_follow_feed_mode` RPC'si; takibi bırakma mevcut `unfollowUser` yolu.
  */
@@ -59,7 +59,6 @@ export function FollowManageModal({ onClose }: { onClose: () => void }) {
               { key: "people", label: t("follow.manage.people") },
               { key: "tags", label: t("follow.rail.tags"), count: tags.tags.length },
               { key: "tools", label: t("follow.manage.tools"), count: tools.tools.length },
-              { key: "spaces", label: t("follow.rail.spaces") },
             ]}
             active={tab}
             onChange={setTab}
@@ -101,14 +100,7 @@ export function FollowManageModal({ onClose }: { onClose: () => void }) {
                 ))}
               </ul>
             )
-          ) : (
-            <div className="space-y-3 py-2">
-              <p className="text-small text-text-secondary">{t("follow.manage.spacesHint")}</p>
-              <Link href="/spaces" onClick={onClose} className="inline-flex text-small font-semibold text-primary hover:text-primary-hover">
-                {t("follow.manage.openSpaces")}
-              </Link>
-            </div>
-          )}
+          ) : null}
         </div>
         <div className="flex items-center gap-3 border-t border-border-soft px-4 py-3" data-dialog-footer="">
           <p className="min-w-0 flex-1 text-caption text-text-muted">{t("follow.manage.muteHint")}</p>

@@ -100,8 +100,8 @@ select public._check(11, 'izleyici bağlantı ekleyemez / silemez',
   public._try(format($q$insert into public.space_connections (space_id, from_item_id, to_item_id, created_by) values (%L, %L, %L, auth.uid())$q$, public._g('P'), public._g('C'), public._g('B'))) <> 'ok'
   and public._ids($q$with d as (delete from public.space_connections returning 1) select count(*)::text from d$q$) = '0');
 select public._as_user(:dave);
-select public._check(12, 'yabancı herkese açık Space''te bağlantıları OKUR ama yazamaz',
-  public._ids(format($q$select count(*)::text from public.space_connections where space_id = %L$q$, public._g('P'))) = '2'
+select public._check(12, 'yabancı (üye olmayan) Space''in bağlantılarını OKUYAMAZ ve yazamaz',
+  public._ids(format($q$select count(*)::text from public.space_connections where space_id = %L$q$, public._g('P'))) = '0'
   and public._try(format($q$insert into public.space_connections (space_id, from_item_id, to_item_id, created_by) values (%L, %L, %L, auth.uid())$q$, public._g('P'), public._g('C'), public._g('A'))) <> 'ok'
   and public._ids(format($q$with u as (update public.space_connections set label = 'x' where space_id = %L returning 1) select count(*)::text from u$q$, public._g('P'))) = '0');
 select public._as_user(:erin);
@@ -110,8 +110,8 @@ select public._check(13, 'engellenen kullanıcı hiç bağlantı görmez',
 reset role;
 set role anon;
 select public._as_user('');
-select public._check(14, 'ziyaretçi herkese açık Space''in bağlantılarını okur, yazamaz',
-  public._ids($q$select count(*)::text from public.space_connections$q$) = '2'
+select public._check(14, 'ziyaretçi hiçbir Space''in bağlantılarını okuyamaz ve yazamaz',
+  public._ids($q$select count(*)::text from public.space_connections$q$) = '0'
   and public._try(format($q$insert into public.space_connections (space_id, from_item_id, to_item_id) values (%L, %L, %L)$q$, public._g('P'), public._g('C'), public._g('A'))) <> 'ok');
 reset role;
 

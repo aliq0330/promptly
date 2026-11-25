@@ -8,14 +8,12 @@ test("takip edilebilir hedefler", () => {
   assert.deepEqual(commentFollowTarget({ workflowId: "w" }), { kind: "workflow", id: "w" });
   assert.deepEqual(commentFollowTarget({ presetId: "x" }), { kind: "preset", id: "x" });
   assert.deepEqual(commentFollowTarget({ skillId: "s" }), { kind: "skill", id: "s" });
-  assert.deepEqual(commentFollowTarget({ spaceId: "sp" }), { kind: "space", id: "sp" });
 });
 
 test("takip edilemeyen hedefler", () => {
   assert.equal(commentFollowTarget({ resultId: "x" }), null);
   assert.equal(commentFollowTarget({ communityPostId: "x" }), null);
   assert.equal(commentFollowTarget({ quoteId: "x" }), null);
-  assert.equal(commentFollowTarget({ spaceId: "sp", spaceActivityId: "a" }), null);
 });
 
 test("sürüm etiketleri", () => {
@@ -34,6 +32,4 @@ test("yorum bağlantısı hl ekler, eskisini ve hash'i atar", () => {
 test("takip listesi adresleri", () => {
   assert.equal(commentFollowHref("prompt", "P", null), "/prompts/local?id=P");
   assert.equal(commentFollowHref("skill", "S", "C"), "/skills/local?id=S&hl=comment:C");
-  assert.equal(commentFollowHref("space", "X", null), "/spaces/local?id=X&tab=comments");
-  assert.equal(commentFollowHref("space", "X", "C"), "/spaces/local?id=X&tab=comments&hl=comment:C");
 });

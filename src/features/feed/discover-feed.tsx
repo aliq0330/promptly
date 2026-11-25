@@ -34,8 +34,6 @@ import { EmbeddedCommunitiesBrowse } from "@/features/communities/all-communitie
 import { TagsSection } from "@/features/tags/tags-section";
 import { ToolsSection } from "@/features/tools/tools-section";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import { SpacesIcon } from "@/features/spaces/space-visuals";
-import { SpaceDiscoverSection } from "@/features/spaces/space-discover-section";
 import { SkillDiscoverSection } from "@/features/skills/skill-discover-section";
 import { GraduationCap } from "@/components/icons/graduation-cap";
 import { SKILLS_MENU_ENABLED } from "@/lib/skills/flag";
@@ -67,7 +65,7 @@ function DiscoverEditorialSkeleton() {
 }
 
 type FeedSection = "all" | "prompts" | "requests" | "workflows" | "presets" | "quotes";
-type EntitySection = "spaces" | "skills" | "tools" | "tags" | "creators" | "communities";
+type EntitySection = "skills" | "tools" | "tags" | "creators" | "communities";
 type Section = FeedSection | EntitySection;
 
 const SECTIONS: { key: Section; labelKey: TranslationKey; icon: typeof LayoutGrid; dividerBefore?: boolean }[] = [
@@ -77,8 +75,7 @@ const SECTIONS: { key: Section; labelKey: TranslationKey; icon: typeof LayoutGri
   { key: "requests", labelKey: "nav.requestsShort", icon: Sparkles },
   { key: "workflows", labelKey: "nav.workflows", icon: WorkflowIcon },
   { key: "presets", labelKey: "nav.presets", icon: SlidersHorizontal },
-  // Herkese açık Space'ler (docs/history/241-*: akışa yalnız alıntı olarak girerler) ve alıntılar (docs/history/217-*).
-  { key: "spaces", labelKey: "nav.spaces", icon: SpacesIcon },
+  // Alıntılar (docs/history/217-*). Space bölümü docs/history/459-* ile kalktı (Space'ler özel).
   // Skill'ler (docs/history/392-*): karma akışa girmez, kendi sunucu sorgusu (`skill_feed_page`); menü girişi bayrak arkasındadır.
   ...(SKILLS_MENU_ENABLED ? [{ key: "skills" as const, labelKey: "skill.pageTitle" as const, icon: GraduationCap }] : []),
   { key: "quotes", labelKey: "quotes.discover.section", icon: QuoteIcon },
@@ -100,7 +97,7 @@ const SECTION_KIND: Record<FeedSection, FeedKind | "all"> = {
 };
 
 const isEntity = (section: Section): section is EntitySection =>
-  section === "spaces" || section === "skills" || section === "tools" || section === "tags" || section === "creators" || section === "communities";
+  section === "skills" || section === "tools" || section === "tags" || section === "creators" || section === "communities";
 
 /** A quote has no content type / category / AI tool, so the post filters do not apply to it (the database leaves it out when one is set). */
 const hasPostFilters = (section: FeedSection) => section !== "quotes";
@@ -253,8 +250,6 @@ export function DiscoverFeed() {
 
         {section === "skills" ? (
           <SkillDiscoverSection />
-        ) : section === "spaces" ? (
-          <SpaceDiscoverSection />
         ) : section === "tools" ? (
           <ToolsSection />
         ) : section === "tags" ? (

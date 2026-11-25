@@ -20,7 +20,6 @@ import { communityPostReportTarget } from "./post-report";
 import { DropdownMenu, MenuItem } from "@/components/ui/dropdown-menu";
 import { PostScopeProvider } from "./post-scope";
 import { summarizeContent } from "./content-summary";
-import { SpacePreview } from "@/features/spaces/space-preview";
 import { SkillDetailView } from "@/features/skills/skill-detail-view";
 import { PostMenuExtras, type PostMenuExtra } from "@/features/prompts/post-menu-extras";
 import { PromptDetailView } from "@/features/prompts/prompt-detail-view";
@@ -43,7 +42,6 @@ const SHARED_LABEL: Record<CommunityPost["contentType"], TranslationKey> = {
   request: "communities.feed.shared.request",
   workflow: "communities.feed.shared.workflow",
   preset: "communities.feed.shared.preset",
-  space: "communities.feed.shared.space",
   skill: "communities.feed.shared.skill",
 };
 
@@ -197,7 +195,6 @@ export function CommunityPostPage() {
           {content?.type === "workflow" && <WorkflowDetailView workflowId={content.data.id} />}
           {content?.type === "preset" && <PresetDetailView presetId={content.data.id} />}
           {content?.type === "skill" && <SkillDetailView skillId={content.data.id} />}
-          {content?.type === "space" && <SpacePreview space={content.data} />}
         </PostMenuExtras>
       </PostScopeProvider>
 

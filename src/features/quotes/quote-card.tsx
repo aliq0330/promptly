@@ -9,10 +9,9 @@ import { ContentTypePill } from "@/features/content/content-type-label";
 import { summarizeContent } from "@/features/communities/content-summary";
 import { OutputPosterPreview, OutputThumbnailStrip } from "@/features/prompts/multi-image-output-options";
 import { PlayableCardArt } from "@/features/prompts/playable-card-art";
-import { PaletteStrip, SpaceCoverArt } from "@/features/spaces/space-visuals";
 import { SummaryTextArt } from "@/features/content/text-art";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import { quoteHref, quoteVerbKey } from "@/lib/quotes";
+import { quoteHref } from "@/lib/quotes";
 import { formatRelativeTime } from "@/lib/utils";
 import type { Quote } from "@/lib/supabase/quotes";
 import { QuoteCommentLink, QuoteLike } from "./quote-engagement";
@@ -37,17 +36,15 @@ export function QuoteCard({ quote }: { quote: Quote }) {
     <ContentCard variant="visual" href={href}>
       <ContentCardPost
         author={quote.author}
-        meta={`${t(quoteVerbKey(quote))} · ${formatRelativeTime(quote.createdAt, language)}`}
+        meta={`${t("quotes.card.quoted")} · ${formatRelativeTime(quote.createdAt, language)}`}
         typeIcon={summary?.typeIcon ?? (skill ? GraduationCap : undefined)}
-        titleInArt={Boolean(summary && summary.type !== "space" && summary.media.length === 0 && !summary.promptText)}
+        titleInArt={Boolean(summary && summary.media.length === 0 && !summary.promptText)}
         status={<Badge variant="default">{t("quotes.badge")}</Badge>}
         badges={skill ? <ContentTypePill icon={GraduationCap} label={t("skill.singular")} detail={null} /> : summary && <ContentTypePill icon={summary.typeIcon} label={t(summary.typeLabelKey)} detail={summary.tools.length > 0 ? null : summary.detail} />}
         menu={<QuoteMenu quote={quote} onDeleted={() => setGone(true)} />}
         art={
           summary ? (
-            summary.type === "space" ? (
-              <SpaceCoverArt urls={summary.spaceArt ?? []} className="aspect-[4/3] w-full overflow-hidden" iconSize={40} />
-            ) : summary.playable && poster ? (
+            summary.playable && poster ? (
               quote.content?.type === "prompt" ? <PlayableCardArt prompt={quote.content.data} poster={poster} /> : <OutputPosterPreview media={poster} />
             ) : summary.media.length > 0 ? (
               <OutputThumbnailStrip media={summary.media} />
@@ -74,7 +71,6 @@ export function QuoteCard({ quote }: { quote: Quote }) {
           </div>
         }
       >
-        {summary?.palette && summary.palette.length > 0 && <PaletteStrip colors={summary.palette} className="h-1.5" />}
         {quote.note && (
           <p data-quote-note className="whitespace-pre-wrap break-words rounded-lg bg-surface/80 px-3 py-2.5 text-small text-text-secondary">
             {quote.note}

@@ -17,13 +17,9 @@ import {
   SPACE_KINDS,
   SPACE_TEMPLATE_GROUPS,
   SPACE_TITLE_MAX,
-  SPACE_VISIBILITIES,
-  SPACE_VISIBILITY_LABEL,
   type SpaceKind,
-  type SpaceVisibility,
 } from "@/lib/spaces";
-import type { TranslationKey } from "@/lib/i18n/translations";
-import { SPACE_KIND_ICON as KIND_ICON, VISIBILITY_ICON } from "./space-visuals";
+import { SPACE_KIND_ICON as KIND_ICON } from "./space-visuals";
 import { InlineAlert } from "@/components/ui/inline-alert";
 
 /*
@@ -31,11 +27,6 @@ import { InlineAlert } from "@/components/ui/inline-alert";
  * açıkça yazılır), başlangıç şablonu ve kapak seçici. Yalnız sunum + yerel doğrulama; yazma çağıranda.
  */
 
-const VISIBILITY_HELP: Record<SpaceVisibility, TranslationKey> = {
-  private: "spaces.visibility.privateHelp",
-  link: "spaces.visibility.linkHelp",
-  public: "spaces.visibility.publicHelp",
-};
 
 export function TitleField({
   value,
@@ -106,23 +97,6 @@ export function KindField({ value, onChange, kinds = SPACE_KINDS }: { value: Spa
         value={value}
         onChange={onChange}
         options={kinds.map((kind) => ({ key: kind, label: t(SPACE_KIND_LABEL[kind]), icon: KIND_ICON[kind] }))}
-      />
-    </div>
-  );
-}
-
-export function VisibilityField({ value, onChange }: { value: SpaceVisibility; onChange: (value: SpaceVisibility) => void; name?: string }) {
-  const { t } = useTranslation();
-  return (
-    <div>
-      <p id="space-visibility-label" className={fieldLabelClassName}>
-        {t("spaces.form.visibility")}
-      </p>
-      <OptionGroup<SpaceVisibility>
-        labelledBy="space-visibility-label"
-        value={value}
-        onChange={onChange}
-        options={SPACE_VISIBILITIES.map((visibility) => ({ key: visibility, icon: VISIBILITY_ICON[visibility], label: t(SPACE_VISIBILITY_LABEL[visibility]), description: t(VISIBILITY_HELP[visibility]) }))}
       />
     </div>
   );

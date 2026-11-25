@@ -128,8 +128,8 @@ select public._check(10, 'süzgeçler dört içerik türünde de çalışır (wo
   and public._f('all', 'newest', array['request'], public._ids('carol'), null, null) = 'R1'
   and public._f('all', 'newest', array['request'], public._ids('bobby'), null, null) = '',
   public._f('all', 'newest', array['workflow'], public._ids('bobby'), array['karakter'], array['midjourney']));
-select public._check(11, 'kişi süzgeci Space ve alıntıyı sahibine göre süzer; etiket/araç süzgeci ikisini de eler',
-  public._f('all', 'newest', array['space'], public._ids('bobby'), null, null) = 'Space1'
+select public._check(11, 'kişi süzgeci alıntıyı sahibine göre süzer (Space artık akışta yok); etiket/araç süzgeci ikisini de eler',
+  public._f('all', 'newest', array['space'], public._ids('bobby'), null, null) = ''
   and public._f('all', 'newest', array['space'], public._ids('carol'), null, null) = ''
   and public._f('all', 'newest', array['quote'], public._ids('carol'), null, null) like 'quote:%'
   and public._f('all', 'newest', array['quote'], public._ids('bobby'), null, null) = ''
@@ -174,7 +174,7 @@ select public._check(18, 'takip kapsamı + süzgeçler: yalnız takip edilenleri
   and public._f('following', 'newest', array['prompt'], public._ids('carol'), null, null) = '',
   public._f('following', 'newest', array['prompt'], null, null, null));
 select public._check(19, 'takip kapsamı kronolojik: en yeni önce (tüm türler)',
-  public._f('following', 'newest', null, null, null, null) = 'S1,Space1,W1,P1,P7',
+  public._f('following', 'newest', null, null, null, null) = 'S1,W1,P1,P7',
   public._f('following', 'newest', null, null, null, null));
 reset role;
 
