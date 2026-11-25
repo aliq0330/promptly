@@ -38,6 +38,8 @@ import {
 import type { PathCrumb } from "./project-path-bar";
 import { InviteDialog } from "./team-invites";
 import type { TeamBoardConfig } from "./board/board-types";
+import { CopyItemsDialog } from "@/features/spaces/copy-items-dialog";
+import { Send } from "@/components/icons/send";
 import { boardGroupPagesOf, boardPageHref, fileBoardEntries } from "@/lib/team-board";
 import { ProjectPeopleList } from "./project-people";
 import { ProjectRoleChip, projectRoleLabelKey } from "./project-ui";
@@ -279,6 +281,7 @@ function FileInfoSheet({
   const lead = canReview(myRole);
   const { node: toastNode, show } = useToast();
   const [busy, setBusy] = useState(false);
+  const [copyOpen, setCopyOpen] = useState(false);
   // Dosya sohbeti (docs/history/369-*): kendiliğinden açılmaz; lider sonradan buradan açar. Sessizliği kanalın KENDİ ayarıdır (kanal bilgisinden), burada yalnız durumu görünür.
   const channelsState = useTeamChannelList(teamId);
   const fileChannel = channelsState.channels.find((channel) => channel.fileId === file.id) ?? null;
@@ -345,6 +348,15 @@ function FileInfoSheet({
           )}
         </section>
         <ProjectVariablesPanel projectId={project.id} fileId={file.id} variables={detail.variables} role={myRole} onChanged={onChanged} />
+        {file.mainAreaId && (
+          <div className="border-t border-border-soft pt-4">
+            <Button type="button" size="sm" variant="outline" className="gap-1.5" onClick={() => setCopyOpen(true)} data-file-copy>
+              <Send size={16} aria-hidden />
+              {t("spaces.copy.fileButton")}
+            </Button>
+          </div>
+        )}
+        {copyOpen && file.mainAreaId && <CopyItemsDialog sourceSpaceId={file.mainAreaId} sourceTitle={file.title} defaultDestination="new" onClose={() => setCopyOpen(false)} />}
         {lead && (
           <div className="flex flex-wrap gap-2 border-t border-border-soft pt-4">
             <Button type="button" size="sm" variant="outline" className="gap-1.5" onClick={onRename} data-file-rename>

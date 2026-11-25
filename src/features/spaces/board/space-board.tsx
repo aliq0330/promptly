@@ -89,7 +89,7 @@ import { isDuplicable, planDuplicate } from "@/lib/space-clipboard";
 import { chainPairs, connectionExists } from "@/lib/space-connectors";
 import { smartSnap, type Guide } from "@/lib/space-guides";
 import { legacyFramesOf, loadPlanInput, runImport, type PlanIO } from "@/lib/supabase/workflow-board";
-import { createSpaceGroup, uploadSpaceImage, type LayoutEntry, type NewSpaceItem, type SpaceConnection, type SpaceConnectionPatch, type SpaceItem } from "@/lib/supabase/spaces";
+import { createSpaceGroup, fetchSpaceMembers, uploadSpaceImage, type LayoutEntry, type NewSpaceItem, type SpaceConnection, type SpaceConnectionPatch, type SpaceItem } from "@/lib/supabase/spaces";
 import { boardPageHref, dragBox, frameMemberIds, initialsOf, isDrawingKind, lineShape, normalizePoints, pinWorldPosition, presentationFrames, type StrokeWidth } from "@/lib/team-board";
 import { deleteFileItem, transferItems } from "@/lib/supabase/team-board";
 import { CONTENT_ADD_ROWS, useContentAdd } from "@/features/teams/content-add";
@@ -111,7 +111,12 @@ import { NewPaletteDialog } from "../tabs/palette-tab";
 import type { TeamBoardConfig } from "@/features/teams/board/board-types";
 import { useOwnProfile } from "@/features/auth/own-profile-provider";
 import { fetchPinComments } from "@/lib/supabase/team-board";
-import { canAddToArea, canReview } from "@/lib/team-projects";
+import { canAddToArea, canReview, type ProjectRole } from "@/lib/team-projects";
+import type { ProjectPerson } from "@/lib/supabase/team-projects";
+import { MessageCircle } from "@/components/icons/message-circle";
+import { Send } from "@/components/icons/send";
+import { CopyItemsDialog } from "../copy-items-dialog";
+import { CountBadge } from "@/components/ui/badge";
 import { Frame } from "@/components/icons/frame";
 import { Type } from "@/components/icons/type";
 import { Pencil } from "@/components/icons/pencil";
@@ -222,11 +227,11 @@ function toNewConnection(c: SpaceConnection) {
   return { id: c.id, spaceId: c.spaceId, fromItemId: c.fromItemId, toItemId: c.toItemId, label: c.label, lineStyle: c.lineStyle, arrow: c.arrow, route: c.route, color: c.color, sourceWorkflowId: c.sourceWorkflowId, sourceRole: c.sourceRole };
 }
 
-export function SpaceBoard({ focusId, team }: { focusId: string | null; team?: TeamBoardConfig }) {
+export function SpaceBoard({ focusId, team, openComment }: { focusId: string | null; team?: TeamBoardConfig; /** Bildirimden gelen `?comment=` (kişisel Space). */ openComment?: string | null }) {
   const { t } = useTranslation();
   // Telefonda araç çubuğu gruplanır (docs/history/363-*): sık kullanılanlar görünür, gerisi "⋯" menüsünde.
   const phoneBar = useMediaQuery("(max-width: 767.98px)");
-  const { space, items, groups, palettes, sources, readable, caps, setItems, setGroups, queueLayout, layoutStatus, flushLayout, layoutNotice, dismissLayoutNotice, addItems, applyImport, removeItems, patchItem, userId, connections, setConnections, addConnections, removeConnections, patchConnection } =
+  const { space, role: spaceRole, items, groups, palettes, sources, readable, caps, setItems, setGroups, queueLayout, layoutStatus, flushLayout, layoutNotice, dismissLayoutNotice, addItems, applyImport, removeItems, patchItem, userId, connections, setConnections, addConnections, removeConnections, patchConnection } =
     useSpaceContext();
   const itemTitle = useItemTitle();
   const place = usePlaceNewItems();
@@ -263,6 +268,7 @@ export function SpaceBoard({ focusId, team }: { focusId: string | null; team?: T
     | { kind: "frame"; item: SpaceItem }
     | { kind: "content"; type: "preset" | "request" }
     | { kind: "palette" }
+    | { kind: "copy" }
   >(null);
   const [error, setError] = useState<string | null>(null);
   const [undoNotice, setUndoNotice] = useState<string | null>(null);
@@ -313,7 +319,7 @@ export function SpaceBoard({ focusId, team }: { focusId: string | null; team?: T
   const { profile: ownProfile } = useOwnProfile();
   const tabletBar = useMediaQuery("(min-width: 768px) and (max-width: 1023.98px)");
   const size: "desktop" | "tablet" | "phone" = phoneBar ? "phone" : tabletBar ? "tablet" : "desktop";
-  const canDraw = teamMode && caps.edit && !team?.archived;
+  const canDraw = caps.edit && !team?.archived;
   const [shape, setShape] = useState<PillShape>("rect");
   const [pencilWidth, setPencilWidth] = useState<StrokeWidth>(4);
   const [guidesOn, setGuidesOn] = useState(true);
@@ -340,7 +346,7 @@ export function SpaceBoard({ focusId, team }: { focusId: string | null; team?: T
   }, [tool]);
   const pagesUi = usePagesUi(phoneBar, tabletBar);
   const pageActions = usePageActions(team ?? DUMMY_TEAM);
-  const pins = usePinComments(space.id, teamMode);
+  const pins = usePinComments(space.id, true);
 
   // ---- türetilmiş veri ----
   const geoms = useMemo(() => {
@@ -793,7 +799,29 @@ export function SpaceBoard({ focusId, team }: { focusId: string | null; team?: T
   }
 
   // ---- ekip modu işlemleri (docs/history/367-*) ----
-  const myRole = team?.role ?? null;
+  // Kişisel Space: sahip = lider, düzenleyici = düzenleyici, görüntüleyici = görüntüleyici (yorum yetkileri ekip panosuyla aynı kuraldır).
+  const myRole: ProjectRole | null = team ? team.role : spaceRole === "owner" ? "lead" : spaceRole === "editor" ? "edit" : spaceRole === "viewer" ? "view" : null;
+  const [personalPeople, setPersonalPeople] = useState<ProjectPerson[]>([]);
+  useEffect(() => {
+    if (teamMode) return;
+    let alive = true;
+    void fetchSpaceMembers(space.id)
+      .then((list) => {
+        if (!alive) return;
+        setPersonalPeople(
+          list.flatMap((member) =>
+            member.profile
+              ? [{ type: "member" as const, id: member.userId, name: member.profile.displayName || member.profile.username, username: member.profile.username, avatarUrl: member.profile.avatarUrl, role: "view" as const, implicit: false, memberCount: null }]
+              : [],
+          ),
+        );
+      })
+      .catch(() => undefined);
+    return () => {
+      alive = false;
+    };
+  }, [space.id, teamMode]);
+  const boardPeople = team?.people ?? personalPeople;
   const canResolveComments = canAddToArea(myRole);
   const canModerateComments = canReview(myRole);
   const itemPositions = useMemo(() => new Map(items.map((item) => [item.id, { x: geoms[item.id].x, y: geoms[item.id].y }])), [items, geoms]);
@@ -904,8 +932,8 @@ export function SpaceBoard({ focusId, team }: { focusId: string | null; team?: T
 
   const locate = useCallback(
     (thread: PanelThread) => {
-      if (!team) return;
       if (thread.boardId !== space.id) {
+        if (!team) return;
         team.navigate(boardPageHref(team.teamId, team.projectId, thread.boardId, { comment: thread.root.id }), "replace");
         return;
       }
@@ -927,7 +955,7 @@ export function SpaceBoard({ focusId, team }: { focusId: string | null; team?: T
   // Bildirimden gelen `?comment=`: yorumlar yüklenince bir kez yer gösterilir.
   const openedComment = useRef<string | null>(null);
   useEffect(() => {
-    const wanted = team?.openComment;
+    const wanted = team ? team.openComment : (openComment ?? null);
     if (!wanted || openedComment.current === wanted || pins.status !== "ready" || !ready) return;
     const thread = boardThreads.find((entry) => entry.root.id === wanted);
     openedComment.current = wanted;
@@ -935,7 +963,7 @@ export function SpaceBoard({ focusId, team }: { focusId: string | null; team?: T
     // eslint-disable-next-line react-hooks/set-state-in-effect -- adres parametresi bir kez uygulanır
     if (!phoneBar) setPanelOpen(true);
     locate(thread);
-  }, [team?.openComment, pins.status, ready, boardThreads, locate, phoneBar]);
+  }, [team, openComment, pins.status, ready, boardThreads, locate, phoneBar]);
 
   const startComment = useCallback(
     (point: { x: number; y: number }, targetId: string | null) => {
@@ -1072,7 +1100,7 @@ export function SpaceBoard({ focusId, team }: { focusId: string | null; team?: T
     const connectorId = target.closest<HTMLElement>("[data-board-connector]")?.dataset.boardConnector ?? null;
 
     // Ekip araçları (docs/history/367-*): yorum / metin = dokunuşla yerleştir (sürüklenirse kaydırır); çerçeve/şekil/çizgi = sürükle; kalem = serbest çizim.
-    if (teamMode && !wantsPan) {
+    if (!wantsPan) {
       const world = screenToWorld(vpRef.current, point.x, point.y);
       if (tool === "comment" || tool === "text") {
         interaction.current = { ...base, kind: "tap", targetId: tool === "comment" ? itemId : null };
@@ -1149,7 +1177,7 @@ export function SpaceBoard({ focusId, team }: { focusId: string | null; team?: T
   }
 
   function onPointerMove(event: React.PointerEvent<HTMLDivElement>) {
-    if (teamMode && tool === "comment" && event.pointerType === "mouse") {
+    if (tool === "comment" && event.pointerType === "mouse") {
       const hovered = (event.target as HTMLElement).closest<HTMLElement>("[data-board-item]")?.dataset.boardItem ?? null;
       setHoverId((current) => (current === hovered ? current : hovered));
     }
@@ -1517,7 +1545,7 @@ export function SpaceBoard({ focusId, team }: { focusId: string | null; team?: T
     })),
   ];
   const lowDetail = vp.zoom < LOW_DETAIL_ZOOM;
-  const cursor = panning ? "cursor-grabbing" : tool === "pan" || spaceHeld ? "cursor-grab" : tool === "connect" || (teamMode && tool !== "select") ? "cursor-crosshair" : "cursor-default";
+  const cursor = panning ? "cursor-grabbing" : tool === "pan" || spaceHeld ? "cursor-grab" : tool === "connect" || tool !== "select" ? "cursor-crosshair" : "cursor-default";
 
   const overviewOpen = Boolean(team && pagesUi.overview);
   const rootClass = cn(
@@ -1533,7 +1561,7 @@ export function SpaceBoard({ focusId, team }: { focusId: string | null; team?: T
             "max-md:fixed max-md:inset-x-0 max-md:bottom-[calc(4rem+env(safe-area-inset-bottom))] max-md:top-16 max-md:z-20 max-md:rounded-none max-md:border-x-0 md:h-[calc(100dvh-8.5rem)]"
         : "h-[72dvh] min-h-[420px] md:h-[calc(100dvh-12rem)]",
   );
-  const commentMode = teamMode && tool === "comment";
+  const commentMode = tool === "comment";
   const openCommentCount = boardThreads.filter((thread) => !thread.root.resolvedAt).length;
   const selBox = (() => {
     if (!teamMode || selectedItems.length === 0) return null;
@@ -1572,6 +1600,14 @@ export function SpaceBoard({ focusId, team }: { focusId: string | null; team?: T
     { key: "shape", icon: <Square size={20} aria-hidden />, label: t("tb.tool.shape"), hint: t("tb.add.shapeHint"), tag: t("tb.add.new"), run: () => { setShape("rect"); setToolMode("rect"); }, hidden: !canDraw },
     { key: "arrow", icon: <MinusLine size={20} className="-rotate-45" aria-hidden />, label: t("tb.add.lineArrow"), hint: t("tb.add.lineHint"), tag: t("tb.add.new"), run: () => { setShape("arrow"); setToolMode("arrow"); }, hidden: !canDraw },
     { key: "connect", icon: <Spline size={20} aria-hidden />, label: t("tb.add.connect"), hint: t("tb.add.connectHint"), run: () => setToolMode("connect") },
+  ];
+  // Kişisel Space'in eski araç çubuğu için çizim ve yorum girişleri (ekip panosundaki "Ekle" menüsünün çizim satırlarıyla AYNI araçlar).
+  const drawMenuItems = [
+    { key: "text", label: t("tb.kind.text"), icon: Type, onSelect: () => setToolMode("text") },
+    { key: "frame", label: t("tb.kind.frame"), icon: Frame, onSelect: () => setToolMode("frame") },
+    { key: "pencil", label: t("tb.tool.pencil"), icon: Pencil, onSelect: () => setToolMode("pencil") },
+    { key: "shape", label: t("tb.tool.shape"), icon: Square, onSelect: () => { setShape("rect"); setToolMode("rect"); } },
+    { key: "arrow", label: t("tb.add.lineArrow"), icon: MinusLine, onSelect: () => { setShape("arrow"); setToolMode("arrow"); } },
   ];
   const zoomProps = {
     zoom: vp.zoom,
@@ -1643,7 +1679,7 @@ export function SpaceBoard({ focusId, team }: { focusId: string | null; team?: T
           <X size={20} aria-hidden />
         </button>
       </div>
-      <CommentInput people={team?.people ?? []} placeholder={t("tb.comments.placeholder")} submitLabel={t("tb.comments.send")} autoFocus={!phoneBar} onSubmit={submitDraft} onCancel={() => setDraftPin(null)} />
+      <CommentInput people={boardPeople} placeholder={t("tb.comments.placeholder")} submitLabel={t("tb.comments.send")} autoFocus={!phoneBar} onSubmit={submitDraft} onCancel={() => setDraftPin(null)} />
     </div>
   );
   const commentsPanel = (className?: string) => (
@@ -1651,6 +1687,7 @@ export function SpaceBoard({ focusId, team }: { focusId: string | null; team?: T
       className={className}
       threads={panelThreads}
       allScope={allScope}
+      hideScope={!team}
       onScope={(all) => {
         setAllScope(all);
         if (!all) setScopeThreads(null);
@@ -1659,7 +1696,7 @@ export function SpaceBoard({ focusId, team }: { focusId: string | null; team?: T
       activeId={activeComment}
       items={items}
       itemTitle={itemTitle}
-      people={team?.people ?? []}
+      people={boardPeople}
       myId={userId}
       canModerate={canModerateComments}
       canResolve={canResolveComments}
@@ -1720,6 +1757,8 @@ export function SpaceBoard({ focusId, team }: { focusId: string | null; team?: T
                 trigger={<Ellipsis size={20} aria-hidden />}
                 items={[
                   { key: "groups", label: t("spaces.groups.manage"), icon: Layers, onSelect: () => setDialog({ kind: "groups" }), hidden: !editable },
+                  ...drawMenuItems.map((item) => ({ ...item, label: `${t("spaces.board.draw")} · ${item.label}`, hidden: !canDraw })),
+                  { key: "comments", label: t("tb.comments.title"), icon: MessageCircle, onSelect: () => setPanelOpen((open) => !open) },
                   ...exportMenuItems.map((item) => ({ ...item, label: `${t("spaces.board.export")} · ${item.label}`, hidden: !editable })),
                   { key: "zoomIn", label: t("spaces.board.zoomIn"), icon: Plus, onSelect: () => zoomBy(1.2) },
                   { key: "zoomOut", label: t("spaces.board.zoomOut"), icon: Minus, onSelect: () => zoomBy(1 / 1.2) },
@@ -1736,6 +1775,8 @@ export function SpaceBoard({ focusId, team }: { focusId: string | null; team?: T
               <ToolButton icon={Hand} label={t("spaces.board.toolPan")} active={tool === "pan"} onClick={() => setToolMode("pan")} />
               <ToolButton icon={SquareDashedMousePointer} label={t("spaces.board.multiSelect")} active={multiSelect} onClick={() => setMultiSelect((value) => !value)} />
               {editable && <ToolButton icon={Spline} label={t("spaces.connect.tool")} active={tool === "connect"} onClick={() => setToolMode(tool === "connect" ? "select" : "connect")} />}
+              {canDraw && <PopoverMenu label={t("spaces.board.draw")} trigger={<Pencil size={20} aria-hidden />} items={drawMenuItems} />}
+              <ToolButton icon={MessageCircle} label={t("tb.comments.title")} active={panelOpen || commentMode} onClick={() => setPanelOpen((open) => !open)} count={openCommentCount} />
               {editable && (
                 <>
                   <Divider />
@@ -1877,7 +1918,7 @@ export function SpaceBoard({ focusId, team }: { focusId: string | null; team?: T
               />
             );
           })}
-          {teamMode && commentMode && hoverId && geoms[hoverId] && (
+          {commentMode && hoverId && geoms[hoverId] && (
             <div aria-hidden data-board-hover={hoverId} className="pointer-events-none absolute rounded-lg border-2 border-dashed border-primary bg-primary/5" style={{ left: geoms[hoverId].x - 4, top: geoms[hoverId].y - 4, width: geoms[hoverId].w + 8, height: geoms[hoverId].h + 8, zIndex: 8000 }}>
               <span className="absolute -top-7 left-0 inline-flex h-6 items-center whitespace-nowrap rounded-md bg-primary px-2 text-caption font-semibold text-primary-foreground" style={{ transform: `scale(${1 / vp.zoom})`, transformOrigin: "left bottom" }}>
                 {(() => {
@@ -1887,7 +1928,7 @@ export function SpaceBoard({ focusId, team }: { focusId: string | null; team?: T
               </span>
             </div>
           )}
-          {teamMode && hlItemId && geoms[hlItemId] && (
+          {hlItemId && geoms[hlItemId] && (
             <div aria-hidden data-board-highlight={hlItemId} className="pointer-events-none absolute rounded-lg border-2 border-primary bg-primary/10" style={{ left: geoms[hlItemId].x - 4, top: geoms[hlItemId].y - 4, width: geoms[hlItemId].w + 8, height: geoms[hlItemId].h + 8, zIndex: 8000 }} />
           )}
           {drawPreview && (() => {
@@ -1908,7 +1949,7 @@ export function SpaceBoard({ focusId, team }: { focusId: string | null; team?: T
             </svg>
           )}
         </div>
-        {teamMode && presenting === null && (
+        {presenting === null && (
           <div className="pointer-events-none absolute inset-0 overflow-hidden" data-board-pins="">
             {!pinsHidden && pins.threads.map((thread) => {
               const pos = pinWorldPosition(thread.root, itemPositions);
@@ -2005,6 +2046,7 @@ export function SpaceBoard({ focusId, team }: { focusId: string | null; team?: T
         >
           <div role="toolbar" aria-label={t("spaces.board.selectionToolbar")} data-board-selection={selectedItems.length} className="scrollbar-none pointer-events-auto flex max-w-full items-center gap-0.5 overflow-x-auto rounded-full border border-border-soft bg-surface px-1.5 py-1 shadow-md">
             <span className="shrink-0 px-2 text-caption font-semibold text-text-secondary">{t("spaces.board.selected", { count: selectedItems.length })}</span>
+            <ToolButton icon={Send} label={t("spaces.copy.selection")} onClick={() => setDialog({ kind: "copy" })} />
             {single && single.kind !== "palette" && single.kind !== "shape" && <ToolButton icon={ArrowUpRight} label={t("spaces.board.open")} onClick={() => openItem(single.id)} />}
             {teamMode && editable && single && single.kind === "content" && single.contentType === "workflow" && <ToolButton icon={WorkflowIcon} label={t("tf.board.expandWorkflow")} onClick={() => void expandWorkflow(single)} />}
             {editable && single && single.kind !== "note" && single.kind !== "palette" && !isDrawingKind(single.kind) && <ToolButton icon={StickyNote} label={t("spaces.board.attachNote")} onClick={() => setDialog({ kind: "note", attachTo: single.id })} />}
@@ -2039,7 +2081,7 @@ export function SpaceBoard({ focusId, team }: { focusId: string | null; team?: T
                     ]}
                   />
                 )}
-                {teamMode && canDraw && selectedItems.every((entry) => entry.kind === "shape" || entry.kind === "text" || entry.kind === "frame") && <StyleControls items={selectedItems} onPatch={(patch) => void restyle(patch)} />}
+                {canDraw && selectedItems.every((entry) => entry.kind === "shape" || entry.kind === "text" || entry.kind === "frame") && <StyleControls items={selectedItems} onPatch={(patch) => void restyle(patch)} />}
                 {team && team.pages.length > 1 && !team.archived && (
                   <button
                     ref={moveRef}
@@ -2127,6 +2169,7 @@ export function SpaceBoard({ focusId, team }: { focusId: string | null; team?: T
         />
       )}
       {dialog?.kind === "palette" && <NewPaletteDialog onClose={() => setDialog(null)} />}
+      {dialog?.kind === "copy" && <CopyItemsDialog sourceSpaceId={space.id} sourceTitle={team?.fileTitle ?? space.title} itemIds={selection} onClose={() => setDialog(null)} />}
 
       {/* Ekip modu katmanları (docs/history/367-*) */}
       {commentMode && !draftPin && (
@@ -2178,10 +2221,10 @@ export function SpaceBoard({ focusId, team }: { focusId: string | null; team?: T
       {team && pagesUi.menuOpen && pagesUi.drawer && <PagesDrawer team={team} actions={pageActions.actions} onClose={() => pagesUi.setMenuOpen(false)} onOverview={() => pagesUi.setOverview(true)} />}
       {team && pagesUi.menuOpen && !pagesUi.drawer && <PagesPopover anchorRef={pagesUi.buttonRef} team={team} actions={pageActions.actions} onClose={() => pagesUi.setMenuOpen(false)} onOverview={() => pagesUi.setOverview(true)} />}
       {team && moveOpen && selectedItems.length > 0 && <MovePopover anchorRef={moveRef} team={team} count={selectedItems.length} canMove={canMoveSelection} onClose={() => setMoveOpen(false)} onRun={runTransfer} />}
-      {team && panelOpen && size === "tablet" && (
+      {panelOpen && size === "tablet" && (
         <div className="absolute inset-y-0 right-0 z-30 flex w-[21rem] max-w-[92%] border-l border-border-soft bg-surface shadow-pop animate-fade-in">{commentsPanel("w-full")}</div>
       )}
-      {team && panelOpen && size === "phone" && (
+      {panelOpen && size === "phone" && (
         <BoardSheet onClose={() => setPanelOpen(false)}>
           <div className="h-[min(62dvh,34rem)]">{commentsPanel("h-full")}</div>
         </BoardSheet>
@@ -2190,7 +2233,7 @@ export function SpaceBoard({ focusId, team }: { focusId: string | null; team?: T
         <PresentBar index={Math.min(presenting, frameList.length - 1)} total={frameList.length} title={frameList[Math.min(presenting, frameList.length - 1)]?.title ?? ""} onPrev={() => setPresenting((n) => Math.max(0, (n ?? 0) - 1))} onNext={() => setPresenting((n) => Math.min(frameList.length - 1, (n ?? 0) + 1))} onExit={exitPresent} />
       )}
       </div>
-      {team && panelOpen && size === "desktop" && presenting === null && (
+      {panelOpen && size === "desktop" && presenting === null && (
         <aside className="flex w-[23.75rem] shrink-0 border-l border-border-soft bg-surface" data-testid="board-comments-aside">
           {commentsPanel("w-full")}
         </aside>
@@ -2219,7 +2262,7 @@ export function SpaceBoard({ focusId, team }: { focusId: string | null; team?: T
   );
 }
 
-function ToolButton({ icon: Icon, label, onClick, active, disabled, danger, className }: { icon: IconComponent; label: string; onClick: () => void; active?: boolean; disabled?: boolean; danger?: boolean; className?: string }) {
+function ToolButton({ icon: Icon, label, onClick, active, disabled, danger, className, count }: { icon: IconComponent; label: string; onClick: () => void; active?: boolean; disabled?: boolean; danger?: boolean; className?: string; count?: number }) {
   return (
     <button
       type="button"
@@ -2229,12 +2272,13 @@ function ToolButton({ icon: Icon, label, onClick, active, disabled, danger, clas
       title={label}
       aria-pressed={active}
       className={cn(
-        "flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors disabled:opacity-50",
+        "relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors disabled:opacity-50",
         active ? "bg-primary-soft text-primary" : danger ? "text-danger hover:bg-danger-soft" : "text-text-secondary hover:bg-surface-soft hover:text-text",
         className,
       )}
     >
       <Icon size={16} aria-hidden />
+      {count ? <CountBadge tone="primary" aria-hidden data-board-comment-count="" className="absolute -right-1 -top-1">{count}</CountBadge> : null}
     </button>
   );
 }
