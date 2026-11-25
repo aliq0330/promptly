@@ -179,7 +179,7 @@ const withReplies = (db) => {
   db.comments.push(r1, r2, r11, r111);
 };
 
-await scenario("10. yanıtlar kancalıdır: çizgi arka plana yakın (border-soft), her yanıt kendi hook'una sahip; iki seviyeden sonra girinti artmaz", async ({ page }) => {
+await scenario("10. yanıtlar kancalıdır: 2 px çizgi + kavisli kanca, her yanıt kendi hook'una sahip; iki seviyeden sonra girinti artmaz", async ({ page }) => {
   await page.getByText(/Mert:/).first().waitFor();
   await node(page, "Mert:").getByRole("button", { name: /yanıtı göster|Show .* repl/ }).first().click();
   await page.getByText("Yanıt bir").waitFor();
@@ -240,11 +240,13 @@ await scenario("12. telefon (390): Yanıtla satır içi çerçeveli kutuda açı
   assert.equal(db.comments.find((c) => c.body === "Telefon yanıtı").parent_id, db.comments.find((c) => c.body.startsWith("Mert:")).id);
 }, { viewport: { width: 390, height: 800 } });
 
-await scenario("13. telefon: yorum kartları tam genişlik (sayfa kenar boşluğu hariç), yatay taşma yok; düzenleme de alttan kartta", async ({ page, db }) => {
+await scenario("13. telefon: yorum metni geniş sütunda (kutu yok), yatay taşma yok; düzenleme de alttan kartta", async ({ page, db }) => {
   await page.getByText(/Mert:/).first().waitFor();
   const vw = 390;
-  const bubble = await node(page, "Mert:").locator("div.rounded-lg.border-border").first().boundingBox();
-  assert.ok(bubble.width >= vw - 40, `kart geniş (${bubble.width})`);
+  // Kutu yok (docs/history/458-*): avatar sütunu + metin; telefonda metin sütunu ekranın büyük kısmını kullanır.
+  assert.equal(await node(page, "Mert:").locator("div.rounded-lg.border").count(), 0, "yorum kutusu yok");
+  const body = await node(page, "Mert:").locator("p.text-h3").first().boundingBox();
+  assert.ok(body.width >= vw - 130, `metin sütunu geniş (${body.width})`);
   assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1), "taşma yok");
   await openMenu(page, "Kendi yorumum");
   await page.getByRole("menuitem", { name: "Düzenle", exact: true }).click();
@@ -271,6 +273,19 @@ await scenario("15. ziyaretçi: Takip et ve menü eylemleri yok (yalnız kopyala
   await openMenu(page, "Mert:");
   assert.deepEqual(await items(page), ["Bağlantıyı kopyala", "Düzenleme geçmişi"]);
 }, { guest: true, setup: (db) => { const c = db.comments.find((x) => x.body.startsWith("Mert:")); c.edited_at = "2026-10-02T10:00:00Z"; } });
+
+await scenario("16. Yanıtla: yanıt kutusu yanıtların son satırı olarak kancayla açılır, üst yorumun çizgisi uzar (yanıtsız yorumda da)", async ({ page }) => {
+  await page.getByText(/Kendi yorumum/).first().waitFor();
+  assert.equal(await node(page, "Kendi yorumum").locator("[data-comment-rail]").count(), 0, "yanıt kutusu yokken çizgi yok");
+  await node(page, "Kendi yorumum").getByRole("button", { name: "Yanıtla" }).first().click();
+  const row = node(page, "Kendi yorumum").locator("[data-comment-reply-row]");
+  await row.locator("form textarea").waitFor();
+  assert.equal(await node(page, "Kendi yorumum").locator("[data-comment-rail]").count(), 1, "çizgi uzadı");
+  const before = await row.evaluate((el) => getComputedStyle(el, "::before").borderLeftWidth);
+  assert.equal(before, "2px", "kanca");
+  await node(page, "Kendi yorumum").getByRole("button", { name: "Yanıtla" }).first().click();
+  await row.waitFor({ state: "detached" });
+}, { setup: (db) => mine(db, "Kendi yorumum", { created_at: "2026-10-06T10:00:00Z" }) });
 
 await browser.close();
 server.close?.();
