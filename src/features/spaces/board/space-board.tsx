@@ -101,6 +101,10 @@ import { CommentInput, CommentPeek, CommentsPanel, CommentTargetChip, PinMarker,
 import { MovePopover, BoardSheet, type AddRow } from "@/features/teams/board/board-menus";
 import { FrameDialog, StyleControls, TextItemDialog, ShapeSvg } from "@/features/teams/board/board-draw";
 import { ShareDialog } from "@/features/teams/board/board-share";
+import { runBoardExport, type BoardExportKind } from "./board-export-run";
+import { Download } from "@/components/icons/download";
+import { FileText } from "@/components/icons/file-text";
+import { ImageIcon } from "@/components/icons/image-icon";
 import { PresentBar } from "@/features/teams/board/board-present";
 import { ContentPickerDialog } from "@/features/teams/board/board-content-picker";
 import { NewPaletteDialog } from "../tabs/palette-tab";
@@ -1607,6 +1611,26 @@ export function SpaceBoard({ focusId, team }: { focusId: string | null; team?: T
       return { title: itemTitle(item), body: item.kind === "prompt" ? (item.isDraft ? item.body : (resolved?.prompt?.promptText ?? "")) : item.body };
     },
   };
+  // Kişisel Space'te dışa aktarma (PNG · PDF · JSON; docs/history/460-*): tarayıcıda üretilir, yalnız düzenleyebilenlere.
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
+  const exportBoard = async (kind: BoardExportKind) => {
+    if (exporting) return;
+    setExporting(true);
+    setExportError(null);
+    try {
+      await runBoardExport(kind, shareData, t);
+    } catch (err) {
+      setExportError(err instanceof Error && err.message ? err.message : t("tb.share.exportFailed"));
+    } finally {
+      setExporting(false);
+    }
+  };
+  const exportMenuItems = [
+    { key: "export-png", label: t("tb.share.png"), icon: ImageIcon, onSelect: () => void exportBoard("png") },
+    { key: "export-pdf", label: t("tb.share.pdf"), icon: FileText, onSelect: () => void exportBoard("pdf") },
+    { key: "export-json", label: t("tb.share.json"), icon: SquareTerminal, onSelect: () => void exportBoard("json") },
+  ];
   const composerBody = draftPin && (
     <div className="space-y-3" data-testid="board-comment-composer">
       <div className="flex items-center gap-3">
@@ -1696,6 +1720,7 @@ export function SpaceBoard({ focusId, team }: { focusId: string | null; team?: T
                 trigger={<Ellipsis size={20} aria-hidden />}
                 items={[
                   { key: "groups", label: t("spaces.groups.manage"), icon: Layers, onSelect: () => setDialog({ kind: "groups" }), hidden: !editable },
+                  ...exportMenuItems.map((item) => ({ ...item, label: `${t("spaces.board.export")} · ${item.label}`, hidden: !editable })),
                   { key: "zoomIn", label: t("spaces.board.zoomIn"), icon: Plus, onSelect: () => zoomBy(1.2) },
                   { key: "zoomOut", label: t("spaces.board.zoomOut"), icon: Minus, onSelect: () => zoomBy(1 / 1.2) },
                   { key: "fit", label: t("spaces.board.fit"), icon: Maximize, onSelect: fit },
@@ -1729,11 +1754,13 @@ export function SpaceBoard({ focusId, team }: { focusId: string | null; team?: T
               <ToolButton icon={Search} label={t("spaces.board.search")} active={searchOpen} onClick={() => setSearchOpen((open) => !open)} />
               <ToolButton icon={MapIcon} label={t("spaces.board.minimap")} active={minimapOn} onClick={toggleMinimap} className="max-sm:hidden" />
               <ToolButton icon={Keyboard} label={t("spaces.board.shortcuts")} onClick={() => setDialog({ kind: "shortcuts" })} />
+              {editable && <PopoverMenu label={t("spaces.board.export")} trigger={<Download size={20} aria-hidden />} items={exportMenuItems} />}
               <ToolButton icon={fullscreen ? Minimize2 : Maximize2} label={fullscreen ? t("spaces.board.exitFullscreen") : t("spaces.board.fullscreen")} onClick={() => setFullscreen((value) => !value)} />
             </>
           )}
           <div className="ml-auto flex shrink-0 items-center gap-2 pl-2">
             {uploading && <Loader2 size={16} className="animate-spin text-text-muted" aria-label={t("spaces.images.uploadingShort")} />}
+            {exportError && <span role="alert" data-board-export-error="" className="text-caption text-danger">{exportError}</span>}
             <SaveIndicator status={layoutStatus} onRetry={() => void flushLayout()} className="ml-0" />
           </div>
           <input ref={fileRef} type="file" multiple accept="image/jpeg,image/png,image/webp,image/heic,image/heif" className="sr-only" tabIndex={-1} onChange={(event) => { void uploadFiles(event.target.files); event.target.value = ""; }} />

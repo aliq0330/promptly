@@ -13,11 +13,9 @@ import { Avatar } from "@/components/ui/avatar";
 import { Modal } from "@/components/ui/modal";
 import { ProjectRoleChip } from "@/features/teams/project-ui";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import { boardToJson, buildPdf, exportFileName } from "@/lib/board-export";
-import { presentationFrames } from "@/lib/team-board";
+import { runBoardExport } from "@/features/spaces/board/board-export-run";
 import { absoluteUrl, cn } from "@/lib/utils";
 import type { SpaceConnection, SpaceItem, SpacePalette } from "@/lib/supabase/spaces";
-import { canvasToBlob, downloadBlob, renderBoard } from "./board-export-render";
 import type { TeamBoardConfig } from "./board-types";
 import { InlineAlert } from "@/components/ui/inline-alert";
 import { DialogShell } from "@/components/ui/dialog-shell";
@@ -78,25 +76,7 @@ export function ShareDialog({
     setBusy(kind);
     setError(null);
     try {
-      if (kind === "json") {
-        const json = boardToJson({ title: data.title, items: data.items, connections: data.connections, palettes: data.palettes });
-        downloadBlob(new Blob([JSON.stringify(json, null, 2)], { type: "application/json" }), exportFileName(data.title, "json"));
-      } else if (kind === "png") {
-        const rendered = await renderBoard({ items: data.items, connections: data.connections, palettes: data.palettes, describe: data.describe });
-        if (!rendered) throw new Error(t("tb.share.emptyBoard"));
-        downloadBlob(await canvasToBlob(rendered.canvas, "image/png"), exportFileName(data.title, "png"));
-      } else {
-        const frames = presentationFrames(data.items);
-        const regions = frames.length > 0 ? frames.map((frame) => ({ x: frame.x, y: frame.y, w: frame.w, h: frame.h })) : [undefined];
-        const pages = [];
-        for (const region of regions) {
-          const rendered = await renderBoard({ items: data.items, connections: data.connections, palettes: data.palettes, describe: data.describe, region, maxSide: 3000 });
-          if (!rendered) throw new Error(t("tb.share.emptyBoard"));
-          const jpeg = new Uint8Array(await (await canvasToBlob(rendered.canvas, "image/jpeg", 0.9)).arrayBuffer());
-          pages.push({ jpeg, width: rendered.width, height: rendered.height });
-        }
-        downloadBlob(new Blob([buildPdf(pages) as BlobPart], { type: "application/pdf" }), exportFileName(data.title, "pdf"));
-      }
+      await runBoardExport(kind, data, t);
     } catch (e) {
       setError(e instanceof Error && e.message ? e.message : t("tb.share.exportFailed"));
     } finally {
