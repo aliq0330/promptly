@@ -43,7 +43,7 @@ const overflowFree = (page) => page.evaluate(() => document.documentElement.scro
 const shot = async (page, name) => { if (process.env.SHOTS) await page.screenshot({ path: `${process.env.SHOTS}/${name}.png`, fullPage: true }); };
 
 await scenario("1 the hub is a short list: six categories with a one-line description each, no forms; sign-out below", async ({ page }) => {
-  await page.getByRole("heading", { name: "Ayarlar", level: 1 }).waitFor();
+  await page.locator("h1", { hasText: "Ayarlar" }).first().waitFor({ state: "attached" });
   const rows = [
     ["Hesap", "/settings/account", /Kullanıcı adı, e-posta ve şifre/],
     ["Gizlilik", "/settings/privacy", /kimin mesaj atabileceği/],
@@ -68,7 +68,7 @@ await scenario("2 every row opens its own sub-page with a title and a back link 
     await page.getByRole("heading", { name: title, level: 1 }).waitFor();
     await page.locator("[data-settings-back]").click();
     await page.waitForURL(/\/settings\/?$/);
-    await page.getByRole("heading", { name: "Ayarlar", level: 1 }).waitFor();
+    await page.locator("h1", { hasText: "Ayarlar" }).first().waitFor({ state: "attached" });
   }
 });
 
@@ -209,7 +209,7 @@ await scenario("10 English: hub and developer guide use English labels", async (
 }, { lang: "en" });
 
 await scenario("11 phone: the hub and the developer page do not overflow sideways", async ({ page }) => {
-  await page.getByRole("heading", { name: "Ayarlar", level: 1 }).waitFor();
+  await page.locator("h1", { hasText: "Ayarlar" }).first().waitFor({ state: "attached" });
   assert.ok(await overflowFree(page));
   await page.goto(BASE + "/settings/developer/");
   await page.locator("[data-access-list]").waitFor();
@@ -221,7 +221,7 @@ await scenario("11 phone: the hub and the developer page do not overflow sideway
 }, { viewport: { width: 390, height: 844 } });
 
 await scenario("12 an old #settings-developer link still opens the hub (no crash)", async ({ page }) => {
-  await page.getByRole("heading", { name: "Ayarlar", level: 1 }).waitFor();
+  await page.locator("h1", { hasText: "Ayarlar" }).first().waitFor({ state: "attached" });
 }, { path: "/settings/#settings-developer" });
 
 await server.close();

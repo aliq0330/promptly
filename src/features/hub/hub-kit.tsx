@@ -11,6 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { PAGE_GUTTER_CLASS, PAGE_WIDTH_CLASS } from "@/components/ui/page-header";
 import { Badge } from "@/components/ui/badge";
+import { usePhoneDuplicateClass } from "@/components/layout/phone-title";
 
 /**
  * Hub düzeni (docs/history/379-*): Spaces, Topluluklar ve Ekipler'in ana sayfaları ile iç sayfaları TEK iskeleti paylaşır.
@@ -50,13 +51,14 @@ export function HubBand({
   testId?: string;
   [data: `data-${string}`]: string | undefined;
 }) {
+  const duplicate = usePhoneDuplicateClass(title);
   return (
     <div className="flex items-center gap-3 sm:gap-4" data-hub-band="" data-testid={testId} {...rest}>
       <span className={cn("grid h-12 w-12 shrink-0 place-items-center rounded-lg", HUB_BAND_TONE[tone])}>
         <Icon size={24} aria-hidden />
       </span>
       <div className="min-w-0 flex-1">
-        <h1 className="truncate text-h2 font-extrabold text-text md:text-h1">{title}</h1>
+        <h1 className={cn("truncate text-h2 font-extrabold text-text md:text-h1", duplicate)}>{title}</h1>
         {description && <p className="truncate text-small text-text-muted">{description}</p>}
       </div>
       {action}

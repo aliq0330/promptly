@@ -11,9 +11,12 @@ import { useAuth } from "@/features/auth/auth-provider";
 import { fetchFollowedProfilesPage } from "@/lib/supabase/profiles";
 import { EMPTY_TAXONOMY_FILTER } from "@/lib/content-taxonomy";
 import { useTranslation } from "@/lib/i18n/language-provider";
+import { usePhoneDuplicateClass } from "@/components/layout/phone-title";
+import { cn } from "@/lib/utils";
 
 export default function FollowingPage() {
   const { t } = useTranslation();
+  const duplicate = usePhoneDuplicateClass(t("nav.followingPeople"));
   const { user } = useAuth();
   // Both lists are read a page at a time (docs/history/257-*): the people (50 per page) and their latest posts (`feed_page` "following" — the
   // database picks the posts of everyone followed; the client never sends the followed ids back).
@@ -23,7 +26,7 @@ export default function FollowingPage() {
   return (
     <PageContainer className="space-y-6">
       <section className="space-y-3">
-        <h1 className="text-h1 font-bold text-text">{t("nav.followingPeople")}</h1>
+        <h1 className={cn("text-h1 font-bold text-text", duplicate)}>{t("nav.followingPeople")}</h1>
         <PagedListState list={followed} skeleton={<p className="py-10 text-center text-small text-text-muted">{t("common.loading")}</p>}>
           <CreatorList users={followed.items} />
         </PagedListState>

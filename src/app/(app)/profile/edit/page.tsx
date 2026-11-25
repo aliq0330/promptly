@@ -14,6 +14,7 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import { updateOwnProfile, uploadAvatar } from "@/lib/supabase/profiles";
 import { imageSourceProblem } from "@/lib/image-processing";
 import { cn, profileHref } from "@/lib/utils";
+import { usePhoneDuplicateClass } from "@/components/layout/phone-title";
 
 const BIO_MAX_LENGTH = 200;
 const DISPLAY_NAME_MAX_LENGTH = 40;
@@ -27,6 +28,7 @@ const DISPLAY_NAME_MAX_LENGTH = 40;
  */
 export default function EditProfilePage() {
   const { t } = useTranslation();
+  const duplicate = usePhoneDuplicateClass(t("profile.editProfileHeading"));
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
   const { profile: ownProfile, loading: ownProfileLoading, setProfile: setOwnProfile } = useOwnProfile();
@@ -136,7 +138,7 @@ export default function EditProfilePage() {
 
   return (
     <div className="mx-auto max-w-xl px-3 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-8">
-      <h1 className="mb-1 text-h1 font-bold text-text">{t("profile.editProfileHeading")}</h1>
+      <h1 className={cn("mb-1 text-h1 font-bold text-text", duplicate)}>{t("profile.editProfileHeading")}</h1>
       <p className="mb-6 text-small text-text-muted">
         {t("profile.editProfileHint")}
       </p>

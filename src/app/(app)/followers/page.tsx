@@ -8,9 +8,12 @@ import { PagedListState } from "@/features/feed/paged-list-state";
 import { fetchFollowerProfilesPage } from "@/lib/supabase/profiles";
 import { getBlockedIds } from "@/lib/supabase/blocked-users";
 import { useTranslation } from "@/lib/i18n/language-provider";
+import { usePhoneDuplicateClass } from "@/components/layout/phone-title";
+import { cn } from "@/lib/utils";
 
 export default function FollowersPage() {
   const { t } = useTranslation();
+  const duplicate = usePhoneDuplicateClass(t("nav.followers"));
   const { user } = useAuth();
   // A page at a time, the next by itself on scroll (docs/history/257-*): a person can have tens of thousands of followers.
   const followers = usePagedList(`followers|${user?.id ?? ""}`, Boolean(user), async (offset) => {
@@ -21,7 +24,7 @@ export default function FollowersPage() {
   return (
     <PageContainer className="space-y-6">
       <section className="space-y-3">
-        <h1 className="text-h1 font-bold text-text">{t("nav.followers")}</h1>
+        <h1 className={cn("text-h1 font-bold text-text", duplicate)}>{t("nav.followers")}</h1>
         <PagedListState list={followers} skeleton={<p className="py-10 text-center text-small text-text-muted">{t("common.loading")}</p>}>
           <CreatorList users={followers.items} emptyMessage={t("profile.noFollowersYet")} />
         </PagedListState>

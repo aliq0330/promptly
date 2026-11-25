@@ -5,6 +5,7 @@ import type { IconComponent } from "@/components/icons/icon";
 import { ArrowRight } from "@/components/icons/arrow-right";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
+import { usePhoneDuplicateClass } from "@/components/layout/phone-title";
 
 /** Top-of-page title block: optional eyebrow, title, one-line description, actions. */
 export function PageHeader({
@@ -23,6 +24,7 @@ export function PageHeader({
   className?: string;
 }) {
   // Meydan (docs/history/190-*): one plain, large title block everywhere — the illustrated header card is gone.
+  const duplicate = usePhoneDuplicateClass(title);
   return (
     <header className={cn("flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between", className)}>
       <div className="min-w-0 space-y-1.5">
@@ -32,7 +34,7 @@ export function PageHeader({
             {eyebrow}
           </p>
         )}
-        <h1 className="text-h1 font-bold text-text">{title}</h1>
+        <h1 className={cn("text-h1 font-bold text-text", duplicate)}>{title}</h1>
         {description && <p className="max-w-2xl text-small text-text-muted sm:text-body">{description}</p>}
       </div>
       {actions && <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div>}
