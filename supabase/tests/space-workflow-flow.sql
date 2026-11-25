@@ -69,25 +69,25 @@ select public._check(4, 'özel Space''te düzenleyici katmanı değiştirebilir'
 select public._as_user(:dave);
 select public._check(5, 'yabancı herkese açık Space''in katmanını değiştiremez (0 satır)',
   public._ids(format($q$with u as (update public.space_items set flow_show_io = true where space_id = %L and kind = 'content' returning 1) select count(*)::text from u$q$, public._g('P'))) = '0');
-select public._check(6, 'yabancı herkese açık Space''te öğeyi ve katmanları okur',
-  public._ids(format($q$select flow_show_io::text || ':' || flow_show_links::text from public.space_items where space_id = %L and kind = 'content'$q$, public._g('P'))) = 'false:true');
+select public._check(6, 'yabancı (üye olmayan) Space''te öğeyi ve katmanları OKUYAMAZ',
+  public._ids(format($q$select count(*)::text from public.space_items where space_id = %L and kind = 'content'$q$, public._g('P'))) = '0');
 select public._check(7, 'yabancı özel Space''in öğesini görmez',
   public._ids(format($q$select count(*)::text from public.space_items where space_id = %L$q$, public._g('X'))) = '0');
 
 -- Workflow sayfasındaki "bağlı Space'ler" sorgusu: içerik + Space; her okuyucu yalnız kendi görebildiğini görür.
-select public._check(8, 'yabancı: workflow''un yalnız herkese açık Space''i görünür',
-  public._ids($q$select string_agg(s.title, ',' order by s.title) from public.space_items i join public.spaces s on s.id = i.space_id where i.kind = 'content' and i.content_type = 'workflow' and i.content_id = 'b0000000-0000-4000-8000-0000000000b1'$q$) = 'Açık');
+select public._check(8, 'yabancı: workflow''un hiçbir Space''i görünmez',
+  public._ids($q$select string_agg(s.title, ',' order by s.title) from public.space_items i join public.spaces s on s.id = i.space_id where i.kind = 'content' and i.content_type = 'workflow' and i.content_id = 'b0000000-0000-4000-8000-0000000000b1'$q$) = '');
 select public._as_user(:bobby);
-select public._check(9, 'özel Space''in üyesi ikisini de görür',
-  public._ids($q$select string_agg(s.title, ',' order by s.title) from public.space_items i join public.spaces s on s.id = i.space_id where i.kind = 'content' and i.content_type = 'workflow' and i.content_id = 'b0000000-0000-4000-8000-0000000000b1'$q$) = 'Açık,Özel');
+select public._check(9, 'üye yalnız üyesi olduğu Space''i görür',
+  public._ids($q$select string_agg(s.title, ',' order by s.title) from public.space_items i join public.spaces s on s.id = i.space_id where i.kind = 'content' and i.content_type = 'workflow' and i.content_id = 'b0000000-0000-4000-8000-0000000000b1'$q$) = 'Özel');
 select public._as_user(:erin);
 select public._check(10, 'engellenen kullanıcı sahibin Space''ini görmez',
   public._ids($q$select count(*)::text from public.space_items where kind = 'content' and content_type = 'workflow'$q$) = '0');
 reset role;
 set role anon;
 select public._as_user('');
-select public._check(11, 'ziyaretçi herkese açık Space''in workflow öğesini okur',
-  public._ids($q$select count(*)::text from public.space_items where kind = 'content' and content_type = 'workflow'$q$) = '1');
+select public._check(11, 'ziyaretçi hiçbir Space''in workflow öğesini okuyamaz',
+  public._ids($q$select count(*)::text from public.space_items where kind = 'content' and content_type = 'workflow'$q$) = '0');
 reset role;
 
 -- Kaynak okunabilirliği: özel workflow'u yabancı OKUYAMAZ (öğe satırı görünse bile pano "erişilemiyor" çizer).

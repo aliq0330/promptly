@@ -1,12 +1,8 @@
 "use client";
 
 import { useEffect, useId, useState } from "react";
-import { ChoiceGroup } from "@/components/ui/choice-group";
 import { useRouter } from "next/navigation";
 import { Check } from "@/components/icons/check";
-import { Copy } from "@/components/icons/copy";
-import { House } from "@/components/icons/house";
-import { Link2 } from "@/components/icons/link-2";
 import { Loader2 } from "@/components/icons/loader-2";
 import { X } from "@/components/icons/x";
 import { Button } from "@/components/ui/button";
@@ -14,22 +10,18 @@ import { Modal } from "@/components/ui/modal";
 import { ConfirmDialog } from "@/features/groups/confirm-dialog";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { useMediaQuery } from "@/lib/use-media-query";
-import { absoluteUrl, cn, formatRelativeTime } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import {
   createSpace,
-  createSpaceLink,
   deleteSpace,
   fetchSpaceItems,
-  fetchSpaceLinkStatus,
-  revokeSpaceLink,
   updateSpace,
   uploadSpaceImage,
   type Space,
   type SpaceItem,
 } from "@/lib/supabase/spaces";
-import { createQuote, deleteQuote, fetchOwnSpaceQuoteId } from "@/lib/supabase/quotes";
-import { SPACE_TEMPLATE_GROUPS, spaceHref, spaceLinkHref, type SpaceActivityVisibility, type SpaceKind, type SpaceVisibility } from "@/lib/spaces";
-import { CoverPicker, DescriptionField, FormError, KindField, SubmitButton, TemplateField, TitleField, VisibilityField } from "./space-forms";
+import { SPACE_TEMPLATE_GROUPS, spaceHref, type SpaceKind } from "@/lib/spaces";
+import { CoverPicker, DescriptionField, FormError, KindField, SubmitButton, TemplateField, TitleField } from "./space-forms";
 import { SpaceImage } from "./space-visuals";
 
 /** Gövdenin İÇİNDE yazılmış alt düğme satırı (Vazgeç / Kaydet) için: kayan gövdenin altına yapışır (`has-[[data-dialog-footer]]:pb-0` altındaki boşluğu kaldırır). `footer` prop'u varsa gerek yok. */
@@ -123,7 +115,6 @@ export function CreateSpaceModal({ onClose, onCreated, initialKind }: { onClose:
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [kind, setKind] = useState<SpaceKind>(initialKind ?? "moodboard");
-  const [visibility, setVisibility] = useState<SpaceVisibility>("private");
   const [template, setTemplate] = useState<"empty" | "template">("template");
   const [cover, setCover] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
@@ -149,7 +140,6 @@ export function CreateSpaceModal({ onClose, onCreated, initialKind }: { onClose:
         title,
         description,
         kind,
-        visibility,
         groups: template === "template" ? SPACE_TEMPLATE_GROUPS[kind].map((key) => t(key)) : [],
       });
     } catch (err) {
@@ -209,7 +199,6 @@ export function CreateSpaceModal({ onClose, onCreated, initialKind }: { onClose:
         <DescriptionField value={description} onChange={setDescription} />
         <KindField value={kind} onChange={setKind} />
         <TemplateField kind={kind} value={template} onChange={setTemplate} />
-        <VisibilityField value={visibility} onChange={setVisibility} />
         <CoverPicker file={cover} onChange={setCover} />
         <FormError message={error} />
       </div>
@@ -218,8 +207,8 @@ export function CreateSpaceModal({ onClose, onCreated, initialKind }: { onClose:
 }
 
 /**
- * Space ayarları (yalnız sahip): ad, açıklama, tür, kapak (yükle / Space'teki bir görseli seç / kaldır). Görünürlük paylaşım
- * penceresindedir. Kaydetme gerçekten güncellenen satırı döner; hata pencerede kalır.
+ * Space ayarları (yalnız sahip): ad, açıklama, tür, kapak (yükle / Space'teki bir görseli seç / kaldır). Space'ler hep özeldir
+ * (docs/history/459-*). Kaydetme gerçekten güncellenen satırı döner; hata pencerede kalır.
  */
 export function SpaceSettingsModal({
   space,
@@ -237,7 +226,6 @@ export function SpaceSettingsModal({
   const [title, setTitle] = useState(space.title);
   const [description, setDescription] = useState(space.description);
   const [kind, setKind] = useState<SpaceKind>(space.kind);
-  const [activityVisibility, setActivityVisibility] = useState<SpaceActivityVisibility>(space.activityVisibility);
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverItemId, setCoverItemId] = useState<string | null>(space.coverItemId);
   const [removeUpload, setRemoveUpload] = useState(false);
@@ -275,7 +263,6 @@ export function SpaceSettingsModal({
         title,
         description,
         kind,
-        activityVisibility,
         coverItemId,
         ...(coverUrl !== undefined ? { coverUrl } : {}),
       });
@@ -308,22 +295,6 @@ export function SpaceSettingsModal({
         <TitleField value={title} onChange={setTitle} />
         <DescriptionField value={description} onChange={setDescription} />
         <KindField value={kind} onChange={setKind} />
-        <div data-space-activity-visibility="">
-          <p id="space-activity-visibility-label" className="mb-1 text-label font-medium text-text">
-            {t("spaces.settings.activityVisibility")}
-          </p>
-          <p className="mb-2 text-caption text-text-muted">{t("spaces.settings.activityVisibilityHint")}</p>
-          <ChoiceGroup<"everyone" | "members">
-            labelledBy="space-activity-visibility-label"
-            variant="segmented"
-            value={activityVisibility}
-            onChange={setActivityVisibility}
-            options={[
-              { key: "everyone", label: t("spaces.activity.visible.everyone") },
-              { key: "members", label: t("spaces.activity.visible.members") },
-            ]}
-          />
-        </div>
         <CoverPicker
           file={coverFile}
           onChange={(file) => {
@@ -371,215 +342,6 @@ export function SpaceSettingsModal({
         </div>
         <FormError message={error} />
       </div>
-    </SpaceDialog>
-  );
-}
-
-/**
- * Paylaşım: görünürlük (neyin yayımlanacağı açıkça yazılır) + "bağlantıya sahip olanlar" için bağlantı yönetimi. Bağlantının
- * kendisi yalnız oluşturulduğu anda gösterilir (sunucu yalnız özetini saklar); kaybolursa yenisi oluşturulur ve eskisi iptal olur.
- */
-/**
- * Space paylaşım ayarları (sahip): "Kim görsün?" (Özel · Bağlantıya sahip olanlar · Herkese açık), bağlantı yönetimi ve — herkese açık
- * Space'te — "Akışta paylaş" (docs/history/215-*: açık onay, varsayılan kapalı). 241'den beri bu, sahibin KENDİ ALINTISIDIR (`create_quote`,
- * Space başına bir; kapatmak alıntıyı siler): Space'in ayrı gönderisi/beğenisi/yorumu yoktur, etkileşim alıntıdadır.
- * Birleşik Paylaş penceresinin (`ShareModal`) Space bölümüdür; tek başına `ShareSpaceModal` içinde de kullanılır.
- */
-export function SpaceShareSettings({ space, onChanged }: { space: Space; onChanged: (space: Space) => void }) {
-  const { t, language } = useTranslation();
-  const [visibility, setVisibility] = useState<SpaceVisibility>(space.visibility);
-  const [current, setCurrent] = useState(space);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [link, setLink] = useState<{ createdAt: string; openedCount: number } | null | undefined>(undefined);
-  const [freshUrl, setFreshUrl] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
-  // Sahibin bu Space'teki alıntısı: `undefined` = yükleniyor, `null` = akışta paylaşılmamış.
-  const [quoteId, setQuoteId] = useState<string | null | undefined>(undefined);
-
-  useEffect(() => {
-    let alive = true;
-    fetchOwnSpaceQuoteId(current.id, current.ownerId)
-      .then((id) => alive && setQuoteId(id))
-      .catch(() => alive && setQuoteId(null));
-    return () => {
-      alive = false;
-    };
-  }, [current.id, current.ownerId]);
-
-  useEffect(() => {
-    if (current.visibility !== "link") return;
-    let alive = true;
-    fetchSpaceLinkStatus(current.id)
-      .then((status) => alive && setLink(status))
-      .catch(() => alive && setLink(null));
-    return () => {
-      alive = false;
-    };
-  }, [current.id, current.visibility]);
-
-  async function applyVisibility(next: SpaceVisibility) {
-    setVisibility(next);
-    if (next === current.visibility) return;
-    setBusy(true);
-    setError(null);
-    try {
-      const saved = await updateSpace(current.id, { visibility: next });
-      setCurrent(saved);
-      onChanged(saved);
-      setFreshUrl(null);
-      setLink(next === "link" ? null : undefined);
-    } catch (err) {
-      setVisibility(current.visibility);
-      setError(err instanceof Error ? err.message : t("spaces.error.generic"));
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function makeLink() {
-    setBusy(true);
-    setError(null);
-    try {
-      const created = await createSpaceLink(current.id);
-      setFreshUrl(absoluteUrl(spaceLinkHref(created.token)));
-      setLink({ createdAt: created.createdAt, openedCount: 0 });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t("spaces.error.generic"));
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function revoke() {
-    setBusy(true);
-    setError(null);
-    try {
-      await revokeSpaceLink(current.id);
-      setFreshUrl(null);
-      setLink(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t("spaces.error.generic"));
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function copy(text: string) {
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    } catch {
-      setError(t("spaces.share.copyFailed"));
-    }
-  }
-
-  async function toggleFeed(next: boolean) {
-    setBusy(true);
-    setError(null);
-    try {
-      if (next) {
-        setQuoteId(await createQuote("space", current.id, ""));
-      } else if (quoteId) {
-        await deleteQuote(quoteId);
-        setQuoteId(null);
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t("spaces.error.generic"));
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  const publicUrl = absoluteUrl(spaceHref(current.id));
-  const canFeed = current.visibility === "public" && !current.archivedAt;
-
-  return (
-      <div className="space-y-4" data-testid="share-space-modal">
-        <VisibilityField value={visibility} onChange={(next) => void applyVisibility(next)} name="share-visibility" />
-        <p className="rounded-md bg-surface-soft px-3 py-2 text-caption text-text-secondary">{t("spaces.share.neverPublished")}</p>
-
-        {canFeed && (
-          <label
-            data-space-feed-toggle={quoteId ? "on" : "off"}
-            className="flex cursor-pointer items-center gap-3 rounded-lg card-inset px-3 py-2.5 has-[:checked]:border-primary/50 has-[:checked]:bg-primary-soft"
-          >
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-surface-soft text-text-secondary">
-              <House size={16} aria-hidden />
-            </span>
-            <span className="min-w-0 flex-1">
-              <span className="block text-small font-semibold text-text">{t("spaces.feed.toggle")}</span>
-              <span className="block text-caption text-text-muted">{quoteId ? t("spaces.feed.toggleOnHint") : t("spaces.feed.toggleHint")}</span>
-            </span>
-            <input
-              type="checkbox"
-              checked={Boolean(quoteId)}
-              disabled={busy || quoteId === undefined}
-              onChange={(event) => void toggleFeed(event.target.checked)}
-              className="h-5 w-5 shrink-0 accent-primary"
-            />
-          </label>
-        )}
-
-        {current.visibility === "public" && (
-          <div className="flex items-center gap-2">
-            <input readOnly value={publicUrl} aria-label={t("spaces.share.publicUrl")} className="h-10 min-w-0 flex-1 rounded-md card-inset px-3 text-small text-text" />
-            <Button type="button" variant="outline" size="sm" onClick={() => void copy(publicUrl)}>
-              {copied ? <Check size={16} aria-hidden /> : <Copy size={16} aria-hidden />}
-              {copied ? t("common.copied") : t("common.copyLink")}
-            </Button>
-          </div>
-        )}
-
-        {current.visibility === "link" && (
-          <div className="space-y-3 rounded-lg border border-border-soft p-3" data-testid="space-link-panel">
-            {freshUrl ? (
-              <>
-                <p className="text-small font-medium text-text">{t("spaces.share.linkReady")}</p>
-                <div className="flex items-center gap-2">
-                  <input readOnly value={freshUrl} aria-label={t("spaces.share.linkLabel")} data-testid="space-link-url" className="h-10 min-w-0 flex-1 rounded-md card-inset px-3 text-small text-text" />
-                  <Button type="button" variant="outline" size="sm" onClick={() => void copy(freshUrl)}>
-                    {copied ? <Check size={16} aria-hidden /> : <Copy size={16} aria-hidden />}
-                    {copied ? t("common.copied") : t("common.copy")}
-                  </Button>
-                </div>
-                <p className="text-caption text-text-muted">{t("spaces.share.linkOnce")}</p>
-              </>
-            ) : link === undefined ? (
-              <Loader2 size={16} className="animate-spin text-text-muted" aria-label={t("common.loading")} />
-            ) : link ? (
-              <p className="text-small text-text-secondary">
-                {t("spaces.share.linkActive", { time: formatRelativeTime(link.createdAt, language), count: link.openedCount })}
-              </p>
-            ) : (
-              <p className="text-small text-text-secondary">{t("spaces.share.noLink")}</p>
-            )}
-            <p className="text-caption text-text-muted">{t("spaces.share.linkRules")}</p>
-            <div className="flex flex-wrap gap-2">
-              <Button type="button" size="sm" onClick={() => void makeLink()} disabled={busy}>
-                <Link2 size={16} aria-hidden />
-                {link ? t("spaces.share.newLink") : t("spaces.share.createLink")}
-              </Button>
-              {link && (
-                <Button type="button" variant="outline" size="sm" onClick={() => void revoke()} disabled={busy}>
-                  {t("spaces.share.revokeLink")}
-                </Button>
-              )}
-            </div>
-          </div>
-        )}
-        <FormError message={error} />
-      </div>
-  );
-}
-
-/** Tek başına Space paylaşım penceresi (ayarlar bölümü + çerçeve). Birleşik Paylaş penceresi aynı bölümü kullanır. */
-export function ShareSpaceModal({ space, onClose, onChanged }: { space: Space; onClose: () => void; onChanged: (space: Space) => void }) {
-  const { t } = useTranslation();
-  return (
-    <SpaceDialog title={t("spaces.share.title")} onClose={onClose}>
-      <SpaceShareSettings space={space} onChanged={onChanged} />
     </SpaceDialog>
   );
 }

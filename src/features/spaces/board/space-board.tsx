@@ -2052,7 +2052,6 @@ export function SpaceBoard({ focusId, team }: { focusId: string | null; team?: T
       {dialog?.kind === "groups" && <GroupsManagerModal onClose={() => setDialog(null)} />}
       {dialog?.kind === "importWorkflow" && (
         <WorkflowImportModal
-          spaceVisibility={space.visibility}
           items={items}
           onClose={() => setDialog(null)}
           onImport={async ({ workflow, options }) => {

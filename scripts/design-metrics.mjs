@@ -38,7 +38,7 @@ const METRICS = [
   className("rawSwitch", 'role="switch" (Switch dışında)', /role="switch"/g, { allow: ["components/ui/switch.tsx"] }),
   // Tek değer seçimi (docs/history/453-*): radyo yalnız ortak bileşenlerde (ChoiceGroup / OptionGroup / SwatchGroup / MenuRadioGroup); yıldız puanı ve kategori ağacı yaprağı bilinçli istisna.
   className("rawRadio", 'role="radio" / type="radio" (ortak seçim bileşenleri dışında)', /(?<!\[)\b(role|type)="radio"/g, {
-    allow: ["components/ui/option-group.tsx", "components/ui/choice-group.tsx", "components/ui/swatch-group.tsx", "components/ui/menu-radio.tsx", "components/ui/star-rating.tsx", "features/content/taxonomy-picker.tsx"],
+    allow: ["components/ui/option-group.tsx", "components/ui/choice-group.tsx", "components/ui/swatch-group.tsx", "components/ui/menu-radio.tsx", "features/content/taxonomy-picker.tsx"],
     tsxOnly: true,
   }),
   className("statusAlpha", "durum rengi alfa zemin (bg-*/10|12|15)", /bg-(success|warning|danger)\/(10|12|15)(?![\w-])/g),

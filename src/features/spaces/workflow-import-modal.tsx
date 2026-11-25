@@ -11,7 +11,6 @@ import { useAuth } from "@/features/auth/auth-provider";
 import { usePagedList } from "@/features/content/use-paged-list";
 import { PagedListState } from "@/features/feed/paged-list-state";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import type { SpaceVisibility } from "@/lib/spaces";
 import { importPlan, loadPlanInput, workflowObjectsOn, type PlanInput } from "@/lib/supabase/workflow-board";
 import type { SpaceItem } from "@/lib/supabase/spaces";
 import { fetchWorkflowsByCreatorPage } from "@/lib/supabase/workflows";
@@ -33,12 +32,10 @@ export interface WorkflowImportInput {
  * workflow değişince panoda "Güncelle" çıkar. Önizleme panoya yazılacak planın kendisidir.
  */
 export function WorkflowImportModal({
-  spaceVisibility,
   items,
   onImport,
   onClose,
 }: {
-  spaceVisibility: SpaceVisibility;
   items: readonly SpaceItem[];
   onImport: (input: WorkflowImportInput) => Promise<void>;
   onClose: () => void;
@@ -71,7 +68,6 @@ export function WorkflowImportModal({
   const loaded = input && input.id === selectedId ? input : null;
   const plan = useMemo(() => (loaded?.value ? importPlan(loaded.value, options, items) : null), [loaded, options, items]);
   const alreadyOnBoard = selected ? workflowObjectsOn(items, selected.id).length > 0 : false;
-  const exposesPrivate = Boolean(selected && selected.visibility === "private" && spaceVisibility !== "private");
   const tooMany = Boolean(plan && items.length + plan.items.length > MAX_ITEMS);
 
   async function submit(event: React.FormEvent) {
@@ -201,12 +197,6 @@ export function WorkflowImportModal({
 
           {alreadyOnBoard && <p className="rounded-xl bg-primary-soft px-3 py-2 text-small text-text-secondary">{t("wfSpace.objects.alreadyHere")}</p>}
           {tooMany && <p role="status" className="rounded-xl bg-warning-soft px-3 py-2 text-small text-text-secondary">{t("wfSpace.objects.tooMany")}</p>}
-          {exposesPrivate && (
-            <p role="status" className="flex items-start gap-2 rounded-xl bg-warning-soft px-3 py-2 text-small text-text-secondary">
-              <Lock size={16} className="mt-0.5 shrink-0 text-warning" aria-hidden />
-              {t("wfSpace.import.privateWarn")}
-            </p>
-          )}
         </div>
       )}
 

@@ -80,8 +80,8 @@ select public._check(8, 'özel / taslak / topluluğa özgü / olmayan prompt eki
   and public._c(format(', attach_type, attach_id|, ''prompt'', %L', :p3)) ilike '%attachment_not_public%'
   and public._c(format(', attach_type, attach_id|, ''prompt'', %L', :p4)) ilike '%attachment_not_public%'
   and public._c(', attach_type, attach_id|, ''prompt'', gen_random_uuid()') ilike '%attachment_not_public%');
-select public._check(9, 'Space eki: herkese açık kabul, özel reddedilir',
-  public._c(format(', attach_type, attach_id|, ''space'', %L', :s1)) = 'ok'
+select public._check(9, 'Space eki artık kabul edilmez (Space''ler özel; docs/history/459-*)',
+  public._c(format(', attach_type, attach_id|, ''space'', %L', :s1)) ilike '%attachment_not_public%'
   and public._c(format(', attach_type, attach_id|, ''space'', %L', :s2)) ilike '%attachment_not_public%');
 select public._check(10, 'geçersiz ek türü ve yarım ek reddedilir',
   public._c(format(', attach_type, attach_id|, ''comment'', %L', :p1)) ~* '(attachment_not_public|prompt_comments_attach_check)'

@@ -30,9 +30,6 @@ import { StorageBackground } from "@/components/ui/storage-media";
 import { QuoteSection } from "@/features/quotes/quote-section";
 import { SaveToCollectionModal } from "@/features/collections/save-to-collection-modal";
 import { AddToSpaceModal, type AddToSpaceTarget } from "@/features/spaces/add-to-space-modal";
-import { SpaceShareSettings } from "@/features/spaces/space-modals";
-import { SPACE_KIND_LABEL, spaceHref } from "@/lib/spaces";
-import type { Space } from "@/lib/supabase/spaces";
 import type { QuoteContentType } from "@/lib/supabase/quotes";
 import { summarizeContent } from "@/features/communities/content-summary";
 import { quoteHref } from "@/lib/quotes";
@@ -50,11 +47,6 @@ export type ShareModalTarget =
   | { contentType: "prompt_result"; result: PromptResult }
   /** Bir topluluk gönderisi (başvuru): önizleme çağıran tarafından hazırlanır; bağlantı gönderinin kendi sayfasıdır. */
   | { contentType: "community_post"; postId: string; title: string; description: string; thumbnailUrl: string | null; badgeLabel: string; href: string }
-  /**
-   * Bir Space (docs/history/215-*). Sahibi aynı pencerede "Kim görsün?" + "Akışta gönderi olarak paylaş" ayarlarını da görür
-   * (`SpaceShareSettings`); `art` önizleme kolajının ilk görseli için, `onChanged` sayfanın Space durumunu güncel tutar.
-   */
-  | { contentType: "space"; space: Space; art?: string[]; onChanged?: (space: Space) => void }
   /** Bir içeriğin ALINTISI (docs/history/217-*): bağlantı alıntının kendi sayfasıdır. */
   | { contentType: "quote"; quote: Quote };
 
@@ -166,22 +158,6 @@ function getSharePreview(target: ShareModalTarget, t: (key: TranslationKey) => s
       storyLink: storyLinkFor("skill", skill.id, skill.status === "published" && skill.visibility === "public"),
     };
   }
-  if (target.contentType === "space") {
-    const space = target.space;
-    return {
-      id: space.id,
-      title: space.title,
-      description: space.description,
-      thumbnailUrl: space.coverUrl ?? target.art?.[0] ?? null,
-      badgeLabel: `Space · ${t(SPACE_KIND_LABEL[space.kind])}`,
-      badgeVariant: "neutral",
-      href: spaceHref(space.id),
-      messageParam: null,
-      // Space'in statik paylaşım sayfası yok; bağlantı Space'in kendi adresidir.
-      directLink: true,
-      storyLink: null,
-    };
-  }
   if (target.contentType === "quote") {
     const quote = target.quote;
     const summary = quote.content ? summarizeContent(quote.content) : null;
@@ -232,7 +208,7 @@ function getSharePreview(target: ShareModalTarget, t: (key: TranslationKey) => s
  * "Alıntıla" hedefi (akışta + topluluklarda; eskiden "Topluluklarda duyur"): yalnız topluluğa ait OLMAYAN içerik; herkese açık + yayında değilse satır nedeniyle kapalı durur
  * (topluluk paylaşımı hiçbir içeriği otomatik açmaz). Sonuç ve topluluk gönderisi duyurulamaz.
  */
-function announceTarget(target: ShareModalTarget, space: Space | null): { type: QuoteContentType; id: string; blockedKey: TranslationKey | null } | null {
+function announceTarget(target: ShareModalTarget): { type: QuoteContentType; id: string; blockedKey: TranslationKey | null } | null {
   if (target.contentType === "prompt") {
     const x = target.prompt;
     if (x.communityId) return null;
@@ -256,9 +232,6 @@ function announceTarget(target: ShareModalTarget, space: Space | null): { type: 
   if (target.contentType === "skill") {
     const x = target.skill;
     return { type: "skill", id: x.id, blockedKey: x.status === "published" && x.visibility === "public" ? null : "share.announce.notPublic" };
-  }
-  if (target.contentType === "space" && space) {
-    return { type: "space", id: space.id, blockedKey: space.visibility === "public" && !space.archivedAt ? null : "share.announce.spaceNotPublic" };
   }
   return null;
 }
@@ -323,14 +296,11 @@ export function ShareModal({ target, onClose }: { target: ShareModalTarget; onCl
   const { user } = useAuth();
   const { t, language } = useTranslation();
   const [copied, setCopied] = useState(false);
-  // Space: sahibin aynı pencerede yaptığı görünürlük / akış değişiklikleri duyuru uygunluğunu anında değiştirir.
-  const [space, setSpace] = useState<Space | null>(target.contentType === "space" ? target.space : null);
   const [self, setSelf] = useState<"space" | "save" | null>(null);
   const [quoteOpen, setQuoteOpen] = useState(false);
-  const preview = getSharePreview(target.contentType === "space" && space ? { ...target, space } : target, t, language);
-  const announce = user ? announceTarget(target, space) : null;
+  const preview = getSharePreview(target, t, language);
+  const announce = user ? announceTarget(target) : null;
   const selfOptions = user ? selfTargets(target) : { space: null, save: null };
-  const ownsSpace = target.contentType === "space" && space !== null && user?.id === space.ownerId && !space.archivedAt;
 
   // "Kendin için" bir pencere açar; Paylaş penceresinin yerini alır (üst üste iki pencere olmaz).
   if (self === "space" && selfOptions.space) return <AddToSpaceModal target={selfOptions.space} onClose={onClose} />;
@@ -396,19 +366,6 @@ export function ShareModal({ target, onClose }: { target: ShareModalTarget; onCl
           </span>
         </div>
 
-        {ownsSpace && space && (
-          <section className="mt-4 space-y-2" aria-label={t("share.spaceSettings")}>
-            <h3 className="text-label font-semibold text-text">{t("share.spaceSettings")}</h3>
-            <SpaceShareSettings
-              space={space}
-              onChanged={(next) => {
-                setSpace(next);
-                if (target.contentType === "space") target.onChanged?.(next);
-              }}
-            />
-          </section>
-        )}
-
         {user && shareRef ? (
           <SharePeople share={shareRef} moreHref={`/messages?${preview.messageParam}`} onDone={onClose} actions={actionRow} />
         ) : user ? (
@@ -442,7 +399,6 @@ export function ShareModal({ target, onClose }: { target: ShareModalTarget; onCl
             type={announce.type}
             contentId={announce.id}
             blockedReason={announce.blockedKey ? t(announce.blockedKey) : null}
-            hideFeed={ownsSpace}
           />
         )}
       </div>

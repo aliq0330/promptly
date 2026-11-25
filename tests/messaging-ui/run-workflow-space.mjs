@@ -117,7 +117,7 @@ function setupWorkflowSpace(db) {
       }
       const id = ctx.body.p_workflow_id;
       const memberOf = (spaceId) => db.spaceMembers.some((m) => m.space_id === spaceId && m.user_id === signedIn);
-      const readable = (spaceId) => { const sp = db.spaces.find((x) => x.id === spaceId); return sp && (memberOf(spaceId) || (sp.visibility === "public" && !sp.archived_at) || sp.owner_id === signedIn); };
+      const readable = (spaceId) => { const sp = db.spaces.find((x) => x.id === spaceId); return Boolean(sp && (memberOf(spaceId) || sp.owner_id === signedIn)); }; // docs/history/459-*: yalnız üyelik
       const mine = db.spaceItems.filter((i) => readable(i.space_id) && !i.is_private && (i.source_workflow_id === id || (i.kind === "content" && i.content_type === "workflow" && i.content_id === id)));
       const rank = (i) => (i.source_role === "step" ? 0 : i.source_workflow_id ? 1 : 2);
       const bySpace = new Map();
@@ -433,7 +433,7 @@ await scenario("3e güncelle: izleyici şerit görmez", async ({ page }) => {
 }, { setup: (db) => { db.addSpace(1, { title: "Başkasının", owner: U.carol.id, members: [[{ id: ME }, "viewer"]], visibility: "public" }); db.addWorkflowObjects(1); db.stepTitles = [...STEP_TITLES, "Yeni adım"]; } });
 
 // ---------------------------------------------------------------- Workflow sayfası önizlemesi
-await scenario("4 sayfa: herkese açık Space → ziyaretçi 'Space panosu' önizlemesini görür (adım kartları, promptlar, oklar)", async ({ page }) => {
+await scenario("4 sayfa: Space üyesi 'Space panosu' önizlemesini görür (adım kartları, promptlar, oklar)", async ({ page }) => {
   await page.goto(wfUrl(1));
   const section = page.locator("#workflow-space");
   await section.waitFor();
@@ -441,12 +441,12 @@ await scenario("4 sayfa: herkese açık Space → ziyaretçi 'Space panosu' öni
   await section.locator("[data-step-card]").first().waitFor();
   assert.equal(await section.locator("[data-step-card]").count(), 4);
   assert.equal(await section.locator("[data-connector]").count(), 7, "oklar da çizilir");
-  assert.ok((await section.innerText()).includes("Herkese açık Space"));
+  assert.ok((await section.innerText()).includes("Yalnız sen ve üyeler görür"));
   assert.ok(!(await section.innerText()).includes("Alakasız uzak not"), "workflow'dan uzak öğeler önizlemede yok");
   const href = await section.getByRole("link", { name: /Panoyu aç/ }).getAttribute("href");
   assert.ok(href.includes(`id=${SID(1)}`) && href.includes("tab=board") && href.includes("focus="), `pano bağlantısı: ${href}`);
   assert.equal(await section.getByRole("group", { name: /bağlı olduğu Space/ }).count(), 0, "tek Space: çip yok");
-}, { guest: true, setup: (db) => { db.addSpace(1, { title: "Lansman", visibility: "public" }); db.addWorkflowObjects(1); db.addItem(SID(1), { kind: "note", title: "Uzak", body: "Alakasız uzak not", x: 9000, y: 9000, w: 220, h: 160, z: 2 }); db.addItem(SID(1), { kind: "note", title: "Gizli", body: "gizli not metni", is_private: true, x: 0, y: 420, w: 220, h: 160, z: 3 }); } });
+}, { setup: (db) => { db.addSpace(1, { title: "Lansman", visibility: "public" }); db.addWorkflowObjects(1); db.addItem(SID(1), { kind: "note", title: "Uzak", body: "Alakasız uzak not", x: 9000, y: 9000, w: 220, h: 160, z: 2 }); db.addItem(SID(1), { kind: "note", title: "Gizli", body: "gizli not metni", is_private: true, x: 0, y: 420, w: 220, h: 160, z: 3 }); } });
 
 await scenario("4b sayfa: gizli notlar hiçbir durumda önizlemeye girmez (üye bile görse)", async ({ page }) => {
   await page.goto(wfUrl(1));
@@ -459,7 +459,7 @@ await scenario("4c sayfa: eski tek parça çerçeve öğesi olan Space de önizl
   await page.goto(wfUrl(1));
   const section = page.locator("#workflow-space");
   await section.locator("[data-workflow-flow]").waitFor();
-}, { guest: true, setup: (db) => { db.addSpace(1, { title: "Eski", visibility: "public" }); db.addWorkflowItem(1); } });
+}, { setup: (db) => { db.addSpace(1, { title: "Eski", visibility: "public" }); db.addWorkflowItem(1); } });
 
 await scenario("5 sayfa: özel Space → ziyaretçi bölümü HİÇ görmez, sahibi görür", async ({ page }) => {
   await page.goto(wfUrl(1));
@@ -477,17 +477,17 @@ await scenario("5b sayfa: özel Space → sahibi önizlemeyi 'yalnız sen ve üy
   assert.ok((await section.innerText()).includes("Yalnız sen ve üyeler görür"));
 }, { setup: (db) => { db.addSpace(1, { title: "Özel Lansman", visibility: "private" }); db.addWorkflowObjects(1); } });
 
-await scenario("5c sayfa: birden fazla Space — varsayılan en yeni herkese açık olan, çipten geçiş; ziyaretçi özel çipi görmez", async ({ page }) => {
+await scenario("5c sayfa: birden fazla Space — varsayılan en yeni olan, çipten geçiş", async ({ page }) => {
   await page.goto(wfUrl(1));
   const section = page.locator("#workflow-space");
   await section.waitFor();
   const chips = section.getByRole("group", { name: /bağlı olduğu Space/ }).getByRole("button");
   assert.equal(await chips.count(), 3);
-  assert.equal(await section.getByRole("button", { name: /Yeni Açık/ }).getAttribute("aria-pressed"), "true");
-  assert.equal(await section.getByRole("button", { name: /Gizli Moodboard/ }).getAttribute("aria-pressed"), "false");
-  await section.getByRole("button", { name: /Gizli Moodboard/ }).click();
-  await section.locator("[data-step-card]").first().waitFor();
   assert.equal(await section.getByRole("button", { name: /Gizli Moodboard/ }).getAttribute("aria-pressed"), "true");
+  assert.equal(await section.getByRole("button", { name: /Yeni Açık/ }).getAttribute("aria-pressed"), "false");
+  await section.getByRole("button", { name: /Yeni Açık/ }).click();
+  await section.locator("[data-step-card]").first().waitFor();
+  assert.equal(await section.getByRole("button", { name: /Yeni Açık/ }).getAttribute("aria-pressed"), "true");
 }, { setup: (db) => {
   db.addSpace(1, { title: "Eski Açık", visibility: "public", updated_at: "2026-09-12T10:00:00Z" });
   db.addSpace(2, { title: "Yeni Açık", visibility: "public", updated_at: "2026-09-20T10:00:00Z" });
@@ -495,18 +495,15 @@ await scenario("5c sayfa: birden fazla Space — varsayılan en yeni herkese aç
   [1, 2, 3].forEach((n) => db.addWorkflowObjects(n, { group: false }));
 } });
 
-await scenario("5d sayfa: ziyaretçi yalnız herkese açık Space çiplerini görür; bağ yoksa bölüm yok", async ({ page }) => {
+await scenario("5d sayfa: ziyaretçi hiçbir Space çipini görmez (Space'ler özel); bölüm yok", async ({ page }) => {
   await page.goto(wfUrl(1));
-  const section = page.locator("#workflow-space");
-  await section.waitFor();
-  const chips = section.getByRole("group", { name: /bağlı olduğu Space/ }).getByRole("button");
-  assert.equal(await chips.count(), 2);
-  assert.ok(!(await section.innerText()).includes("Gizli Moodboard"));
+  await page.getByRole("heading", { name: /Ürün lansman görseli/ }).first().waitFor();
+  await page.waitForTimeout(600);
+  assert.equal(await page.locator("#workflow-space").count(), 0, "ziyaretçi: bölüm yok");
 }, { guest: true, setup: (db) => {
   db.addSpace(1, { title: "Eski Açık", visibility: "public", updated_at: "2026-09-12T10:00:00Z" });
   db.addSpace(2, { title: "Yeni Açık", visibility: "public", updated_at: "2026-09-20T10:00:00Z" });
-  db.addSpace(3, { title: "Gizli Moodboard", visibility: "private", updated_at: "2026-09-25T10:00:00Z" });
-  [1, 2, 3].forEach((n) => db.addWorkflowObjects(n, { group: false }));
+  [1, 2].forEach((n) => db.addWorkflowObjects(n, { group: false }));
 } });
 
 await scenario("5e sayfa: bağ yoksa bölüm yok", async ({ page }) => {
@@ -590,8 +587,8 @@ await scenario("7b İngilizce: workflow sayfasında Space önizlemesi", async ({
   const section = page.locator("#workflow-space");
   await section.locator("[data-step-card]").first().waitFor();
   const text = (await section.innerText()).toUpperCase();
-  for (const s of ["SPACE BOARD", "OPEN BOARD", "READ-ONLY PREVIEW", "PUBLIC SPACE"]) assert.ok(text.includes(s), `"${s}" var`);
-}, { lang: "en", guest: true, setup: (db) => { db.addSpace(1, { title: "Launch", visibility: "public" }); db.addWorkflowObjects(1); } });
+  for (const s of ["SPACE BOARD", "OPEN BOARD", "READ-ONLY PREVIEW", "ONLY YOU AND MEMBERS CAN SEE THIS"]) assert.ok(text.includes(s), `"${s}" var`);
+}, { lang: "en", setup: (db) => { db.addSpace(1, { title: "Launch", visibility: "public" }); db.addWorkflowObjects(1); } });
 
 await scenario("8 telefon: workflow sayfası ve Space panosu taşmaz", async ({ page }) => {
   await page.goto(wfUrl(1));

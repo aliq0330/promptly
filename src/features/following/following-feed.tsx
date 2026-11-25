@@ -6,7 +6,6 @@ import { Clock } from "@/components/icons/clock";
 import { Hash } from "@/components/icons/hash";
 import { LayoutGrid } from "@/components/icons/layout-grid";
 import { Bot } from "@/components/icons/bot";
-import { Shapes } from "@/components/icons/shapes";
 import { UserCheck } from "@/components/icons/user-check";
 import { Users } from "@/components/icons/users";
 import { CircleCheck } from "@/components/icons/circle-check";
@@ -31,7 +30,7 @@ import { useActorProfiles } from "./use-actor-profiles";
 
 /**
  * Ana Sayfa → Takip Ettiklerin (docs/history/451-*): takip ettiklerinin ETKİNLİK akışı, zamana göre. Üstte "son ziyaretinden beri" özeti,
- * kaynak çipleri (Tümü · Kişiler · Etiketler · Araçlar · Spaces) ve kişiye göre daraltma; altında zaman çizelgesi (gün ayraçları, "son ziyaretin"
+ * kaynak çipleri (Tümü · Kişiler · Etiketler · Araçlar) ve kişiye göre daraltma; altında zaman çizelgesi (gün ayraçları, "son ziyaretin"
  * çizgisi), sonda "hepsi bu kadar". Sıra ve görünürlük veritabanında (`following_activity_page`); bu bileşen yalnız çizer. Tür ve takip edilenler
  * süzgeçleri Filtre penceresinden gelir (`FeedTabs`).
  */
@@ -68,9 +67,9 @@ export function FollowingFeed({
   const feed = useFollowingActivity(query, true, reload);
   const actors = useActorChips(summary?.actors ?? []);
 
-  const counts = summary ? { posts: summary.posts, versions: summary.versions, spaces: summary.spaces, tags: summary.tags } : null;
+  const counts = summary ? { posts: summary.posts, versions: summary.versions, tags: summary.tags } : null;
   const total = counts ? summaryTotal(counts) : 0;
-  const nothingFollowed = summary !== null && summary.following === 0 && summary.tagsFollowed === 0 && summary.toolsFollowed === 0 && summary.spacesFollowed === 0;
+  const nothingFollowed = summary !== null && summary.following === 0 && summary.tagsFollowed === 0 && summary.toolsFollowed === 0;
   const filtered = narrowed || source !== "all" || person !== null;
 
   const sourceChips: { key: ActivitySource; label: string; icon: typeof LayoutGrid; count?: number; hidden?: boolean }[] = [
@@ -78,7 +77,6 @@ export function FollowingFeed({
     { key: "people", label: t("follow.source.people"), icon: Users, count: counts ? counts.posts + counts.versions || undefined : undefined },
     { key: "tags", label: t("follow.source.tags"), icon: Hash, count: counts?.tags || undefined, hidden: summary !== null && summary.tagsFollowed === 0 },
     { key: "tools", label: t("follow.source.tools"), icon: Bot, hidden: summary === null || summary.toolsFollowed === 0 },
-    { key: "spaces", label: t("follow.source.spaces"), icon: Shapes, count: counts?.spaces || undefined, hidden: summary !== null && summary.spacesFollowed === 0 },
   ];
 
   return (

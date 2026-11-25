@@ -17,9 +17,7 @@ import { ArrowRight } from "@/components/icons/arrow-right";
 import { ArrowUp } from "@/components/icons/arrow-up";
 import { SectionMenu, type SectionMenuItem } from "@/features/content/section-menu";
 import type { CommentSort } from "@/lib/comment-sort";
-import type { TranslationKey } from "@/lib/i18n/translations";
 import { useCommentThread, type CommentTarget } from "./use-comment-thread";
-import { StarRatingInput } from "@/components/ui/star-rating";
 import { CommentExtrasPreview, CommentExtrasToolbar } from "./comment-extras";
 import { CommentComposerBox } from "./comment-composer-box";
 import { Send } from "@/components/icons/send";
@@ -37,7 +35,6 @@ export function CommentSection({
   disabledReason,
   highlightCommentId,
   headless = false,
-  spaceOwnerId = null,
   placeholder,
   onChange,
   ownerId = null,
@@ -45,11 +42,9 @@ export function CommentSection({
   target: CommentTarget;
   /** Prompt/istek/workflow/ayar paketi yazarı: yorum sabitleyebilir, yorumlarında "Yazar" rozeti çıkar (docs/history/385-*). */
   ownerId?: string | null;
-  /** Space yorumlarında: sahibi kendini puanlayamaz (yıldız seçici yerine açıklama görür). */
-  spaceOwnerId?: string | null;
   /** Yazma kutusunun ipucu metni (varsayılan "Bir yorum yaz…"). */
   placeholder?: string;
-  /** Yorum/puan değişince çağrılır (Space puan özeti için). */
+  /** Yorum değişince çağrılır. */
   onChange?: () => void;
   /** The page already titles the thread (the detail pages' numbered "Yorumlar" section): drop the own heading, keep the count + "Tümünü gör". */
   headless?: boolean;
@@ -82,11 +77,6 @@ export function CommentSection({
     tree,
     draft,
     setDraft,
-    ratingEnabled,
-    draftRating,
-    setDraftRating,
-    myRatedComment,
-    isSpaceOwner,
     submitComment,
     composerExtras,
     isPosting,
@@ -106,7 +96,7 @@ export function CommentSection({
     newCount,
     showNewComments,
     pinError,
-  } = useCommentThread(target, { highlightCommentId, spaceOwnerId, contentOwnerId: ownerId, onChange });
+  } = useCommentThread(target, { highlightCommentId, contentOwnerId: ownerId, onChange });
 
   // Yorum takibi + ⋮ menüsü + düzenleme geçmişi (docs/history/452-*).
   const follow = useCommentFollow(target);
@@ -230,22 +220,6 @@ export function CommentSection({
         <form onSubmit={handleSubmit} className="flex items-start gap-3">
           <Avatar src={ownProfile?.avatarUrl ?? null} alt={ownProfile?.displayName ?? t("prompt.previewAuthorName")} size={36} />
           <div className="min-w-0 flex-1 space-y-2">
-            {ratingEnabled && (
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-1" data-space-rating-picker="">
-                {isSpaceOwner ? (
-                  <p className="text-caption text-text-muted">{t("spaces.rating.owner")}</p>
-                ) : myRatedComment ? (
-                  <p className="text-caption text-text-muted">{t("spaces.rating.yours", { rating: myRatedComment.rating ?? 0 })}</p>
-                ) : (
-                  <>
-                    <StarRatingInput value={draftRating} onChange={setDraftRating} size={24} />
-                    <span className="min-w-20 text-caption text-text-secondary">
-                      {draftRating > 0 ? `${draftRating} · ${t(`spaces.rating.label${draftRating}` as TranslationKey)}` : t("spaces.rating.pick")}
-                    </span>
-                  </>
-                )}
-              </div>
-            )}
           <CommentComposerBox
             value={draft}
             onChange={setDraft}
@@ -259,7 +233,6 @@ export function CommentSection({
               </Button>
             }
           />
-          {ratingEnabled && !isSpaceOwner && !myRatedComment && <p className="text-caption text-text-muted">{t("spaces.rating.rules")}</p>}
           </div>
         </form>
       )}

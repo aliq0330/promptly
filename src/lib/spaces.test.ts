@@ -6,36 +6,30 @@ import {
   extractSpaceErrorCode,
   isSpaceTab,
   matchesQuery,
-  parseSpaceLinkToken,
   sourceStateOf,
-  spaceActivityHref,
   spaceCapabilities,
   spaceHref,
-  spaceLinkHref,
 } from "./spaces.ts";
 
-test("addresses: overview has no tab param, link token lives in the URL fragment", () => {
+test("addresses: overview has no tab param; comments/activity tabs and share links are gone (docs/history/459-*)", () => {
   assert.equal(spaceHref("abc"), "/spaces/local?id=abc");
   assert.equal(spaceHref("abc", "overview"), "/spaces/local?id=abc");
   assert.equal(spaceHref("abc", "board"), "/spaces/local?id=abc&tab=board");
-  assert.equal(spaceLinkHref("T".repeat(43)), `/spaces/link#${"T".repeat(43)}`);
-  assert.equal(parseSpaceLinkToken(`#${"a_B-9".repeat(9)}`), "a_B-9".repeat(9));
-  assert.equal(parseSpaceLinkToken("#short"), null);
-  assert.equal(parseSpaceLinkToken("#<script>alert(1)</script>xxxxxxxxxxxx"), null);
   assert.ok(isSpaceTab("palette") && !isSpaceTab("settings") && !isSpaceTab(null));
+  assert.ok(!isSpaceTab("comments") && !isSpaceTab("activity"));
 });
 
 test("capabilities: viewer reads only, editor edits but never manages, archive freezes everyone", () => {
   const viewer = spaceCapabilities("viewer", false);
-  assert.ok(viewer.member && !viewer.edit && !viewer.share && viewer.leave);
+  assert.ok(viewer.member && !viewer.edit && viewer.leave);
   const editor = spaceCapabilities("editor", false);
-  assert.ok(editor.edit && !editor.owner && !editor.manageMembers && !editor.share && !editor.delete);
+  assert.ok(editor.edit && !editor.owner && !editor.manageMembers && !editor.delete);
   const owner = spaceCapabilities("owner", false);
-  assert.ok(owner.edit && owner.manageMembers && owner.share && owner.delete && !owner.leave);
+  assert.ok(owner.edit && owner.manageMembers && owner.delete && !owner.leave);
   const archived = spaceCapabilities("owner", true);
   assert.ok(!archived.edit && !archived.manageMembers && archived.archive && archived.delete);
   const stranger = spaceCapabilities(null, false);
-  assert.ok(!stranger.member && !stranger.edit && !stranger.seePrivateNotes && !stranger.seeActivity);
+  assert.ok(!stranger.member && !stranger.edit && !stranger.seePrivateNotes);
 });
 
 test("defaultItemSize keeps an image's ratio with a 260 long side", () => {
@@ -75,28 +69,14 @@ test("matchesQuery ignores case, Turkish dotless i and accents", () => {
   assert.ok(!matchesQuery("ejderha", "kedi", undefined));
 });
 
-test("activity visibility: members always see it, strangers only when the owner left it open (docs/history/242-*)", () => {
-  assert.equal(spaceCapabilities(null, false, "everyone").seeActivity, true);
-  assert.equal(spaceCapabilities(null, false, "members").seeActivity, false);
-  assert.equal(spaceCapabilities("viewer", false, "members").seeActivity, true);
-  // Eski çağıranlar (üçüncü argüman yok) üyeye özel davranışı korur.
-  assert.equal(spaceCapabilities(null, false).seeActivity, false);
-});
-
-test("spaceActivityHref opens the activity tab on one event", () => {
-  assert.equal(spaceActivityHref("s1", "e 2"), "/spaces/local?id=s1&tab=activity&event=e%202");
-});
-
-test("spaceCapabilities: ekibe bağlı Space’te kişi yönetimi, paylaşım ve ayrılma kapanır; düzenleme ve sahiplik rolü kalır (docs/history/349-*)", () => {
-  const personal = spaceCapabilities("owner", false, "members", false);
+test("spaceCapabilities: ekibe bağlı Space’te kişi yönetimi ve ayrılma kapanır; düzenleme ve sahiplik rolü kalır (docs/history/349-*)", () => {
+  const personal = spaceCapabilities("owner", false, false);
   assert.equal(personal.manageMembers, true);
-  assert.equal(personal.share, true);
-  const team = spaceCapabilities("owner", false, "members", true);
+  const team = spaceCapabilities("owner", false, true);
   assert.equal(team.manageMembers, false);
-  assert.equal(team.share, false);
   assert.equal(team.edit, true);
   assert.equal(team.owner, true);
-  const teamEditor = spaceCapabilities("editor", false, "members", true);
+  const teamEditor = spaceCapabilities("editor", false, true);
   assert.equal(teamEditor.edit, true);
   assert.equal(teamEditor.owner, false);
   assert.equal(TEAM_SPACES_MAX, 50);

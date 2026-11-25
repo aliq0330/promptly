@@ -111,7 +111,7 @@ export function SpaceProvider({ initial, userId, children }: { initial: SpaceDat
   const [layoutStatus, setLayoutStatus] = useState<SaveStatus>("idle");
   const [layoutNotice, setLayoutNotice] = useState<string | null>(null);
 
-  const baseCaps = useMemo(() => spaceCapabilities(role, Boolean(space.archivedAt), space.activityVisibility, space.teamId !== null), [role, space.archivedAt, space.activityVisibility, space.teamId]);
+  const baseCaps = useMemo(() => spaceCapabilities(role, Boolean(space.archivedAt), space.teamId !== null), [role, space.archivedAt, space.teamId]);
 
   const caps = baseCaps;
 

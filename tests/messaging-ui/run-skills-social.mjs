@@ -643,7 +643,7 @@ await scenario("34. Sana özel: Skill kartının ⋮ menüsünde 'İlgimi çekiy
   assert.deepEqual([state.interestCalls[0].p_kind, state.interestCalls[0].p_id, state.interestCalls[0].p_value], ["skill", S_PUB2, "interested"]);
 }, { me: U.bob });
 
-await scenario("35. Prompt sayfasıyla aynı düzen (docs/history/409-*): Talimat bloğu + altında İndir/Kopyala, sekmeler, yan sütunda Kalite/Space, bantta kullanım sayısı", async ({ page, state }) => {
+await scenario("35. Prompt sayfasıyla aynı düzen (docs/history/409-*): Talimat bloğu + altında İndir/Kopyala, sekmeler, yan sütunda Kalite (Space bloğu yok), bantta kullanım sayısı", async ({ page, state }) => {
   state.skills.find((x) => x.id === S_PUB).use_count = 5;
   await openDetail(page);
   // Talimat bloğu: varsayılan ham SKILL.md (üst bilgi + gövde), altında bilgi satırı; Önizleme gövdeyi işler.
@@ -659,14 +659,13 @@ await scenario("35. Prompt sayfasıyla aynı düzen (docs/history/409-*): Talima
   await page.locator("[data-skill-install-card]").waitFor();
   // Bant: kullanım sayısı (prompt'taki "N kez kullanıldı").
   assert.match(await page.locator("[data-detail-band]").innerText(), /5 kez kullanıldı/);
-  // Yan sütun: Hakkında + bilgi satırları, Kalite, "Bu Skill şu Space'lerde".
+  // Yan sütun: Hakkında + bilgi satırları, Kalite.
   const aside = page.locator("aside");
   await aside.locator("[data-skill-info]").waitFor();
   await aside.locator("[data-skill-quality]").waitFor();
-  const spaces = page.locator('[data-testid="skill-in-spaces"]');
-  await spaces.waitFor();
-  assert.match(await spaces.innerText(), /Skill panosu/);
-  assert.equal(state.skillSpaceCalls[0].p_skill, S_PUB);
+  // "Bu Skill şu Space'lerde" bloğu docs/history/459-* ile kalktı (Space'ler özel; herkese açık liste yok).
+  assert.equal(await page.locator('[data-testid="skill-in-spaces"]').count(), 0);
+  assert.equal(state.skillSpaceCalls?.length ?? 0, 0, "Space listesi sorgusu yok");
   // Ana sütunda ayrı Kalite / eski "Skill bilgisi" bölümü yok.
   assert.equal(await page.locator("article [data-skill-quality]").count(), 0);
 });

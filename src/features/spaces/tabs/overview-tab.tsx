@@ -1,9 +1,6 @@
 "use client";
 
-import Link from "next/link";
-import { useEffect, useState } from "react";
 import { ArrowRight } from "@/components/icons/arrow-right";
-import { History } from "@/components/icons/history";
 import { ImageIcon } from "@/components/icons/image-icon";
 import { Layers } from "@/components/icons/layers";
 import { LayoutDashboard } from "@/components/icons/layout-dashboard";
@@ -11,21 +8,18 @@ import { Palette } from "@/components/icons/palette";
 import { SquareTerminal } from "@/components/icons/square-terminal";
 import { StickyNote } from "@/components/icons/sticky-note";
 import { UsersRound } from "@/components/icons/users-round";
-import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import { cn, formatRelativeTime, profileHref } from "@/lib/utils";
-import { fetchSpaceActivity, type SpaceActivity } from "@/lib/supabase/spaces";
-import { SPACE_TAB_LABEL, SPACE_VISIBILITY_LABEL, spaceHref, type SpaceTab, type SpaceVisibility } from "@/lib/spaces";
+import { cn, formatRelativeTime } from "@/lib/utils";
+import { SPACE_TAB_LABEL, type SpaceTab } from "@/lib/spaces";
 import { useSpaceContext } from "../space-provider";
-import { useActivityText } from "../activity-parts";
 import { resolveSource, sourceReasonKey, useItemTitle } from "../space-items";
 import { SPACE_COLOR_CLASS, SpaceImage } from "../space-visuals";
 
 
 /**
  * Genel bakış: kaldığın yerden devam (panoya), son görseller, son promptlar, notlar, paletler; yanda sayılar, gruplar ve —
- * yalnız üyelere — etkinlik geçmişi. Boş Space'te ilk adımları gösterir (düzenleyiciye eylemle).
+ * gruplar. Boş Space'te ilk adımları gösterir (düzenleyiciye eylemle).
  */
 export function OverviewTab({ onNavigate }: { onNavigate: (tab: SpaceTab, focus?: string) => void }) {
   const { t, language } = useTranslation();
@@ -203,7 +197,7 @@ function OverviewSection({ title, onMore, children }: { title: string; onMore: (
 
 function OverviewAside({ groupsCount }: { groupsCount?: number }) {
   const { t, language } = useTranslation();
-  const { space, items, groups, palettes, caps } = useSpaceContext();
+  const { space, items, groups, palettes } = useSpaceContext();
   const stats: { icon: typeof ImageIcon; label: string }[] = [
     { icon: ImageIcon, label: t("spaces.count.images", { count: items.filter((i) => i.kind === "image").length }) },
     { icon: SquareTerminal, label: t("spaces.count.prompts", { count: items.filter((i) => i.kind === "prompt").length }) },
@@ -224,7 +218,7 @@ function OverviewAside({ groupsCount }: { groupsCount?: number }) {
           ))}
           <li className="flex items-center gap-2">
             <UsersRound size={16} className="text-text-muted" aria-hidden />
-            {t(SPACE_VISIBILITY_LABEL[space.visibility as SpaceVisibility])}
+            {t("spaces.visibility.private")}
           </li>
         </ul>
         <p className="mt-3 text-caption text-text-muted">
@@ -244,68 +238,6 @@ function OverviewAside({ groupsCount }: { groupsCount?: number }) {
           </ul>
         </section>
       )}
-      {caps.seeActivity && <ActivityList />}
     </aside>
-  );
-}
-
-function ActivityList() {
-  const { t, language } = useTranslation();
-  const { space, items } = useSpaceContext();
-  const [list, setList] = useState<SpaceActivity[] | null>(null);
-  const [failed, setFailed] = useState(false);
-  const limit = 6;
-  const activityText = useActivityText();
-  const refreshKey = items.length;
-
-  useEffect(() => {
-    let alive = true;
-    fetchSpaceActivity(space.id, limit)
-      .then((rows) => alive && setList(rows))
-      .catch(() => alive && setFailed(true));
-    return () => {
-      alive = false;
-    };
-  }, [space.id, limit, refreshKey, space.updatedAt]);
-
-  return (
-    <section className="space-y-2" data-testid="space-activity">
-      <h2 className="flex items-center gap-1.5 text-label font-semibold text-text-muted">
-        <History size={16} aria-hidden />
-        {t("spaces.activity.title")}
-      </h2>
-      {failed ? (
-        <p className="text-caption text-text-muted">{t("spaces.activity.loadError")}</p>
-      ) : list === null ? (
-        <p className="text-caption text-text-muted">{t("common.loading")}</p>
-      ) : list.length === 0 ? (
-        <p className="text-caption text-text-muted">{t("spaces.activity.empty")}</p>
-      ) : (
-        <>
-          <ul className="space-y-3">
-            {list.map((entry) => (
-              <li key={entry.id} className="flex items-start gap-2 text-caption text-text-secondary" data-activity={entry.action}>
-                {entry.actor ? (
-                  <Link href={profileHref(entry.actor)} className="shrink-0">
-                    <Avatar src={entry.actor.avatarUrl} alt="" size={24} />
-                  </Link>
-                ) : (
-                  <span className="h-[22px] w-[22px] shrink-0 rounded-full bg-surface-soft" />
-                )}
-                <span className="min-w-0">
-                  <span className="font-semibold text-text">{entry.actor?.displayName ?? t("spaces.activity.someone")}</span>{" "}
-                  {activityText(entry)}
-                  <span className="block text-text-muted">{formatRelativeTime(entry.createdAt, language)}</span>
-                </span>
-              </li>
-            ))}
-          </ul>
-          <Link href={spaceHref(space.id, "activity")} className="inline-flex items-center gap-1 text-caption font-semibold text-primary hover:underline" data-activity-all="">
-            {t("spaces.activity.backToList")}
-            <ArrowRight size={12} aria-hidden />
-          </Link>
-        </>
-      )}
-    </section>
   );
 }

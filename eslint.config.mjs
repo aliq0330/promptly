@@ -35,7 +35,7 @@ const classRules = (skipPath) =>
   });
 const SWITCH_RULE = { selector: "JSXAttribute[name.name='role'][value.value='switch']", message: "Switch elle yazılmaz: components/ui/switch.tsx (Switch / SwitchRow)." };
 // Tek değer seçimi (docs/history/453-*): radyo yalnız ortak bileşenlerde yazılır — ChoiceGroup (kısa etiket / karo), OptionGroup (açıklamalı kart),
-// SwatchGroup (renk), MenuRadioGroup (menü satırı). `star-rating` (yıldız puanı) ve `taxonomy-picker` (kategori ağacı yaprağı) bilinçli istisnadır.
+// SwatchGroup (renk), MenuRadioGroup (menü satırı). `taxonomy-picker` (kategori ağacı yaprağı) bilinçli istisnadır.
 const RADIO_RULES = [
   { selector: "JSXAttribute[name.name='role'][value.value='radio']", message: "Radyo elle yazılmaz: ChoiceGroup (kısa etiket/karo), OptionGroup (açıklamalı kart), SwatchGroup (renk), MenuRadioGroup (menü satırı)." },
   { selector: "JSXAttribute[name.name='type'][value.value='radio']", message: "<input type=\"radio\"> yazılmaz: OptionGroup (açıklamalı kart) ya da ChoiceGroup (kısa etiket) kullan." },
@@ -45,7 +45,6 @@ const RADIO_FILES = [
   "src/components/ui/choice-group.tsx",
   "src/components/ui/swatch-group.tsx",
   "src/components/ui/menu-radio.tsx",
-  "src/components/ui/star-rating.tsx",
   "src/features/content/taxonomy-picker.tsx",
 ];
 const skipFiles = [...new Set(FORBIDDEN_CLASSES.flatMap((rule) => rule.skip ?? []))];

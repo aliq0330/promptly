@@ -13,7 +13,7 @@ export interface AttachmentCard {
   id: string;
   title: string;
   ownerName: string | null;
-  /** İlk görsel (prompt/istek/workflow/hazır ayar) ya da Space kapağı; yoksa tür simgesi çizilir. */
+  /** İlk görsel (prompt/istek/workflow/hazır ayar); yoksa tür simgesi çizilir. */
   thumbnailUrl: string | null;
   /** Yalnız istek: açık/kapalı rozeti. */
   requestStatus?: "open" | "answered" | "closed";
@@ -44,7 +44,6 @@ interface RequestCardRow { id: string; title: string; status: "open" | "answered
 interface WorkflowCardRow { id: string; title: string; cover_url: string | null; status: string; visibility: string; community_id: string | null; profiles: ProfileEmbed; workflow_steps: { count: number }[] | null; workflow_media: { url: string; position: number }[] | null }
 interface PresetCardRow { id: string; title: string; cover_url: string | null; status: string; visibility: string; community_id: string | null; profiles: ProfileEmbed }
 interface SkillCardRow { id: string; title: string; status: string; visibility: string; profiles: ProfileEmbed }
-interface SpaceCardRow { id: string; owner_id: string; title: string; cover_url: string | null; visibility: string; archived_at: string | null }
 
 /**
  * Verilen eklerin kartları; anahtar `tür:kimlik`. Okunamayan / halka açık olmayan / silinmiş içerik haritada YOKTUR (arayüz "gizli veya
@@ -94,16 +93,6 @@ export async function fetchAttachmentCards(items: CommentAttachment[]): Promise<
             if (row.status !== "published" || row.visibility !== "public") continue;
             put({ type, id: row.id, title: row.title, ownerName: ownerOf(row.profiles), thumbnailUrl: null });
           }
-        } else {
-          const rows = await fetchRows<SpaceCardRow>("spaces", "id, owner_id, title, cover_url, visibility, archived_at", ids);
-          const visible = rows.filter((row) => row.visibility === "public" && !row.archived_at);
-          const owners = new Map<string, string | null>();
-          const ownerIds = [...new Set(visible.map((row) => row.owner_id))];
-          for (const part of chunk(ownerIds, 100)) {
-            const { data } = await supabase.from("profiles").select("id, display_name").in("id", part);
-            for (const profile of (data ?? []) as { id: string; display_name: string | null }[]) owners.set(profile.id, profile.display_name);
-          }
-          for (const row of visible) put({ type, id: row.id, title: row.title, ownerName: owners.get(row.owner_id) ?? null, thumbnailUrl: row.cover_url });
         }
       } catch (err) {
         console.error("fetchAttachmentCards", type, err);
@@ -119,7 +108,7 @@ export async function fetchAttachmentCards(items: CommentAttachment[]): Promise<
 // ---------------------------------------------------------------------------------------------
 
 
-/** Kaydedilebilen türler (istek ve Space kaydedilmez — docs/history/184-*): "Kaydettiklerim" yalnız bunlarda vardır. */
+/** Kaydedilebilen türler (istek kaydedilmez — docs/history/184-*): "Kaydettiklerim" yalnız bunlarda vardır. */
 export const SAVED_SOURCE_TYPES: readonly CommentAttachmentType[] = ["prompt", "workflow", "preset", "skill"];
 
 export interface PickableContent {

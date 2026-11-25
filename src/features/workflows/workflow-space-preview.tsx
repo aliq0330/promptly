@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { Globe } from "@/components/icons/globe";
 import { Lock } from "@/components/icons/lock";
 import { Shapes } from "@/components/icons/shapes";
 import { ArrowUpRight } from "@/components/icons/arrow-up-right";
@@ -196,7 +195,6 @@ export function WorkflowSpacePreview({ workflowId }: { workflowId: string }) {
   const links = state.links;
   if (links.length === 0) return null;
   const current = links.find((link) => link.spaceId === pickedId) ?? links[0];
-  const isPublic = current.visibility === "public" && !current.archived;
 
   return (
     <DetailSection id="workflow-space" title={t("wfSpace.preview.heading")}>
@@ -215,7 +213,7 @@ export function WorkflowSpacePreview({ workflowId }: { workflowId: string }) {
                     link.spaceId === current.spaceId ? "border-primary bg-primary-soft text-primary" : "border-border bg-surface text-text-secondary hover:bg-surface-soft",
                   )}
                 >
-                  {link.visibility === "public" && !link.archived ? <Globe size={12} aria-hidden /> : <Lock size={12} aria-hidden />}
+                  <Lock size={12} aria-hidden />
                   <span className="truncate">{link.spaceTitle}</span>
                 </button>
               ))}
@@ -226,9 +224,9 @@ export function WorkflowSpacePreview({ workflowId }: { workflowId: string }) {
               <Shapes size={16} className="shrink-0 text-primary" aria-hidden />
               <span className="truncate">{current.spaceTitle}</span>
             </p>
-            <span className={cn("inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-caption font-semibold", isPublic ? "bg-primary-soft text-primary" : "bg-surface text-text-secondary")}>
-              {isPublic ? <Globe size={12} aria-hidden /> : <Lock size={12} aria-hidden />}
-              {isPublic ? t("wfSpace.preview.public") : t("wfSpace.preview.private")}
+            <span className="inline-flex items-center gap-1 rounded-full bg-surface px-2 py-0.5 text-caption font-semibold text-text-secondary">
+              <Lock size={12} aria-hidden />
+              {t("wfSpace.preview.private")}
             </span>
             <span className="text-caption text-text-muted">{t("wfSpace.preview.readOnly")}</span>
             <Link
@@ -240,7 +238,7 @@ export function WorkflowSpacePreview({ workflowId }: { workflowId: string }) {
             </Link>
           </div>
         </div>
-        {!isPublic && <p className="border-b border-border-soft px-3 py-2 text-caption text-text-muted">{t("wfSpace.preview.privateHint")}</p>}
+        <p className="border-b border-border-soft px-3 py-2 text-caption text-text-muted">{t("wfSpace.preview.privateHint")}</p>
         <MiniBoard key={current.spaceId} spaceId={current.spaceId} workflowId={workflowId} />
       </div>
     </DetailSection>

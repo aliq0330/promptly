@@ -15,7 +15,6 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import { useMediaQuery } from "@/lib/use-media-query";
 import type { PromptComment } from "@/types";
 import { MentionText } from "@/features/mentions/mention-text";
-import { StarRatingDisplay, StarRatingInput } from "@/components/ui/star-rating";
 import { CompactContentCard, type AttachmentState } from "@/features/content/compact-content-card";
 import { MentionTextarea } from "@/features/mentions/mention-field";
 import { CommentExtrasPreview, CommentExtrasToolbar, CommentMediaView, type CommentExtrasController } from "./comment-extras";
@@ -72,7 +71,6 @@ export interface CommentTree {
    */
   layout?: "thread" | "sheet";
   /** Space yorumlarında kendi puanını yıldızlardan değiştirmek (docs/history/242-*); yoksa yıldızlar yalnız gösterilir. */
-  onRate?: (id: string, rating: number) => void;
   /** Yanıt kutusunun ekleri (fotoğraf · GIF · içerik, docs/history/308-*). */
   replyExtras: CommentExtrasController;
   /** Düzenlenen yorumun ekleri: mevcut görsel/ek ile açılır; değiştirilebilir ya da kaldırılabilir. */
@@ -134,21 +132,6 @@ function PinnedLabel({ className }: { className?: string }) {
       <Pin size={12} aria-hidden />
       {t("comments.pinnedLabel")}
     </span>
-  );
-}
-
-/** Space yorumunun puanı: başkasınınki yalnız yıldız, kendininki dokunarak değişir (docs/history/242-*). Puan yorumla birlikte, yorumun üstünde görünür. */
-function CommentRating({ comment, tree, isOwn }: { comment: PromptComment; tree: CommentTree; isOwn: boolean }) {
-  const rating = comment.rating ?? 0;
-  return (
-    <div className="mb-0.5 flex items-center gap-1.5" data-comment-rating={rating}>
-      {isOwn && tree.onRate ? (
-        <StarRatingInput value={rating} size={16} allowClear={false} onChange={(value) => value > 0 && tree.onRate?.(comment.id, value)} />
-      ) : (
-        <StarRatingDisplay value={rating} size={16} />
-      )}
-      <span className="text-caption font-semibold tabular-nums text-text-secondary">{rating}/5</span>
-    </div>
   );
 }
 
@@ -338,7 +321,6 @@ function ThreadCommentNode({ comment, depth, tree }: { comment: PromptComment; d
                 </div>
               ) : (
                 <div className="mt-0.5">
-                  {comment.rating ? <CommentRating comment={comment} tree={tree} isOwn={isOwn} /> : null}
                   <p className="break-words text-h3 text-text">
                     {showParentHint && (
                       <span className="mr-1 inline-flex items-center gap-0.5 text-caption font-medium text-primary">
@@ -520,7 +502,6 @@ function SheetCommentNode({ comment, depth, tree }: { comment: PromptComment; de
               {comment.editedAt && ` · ${t("comments.edited")}`}
             </span>
           </p>
-          {!isDeleted && !isEditingHere && comment.rating ? <CommentRating comment={comment} tree={tree} isOwn={isOwn} /> : null}
           {isDeleted ? (
             <p className="text-small italic text-text-muted">{t("comments.thisCommentWasDeleted")}</p>
           ) : isEditingHere ? (

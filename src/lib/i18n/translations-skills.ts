@@ -130,7 +130,6 @@ export const skillsTranslations = {
   "skill.tabs.aria": { tr: "Skill bölümleri", en: "Skill sections" },
   "skill.detail.textMode": { tr: "Talimat görünümü", en: "Instruction view" },
   "skill.detail.copyFailed": { tr: "Kopyalanamadı. Tarayıcı panoya erişimi engelledi.", en: "Couldn't copy. The browser blocked clipboard access." },
-  "spaces.discover.inSpacesSkill": { tr: "Bu Skill şu Space'lerde", en: "This skill is in these Spaces" },
   "skill.detail.copyMd": { tr: "SKILL.md'yi kopyala", en: "Copy SKILL.md" },
   "skill.detail.downloadJson": { tr: "Özet (JSON) indir", en: "Download summary (JSON)" },
   "skill.detail.pin": { tr: "Sabitle", en: "Pin" },

@@ -94,12 +94,12 @@ export function messageRequestConversationId(card: Pick<NotificationCard, "type"
 }
 
 /** Bağlı içerik önizlemesi (CompactContentCard) çizilebilen türler. */
-export type LinkedContentType = "prompt" | "request" | "workflow" | "preset" | "skill" | "space";
+export type LinkedContentType = "prompt" | "request" | "workflow" | "preset" | "skill";
 
 export function linkedContent(card: Pick<NotificationCard, "targetHref">): { type: LinkedContentType; id: string } | null {
   const href = parseNotificationHref(card.targetHref);
   if (!href.id) return null;
-  if (href.kind === "prompt" || href.kind === "request" || href.kind === "workflow" || href.kind === "preset" || href.kind === "skill" || href.kind === "space") return { type: href.kind, id: href.id };
+  if (href.kind === "prompt" || href.kind === "request" || href.kind === "workflow" || href.kind === "preset" || href.kind === "skill") return { type: href.kind, id: href.id };
   return null;
 }
 

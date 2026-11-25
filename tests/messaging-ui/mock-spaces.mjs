@@ -147,10 +147,8 @@ export function setupSpaces(db) {
   const canRead = (id, uid) => {
     const s = space(id);
     if (!s) return false;
-    if (roleOf(id, uid)) return true;
-    if (s.archived_at) return false;
-    if (s.visibility === "public") return true;
-    return s.visibility === "link" && db.spaceGrants.some((g) => g.space_id === id && g.user_id === uid && db.spaceLinks.find((l) => l.id === g.link_id && !l.revoked_at));
+    // docs/history/459-*: Space her zaman özel — okuma yalnız üyeliktir (sunucudaki `can_read_space` ile aynı).
+    return Boolean(roleOf(id, uid));
   };
   const canEdit = (id, uid) => ["owner", "editor"].includes(roleOf(id, uid)) && !space(id)?.archived_at;
   const summary = (s, uid) => {

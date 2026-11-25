@@ -77,7 +77,7 @@ export async function applyWorkflowSpaceChoice({
   // Yeni nesneler ÖNCE eklenir, eski bağ sonra kalkar: ekleme başarısız olursa eski bağ yerinde kalır.
   let linked: { itemId: string; spaceId: string; objects: true } | null = null;
   if (targetSpace) {
-    const spaceId = targetSpace === "new" ? await createSpace({ title: title.trim().slice(0, 80) || "Workflow", description: "", kind: "free", visibility: "private", groups: [] }) : targetSpace;
+    const spaceId = targetSpace === "new" ? await createSpace({ title: title.trim().slice(0, 80) || "Workflow", description: "", kind: "free", groups: [] }) : targetSpace;
     const result = await importOrSyncDirect({ spaceId, workflowId, workflowTitle: title, userId, options });
     linked = { itemId: result.itemId ?? "", spaceId, objects: true };
   }

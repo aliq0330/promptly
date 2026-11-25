@@ -119,14 +119,13 @@ export function addedVariables(before: string, after: string): string[] {
 export interface ActivitySummaryCounts {
   posts: number;
   versions: number;
-  spaces: number;
   tags: number;
 }
 export function summaryParts(counts: ActivitySummaryCounts): { key: keyof ActivitySummaryCounts; count: number }[] {
-  return (["posts", "versions", "spaces", "tags"] as const).filter((key) => counts[key] > 0).map((key) => ({ key, count: counts[key] }));
+  return (["posts", "versions", "tags"] as const).filter((key) => counts[key] > 0).map((key) => ({ key, count: counts[key] }));
 }
 export function summaryTotal(counts: ActivitySummaryCounts): number {
-  return counts.posts + counts.versions + counts.spaces + counts.tags;
+  return counts.posts + counts.versions + counts.tags;
 }
 
 /** "Öne çıkan" eşiği: en az 10 "Çalıştı mı?" oyu ve %80 üstü evet (SQL `_feed_item_actor` ile aynı oy kuralı). */

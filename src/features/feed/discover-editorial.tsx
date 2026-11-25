@@ -10,7 +10,6 @@ import { Avatar } from "@/components/ui/avatar";
 import { ScrollRow } from "@/components/ui/scroll-row";
 import { StorageAppearanceImage } from "@/components/ui/storage-media";
 import { CreatorCard } from "@/features/profile/creator-card";
-import { SpaceDiscoverCard, usePublicSpaces } from "@/features/spaces/space-discover-section";
 import { ToolLogo } from "@/features/content/tool-logo";
 import { findTool } from "@/lib/ai-tool-catalog";
 import { EMPTY_TAXONOMY_FILTER } from "@/lib/content-taxonomy";
@@ -27,7 +26,7 @@ import { FeedItemCard } from "./feed-grid";
 
 /**
  * Keşfet'in editoryal açılışı (docs/history/451-*, "Tümü" bölümü): dergi düzeni. Gündemdeki konular (büyüme yüzdesiyle), popüler promptlar
- * (haftanın promptu büyük kapak), metin/ses/video, workflow'lar ve açık istekler, yaratıcılar, yükselen araçlar (8 haftalık çizgi), Spaces,
+ * (haftanın promptu büyük kapak), metin/ses/video, workflow'lar ve açık istekler, yaratıcılar, yükselen araçlar (8 haftalık çizgi),
  * Skill'ler. Hepsi gerçek satırlardan; boş bölüm çizilmez (yer tutucu yok). Bütün sorgular TEK `Promise.all`'da, 3 dk modül önbelleği (Geri'de
  * yeniden yükleme yok) — docs/history/220-* kuralı.
  */
@@ -239,7 +238,6 @@ function Sparkline({ weeks }: { weeks: number[] }) {
 export function DiscoverEditorial({ onSeeAllCreators }: { onSeeAllCreators: () => void }) {
   const { t } = useTranslation();
   const data = useEditorial();
-  const spaces = usePublicSpaces(true);
 
   if (!data) {
     return (
@@ -397,17 +395,6 @@ export function DiscoverEditorial({ onSeeAllCreators }: { onSeeAllCreators: () =
                 </Link>
               );
             })}
-          </div>
-        </Section>
-      )}
-
-      {spaces.spaces.length > 0 && (
-        <Section label={t("discover.ed.spaces")}>
-          <SectionHead title={t("discover.ed.spaces")} hint={t("discover.ed.spacesHint")} href="/discover?section=spaces" />
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {spaces.spaces.slice(0, 3).map((space) => (
-              <SpaceDiscoverCard key={space.id} space={space} palette={spaces.palettes.get(space.id) ?? []} stats={spaces.stats.get(space.id)} />
-            ))}
           </div>
         </Section>
       )}

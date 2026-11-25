@@ -102,17 +102,17 @@ select public._check(4, 'özel ve taslak içerik başkasına content_not_found (
   and public._try($q$select public.create_quote('prompt', 'a0000000-0000-4000-8000-0000000000ff', null)$q$) like '%content_not_found%');
 select public._check(5, 'topluluğa özgü istek alıntılanamaz',
   public._try($q$select public.create_quote('request', 'd0000000-0000-4000-8000-0000000000c1', null)$q$) like '%content_not_found%');
-select public._check(6, 'dört içerik türü + açık Space alıntılanır; sayaçlar artar; arşivli ve özel Space alıntılanamaz',
+select public._check(6, 'üç içerik türü alıntılanır; sayaçlar artar; Space alıntısı artık kapalı (docs/history/459-*)',
   public._try($q$select public.create_quote('workflow', 'c0000000-0000-4000-8000-0000000000a1', 'a')$q$) = 'ok'
   and public._try($q$select public.create_quote('request', 'd0000000-0000-4000-8000-0000000000a1', 'b')$q$) = 'ok'
   and public._try($q$select public.create_quote('preset', 'b0000000-0000-4000-8000-0000000000a1', 'c')$q$) = 'ok'
-  and public._try(format($q$select public.create_quote('space', %L, 'd')$q$, public._g('SP'))) = 'ok'
+  and public._try(format($q$select public.create_quote('space', %L, 'd')$q$, public._g('SP'))) ~ '(space_engagement_closed|space_too_empty|content_not_found|content_not_public)'
   and public._q($q$select quote_count from public.workflows where id = 'c0000000-0000-4000-8000-0000000000a1'$q$) = '1'
   and public._q($q$select quote_count from public.prompt_requests where id = 'd0000000-0000-4000-8000-0000000000a1'$q$) = '1'
   and public._q($q$select quote_count from public.presets where id = 'b0000000-0000-4000-8000-0000000000a1'$q$) = '1'
-  and public._q(format($q$select quote_count from public.spaces where id = %L$q$, public._g('SP'))) = '1'
-  and public._try(format($q$select public.create_quote('space', %L, null)$q$, public._g('SPA'))) like '%content_not_found%'
-  and public._try(format($q$select public.create_quote('space', %L, null)$q$, public._g('SPP'))) like '%content_not_found%');
+  and public._q(format($q$select quote_count from public.spaces where id = %L$q$, public._g('SP'))) = '0'
+  and public._try(format($q$select public.create_quote('space', %L, null)$q$, public._g('SPA'))) ~ '(space_engagement_closed|content_not_found|content_not_public)'
+  and public._try(format($q$select public.create_quote('space', %L, null)$q$, public._g('SPP'))) ~ '(space_engagement_closed|content_not_found|content_not_public)');
 reset role;
 select public._as_user('');
 update public.profiles set posting_blocked = true where id = :dave;
@@ -301,9 +301,9 @@ reset role;
 set role anon;
 select public._as_user('');
 select public._check(38, 'profile_quote_count/profile_quotes_page: bobby''nin görünür alıntıları; keyset ikinci sayfa',
-  public._val(format($q$select public.profile_quote_count(%L)::text$q$, :bobby)) = '5'
+  public._val(format($q$select public.profile_quote_count(%L)::text$q$, :bobby)) = '4'
   and public._val(format($q$select count(*)::text from public.profile_quotes_page(%L, 2, null, null)$q$, :bobby)) = '2'
-  and public._val(format($q$select count(*)::text from public.profile_quotes_page(%L, 24, (select created_at from public.profile_quotes_page(%L, 2, null, null) order by created_at asc, id asc limit 1), (select id from public.profile_quotes_page(%L, 2, null, null) order by created_at asc, id asc limit 1))$q$, :bobby, :bobby, :bobby)) = '3');
+  and public._val(format($q$select count(*)::text from public.profile_quotes_page(%L, 24, (select created_at from public.profile_quotes_page(%L, 2, null, null) order by created_at asc, id asc limit 1), (select id from public.profile_quotes_page(%L, 2, null, null) order by created_at asc, id asc limit 1))$q$, :bobby, :bobby, :bobby)) = '2');
 select public._check(39, 'search_quotes: nottan ve içerik başlığından bulur; % kaçışlanır; 2 harften kısa sorgu boş',
   public._val($q$select count(*)::text from public.search_quotes('ışık')$q$) = '1'
   and public._val($q$select count(*)::text from public.search_quotes('Açık prompt')$q$) >= '1'
@@ -385,19 +385,11 @@ select public._check(47, 'yetkiler: create_quote yalnız authenticated; okuma RP
 set role authenticated;
 select public._as_user(:alice);
 select public._set('SE', public.create_space('Boş', '', 'free', 'public')::text);
-select public._check(90, 'boş Space (3 öğe + 1 görsel yok) kimse tarafından alıntılanamaz (space_too_empty), sahibi dahil',
-  public._try(format($q$select public.create_quote('space', %L, null)$q$, public._g('SE'))) like '%space_too_empty%');
-select public._as_user(:dave);
-select public._check(91, 'eşiği geçen Space başkasınca (dave) alıntılanır',
-  public._try(format($q$select public.create_quote('space', %L, null)$q$, public._g('SP'))) = 'ok');
-select public._as_user(:alice);
-select public._check(92, 'sahibin kendi Space paylaşımı: ilki ok, ikincisi already_quoted; set_space_shared(false) siler, true yeniden yaratır',
-  public._try(format($q$select public.create_quote('space', %L, 'benim')$q$, public._g('SP'))) = 'ok'
-  and public._try(format($q$select public.create_quote('space', %L, null)$q$, public._g('SP'))) like '%already_quoted%'
-  and public._try(format($q$select public.set_space_shared(%L, false)$q$, public._g('SP'))) = 'ok'
-  and public._q(format($q$select count(*) from public.content_quotes where author_id = %L and space_id = %L$q$, :alice, public._g('SP'))) = '0'
-  and public._try(format($q$select public.set_space_shared(%L, true)$q$, public._g('SP'))) = 'ok'
-  and public._q(format($q$select count(*) from public.content_quotes where author_id = %L and space_id = %L$q$, :alice, public._g('SP'))) = '1');
+select public._check(90, 'Space alıntısı veritabanında kapalı: sahibi de başkası da alıntılayamaz; tablo tetikleyicisi doğrudan yazımı da reddeder',
+  public._try(format($q$select public.create_quote('space', %L, null)$q$, public._g('SE'))) ~ '(space_engagement_closed|space_too_empty|content_not_found|content_not_public)'
+  and public._try(format($q$select public.create_quote('space', %L, 'benim')$q$, public._g('SP'))) ~ '(space_engagement_closed|content_not_found|content_not_public)'
+  and public._try(format($q$select public.set_space_shared(%L, true)$q$, public._g('SP'))) like '%does not exist%'
+  and public._try(format($q$insert into public.content_quotes (author_id, content_type, space_id) values (%L, 'space', %L)$q$, :alice, public._g('SP'))) like '%permission denied%');
 reset role;
 
 select 'FAILED=' || count(*) filter (where not ok) || ' / ' || count(*) from public._results;

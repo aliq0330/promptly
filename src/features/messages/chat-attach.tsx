@@ -5,7 +5,6 @@ import type { IconComponent } from "@/components/icons/icon";
 import { FileDown } from "@/components/icons/file-down";
 import { ImagePlus } from "@/components/icons/image-plus";
 import { Search } from "@/components/icons/search";
-import { Shapes } from "@/components/icons/shapes";
 import { SlidersHorizontal } from "@/components/icons/sliders-horizontal";
 import { Sparkles } from "@/components/icons/sparkles";
 import { SquareTerminal } from "@/components/icons/square-terminal";
@@ -41,7 +40,6 @@ export const LIBRARY_TYPES: { type: CommunityPostType; icon: IconComponent }[] =
   { type: "request", icon: Sparkles },
   { type: "workflow", icon: Workflow },
   { type: "preset", icon: SlidersHorizontal },
-  { type: "space", icon: Shapes },
 ];
 
 /** Sohbet seçicisinin türleri: yorum eki gibi topluluk dışı yerler `LIBRARY_TYPES`'ı kullanır (Skill yorum eki değildir). */

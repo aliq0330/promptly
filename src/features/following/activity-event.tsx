@@ -22,7 +22,6 @@ import { contentImage } from "@/features/content/content-image";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import { quoteHref } from "@/lib/quotes";
-import { spaceHref } from "@/lib/spaces";
 import { cn, formatRelativeTime, presetHref, profileHref, promptHref, requestHref, skillHref, workflowHref } from "@/lib/utils";
 import type { ActivityEvent } from "@/lib/supabase/following-activity";
 import type { FeedEntry } from "@/lib/supabase/feed";
@@ -242,42 +241,6 @@ export function ActivityEventRow({ event, last }: { event: ActivityEvent; last: 
             </Link>
           </div>
         </div>
-      </Row>
-    );
-  }
-
-  if (event.kind === "space_activity") {
-    const onlyImages = event.actions.length > 0 && event.actions.every((action) => action === "image_added");
-    return (
-      <Row
-        actor={event.actor}
-        last={last}
-        head={
-          <>
-            <Who actor={event.actor} />
-            <span>
-              {onlyImages
-                ? t("follow.space.imagesAdded", { space: event.space.title, count: event.count })
-                : t("follow.space.changed", { space: event.space.title, count: event.count })}
-            </span>
-            <When at={event.at} />
-            <Badge variant="neutral" size="sm">
-              {t("follow.space.badge")}
-            </Badge>
-          </>
-        }
-      >
-        {event.images.length > 0 && (
-          <div className="grid max-w-[640px] grid-cols-3 gap-2 sm:grid-cols-6">
-            {event.images.map((url) => (
-              <StorageImg key={url} src={url} alt="" className="aspect-square w-full rounded-md object-cover" />
-            ))}
-          </div>
-        )}
-        {event.note && <p className="max-w-[640px] text-small text-text-secondary">“{event.note}”</p>}
-        <Link href={spaceHref(event.space.id)} className={cn(buttonClassName({ variant: "outline", size: "sm" }), "self-start")}>
-          {t("follow.space.open")}
-        </Link>
       </Row>
     );
   }

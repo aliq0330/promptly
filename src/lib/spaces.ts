@@ -9,23 +9,21 @@ import type { TranslationKey } from "@/lib/i18n/translations";
 
 /** `team_area`: ekip projesinin gizli içerik kabı (docs/history/362-*) — kişisel oluşturma/filtre listelerinde (`SPACE_KINDS`) YOKTUR. */
 export type SpaceKind = "moodboard" | "character" | "brand" | "game_world" | "interior" | "free" | "team_area";
-export type SpaceVisibility = "private" | "link" | "public";
+/** Space'ler her zaman ÖZEL ve yalnız üyeye açıktır (docs/history/459-*); "bağlantı"/"herkese açık" kalktı. */
+export type SpaceVisibility = "private";
 export type SpaceRole = "owner" | "editor" | "viewer";
 /** `frame`/`text`/`shape`: ekip panosunun çizim öğeleri (docs/history/367-*) — kaynak başvurusu yoktur, onaya tabi değildir. */
 export type SpaceItemKind = "image" | "prompt" | "note" | "palette" | "content" | "frame" | "text" | "shape";
 export type SpaceContentType = "request" | "workflow" | "preset" | "skill";
 /** Not/grup rengi: palet token'ına eşlenir (hex DEĞİL — tema ve paletle birlikte değişir). */
 export type SpaceColor = "primary" | "secondary" | "success" | "warning" | "danger" | "neutral";
-export type SpaceTab = "overview" | "board" | "images" | "prompts" | "palette" | "notes" | "comments" | "activity" | "members";
-/** Etkinlik geçmişini kimin görebileceği (docs/history/242-*): varsayılan herkes (Space'i okuyan), sahibi "yalnız üyeler"e çevirebilir. */
-export type SpaceActivityVisibility = "everyone" | "members";
-export type SpaceFilter = "all" | "mine" | "shared" | "favorites" | "public" | "archived";
+export type SpaceTab = "overview" | "board" | "images" | "prompts" | "palette" | "notes" | "members";
+export type SpaceFilter = "all" | "mine" | "shared" | "archived";
 export type SpaceSort = "updated" | "opened" | "created" | "title";
 
 export const SPACE_KINDS: readonly SpaceKind[] = ["moodboard", "character", "brand", "game_world", "interior", "free"];
-export const SPACE_VISIBILITIES: readonly SpaceVisibility[] = ["private", "link", "public"];
-export const SPACE_TABS: readonly SpaceTab[] = ["overview", "board", "images", "prompts", "palette", "notes", "comments", "activity", "members"];
-export const SPACE_FILTERS: readonly SpaceFilter[] = ["all", "mine", "shared", "favorites", "public", "archived"];
+export const SPACE_TABS: readonly SpaceTab[] = ["overview", "board", "images", "prompts", "palette", "notes", "members"];
+export const SPACE_FILTERS: readonly SpaceFilter[] = ["all", "mine", "shared", "archived"];
 export const SPACE_SORTS: readonly SpaceSort[] = ["updated", "opened", "created", "title"];
 export const SPACE_COLORS: readonly SpaceColor[] = ["neutral", "primary", "secondary", "success", "warning", "danger"];
 
@@ -53,12 +51,6 @@ export const SPACE_KIND_LABEL: Record<SpaceKind, TranslationKey> = {
   team_area: "spaces.kind.team_area",
 };
 
-export const SPACE_VISIBILITY_LABEL: Record<SpaceVisibility, TranslationKey> = {
-  private: "spaces.visibility.private",
-  link: "spaces.visibility.link",
-  public: "spaces.visibility.public",
-};
-
 export const SPACE_ROLE_LABEL: Record<SpaceRole, TranslationKey> = {
   owner: "spaces.role.owner",
   editor: "spaces.role.editor",
@@ -72,8 +64,6 @@ export const SPACE_TAB_LABEL: Record<SpaceTab, TranslationKey> = {
   prompts: "spaces.tab.prompts",
   palette: "spaces.tab.palette",
   notes: "spaces.tab.notes",
-  comments: "spaces.tab.comments",
-  activity: "spaces.tab.activity",
   members: "spaces.tab.members",
 };
 
@@ -104,36 +94,18 @@ export function spaceHref(id: string, tab?: SpaceTab): string {
   return `/spaces/local?id=${encodeURIComponent(id)}${tab && tab !== "overview" ? `&tab=${tab}` : ""}`;
 }
 
-/** Bir etkinliğin özet sayfası (Etkinlik sekmesi + `event`; docs/history/242-*). */
-export function spaceActivityHref(spaceId: string, activityId: string): string {
-  return `${spaceHref(spaceId, "activity")}&event=${encodeURIComponent(activityId)}`;
-}
-
-/** Paylaşım bağlantısının açılış sayfası; token URL parçasında (sunucuya/günlüklere gitmez). */
-export function spaceLinkHref(token: string): string {
-  return `/spaces/link#${token}`;
-}
-
-export function parseSpaceLinkToken(hash: string): string | null {
-  const token = hash.replace(/^#/, "").trim();
-  return /^[A-Za-z0-9_-]{20,100}$/.test(token) ? token : null;
-}
-
 /** Arayüz yetkisi (göster/gizle). Arşivlenen Space herkes için salt-okunurdur. */
-export function spaceCapabilities(role: SpaceRole | null, archived: boolean, activityVisibility: SpaceActivityVisibility = "members", teamManaged = false) {
+export function spaceCapabilities(role: SpaceRole | null, archived: boolean, teamManaged = false) {
   const member = role !== null;
   const editor = (role === "owner" || role === "editor") && !archived;
   return {
     member,
     edit: editor,
     owner: role === "owner",
-    // Ekibe bağlı Space'te kişi listesi ekipten gelir: davet/rol/çıkarma/paylaşım/ayrılma yoktur (docs/history/349-*).
+    // Ekibe bağlı Space'te kişi listesi ekipten gelir: davet/rol/çıkarma/ayrılma yoktur (docs/history/349-*).
     manageMembers: role === "owner" && !archived && !teamManaged,
-    share: role === "owner" && !archived && !teamManaged,
     archive: role === "owner",
     delete: role === "owner",
-    // Etkinlik: üyeye her zaman; "herkes" ayarında Space'i okuyan herkese (ziyaretçi dahil).
-    seeActivity: member || activityVisibility === "everyone",
     seePrivateNotes: member,
     leave: member && role !== "owner" && !teamManaged,
     /** Ekibe bağlı Space (üyelik ekipten eşitlenir). */
@@ -199,8 +171,6 @@ export const SPACE_ERROR_CODES = [
   "space_self_invite",
   "space_member_limit",
   "space_member_not_found",
-  "space_link_invalid",
-  "space_not_link_visible",
   "space_archived",
   "space_item_limit",
   "space_connection_limit",
@@ -208,9 +178,6 @@ export const SPACE_ERROR_CODES = [
   "space_palette_limit",
   "space_source_unavailable",
   "space_duplicate",
-  "space_not_public",
-  "space_too_empty",
-  "space_rating_owner",
   "space_item_locked",
   "space_team_managed",
   "team_space_limit",

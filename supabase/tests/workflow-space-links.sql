@@ -134,8 +134,8 @@ select public._check(11, 'sahip: eski çerçeve bağı objects=false',
   public._ids(format($q$select objects::text from public.workflow_space_links(%L)$q$, 'b0000000-0000-4000-8000-0000000000b3')) = 'false');
 select public._check(12, 'sahip: aynı workflow iki Space''te ise iki satır (Space başına bir)',
   public._ids(format($q$select count(*)::text from public.workflow_space_links(%L)$q$, 'b0000000-0000-4000-8000-0000000000b1')) = '2');
-select public._check(13, 'satır Space bilgisini taşır (başlık, görünürlük, arşiv)',
-  public._ids(format($q$select title || ':' || visibility || ':' || archived::text from public.workflow_space_links(%L) where space_id = %L$q$, 'b0000000-0000-4000-8000-0000000000b1', public._g('P'))) = 'Açık:public:false');
+select public._check(13, 'satır Space bilgisini taşır (başlık, görünürlük her zaman özel, arşiv)',
+  public._ids(format($q$select title || ':' || visibility || ':' || archived::text from public.workflow_space_links(%L) where space_id = %L$q$, 'b0000000-0000-4000-8000-0000000000b1', public._g('P'))) = 'Açık:private:false');
 
 -- Adım kartları silinse de bağ kaybolmaz (başka bir workflow nesnesi kalıyorsa). Prompt öğesi için bir prompt gerekir.
 reset role;
@@ -151,19 +151,19 @@ select public._check(14, 'yalnız prompt nesnesi kalsa da bağ bulunur (adım ka
 
 -- Okuyucu bazlı görünürlük.
 select public._as_user(:dave);
-select public._check(15, 'yabancı: yalnız herkese açık Space görünür',
-  public._ids(format($q$select string_agg(title, ',' order by title) from public.workflow_space_links(%L)$q$, 'b0000000-0000-4000-8000-0000000000b1')) = 'Açık');
+select public._check(15, 'yabancı: hiçbir Space görünmez (üye değil)',
+  public._ids(format($q$select string_agg(title, ',' order by title) from public.workflow_space_links(%L)$q$, 'b0000000-0000-4000-8000-0000000000b1')) = '');
 select public._as_user(:bobby);
-select public._check(16, 'özel Space''in düzenleyicisi ikisini de görür',
-  public._ids(format($q$select string_agg(title, ',' order by title) from public.workflow_space_links(%L)$q$, 'b0000000-0000-4000-8000-0000000000b1')) = 'Açık,Özel');
+select public._check(16, 'üye yalnız üyesi olduğu Space''i görür',
+  public._ids(format($q$select string_agg(title, ',' order by title) from public.workflow_space_links(%L)$q$, 'b0000000-0000-4000-8000-0000000000b1')) = 'Özel');
 select public._as_user(:erin);
 select public._check(17, 'engellenen kullanıcı sahibin Space''lerini görmez',
   public._ids(format($q$select count(*)::text from public.workflow_space_links(%L)$q$, 'b0000000-0000-4000-8000-0000000000b1')) = '0');
 reset role;
 set role anon;
 select public._as_user('');
-select public._check(18, 'ziyaretçi herkese açık Space''i görür, özeli görmez',
-  public._ids(format($q$select string_agg(title, ',') from public.workflow_space_links(%L)$q$, 'b0000000-0000-4000-8000-0000000000b1')) = 'Açık');
+select public._check(18, 'ziyaretçi hiçbir Space''i görmez',
+  public._ids(format($q$select string_agg(title, ',') from public.workflow_space_links(%L)$q$, 'b0000000-0000-4000-8000-0000000000b1')) = '');
 select public._check(19, 'olmayan workflow için boş döner',
   public._ids($q$select count(*)::text from public.workflow_space_links('00000000-0000-4000-8000-000000000000')$q$) = '0');
 reset role;

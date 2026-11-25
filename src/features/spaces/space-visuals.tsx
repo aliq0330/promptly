@@ -7,18 +7,14 @@ import { Check } from "@/components/icons/check";
 import { EyeOff } from "@/components/icons/eye-off";
 import { ImageOff } from "@/components/icons/image-off";
 import { LayoutDashboard } from "@/components/icons/layout-dashboard";
-import { Link2 } from "@/components/icons/link-2";
-import { Lock } from "@/components/icons/lock";
 import { Shapes } from "@/components/icons/shapes";
 import { Sofa } from "@/components/icons/sofa";
 import { Swords } from "@/components/icons/swords";
 import { UserRound } from "@/components/icons/user-round";
-import { Globe } from "@/components/icons/globe";
 import { StorageImg } from "@/components/ui/storage-media";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import { VisibilityTag } from "@/components/ui/visibility-tag";
 import { cn } from "@/lib/utils";
-import { SPACE_VISIBILITY_LABEL, type SpaceColor, type SpaceKind, type SpaceVisibility } from "@/lib/spaces";
+import type { SpaceColor, SpaceKind } from "@/lib/spaces";
 
 /** Spaces'in simgesi (gezinme, bant, boş durum): her yerde aynı. */
 export const SpacesIcon: IconComponent = Shapes;
@@ -34,13 +30,6 @@ export const SPACE_KIND_TINT: Record<SpaceKind, string> = {
   free: "bg-surface-soft text-text-secondary",
   team_area: "bg-surface-soft text-primary",
 };
-
-export const VISIBILITY_ICON: Record<SpaceVisibility, IconComponent> = { private: Lock, link: Link2, public: Globe };
-
-export function VisibilityBadge({ visibility, className }: { visibility: SpaceVisibility; className?: string }) {
-  const { t } = useTranslation();
-  return <VisibilityTag icon={VISIBILITY_ICON[visibility]} label={t(SPACE_VISIBILITY_LABEL[visibility])} className={className} data-space-visibility={visibility} />;
-}
 
 /** Not / grup rengi → palet token'ları (hex yok: tema ve paletle birlikte değişir). */
 export const SPACE_COLOR_CLASS: Record<SpaceColor, { surface: string; border: string; dot: string; text: string }> = {

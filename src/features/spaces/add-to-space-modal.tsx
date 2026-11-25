@@ -175,7 +175,7 @@ export function AddToSpaceModal({
     setBusy(true);
     setError(null);
     try {
-      const id = await createSpace({ title: newName, description: "", kind: "moodboard", visibility: "private", groups: [] });
+      const id = await createSpace({ title: newName, description: "", kind: "moodboard", groups: [] });
       setBusy(false);
       await add(id, newName.trim());
     } catch (err) {

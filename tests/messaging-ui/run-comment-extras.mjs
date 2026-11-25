@@ -221,7 +221,7 @@ await scenario("5. Yanlış dosya türü reddedilir (uyarı satırı), önizleme
   assert.equal(await extra(page, "photo").getAttribute("aria-pressed"), "false");
 });
 
-await scenario("6. İçerik eki: seçici (Prompt/İstek/Workflow/Ayar paketi/Space, Benimkiler/Kaydettiklerim, yalnız herkese açık notu); seçince küçük önizleme kartı; gönderince attach_type/attach_id", async ({ page, db }) => {
+await scenario("6. İçerik eki: seçici (Prompt/İstek/Workflow/Ayar paketi/Skill, Benimkiler/Kaydettiklerim, yalnız herkese açık notu); seçince küçük önizleme kartı; gönderince attach_type/attach_id", async ({ page, db }) => {
   await composerInput(page).waitFor();
   await extra(page, "content").click();
   const picker = page.locator("[data-comment-content-picker]");
@@ -259,7 +259,7 @@ await scenario("6. İçerik eki: seçici (Prompt/İstek/Workflow/Ayar paketi/Spa
   assert.equal(post.body.media_kind, undefined);
 });
 
-await scenario("7. Kaydettiklerim kaynağı: kendi koleksiyonlarındaki herkese açık içerik listelenir ve eklenebilir; İstek/Space türünde bu sekme yoktur", async ({ page }) => {
+await scenario("7. Kaydettiklerim kaynağı: kendi koleksiyonlarındaki herkese açık içerik listelenir ve eklenebilir; İstek türünde bu sekme yoktur", async ({ page }) => {
   await composerInput(page).waitFor();
   await extra(page, "content").click();
   const picker = page.locator("[data-comment-content-picker]");
@@ -270,8 +270,8 @@ await scenario("7. Kaydettiklerim kaynağı: kendi koleksiyonlarındaki herkese 
   await page.locator('[data-section-option="request"]').click();
   assert.equal(await picker.getByRole("radio", { name: "Kaydettiklerim" }).count(), 0, "requests cannot be saved");
   await picker.locator("[data-section-menu]").click();
-  await page.locator('[data-section-option="space"]').click();
-  assert.equal(await picker.getByRole("radio", { name: "Kaydettiklerim" }).count(), 0, "spaces cannot be saved");
+  assert.equal(await page.locator('[data-section-option="space"]').count(), 0, "Space türü artık yok (docs/history/459-*)");
+  await page.keyboard.press("Escape");
 }, {
   setup: (db, state) => { state.savedRows = [{ created_at: "2026-10-01T10:00:00Z", collections: { owner_id: ME }, prompts: { id: "b0000000-0000-4000-8000-0000000000c9", title: "Başkasının kayıtlı promptu" } }]; },
 });

@@ -7,17 +7,11 @@ import type { IconComponent } from "@/components/icons/icon";
 import { Archive } from "@/components/icons/archive";
 import { ArchiveRestore } from "@/components/icons/archive-restore";
 import { Eye } from "@/components/icons/eye";
-import { History } from "@/components/icons/history";
-import { MessageCircle } from "@/components/icons/message-circle";
 import { LayoutDashboard } from "@/components/icons/layout-dashboard";
 import { LogOut } from "@/components/icons/log-out";
 import { Palette } from "@/components/icons/palette";
-import { Pin } from "@/components/icons/pin";
-import { PinOff } from "@/components/icons/pin-off";
 import { Presentation } from "@/components/icons/presentation";
-import { Quote } from "@/components/icons/quote";
 import { Settings } from "@/components/icons/settings";
-import { Share2 } from "@/components/icons/share-2";
 import { SquareTerminal } from "@/components/icons/square-terminal";
 import { StickyNote } from "@/components/icons/sticky-note";
 import { Trash2 } from "@/components/icons/trash-2";
@@ -43,10 +37,8 @@ import {
   fetchSpaceGroups,
   fetchSpaceItems,
   fetchSpacePalettes,
-  fetchSpaceFavorite,
   fetchSpacePerson,
   removeSpaceMember,
-  setSpaceFavorite,
   touchSpace,
   updateSpace,
   type SpacePerson,
@@ -56,27 +48,22 @@ import { projectLink } from "@/lib/team-projects";
 import { isSpaceTab, SPACE_KIND_LABEL, SPACE_TAB_LABEL, SPACE_TABS, spaceHref, type SpaceTab } from "@/lib/spaces";
 import { SpaceProvider, useSpaceContext, type SpaceData } from "./space-provider";
 import { DeleteSpaceDialog, SpaceSettingsModal } from "./space-modals";
-import { ShareModal } from "@/features/prompts/share-modal";
-import { ReportButton } from "@/features/moderation/report-button";
 import { PopoverMenu, type PopoverMenuItem } from "@/components/ui/popover-menu";
-import { PaletteStrip, SpaceCoverArt, SpacesIcon, VisibilityBadge } from "./space-visuals";
+import { PaletteStrip, SpaceCoverArt, SpacesIcon } from "./space-visuals";
 import { OverviewTab } from "./tabs/overview-tab";
 import { ImagesTab } from "./tabs/images-tab";
 import { PromptsTab } from "./tabs/prompts-tab";
 import { PaletteTab } from "./tabs/palette-tab";
 import { NotesTab } from "./tabs/notes-tab";
 import { MembersTab } from "./tabs/members-tab";
-import { CommentsTab, formatRating } from "./tabs/comments-tab";
-import { ActivityTab } from "./tabs/activity-tab";
-import { StarRatingDisplay } from "@/components/ui/star-rating";
 import { SpaceBoard } from "./board/space-board";
 import { SaveIndicator } from "./save-indicator";
 
-type LoadState = { status: "loading" } | { status: "missing" } | { status: "error" } | { status: "ready"; data: SpaceData; owner: SpacePerson | null; favorite: boolean };
+type LoadState = { status: "loading" } | { status: "missing" } | { status: "error" } | { status: "ready"; data: SpaceData; owner: SpacePerson | null };
 
 /**
- * `/spaces/local?id=&tab=` (docs/history/213-*). Okunamayan Space (yok, özel, iptal edilmiş bağlantı, engel) tek tip "erişemezsin /
- * artık yok" bloğu gösterir: varlığı sızmaz. Sekme adresle taşınır; pano `&focus=<öğe>` ile o öğeye gider.
+ * `/spaces/local?id=&tab=` (docs/history/213-*). Space her zaman özeldir (docs/history/459-*): üye olmayan (yok, engel dahil) tek tip
+ * "erişemezsin / artık yok" bloğu görür, varlığı sızmaz. Sekme adresle taşınır; pano `&focus=<öğe>` ile o öğeye gider.
  */
 export function SpacePage() {
   const { t } = useTranslation();
@@ -104,17 +91,16 @@ export function SpacePage() {
           if (alive) setState({ status: "missing" });
           return;
         }
-        const [role, items, groups, palettes, connections, owner, favorite] = await Promise.all([
+        const [role, items, groups, palettes, connections, owner] = await Promise.all([
           fetchMyRole(id, userId),
           fetchSpaceItems(id),
           fetchSpaceGroups(id),
           fetchSpacePalettes(id),
           fetchSpaceConnections(id),
           fetchSpacePerson(space.ownerId),
-          fetchSpaceFavorite(id, userId),
         ]);
         if (!alive) return;
-        setState({ status: "ready", data: { space, role, items, groups, palettes, connections }, owner, favorite });
+        setState({ status: "ready", data: { space, role, items, groups, palettes, connections }, owner });
         if (userId) touchSpace(id);
       } catch {
         if (alive) setState({ status: "error" });
@@ -167,7 +153,7 @@ export function SpacePage() {
   }
   return (
     <SpaceProvider key={state.data.space.id} initial={state.data} userId={user?.id ?? null}>
-      <SpaceView owner={state.owner} initialFavorite={state.favorite} />
+      <SpaceView owner={state.owner} />
     </SpaceProvider>
   );
 }
@@ -179,12 +165,10 @@ const SPACE_TAB_ICON: Record<SpaceTab, IconComponent> = {
   prompts: SquareTerminal,
   palette: Palette,
   notes: StickyNote,
-  comments: MessageCircle,
-  activity: History,
   members: UsersRound,
 };
 
-function SpaceView({ owner, initialFavorite }: { owner: SpacePerson | null; initialFavorite: boolean }) {
+function SpaceView({ owner }: { owner: SpacePerson | null }) {
   const { t, language } = useTranslation();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -193,20 +177,12 @@ function SpaceView({ owner, initialFavorite }: { owner: SpacePerson | null; init
   const phone = useMediaQuery("(max-width: 767.98px)");
   const tabParam = searchParams.get("tab");
   const noteCount = items.filter((item) => item.kind === "note").length;
-  // Üye çalışma alanını, üye olmayan VİTRİNİ görür (docs/history/214-*): genel bakış ve üyeler yok, not yoksa Notlar da yok.
-  // Yorumlar herkese (Space'i okuyan), Etkinlik ise sahibinin ayarına göre (varsayılan herkes; "yalnız üyeler" ise üye olmayana yok) görünür (docs/history/242-*).
-  const visibleTabs = SPACE_TABS.filter((tab) => {
-    if (tab === "activity") return caps.seeActivity;
-    return caps.member ? true : tab !== "overview" && tab !== "members" && (tab !== "notes" || noteCount > 0);
-  });
-  // Bir yorum bildiriminden gelen bağlantı (`hl=comment:…`) yorumlara açılır.
-  const commentLink = searchParams.get("hl")?.startsWith("comment:") ?? false;
-  // Ekip kütüphanesi üyesi doğrudan promptlara iner (kütüphanenin işi bu); öteki türler Genel bakışla açılır.
-  const defaultTab: SpaceTab = commentLink ? "comments" : caps.member ? "overview" : "images";
+  // Space özeldir (docs/history/459-*): sayfayı yalnız üyeler görür; sekmeler hep açık, Notlar yalnız not varken görünmez kalmaz.
+  const visibleTabs = SPACE_TABS;
+  const defaultTab: SpaceTab = "overview";
   const tab: SpaceTab = isSpaceTab(tabParam) && visibleTabs.includes(tabParam) ? tabParam : defaultTab;
   const focusId = searchParams.get("focus");
-  const [dialog, setDialog] = useState<null | "settings" | "share" | "delete" | "leave">(null);
-  const [favorite, setFavorite] = useState(initialFavorite);
+  const [dialog, setDialog] = useState<null | "settings" | "delete" | "leave">(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -223,21 +199,6 @@ function SpaceView({ owner, initialFavorite }: { owner: SpacePerson | null; init
   const coverUrls = space.coverUrl ? [space.coverUrl] : coverItem?.mediaUrl ? [coverItem.mediaUrl] : images.slice(-4).map((item) => item.mediaUrl!).reverse();
 
   const leadPalette = palettes.find((palette) => palette.colors.length > 0) ?? null;
-  // Paylaş (docs/history/215-*): tek pencere — sahip orada "Kim görsün?" ve "Akışta paylaş" ayarlarını da görür; herkese açık
-  // Space'te herkes alıntılar ya da bağlantıyı paylaşır.
-  const canShare = caps.share || space.visibility === "public";
-  const share = () => setDialog("share");
-
-  async function toggleFavorite() {
-    const next = !favorite;
-    setFavorite(next);
-    try {
-      await setSpaceFavorite(space.id, next);
-    } catch {
-      setFavorite(!next);
-    }
-  }
-
   async function toggleArchive() {
     setError(null);
     try {
@@ -249,8 +210,6 @@ function SpaceView({ owner, initialFavorite }: { owner: SpacePerson | null; init
   }
 
   const menuItems: PopoverMenuItem[] = [
-    { key: "pin", label: favorite ? t("spaces.card.unfavorite") : t("spaces.card.favorite"), icon: favorite ? PinOff : Pin, onSelect: () => void toggleFavorite(), hidden: !userId },
-    { key: "share", label: t("spaces.card.share"), icon: Share2, onSelect: share, hidden: !canShare },
     { key: "settings", label: t("spaces.page.settings"), icon: Settings, onSelect: () => setDialog("settings"), hidden: !caps.owner || Boolean(space.archivedAt) },
     { key: "archive", label: space.archivedAt ? t("spaces.card.unarchive") : t("spaces.card.archive"), icon: space.archivedAt ? ArchiveRestore : Archive, onSelect: () => void toggleArchive(), hidden: !caps.archive },
     { key: "leave", label: t("spaces.card.leave"), icon: LogOut, onSelect: () => setDialog("leave"), danger: true, hidden: !caps.leave },
@@ -271,11 +230,6 @@ function SpaceView({ owner, initialFavorite }: { owner: SpacePerson | null; init
           testId="space-phone-bar"
           right={
             <>
-              {canShare && (
-                <button type="button" onClick={share} aria-label={t("spaces.card.share")} className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-text hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
-                  <Share2 size={20} aria-hidden />
-                </button>
-              )}
               <PopoverMenu items={menuItems} />
             </>
           }
@@ -293,7 +247,6 @@ function SpaceView({ owner, initialFavorite }: { owner: SpacePerson | null; init
                 <SpacesIcon size={16} aria-hidden />
                 Space · {t(SPACE_KIND_LABEL[space.kind])}
               </span>
-              <VisibilityBadge visibility={space.visibility} />
               {space.archivedAt && <span className="rounded-full bg-warning-soft px-2 py-0.5 text-warning">{t("spaces.page.archivedBadge")}</span>}
             </>
           }
@@ -310,19 +263,6 @@ function SpaceView({ owner, initialFavorite }: { owner: SpacePerson | null; init
                   <span aria-hidden>·</span>
                   <span>{t("spaces.card.edited", { time: formatRelativeTime(space.updatedAt, language) })}</span>
                 </p>
-              )}
-              {space.ratingCount > 0 && (
-                <button
-                  type="button"
-                  onClick={() => goTo("comments")}
-                  aria-label={t("spaces.rating.chipAria", { avg: formatRating(space.ratingAvg, language), count: space.ratingCount })}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-border-soft bg-surface px-3 py-1 text-caption font-semibold tabular-nums text-text hover:border-border-strong"
-                  data-space-rating-chip=""
-                >
-                  <StarRatingDisplay value={space.ratingAvg} size={16} />
-                  {formatRating(space.ratingAvg, language)}
-                  <span className="font-normal text-text-muted">· {t("spaces.rating.count", { count: space.ratingCount })}</span>
-                </button>
               )}
               {leadPalette && (
                 <div className="flex max-w-xl items-center gap-3 pt-1" data-space-band-palette="">
@@ -344,11 +284,6 @@ function SpaceView({ owner, initialFavorite }: { owner: SpacePerson | null; init
                   {caps.edit ? t("spaces.page.openBoard") : t("spaces.page.viewBoard")}
                 </Button>
                 <SaveIndicator status={layoutStatus} onRetry={() => void flushLayout()} />
-                {canShare && (
-                  <Button variant="outline" className="h-10 w-10 rounded-full bg-surface/80 p-0" onClick={share} aria-label={t("spaces.card.share")} title={t("spaces.card.share")}>
-                    <Share2 size={20} aria-hidden />
-                  </Button>
-                )}
                 <span data-detail-menu="">
                   <PopoverMenu items={menuItems} triggerClassName={HUB_BAND_MENU_BUTTON_CLASS} />
                 </span>
@@ -390,7 +325,7 @@ function SpaceView({ owner, initialFavorite }: { owner: SpacePerson | null; init
               key,
               label: t(SPACE_TAB_LABEL[key]),
               icon: SPACE_TAB_ICON[key],
-              count: key === "images" ? images.length : key === "prompts" ? items.filter((i) => i.kind === "prompt").length : key === "notes" ? noteCount : key === "palette" ? palettes.length : key === "comments" ? space.commentCount : undefined,
+              count: key === "images" ? images.length : key === "prompts" ? items.filter((i) => i.kind === "prompt").length : key === "notes" ? noteCount : key === "palette" ? palettes.length : undefined,
             }))}
           />
         </div>
@@ -402,26 +337,11 @@ function SpaceView({ owner, initialFavorite }: { owner: SpacePerson | null; init
           {tab === "prompts" && <PromptsTab onShowOnBoard={(itemId) => goTo("board", itemId)} />}
           {tab === "palette" && <PaletteTab />}
           {tab === "notes" && <NotesTab onShowOnBoard={(itemId) => goTo("board", itemId)} />}
-          {tab === "comments" && <CommentsTab />}
-          {tab === "activity" && <ActivityTab />}
           {tab === "members" && <MembersTab />}
         </div>
-
-        {/* Space'in kendi beğeni/yorumu yok (docs/history/241-*): akıştaki yeri bir alıntıdır, etkileşim orada. Burada yalnız alıntı sayısı + şikâyet. */}
-        {tab !== "board" && space.visibility === "public" && !space.archivedAt && (space.quoteCount > 0 || (userId && userId !== space.ownerId)) && (
-          <footer className="mt-12 flex flex-wrap items-center gap-3 border-t border-border-soft pt-4 text-caption text-text-muted" data-space-footer="">
-            {space.quoteCount > 0 && (
-              <span className="inline-flex items-center gap-1.5" data-space-quote-count="">
-                <Quote size={12} aria-hidden /> {t("quotes.count", { count: space.quoteCount })}
-              </span>
-            )}
-            {userId && userId !== space.ownerId && <ReportButton targetType="space" targetId={space.id} menuItem={false} />}
-          </footer>
-        )}
       </div>
 
       {dialog === "settings" && <SpaceSettingsModal space={space} images={images} onClose={() => setDialog(null)} onSaved={setSpace} />}
-      {dialog === "share" && <ShareModal target={{ contentType: "space", space, art: coverUrls, onChanged: setSpace }} onClose={() => setDialog(null)} />}
       {dialog === "delete" && <DeleteSpaceDialog space={space} onClose={() => setDialog(null)} onDeleted={() => router.replace("/spaces")} />}
       {dialog === "leave" && userId && (
         <ConfirmDialog

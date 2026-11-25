@@ -6,7 +6,6 @@ import {
   postCommentOnQuote,
   postCommentOnRequest,
   postCommentOnResult,
-  postCommentOnSpace,
   postCommentOnWorkflow,
 } from "./comments";
 import type { CommentExtras } from "./comments";
@@ -37,8 +36,6 @@ export async function postNotificationReply(target: CommentReplyTarget, authorId
       return postCommentOnQuote(contentId, authorId, body, parentCommentId, extras);
     case "community_post":
       return postCommentOnCommunityPost(contentId, authorId, body, parentCommentId, extras);
-    case "space":
-      return postCommentOnSpace(contentId, authorId, body, parentCommentId, { ...extras });
     default:
       throw new Error("reply_unsupported");
   }

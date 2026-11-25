@@ -20,8 +20,6 @@ import { PromptDetailView } from "@/features/prompts/prompt-detail-view";
 import { RequestDetailView } from "@/features/requests/request-detail-view";
 import { WorkflowDetailView } from "@/features/workflows/workflow-view";
 import { PresetDetailView } from "@/features/presets/preset-detail-view";
-import { SpacePreview } from "@/features/spaces/space-preview";
-import { quoteVerbKey } from "@/lib/quotes";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { fetchQuoteById, type Quote } from "@/lib/supabase/quotes";
 import { formatRelativeTime, profileHref, skillHref } from "@/lib/utils";
@@ -105,7 +103,7 @@ export function QuotePage() {
 
   return (
     <div data-quote-page={quote.id}>
-      <section aria-label={t(quoteVerbKey(quote) === "quotes.card.shared" ? "quotes.page.titleForShared" : "quotes.page.titleFor", { name: quote.author.displayName })} className="border-b border-border-soft bg-surface">
+      <section aria-label={t("quotes.page.titleFor", { name: quote.author.displayName })} className="border-b border-border-soft bg-surface">
         <div className="mx-auto w-full max-w-6xl px-4 py-4 sm:px-6 lg:px-10">
           <button type="button" onClick={() => (window.history.length > 1 ? router.back() : router.push("/"))} className="inline-flex items-center gap-1.5 text-small text-text-muted hover:text-text">
             <ArrowLeft size={16} aria-hidden /> {t("quotes.page.back")}
@@ -117,7 +115,7 @@ export function QuotePage() {
                 <Link href={profileHref(quote.author)} className="font-semibold hover:underline">
                   {quote.author.displayName}
                 </Link>{" "}
-                <span className="text-text-muted">{t(quoteVerbKey(quote))}</span>
+                <span className="text-text-muted">{t("quotes.card.quoted")}</span>
               </p>
               <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-caption text-text-muted">
                 <Badge variant="default">{t("quotes.badge")}</Badge>
@@ -161,7 +159,6 @@ export function QuotePage() {
           {content?.type === "request" && <RequestDetailView request={content.data} />}
           {content?.type === "workflow" && <WorkflowDetailView workflowId={content.data.id} />}
           {content?.type === "preset" && <PresetDetailView presetId={content.data.id} />}
-          {content?.type === "space" && <SpacePreview space={content.data} />}
         </PostMenuExtras>
       </QuoteScopeProvider>
 
