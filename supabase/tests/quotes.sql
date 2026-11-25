@@ -110,7 +110,6 @@ select public._check(6, 'üç içerik türü alıntılanır; sayaçlar artar; Sp
   and public._q($q$select quote_count from public.workflows where id = 'c0000000-0000-4000-8000-0000000000a1'$q$) = '1'
   and public._q($q$select quote_count from public.prompt_requests where id = 'd0000000-0000-4000-8000-0000000000a1'$q$) = '1'
   and public._q($q$select quote_count from public.presets where id = 'b0000000-0000-4000-8000-0000000000a1'$q$) = '1'
-  and public._q(format($q$select quote_count from public.spaces where id = %L$q$, public._g('SP'))) = '0'
   and public._try(format($q$select public.create_quote('space', %L, null)$q$, public._g('SPA'))) ~ '(space_engagement_closed|content_not_found|content_not_public|invalid_content)'
   and public._try(format($q$select public.create_quote('space', %L, null)$q$, public._g('SPP'))) ~ '(space_engagement_closed|content_not_found|content_not_public|invalid_content)');
 reset role;
@@ -389,7 +388,7 @@ select public._check(90, 'Space alıntısı veritabanında kapalı: sahibi de ba
   public._try(format($q$select public.create_quote('space', %L, null)$q$, public._g('SE'))) ~ '(space_engagement_closed|space_too_empty|content_not_found|content_not_public|invalid_content)'
   and public._try(format($q$select public.create_quote('space', %L, 'benim')$q$, public._g('SP'))) ~ '(space_engagement_closed|content_not_found|content_not_public|invalid_content)'
   and public._try(format($q$select public.set_space_shared(%L, true)$q$, public._g('SP'))) like '%does not exist%'
-  and public._try(format($q$insert into public.content_quotes (author_id, content_type, space_id) values (%L, 'space', %L)$q$, :alice, public._g('SP'))) like '%permission denied%');
+  and public._try(format($q$insert into public.content_quotes (author_id, content_type, space_id) values (%L, 'space', %L)$q$, :alice, public._g('SP'))) like '%does not exist%');
 reset role;
 
 select 'FAILED=' || count(*) filter (where not ok) || ' / ' || count(*) from public._results;

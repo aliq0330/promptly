@@ -124,7 +124,7 @@ reset role;
 -- Etkinlik günlüğü alanlarda okunamaz
 set role authenticated;
 select public._as_user(:dave);
-select public._check(18, 'alanın Etkinlik günlüğü okunamaz (üye bile)', (select count(*) from public.space_activity where space_id = public._g('A1')) = 0);
+select public._check(18, 'alanın Etkinlik günlüğü yok (space_activity tablosu düştü, 461-*)', to_regclass('public.space_activity') is null);
 reset role;
 
 -- ============================================================================================================================================
