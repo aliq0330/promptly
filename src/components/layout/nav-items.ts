@@ -1,13 +1,14 @@
 import type { IconComponent } from "@/components/icons/icon";
 import { BarChart3 } from "@/components/icons/bar-chart-3";
 import { Briefcase } from "@/components/icons/briefcase";
+import { Bell } from "@/components/icons/bell";
 import { Bookmark } from "@/components/icons/bookmark";
 import { Compass } from "@/components/icons/compass";
+import { Focus } from "@/components/icons/focus";
 import { Home } from "@/components/icons/home";
 import { LogIn } from "@/components/icons/log-in";
-import { Plus } from "@/components/icons/plus";
+import { MessagesSquare } from "@/components/icons/messages-square";
 import { Shapes } from "@/components/icons/shapes";
-import { User } from "@/components/icons/user";
 import { Users } from "@/components/icons/users";
 import { UsersRound } from "@/components/icons/users-round";
 import { WandSparkles } from "@/components/icons/wand-sparkles";
@@ -77,32 +78,35 @@ export const navGroups: NavGroup[] = [
   },
 ];
 
-/** «Sen» sayfasındaki kısayol kutularının sırası (telefon): kenar çubuğundaki çalışma/kütüphane girişlerinin hepsi. */
-const ACCOUNT_SHORTCUT_HREFS = ["/saved", "/spaces", "/teams", "/following", "/insights", "/studio"];
+/**
+ * «Sen» sayfasındaki kısayol kutularının sırası (telefon): alt çubukta olmayan her hedef. Topluluklar alt çubuktan buraya taşındı
+ * (docs/history/462-*: alt çubuk Ana Sayfa · Odak · Mesajlar · Bildirimler · Keşfet).
+ */
+const ACCOUNT_SHORTCUT_HREFS = ["/saved", "/spaces", "/communities", "/teams", "/following", "/insights", "/studio"];
 export const accountShortcutItems: NavItem[] = ACCOUNT_SHORTCUT_HREFS.map((href) => navGroups.flatMap((group) => group.items).find((item) => item.href === href)!);
 
 /** Shown to guests where a member sees their profile entry. */
 export const guestLoginNavItem: NavItem = { href: "/login", labelKey: "header.login", icon: LogIn };
 
-/** The Create action — for guests it opens the login dialog instead of navigating. */
-export const CREATE_HREF = "/create";
-
 /** Odak's route — entered by a full page load, never a client-side swap (`FullLoadLink`, docs/history/249-*). */
 export const FOCUS_HREF = "/focus";
 
-/**
- * «Sen» yuvası sayfa değil menüdür: telefonda alt çubuğun son sekmesi, rayda ve kenar çubuğunda en alt (docs/history/387-*). Odak alt çubuktan
- * üst çubuğa taşındı (199-*'ı tersine çevirir); boşalan yuvayı «Sen» aldı. Misafirde bu yuva «Giriş Yap» bağlantısı olur.
- */
-export const YOU_HREF = "/you";
+/** Alt çubuktaki oturum isteyen hedefler: misafir dokununca giriş penceresi açılır (yuvalar yer değiştirmesin diye gizlenmez). */
+export const MESSAGES_HREF = "/messages";
+export const NOTIFICATIONS_HREF = "/notifications";
 
-/** Mobile bottom navigation — the middle item is rendered as the emphasized Create action; the last one opens the «Sen» sheet. */
+/**
+ * Telefon alt çubuğu (docs/history/462-*): Ana Sayfa · Odak · Mesajlar · Bildirimler · Keşfet. Üstteki aktif çizgi 5 eşit yuvada kayar. «Sen» artık alt
+ * çubukta değil, üst çubuğun sağındaki avatardır (`PhoneAccountButton`); Oluştur sağ alttaki mavi «+» hub'ıdır (`showsCreateHub`: yalnız Ana Sayfa,
+ * Keşfet ve kendi profilin). Odak kendi tam ekran sayfasıdır (çubuk çizilmez, docs/history/248-*), bu yüzden orada hiçbir yuva "aktif" olmaz.
+ * Keşfet arama kutusunu taşır (arama kendi sekmesi değildir). İkon: Keşfet her yerde Pusula (anlam başına tek ikon, docs/history/344-*).
+ */
 export const mobileNavItems: NavItem[] = [
   { href: "/", labelKey: "nav.home", icon: Home },
+  { href: FOCUS_HREF, labelKey: "nav.focus", icon: Focus },
+  { href: MESSAGES_HREF, labelKey: "header.messagesAriaLabel", icon: MessagesSquare, visibility: "authenticated" },
+  { href: NOTIFICATIONS_HREF, labelKey: "header.notificationsAriaLabel", icon: Bell, visibility: "authenticated" },
   { href: "/discover", labelKey: "nav.discover", icon: Compass },
-  { href: CREATE_HREF, labelKey: "nav.createShort", icon: Plus },
-  { href: "/communities", labelKey: "nav.communities", icon: Users },
-  { href: YOU_HREF, labelKey: "nav.you", icon: User, visibility: "authenticated", match: "/profile", alsoMatch: ["/settings", "/my-content", ...ACCOUNT_SHORTCUT_HREFS] },
 ];
 
 export function isNavItemActive(pathname: string, item: NavItem) {

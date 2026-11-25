@@ -255,9 +255,9 @@ await scenario("10. ✕: değişiklik yoksa doğrudan çıkılır; yazılmışsa
   assert.equal(drafts[0].body.title, "Yarım kalan istek");
 });
 
-await scenario("11. '+' menüsü: alt menünün '+'sı alttan menü açar (Prompt, İstek, Hikâye, Workflow, Ayar paketi, Space, Var olan içeriği paylaş); Prompt yazma ekranına götürür", async ({ page }) => {
+await scenario("11. '+' menüsü: sağ alttaki mavi '+' hub'ı alttan menü açar (Prompt, İstek, Hikâye, Workflow, Ayar paketi, Space, Var olan içeriği paylaş); Prompt yazma ekranına götürür", async ({ page }) => {
   await page.goto(`${BASE}/discover`);
-  await page.locator("[data-nav-create]:visible").first().click();
+  await page.locator("[data-create-hub]").click();
   await page.locator("[data-create-menu]").waitFor();
   for (const key of ["prompt", "request", "story", "workflow", "preset", "space"]) await page.locator(`[data-create-option=${key}]`).waitFor();
   await page.locator("[data-create-share-existing]").waitFor();

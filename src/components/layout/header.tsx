@@ -18,11 +18,13 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
 import { IconButton } from "@/components/ui/icon-button";
 import { BrandMark, BrandWordmark } from "@/components/layout/brand-mark";
-import { GuestAuthMenu } from "@/components/layout/account-menu";
+import { GuestAuthMenu, PhoneAccountButton } from "@/components/layout/account-menu";
+import { phoneTitleKey } from "@/lib/phone-chrome";
 
 /**
- * Üst çubuk = DURUM, gezinme değil (docs/history/387-*): arama · Odak · bildirim · mesajlar. Hesap menüsü («Sen») burada değil gezinme
- * bölgesindedir (telefonda alt çubuğun son sekmesi, rayda ve kenar çubuğunda en alt). Misafir "Giriş Yap" / "Kayıt Ol" (`GuestAuthMenu`) görür.
+ * Üst çubuk. Tablet/masaüstü (md+) = DURUM, gezinme değil (docs/history/387-*): arama · Odak · bildirim · mesajlar; «Sen» rayda/kenar çubuğunda.
+ * TELEFON (<md, docs/history/462-*): solda logo + sayfanın adı, sağda avatar («Sen» sayfasını açar). Odak, Mesajlar, Bildirimler ve arama (Keşfet)
+ * alt çubuğa taşındı; üst çubukta tekrarlanmaz. Misafir "Giriş Yap" / "Kayıt Ol" (`GuestAuthMenu`) görür.
  */
 export function Header() {
   const status = useAuthStatus();
@@ -35,6 +37,8 @@ export function Header() {
   // Discover and Search carry their own (richer) search box — a second one in the header would just be a link back to the same page.
   const pathname = usePathname() ?? "";
   const hasOwnSearch = /^\/(discover|search)(\/|$)/.test(pathname);
+  // Telefonda logonun yanında sayfanın adı; başlığı olmayan rotalarda (ayrıntı sayfaları) logo yazısı.
+  const titleKey = phoneTitleKey(pathname);
   // Açık sohbette telefonda üst menü yok: sohbet paneli ekranın üstüne kadar uzanır (alt menüyle aynı kural, docs/history/194-*).
   const inChat = pathname.startsWith("/messages/local");
 
@@ -43,10 +47,15 @@ export function Header() {
       <Link
         href="/"
         aria-label={t("header.homeAriaLabel")}
-        className="flex h-10 shrink-0 items-center gap-2 rounded-md md:hidden"
+        data-header-brand=""
+        className="flex h-10 min-w-0 shrink items-center gap-2 rounded-md md:hidden"
       >
-        <BrandMark size={30} />
-        <BrandWordmark className="text-h2 max-[359px]:hidden" />
+        <BrandMark size={30} className="shrink-0" />
+        {titleKey ? (
+          <span data-header-title="" className="truncate font-display text-h2 text-text">{t(titleKey)}</span>
+        ) : (
+          <BrandWordmark className="text-h2 max-[359px]:hidden" />
+        )}
       </Link>
 
       <div className="hidden min-w-0 flex-1 items-center md:flex">
@@ -62,29 +71,20 @@ export function Header() {
       </div>
 
       <div className="flex flex-1 items-center justify-end gap-0.5 md:flex-none">
-        {!hasOwnSearch && (
-        <Link
-          href="/discover"
-          aria-label={t("header.searchAriaLabel")}
-          title={t("header.searchAriaLabel")}
-          className={iconButtonClassName(false, "shrink-0 md:hidden")}
-        >
-          <Search size={20} />
-        </Link>
-        )}
         {/* Odak (docs/history/387-*): her boyutta üst çubukta — telefon/tablette ikon, masaüstünde ikon + yazı. Tam sayfa yüklemesi, istemci geçişi değil (docs/history/249-*). */}
         <FullLoadLink
           href="/focus"
           aria-label={t("nav.focus")}
           title={t("nav.focus")}
           data-header-focus=""
-          className="inline-flex h-10 w-10 shrink-0 items-center justify-center gap-2 rounded-full text-text-muted transition-colors duration-200 hover:bg-surface-soft hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary lg:mr-1 lg:w-auto lg:border lg:border-border lg:px-4 lg:text-label lg:font-semibold lg:text-text"
+          className="inline-flex h-10 w-10 shrink-0 items-center justify-center gap-2 rounded-full text-text-muted max-md:hidden transition-colors duration-200 hover:bg-surface-soft hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary lg:mr-1 lg:w-auto lg:border lg:border-border lg:px-4 lg:text-label lg:font-semibold lg:text-text"
         >
           <Focus size={20} aria-hidden />
           <span className="max-lg:sr-only">{t("nav.focus")}</span>
         </FullLoadLink>
+        {status === "authenticated" && <PhoneAccountButton />}
         {status === "authenticated" && (
-          <>
+          <div className="flex items-center gap-0.5 max-md:hidden">
             <NotificationBell />
             {dockEnabled ? (
               <button
@@ -113,7 +113,7 @@ export function Header() {
                 )}
               </Link>
             )}
-          </>
+          </div>
         )}
         {/* Members change the theme from the account menu; guests (no menu) keep the quick toggle here. */}
         {status === "unauthenticated" && <ThemeToggle />}
