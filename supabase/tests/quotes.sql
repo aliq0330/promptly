@@ -106,13 +106,13 @@ select public._check(6, 'üç içerik türü alıntılanır; sayaçlar artar; Sp
   public._try($q$select public.create_quote('workflow', 'c0000000-0000-4000-8000-0000000000a1', 'a')$q$) = 'ok'
   and public._try($q$select public.create_quote('request', 'd0000000-0000-4000-8000-0000000000a1', 'b')$q$) = 'ok'
   and public._try($q$select public.create_quote('preset', 'b0000000-0000-4000-8000-0000000000a1', 'c')$q$) = 'ok'
-  and public._try(format($q$select public.create_quote('space', %L, 'd')$q$, public._g('SP'))) ~ '(space_engagement_closed|space_too_empty|content_not_found|content_not_public)'
+  and public._try(format($q$select public.create_quote('space', %L, 'd')$q$, public._g('SP'))) ~ '(space_engagement_closed|space_too_empty|content_not_found|content_not_public|invalid_content)'
   and public._q($q$select quote_count from public.workflows where id = 'c0000000-0000-4000-8000-0000000000a1'$q$) = '1'
   and public._q($q$select quote_count from public.prompt_requests where id = 'd0000000-0000-4000-8000-0000000000a1'$q$) = '1'
   and public._q($q$select quote_count from public.presets where id = 'b0000000-0000-4000-8000-0000000000a1'$q$) = '1'
   and public._q(format($q$select quote_count from public.spaces where id = %L$q$, public._g('SP'))) = '0'
-  and public._try(format($q$select public.create_quote('space', %L, null)$q$, public._g('SPA'))) ~ '(space_engagement_closed|content_not_found|content_not_public)'
-  and public._try(format($q$select public.create_quote('space', %L, null)$q$, public._g('SPP'))) ~ '(space_engagement_closed|content_not_found|content_not_public)');
+  and public._try(format($q$select public.create_quote('space', %L, null)$q$, public._g('SPA'))) ~ '(space_engagement_closed|content_not_found|content_not_public|invalid_content)'
+  and public._try(format($q$select public.create_quote('space', %L, null)$q$, public._g('SPP'))) ~ '(space_engagement_closed|content_not_found|content_not_public|invalid_content)');
 reset role;
 select public._as_user('');
 update public.profiles set posting_blocked = true where id = :dave;
@@ -386,8 +386,8 @@ set role authenticated;
 select public._as_user(:alice);
 select public._set('SE', public.create_space('Boş', '', 'free', 'public')::text);
 select public._check(90, 'Space alıntısı veritabanında kapalı: sahibi de başkası da alıntılayamaz; tablo tetikleyicisi doğrudan yazımı da reddeder',
-  public._try(format($q$select public.create_quote('space', %L, null)$q$, public._g('SE'))) ~ '(space_engagement_closed|space_too_empty|content_not_found|content_not_public)'
-  and public._try(format($q$select public.create_quote('space', %L, 'benim')$q$, public._g('SP'))) ~ '(space_engagement_closed|content_not_found|content_not_public)'
+  public._try(format($q$select public.create_quote('space', %L, null)$q$, public._g('SE'))) ~ '(space_engagement_closed|space_too_empty|content_not_found|content_not_public|invalid_content)'
+  and public._try(format($q$select public.create_quote('space', %L, 'benim')$q$, public._g('SP'))) ~ '(space_engagement_closed|content_not_found|content_not_public|invalid_content)'
   and public._try(format($q$select public.set_space_shared(%L, true)$q$, public._g('SP'))) like '%does not exist%'
   and public._try(format($q$insert into public.content_quotes (author_id, content_type, space_id) values (%L, 'space', %L)$q$, :alice, public._g('SP'))) like '%permission denied%');
 reset role;

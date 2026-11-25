@@ -19,9 +19,8 @@ export type { ActivityCursor };
 
 interface ActivityRow {
   event_key: string;
-  event_kind: "post" | "group" | "version" | "space_activity" | "result";
-  /** `space_activity` eski bir olay türüdür (Space'ler artık özel; docs/history/459-*): gelirse ayıklanır. */
-  source: "people" | "tag" | "tool" | "space";
+  event_kind: "post" | "group" | "version" | "result";
+  source: "people" | "tag" | "tool";
   actor_id: string;
   occurred_at: string;
   item_kind: string;
@@ -256,7 +255,6 @@ export async function updateFollowFeedSettings(patch: Partial<FollowFeedSettings
     p_include_tags: patch.includeTags ?? null,
     p_include_tools: patch.includeTools ?? null,
     p_show_versions: patch.showVersions ?? null,
-    p_show_space_activity: null, // Space etkinliği kalktı (docs/history/459-*); RPC parametresi eski imza için durur
     p_show_results: patch.showResults ?? null,
   });
   if (error) throw new Error(error.message);
@@ -280,14 +278,12 @@ export interface ActivitySummary {
   since: string;
   posts: number;
   versions: number;
-  spaces: number;
   tags: number;
   activePeople: number;
   actors: { id: string; count: number }[];
   following: number;
   tagsFollowed: number;
   toolsFollowed: number;
-  spacesFollowed: number;
 }
 
 export async function fetchActivitySummary(since: string | null): Promise<ActivitySummary | null> {
@@ -300,14 +296,12 @@ export async function fetchActivitySummary(since: string | null): Promise<Activi
     since: String(raw.since ?? ""),
     posts: num("posts"),
     versions: num("versions"),
-    spaces: num("spaces"),
     tags: num("tags"),
     activePeople: num("active_people"),
     actors: Array.isArray(raw.actors) ? (raw.actors as { id: string; count: number }[]) : [],
     following: num("following"),
     tagsFollowed: num("tags_followed"),
     toolsFollowed: num("tools_followed"),
-    spacesFollowed: num("spaces_followed"),
   };
 }
 

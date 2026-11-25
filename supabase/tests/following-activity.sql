@@ -48,12 +48,10 @@ insert into public.prompt_versions (prompt_id, version_number, title, descriptio
   ('a0000000-0000-4000-8000-000000000009', 3, 'S eski', 'd', 'daha yeni metin', 'owner_edit', :selin, now() - interval '2 hours')
 on conflict (prompt_id, version_number) do update set created_at = excluded.created_at, prompt_text = excluded.prompt_text;
 
--- deniz'in üyesi olduğu Space'te ali 3 görsel ekledi (aynı saat içinde iki kayıt → tek satır).
-insert into public.spaces (id, owner_id, title, visibility) values ('b0000000-0000-4000-8000-000000000001', :ali, 'AI Photography', 'public');
+-- deniz'in üyesi olduğu özel Space'te ali görsel ekledi: Space etkinliği Takip Ettiklerin akışına GİRMEZ (docs/history/459-*, 461-*).
+insert into public.spaces (id, owner_id, title) values ('b0000000-0000-4000-8000-000000000001', :ali, 'AI Photography');
 insert into public.space_members (space_id, user_id, role) values ('b0000000-0000-4000-8000-000000000001', :deniz, 'editor') on conflict do nothing;
-insert into public.space_activity (space_id, actor_id, action, count, created_at) values
-  ('b0000000-0000-4000-8000-000000000001', :ali, 'image_added', 2, date_trunc('hour', now() - interval '5 hours') + interval '10 minutes'),
-  ('b0000000-0000-4000-8000-000000000001', :ali, 'image_added', 1, date_trunc('hour', now() - interval '5 hours') + interval '20 minutes');
+insert into public.space_items (space_id, kind, title, media_url, created_by) values ('b0000000-0000-4000-8000-000000000001', 'note', 'ali notu', null, :ali);
 
 set role authenticated;
 select public._as_user(:deniz);
@@ -75,10 +73,8 @@ select public._check(3, 'takip edilmeyen lina''nın etiketli promptu "tag" kayna
 select public._check(4, 'yeni sürüm: 24 saatte yalnız son sürüm (3)',
   (select count(*) from _p1 where event_kind = 'version') = 1
   and (select (detail ->> 'version')::int from _p1 where event_kind = 'version') = 3);
-select public._check(5, 'Space etkinliği: aynı saat tek satır, toplam 3 görsel',
-  (select count(*) from _p1 where event_kind = 'space_activity') = 1
-  and (select (detail ->> 'count')::int from _p1 where event_kind = 'space_activity') = 3
-  and (select detail ->> 'title' from _p1 where event_kind = 'space_activity') = 'AI Photography');
+select public._check(5, 'Space etkinliği akışta YOK (Space özel bir çalışma tuvali)',
+  not exists (select 1 from _p1 where event_kind = 'space_activity' or item_kind = 'space'));
 select public._check(6, 'sıra zamana göre (yeniden eskiye)',
   (select bool_and(ok) from (select occurred_at >= lead(occurred_at) over (order by occurred_at desc, event_key desc) is not false as ok from _p1) x));
 
@@ -121,9 +117,8 @@ select public._check(11, 'yalnız öne çıkanlar modunda sıradan paylaşım ge
 select public.set_follow_feed_mode(:ali, null);
 
 -- Kaynak süzgeçleri
-select public._check(12, 'Spaces süzgeci yalnız Space etkinliği döner',
-  (select bool_and(event_kind = 'space_activity') from public.following_activity_page(20, null, null, 'spaces'))
-  and exists (select 1 from public.following_activity_page(20, null, null, 'spaces')));
+select public._check(12, 'Spaces kaynağı artık boş döner',
+  not exists (select 1 from public.following_activity_page(20, null, null, 'spaces')));
 select public._check(13, 'Etiketler süzgeci yalnız etiket kaynaklı paylaşımlar',
   (select bool_and(source = 'tag') from public.following_activity_page(20, null, null, 'tags')));
 -- İçerik türü (Ana Sayfa'nın ortak süzgeci): "metin" → görsel paylaşımlar ve Space etkinliği yok; metin promptunun kendisi ve sürümü kalır.
