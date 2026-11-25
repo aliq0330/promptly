@@ -342,6 +342,7 @@ export interface PanelThread extends Thread<PinComment> {
 export function CommentsPanel({
   threads,
   allScope,
+  hideScope = false,
   onScope,
   scopeLoading,
   activeId,
@@ -361,6 +362,8 @@ export function CommentsPanel({
 }: {
   threads: PanelThread[];
   allScope: boolean;
+  /** Kişisel Space tek panodur: kapsam seçici çizilmez. */
+  hideScope?: boolean;
   onScope: (all: boolean) => void;
   scopeLoading: boolean;
   activeId: string | null;
@@ -415,7 +418,7 @@ export function CommentsPanel({
         </button>
       </header>
       <div className="shrink-0 space-y-3 px-4 pb-3">
-        <ChoiceGroup<"board" | "all">
+        {!hideScope && <ChoiceGroup<"board" | "all">
           ariaLabel={t("tb.comments.scope")}
           variant="segmented"
           value={allScope ? "all" : "board"}
@@ -424,7 +427,7 @@ export function CommentsPanel({
             { key: "board", label: t("tb.comments.scopeBoard") },
             { key: "all", label: t("tb.comments.scopeAll") },
           ]}
-        />
+        />}
         <ChoiceGroup<"open" | "resolved">
           ariaLabel={t("tb.comments.open")}
           variant="segmented"
