@@ -291,10 +291,12 @@ export function CommentSection({
       ) : topLevel.length === 0 ? (
         <p className="rounded-md border border-dashed border-border py-6 text-center text-small text-text-muted">{t("comments.noCommentsYet")}</p>
       ) : (
-        <div className="space-y-5">
-          {(showAll ? topLevel : topLevel.slice(0, COLLAPSED_COMMENTS)).map((comment) => (
-            <CommentNode key={comment.id} comment={comment} depth={0} tree={treeWithMenu} />
-          ))}
+        <div>
+          <div className="divide-y divide-border-soft">
+            {(showAll ? topLevel : topLevel.slice(0, COLLAPSED_COMMENTS)).map((comment) => (
+              <CommentNode key={comment.id} comment={comment} depth={0} tree={treeWithMenu} />
+            ))}
+          </div>
           {/* Sonraki sayfa yalnız liste açıkken (kısa özet görünümünde bütün sayfaları gereksiz yüklemesin) ve kendiliğinden gelir. */}
           {showAll && <LoadMore failed={moreFailed} hasMore={hasMore} loadingMore={loadingMore} onLoadMore={() => void loadMore()} />}
         </div>

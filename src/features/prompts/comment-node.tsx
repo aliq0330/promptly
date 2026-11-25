@@ -4,11 +4,11 @@ import { ExitMotion } from "@/components/ui/exit-motion";
 import { CommentReactions } from "@/features/reactions/comment-reactions";
 import Link from "next/link";
 import { ChevronDown } from "@/components/icons/chevron-down";
-import { ChevronUp } from "@/components/icons/chevron-up";
 import { Pin } from "@/components/icons/pin";
 import { Reply } from "@/components/icons/reply";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { useOwnProfile } from "@/features/auth/own-profile-provider";
 import { cn, formatRelativeTime, profileHref } from "@/lib/utils";
 import { ReportButton } from "@/features/moderation/report-button";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -163,27 +163,24 @@ function CommentAttachments({ comment, tree }: { comment: PromptComment; tree: C
   );
 }
 
-/** Yorum kutusu: ince, arka plana yakın kenarlık, dolgu yok (panel yok). */
-const BUBBLE_CLASS = "rounded-lg border border-border px-4 py-3";
 /**
- * Bir yanıtın sarmalayıcısı: kendi KISA kancası (üst yorumdan inen çizgiden kavisle yanıta girer, ucunda nokta) ve — son yanıt değilse — çizginin devamı.
- * Çizgi arka plana yakın, 2 px; yanıtlar arasında uzun çizgi yoktur (docs/history/452-*). Girinti telefonda küçüktür, kutular tam genişliğe yakın kalır.
+ * Bir yanıtın sarmalayıcısı (docs/history/458-*): üst yorumun avatarından inen 2 px çizgiden kısa kavisli bir kancayla yanıtın avatarına girer; son yanıtta çizgi
+ * kancada biter. `parentDepth` üst yorumun düzeyidir: üst yorum avatarı 36 px (çizgi x=17), yanıt avatarı 28 px (çizgi x=13). Kutu/dolgu yoktur.
  */
-function replyWrapClass(last: boolean): string {
+function replyWrapClass(last: boolean, parentDepth: number): string {
+  const small = parentDepth >= 1;
   return cn(
-    "relative pl-3 pt-3 sm:pl-4 sm:pt-4",
-    "bg-linear-to-b from-border-soft to-border-soft bg-position-[0_0] bg-no-repeat",
-    last ? "bg-size-[2px_22px] sm:bg-size-[2px_16px]" : "bg-size-[2px_100%]",
-    "before:pointer-events-none before:absolute before:left-0 before:top-[22px] before:h-3.5 before:w-3 before:rounded-bl-md before:border-b-2 before:border-l-2 before:border-border-soft before:content-['']",
-    "sm:before:top-4 sm:before:h-3 sm:before:w-3.5",
-    "after:pointer-events-none after:absolute after:left-[9px] after:top-[33px] after:size-1.5 after:rounded-full after:bg-border-soft after:content-['']",
-    "sm:after:left-[11px] sm:after:top-[25px]",
+    "relative pt-3",
+    small ? "pl-[27px] before:w-[23px]" : "pl-[31px] before:w-[27px]",
+    "before:pointer-events-none before:absolute before:left-0 before:top-0 before:h-[26px] before:rounded-bl-md before:border-b-2 before:border-l-2 before:border-border-strong before:content-['']",
+    last ? "after:hidden" : "after:pointer-events-none after:absolute after:inset-y-0 after:left-0 after:w-0.5 after:bg-border-strong after:content-['']",
   );
 }
 
 function ThreadCommentNode({ comment, depth, tree }: { comment: PromptComment; depth: number; tree: CommentTree }) {
   const { t, language } = useTranslation();
   const isPhone = useMediaQuery("(max-width: 639px)");
+  const { profile: ownProfile } = useOwnProfile();
   const children = tree.childrenByParent.get(comment.id) ?? [];
   const hasChildren = children.length > 0;
   const isExpanded = tree.expandedIds.has(comment.id);
@@ -206,154 +203,167 @@ function ThreadCommentNode({ comment, depth, tree }: { comment: PromptComment; d
   const isHighlighted = tree.highlightedId === comment.id;
   const isPinned = Boolean(comment.pinnedAt) && depth === 0 && !isDeleted;
   const isByOwner = Boolean(tree.contentOwnerId) && tree.contentOwnerId === comment.author.id && !isDeleted;
-  const avatarSize = depth === 0 ? 36 : 24;
+  const avatarSize = depth === 0 ? 36 : 28;
   const indented = depth < MAX_INDENT_DEPTH;
   const hasMenu = Boolean(tree.menu) && !isDeleted && !isEditingHere;
   const canSaveEdit = Boolean(tree.editDraft.trim() || tree.editExtras.hasExtras) && !tree.editExtras.isPreparing;
   const canSendReply = Boolean(tree.replyDraft.trim() || tree.replyExtras.hasExtras) && !tree.replyExtras.isPreparing;
+  // Girintili düzeylerde yanıt kutusu, yanıtlarla aynı kancayla bağlı son satır olarak açılır; daha derinde yorumun altında satır içi kalır.
+  const hookedForm = replyInline && indented;
+  const showChildren = hasChildren && isExpanded;
+  const showRail = indented && (showChildren || hookedForm);
 
-  const authorAvatar = (size: number, className?: string) => (
-    <Link href={profileHref(comment.author)} className={cn("shrink-0 hover:opacity-80", className)} aria-label={comment.author.displayName}>
+  const authorAvatar = (size: number) => (
+    <Link href={profileHref(comment.author)} className="shrink-0 hover:opacity-80" aria-label={comment.author.displayName}>
       <Avatar src={comment.author.avatarUrl} alt={comment.author.displayName} size={size} />
     </Link>
+  );
+
+  const replyForm = (
+    <form
+      onSubmit={(event) => {
+        event.preventDefault();
+        tree.onSubmitReply(comment.id);
+      }}
+      className={cn("min-w-0 space-y-1.5", !hookedForm && "mt-3")}
+    >
+      <p className="text-caption text-text-muted">
+        <span className="font-medium text-primary">@{comment.author.username}</span> {t("comments.replyingToSuffix")}
+      </p>
+      {tree.currentUserId && (
+        <CommentComposerBox
+          value={tree.replyDraft}
+          onChange={tree.onReplyDraftChange}
+          autoFocus
+          placeholder={t("comments.writeAReply")}
+          minHeightClass="min-h-22"
+          toolbar={<CommentExtrasToolbar extras={tree.replyExtras} userId={tree.currentUserId} disabled={tree.isPosting} />}
+          preview={<CommentExtrasPreview extras={tree.replyExtras} />}
+          cancel={
+            <Button type="button" variant="ghost" size={isPhone ? "md" : "sm"} onClick={tree.onCancelReply}>
+              {t("common.cancel")}
+            </Button>
+          }
+          submit={
+            <Button type="submit" size={isPhone ? "md" : "sm"} disabled={!canSendReply || tree.isPosting}>
+              {tree.isPosting ? t("common.sending") : t("common.send")}
+            </Button>
+          }
+        />
+      )}
+      {tree.postError && <p className="text-caption text-danger">{tree.postError}</p>}
+    </form>
   );
 
   return (
     <div
       ref={(el) => tree.registerNodeRef(comment.id, el)}
       data-comment-id={comment.id}
-      className={cn("rounded-md transition-colors duration-700", isHighlighted && "-m-1.5 bg-primary/10 p-1.5 ring-1 ring-primary/40")}
+      className={cn(
+        "rounded-md transition-colors duration-700",
+        depth === 0 && "py-4",
+        isHighlighted && (depth === 0 ? "-mx-1.5 px-1.5" : "-m-1.5 p-1.5"),
+        isHighlighted && "bg-primary/10 ring-1 ring-primary/40",
+      )}
     >
-      <div className="sm:grid sm:grid-cols-[auto_minmax(0,1fr)] sm:gap-x-3">
-        {/* Sol sütun (sm+): avatar, daraltma oku ve üst yorumu yanıtlara bağlayan çizgi. Telefonda avatar kutunun içinde, kutu tam genişlik. */}
-        <div className="hidden flex-col items-center sm:flex">
+      <div className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3">
+        {/* Sol sütun: avatar ve — yanıtlar açıkken — üst yorumu yanıtlara bağlayan çizgi. Kutu yok; telefonda da aynı düzen. */}
+        <div className="flex flex-col items-center">
           {authorAvatar(avatarSize)}
-          {hasChildren && (
-            <>
-              <button
-                type="button"
-                onClick={() => tree.onToggleExpand(comment.id)}
-                aria-expanded={isExpanded}
-                aria-label={isExpanded ? t("comments.collapseThread") : t("comments.expandThread")}
-                data-comment-fold
-                className="mt-1.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-surface-soft hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-              >
-                <ChevronDown size={12} aria-hidden className={cn("transition-transform duration-200", !isExpanded && "-rotate-90")} />
-              </button>
-              {isExpanded && <span aria-hidden className="mt-1 w-0.5 flex-1 rounded-full bg-border-soft" />}
-            </>
-          )}
+          {showRail && <span aria-hidden data-comment-rail className="mt-2 w-0.5 flex-1 rounded-full bg-border-strong" />}
         </div>
 
         <div className="min-w-0">
-          <div className={BUBBLE_CLASS}>
-            {isDeleted ? (
-              <div className="flex items-center gap-2">
-                {authorAvatar(24, "sm:hidden")}
-                <p className="text-small italic text-text-muted">
-                  <Link href={profileHref(comment.author)} className="font-medium not-italic text-text hover:underline">
-                    {comment.author.displayName}
-                  </Link>{" "}
-                  {t("comments.thisCommentWasDeleted")}
-                </p>
-              </div>
-            ) : (
-              <>
-                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-small text-text-muted">
-                  {authorAvatar(depth === 0 ? 28 : 24, "sm:hidden")}
-                  <Link href={profileHref(comment.author)} className="font-semibold text-text hover:underline">
-                    {comment.author.displayName}
-                  </Link>
-                  {isPinned && <PinnedLabel />}
-                  {isByOwner && <AuthorBadge />}
-                  {worksVote !== undefined && <WorksBadge works={worksVote} />}
-                  <span>· {formatRelativeTime(comment.createdAt, language)}</span>
-                  {comment.editedAt && (
-                    <button
-                      type="button"
-                      onClick={() => tree.menu?.openHistory(comment)}
-                      disabled={!tree.menu}
-                      data-comment-edited
-                      className={cn("text-text-muted", tree.menu && "underline-offset-2 hover:text-text hover:underline")}
-                    >
-                      {t("comments.edited")}
-                    </button>
-                  )}
-                  {hasMenu && (
-                    <span className="ml-auto">
-                      <CommentMenu comment={comment} depth={depth} tree={tree} isOwn={isOwn} isPinned={isPinned} />
-                    </span>
-                  )}
-                </div>
-
-                {editInline ? (
-                  <div className="mt-2 space-y-1.5">
-                    <p className="text-caption text-text-muted">{t("comments.editNotice")}</p>
-                    {tree.currentUserId && (
-                      <CommentComposerBox
-                        value={tree.editDraft}
-                        onChange={tree.onEditDraftChange}
-                        autoFocus
-                        minHeightClass="min-h-22"
-                        toolbar={<CommentExtrasToolbar extras={tree.editExtras} userId={tree.currentUserId} disabled={tree.isSavingEdit} />}
-                        preview={<CommentExtrasPreview extras={tree.editExtras} attachmentState={tree.attachmentStateFor} />}
-                        cancel={
-                          <Button type="button" variant="ghost" size="sm" onClick={tree.onCancelEdit}>
-                            {t("common.cancel")}
-                          </Button>
-                        }
-                        submit={
-                          <Button type="button" size="sm" disabled={!canSaveEdit || tree.isSavingEdit} onClick={() => tree.onSubmitEdit(comment.id)}>
-                            {tree.isSavingEdit ? t("common.saving") : t("common.save")}
-                          </Button>
-                        }
-                      />
-                    )}
-                    {tree.editError && <p className="text-caption text-danger">{tree.editError}</p>}
-                  </div>
-                ) : (
-                  <div className="mt-1.5">
-                    {comment.rating ? <CommentRating comment={comment} tree={tree} isOwn={isOwn} /> : null}
-                    <p className="break-words text-h3 text-text">
-                      {showParentHint && (
-                        <span className="mr-1 inline-flex items-center gap-0.5 text-caption font-medium text-primary">
-                          <Reply size={12} />@{parent.author.username}
-                        </span>
-                      )}
-                      <MentionText text={comment.body} />
-                    </p>
-                    <CommentAttachments comment={comment} tree={tree} />
-                  </div>
+          {isDeleted ? (
+            <p className="flex min-h-9 items-center text-small italic text-text-muted">
+              <span>
+                <Link href={profileHref(comment.author)} className="font-medium not-italic text-text hover:underline">
+                  {comment.author.displayName}
+                </Link>{" "}
+                {t("comments.thisCommentWasDeleted")}
+              </span>
+            </p>
+          ) : (
+            <>
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-small text-text-muted">
+                <Link href={profileHref(comment.author)} className="text-body font-semibold text-text hover:underline">
+                  {comment.author.displayName}
+                </Link>
+                {isByOwner && <AuthorBadge />}
+                {isPinned && <PinnedLabel />}
+                {worksVote !== undefined && <WorksBadge works={worksVote} />}
+                <span>{formatRelativeTime(comment.createdAt, language)}</span>
+                {comment.editedAt && (
+                  <button
+                    type="button"
+                    onClick={() => tree.menu?.openHistory(comment)}
+                    disabled={!tree.menu}
+                    data-comment-edited
+                    className={cn("text-text-muted", tree.menu && "underline-offset-2 hover:text-text hover:underline")}
+                  >
+                    · {t("comments.edited")}
+                  </button>
                 )}
-              </>
-            )}
-          </div>
+                {hasMenu && (
+                  <span className="ml-auto">
+                    <CommentMenu comment={comment} depth={depth} tree={tree} isOwn={isOwn} isPinned={isPinned} />
+                  </span>
+                )}
+              </div>
+
+              {editInline ? (
+                <div className="mt-2 space-y-1.5">
+                  <p className="text-caption text-text-muted">{t("comments.editNotice")}</p>
+                  {tree.currentUserId && (
+                    <CommentComposerBox
+                      value={tree.editDraft}
+                      onChange={tree.onEditDraftChange}
+                      autoFocus
+                      minHeightClass="min-h-22"
+                      toolbar={<CommentExtrasToolbar extras={tree.editExtras} userId={tree.currentUserId} disabled={tree.isSavingEdit} />}
+                      preview={<CommentExtrasPreview extras={tree.editExtras} attachmentState={tree.attachmentStateFor} />}
+                      cancel={
+                        <Button type="button" variant="ghost" size="sm" onClick={tree.onCancelEdit}>
+                          {t("common.cancel")}
+                        </Button>
+                      }
+                      submit={
+                        <Button type="button" size="sm" disabled={!canSaveEdit || tree.isSavingEdit} onClick={() => tree.onSubmitEdit(comment.id)}>
+                          {tree.isSavingEdit ? t("common.saving") : t("common.save")}
+                        </Button>
+                      }
+                    />
+                  )}
+                  {tree.editError && <p className="text-caption text-danger">{tree.editError}</p>}
+                </div>
+              ) : (
+                <div className="mt-0.5">
+                  {comment.rating ? <CommentRating comment={comment} tree={tree} isOwn={isOwn} /> : null}
+                  <p className="break-words text-h3 text-text">
+                    {showParentHint && (
+                      <span className="mr-1 inline-flex items-center gap-0.5 text-caption font-medium text-primary">
+                        <Reply size={12} />@{parent.author.username}
+                      </span>
+                    )}
+                    <MentionText text={comment.body} />
+                  </p>
+                  <CommentAttachments comment={comment} tree={tree} />
+                </div>
+              )}
+            </>
+          )}
 
           {!isDeleted && !isEditingHere && (
-            <div className="mt-1 flex flex-wrap items-center gap-x-1 gap-y-0.5 pl-1.5 text-small text-text-muted">
-              <CommentReactions id={comment.id} likeCount={comment.likeCount} size={16} className="-my-0.5" />
+            <div className="-ml-1.5 mt-0.5 flex flex-wrap items-center gap-x-1 gap-y-0.5 text-small text-text-muted">
+              <CommentReactions id={comment.id} likeCount={comment.likeCount} size={20} buttonClassName="text-small" className="-my-0.5" />
               {tree.canInteract && (
                 <button
                   type="button"
                   onClick={() => (isReplyingHere ? tree.onCancelReply() : tree.onStartReply(comment.id))}
                   className="inline-flex min-h-9 items-center gap-1.5 rounded-full px-2.5 font-medium transition-colors hover:bg-surface-soft hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                 >
-                  <Reply size={16} aria-hidden />
+                  <Reply size={20} aria-hidden />
                   {t("request.reply")}
-                </button>
-              )}
-              {hasChildren && (
-                <button
-                  type="button"
-                  onClick={() => tree.onToggleExpand(comment.id)}
-                  className="inline-flex min-h-9 items-center gap-1 rounded-full px-2.5 font-medium text-primary transition-colors hover:bg-primary-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-                >
-                  {isExpanded ? <ChevronUp size={12} aria-hidden /> : <ChevronDown size={12} aria-hidden />}
-                  {isExpanded
-                    ? t("comments.hideReplies")
-                    : children.length === 1
-                      ? t("comments.showReplySingular")
-                      : t("comments.showRepliesPlural", { count: children.length })}
                 </button>
               )}
               {/* Menü yoksa (Odak dışı eski kullanım) işlemler eskisi gibi satır içi kalır. */}
@@ -376,6 +386,23 @@ function ThreadCommentNode({ comment, depth, tree }: { comment: PromptComment; d
             </div>
           )}
 
+          {!isDeleted && !isEditingHere && hasChildren && (
+            <button
+              type="button"
+              onClick={() => tree.onToggleExpand(comment.id)}
+              aria-expanded={isExpanded}
+              data-comment-fold
+              className="-ml-2 inline-flex min-h-9 items-center gap-1.5 rounded-full px-2 text-small font-medium text-primary transition-colors hover:bg-primary-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            >
+              <ChevronDown size={12} aria-hidden className={cn("transition-transform duration-200", !isExpanded && "-rotate-90")} />
+              {isExpanded
+                ? t("comments.hideReplies")
+                : children.length === 1
+                  ? t("comments.showReplySingular")
+                  : t("comments.showRepliesPlural", { count: children.length })}
+            </button>
+          )}
+
           {isConfirmingDelete && !isDeleted && (
             <div role="alert" data-comment-delete-confirm className="mt-1 flex flex-wrap items-center gap-2 rounded-md bg-danger-soft px-3 py-2 text-small text-danger">
               <span className="font-medium">{t("common.confirmDelete")}</span>
@@ -390,41 +417,7 @@ function ThreadCommentNode({ comment, depth, tree }: { comment: PromptComment; d
             </div>
           )}
 
-          {replyInline && (
-            <form
-              onSubmit={(event) => {
-                event.preventDefault();
-                tree.onSubmitReply(comment.id);
-              }}
-              className="mt-3 space-y-1.5"
-            >
-              <p className="text-caption text-text-muted">
-                <span className="font-medium text-primary">@{comment.author.username}</span> {t("comments.replyingToSuffix")}
-              </p>
-              {tree.currentUserId && (
-                <CommentComposerBox
-                  value={tree.replyDraft}
-                  onChange={tree.onReplyDraftChange}
-                  autoFocus
-                  placeholder={t("comments.writeAReply")}
-                  minHeightClass="min-h-22"
-                  toolbar={<CommentExtrasToolbar extras={tree.replyExtras} userId={tree.currentUserId} disabled={tree.isPosting} />}
-                  preview={<CommentExtrasPreview extras={tree.replyExtras} />}
-                  cancel={
-                    <Button type="button" variant="ghost" size={isPhone ? "md" : "sm"} onClick={tree.onCancelReply}>
-                      {t("common.cancel")}
-                    </Button>
-                  }
-                  submit={
-                    <Button type="submit" size={isPhone ? "md" : "sm"} disabled={!canSendReply || tree.isPosting}>
-                      {tree.isPosting ? t("common.sending") : t("common.send")}
-                    </Button>
-                  }
-                />
-              )}
-              {tree.postError && <p className="text-caption text-danger">{tree.postError}</p>}
-            </form>
-          )}
+          {replyInline && !hookedForm && replyForm}
         </div>
       </div>
 
@@ -446,10 +439,28 @@ function ThreadCommentNode({ comment, depth, tree }: { comment: PromptComment; d
         />
       )}
 
-      {hasChildren && isExpanded && (
-        <div className={cn(indented && (depth === 0 ? "ml-2.5 sm:ml-[17px]" : "ml-2.5 sm:ml-[11px]"))}>
-          {children.map((child, index) => (
-            <div key={child.id} className={indented ? replyWrapClass(index === children.length - 1) : "pt-3 sm:pt-4"}>
+      {indented && (showChildren || hookedForm) && (
+        <div className={depth === 0 ? "ml-[17px]" : "ml-[13px]"}>
+          {showChildren &&
+            children.map((child, index) => (
+              <div key={child.id} className={replyWrapClass(index === children.length - 1 && !hookedForm, depth)}>
+                <CommentNode comment={child} depth={depth + 1} tree={tree} />
+              </div>
+            ))}
+          {hookedForm && (
+            <div className={replyWrapClass(true, depth)} data-comment-reply-row="">
+              <div className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3">
+                <Avatar src={ownProfile?.avatarUrl ?? null} alt={ownProfile?.displayName ?? ""} size={28} />
+                {replyForm}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+      {!indented && showChildren && (
+        <div>
+          {children.map((child) => (
+            <div key={child.id} className="pt-3">
               <CommentNode comment={child} depth={depth + 1} tree={tree} />
             </div>
           ))}
