@@ -37,6 +37,7 @@ import { RelationGraph as RelationCanvas } from "./relation-graph";
 import { RelationList } from "./relation-list";
 import { SkillsUsingContent } from "@/features/skills/skill-aside-blocks";
 import { KIND_ICON, useRelationText } from "./relation-text";
+import { usePhoneDuplicateClass } from "@/components/layout/phone-title";
 
 type ViewMode = "map" | "list";
 
@@ -48,6 +49,7 @@ type ViewMode = "map" | "list";
  */
 export function RelationMapView() {
   const { t } = useTranslation();
+  const duplicate = usePhoneDuplicateClass(t("relations.title"));
   const { kindLabel } = useRelationText();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -172,8 +174,8 @@ export function RelationMapView() {
         </Link>
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div className="min-w-0 space-y-1">
-            <Eyebrow icon={Network}>{t("relations.title")}</Eyebrow>
-            <h1 className="break-words font-display text-h1 text-text">{t("relations.title")}</h1>
+            <div className={duplicate}><Eyebrow icon={Network}>{t("relations.title")}</Eyebrow></div>
+            <h1 className={cn("break-words font-display text-h1 text-text", duplicate)}>{t("relations.title")}</h1>
             <p className="flex min-w-0 items-center gap-1.5 text-small text-text-secondary">
               <CenterIcon size={16} className="shrink-0 text-text-muted" aria-hidden />
               <span className="shrink-0 text-text-muted">{kindLabel(center.kind)}:</span>

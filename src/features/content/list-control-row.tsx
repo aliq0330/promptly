@@ -11,10 +11,13 @@ import { CONTROL_ICON_BUTTON, SectionMenu, type SectionMenuItem } from "@/featur
 import type { ContentSortKey } from "@/features/content/sort-select";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
+import { usePhoneDuplicateClass } from "@/components/layout/phone-title";
 
 /** The plain big page title of the sade pages (Spaces, Topluluklar, listeler, Bildirimler, Mesajlar — docs/history/231-*, 234-*). */
 export function SadeTitle({ children, className }: { children: ReactNode; className?: string }) {
-  return <h1 className={cn("font-display text-display font-bold leading-[1.1] tracking-[-0.02em] text-text", className)}>{children}</h1>;
+  // Üst çubuk (telefon) aynı adı zaten yazıyorsa sayfa başlığı telefonda gizlenir (docs/history/463-*).
+  const duplicate = usePhoneDuplicateClass(children);
+  return <h1 className={cn("font-display text-display font-bold leading-[1.1] tracking-[-0.02em] text-text", className, duplicate)}>{children}</h1>;
 }
 
 export interface ListFilterConfig {

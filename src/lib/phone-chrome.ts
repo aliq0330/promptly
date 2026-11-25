@@ -35,3 +35,13 @@ export function showsCreateHub(pathname: string, usernameParam: string | null, o
   }
   return false;
 }
+
+/**
+ * Telefon üst çubuğu sayfanın adını zaten yazıyor: sayfanın kendi büyük başlığı AYNI metni taşıyorsa telefonda gizlenir (docs/history/463-*).
+ * Karşılaştırma çevrilmiş metindir (`translate(anahtar) === başlık`), yani başka bir başlık (topluluk adı, kişi adı, alt sayfa adı) hiç etkilenmez.
+ */
+export function duplicatesPhoneTitle(pathname: string, text: string | null | undefined, translate: (key: TranslationKey) => string): boolean {
+  if (!text) return false;
+  const key = phoneTitleKey(pathname);
+  return key !== null && translate(key).trim() === text.trim();
+}

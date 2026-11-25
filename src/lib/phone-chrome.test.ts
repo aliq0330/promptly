@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { normalizePath, phoneTitleKey, routeTitleKey, showsCreateHub } from "./phone-chrome.ts";
+import { duplicatesPhoneTitle, normalizePath, phoneTitleKey, routeTitleKey, showsCreateHub } from "./phone-chrome.ts";
 
 test("normalizePath trims the trailing slash but keeps the root", () => {
   assert.equal(normalizePath("/discover/"), "/discover");
@@ -29,4 +29,16 @@ test("the + hub shows on Ana Sayfa, Keşfet and the member's OWN profile only", 
   for (const path of ["/messages/", "/notifications/", "/communities/", "/saved/", "/settings/", "/prompts/local/", "/spaces/"]) {
     assert.equal(showsCreateHub(path, null, "alice"), false, path);
   }
+});
+
+test("a page's own title is hidden on the phone only when it repeats the top-bar name", () => {
+  const tr = (key: string) => ({ "header.notificationsAriaLabel": "Bildirimler", "nav.discover": "Keşfet", "nav.profile": "Profil" })[key] ?? key;
+  assert.equal(duplicatesPhoneTitle("/notifications/", "Bildirimler", tr as never), true);
+  assert.equal(duplicatesPhoneTitle("/discover/", " Keşfet ", tr as never), true);
+  // A different heading on the same route (a community name, a person) stays.
+  assert.equal(duplicatesPhoneTitle("/discover/", "Promptlar", tr as never), false);
+  // Routes without a top-bar name never hide anything.
+  assert.equal(duplicatesPhoneTitle("/prompts/local/", "Keşfet", tr as never), false);
+  assert.equal(duplicatesPhoneTitle("/discover/", "", tr as never), false);
+  assert.equal(duplicatesPhoneTitle("/discover/", null, tr as never), false);
 });

@@ -19,6 +19,8 @@ import { useIsModerator } from "@/features/moderation/use-is-moderator";
 import { SettingsLinkRow } from "@/features/settings/settings-ui";
 import { supabase } from "@/lib/supabase/client";
 import { useTranslation } from "@/lib/i18n/language-provider";
+import { usePhoneDuplicateClass } from "@/components/layout/phone-title";
+import { cn } from "@/lib/utils";
 
 
 /**
@@ -28,6 +30,7 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 export default function SettingsPage() {
   const { user, loading } = useAuth();
   const { t } = useTranslation();
+  const duplicate = usePhoneDuplicateClass(t("nav.settings"));
   usePageTitle(t("nav.settings"));
   const isModerator = useIsModerator();
   const [isSigningOut, setIsSigningOut] = useState(false);
@@ -44,7 +47,7 @@ export default function SettingsPage() {
   return (
     <div className="mx-auto w-full max-w-2xl animate-rise-in space-y-6 px-3 py-5 sm:px-5 sm:py-7 lg:px-8 lg:py-10">
       <header className="space-y-2">
-        <h1 className="text-h1 text-text">{t("nav.settings")}</h1>
+        <h1 className={cn("text-h1 text-text", duplicate)}>{t("nav.settings")}</h1>
         <p className="text-small text-text-secondary">
           {t("settings.profileHintBefore")}{" "}
           <Link href="/profile/edit" className="font-medium text-primary hover:underline">

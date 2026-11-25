@@ -684,7 +684,9 @@ await scenario("40. Telefon: Ekipler listesi (Hub düzeni, docs/history/379-*) �
   await page.goto(`${BASE}/teams`);
   const band = page.locator("[data-hub-band]");
   await band.waitFor();
-  await band.getByRole("heading", { name: "Ekipler" }).waitFor();
+  // Telefonda başlık üst çubuktadır, bantta tekrarlanmaz (docs/history/463-*): h1 DOM'da durur ama gizlidir.
+  await band.locator("h1", { hasText: "Ekipler" }).waitFor({ state: "attached" });
+  assert.equal(await band.locator("h1").isVisible(), false, "bant başlığı telefonda gizli (üst çubukta var)");
   await band.locator("[data-team-create-phone]").waitFor();
   await page.locator("[data-teams-search]").waitFor();
   await page.getByTestId("teams-list").locator(`[data-team-card="${TEAM}"]`).waitFor();

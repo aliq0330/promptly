@@ -252,6 +252,28 @@ await scenario("10c. telefon: sayfa adı üst çubukta — Mesajlar, Topluluklar
   assert.ok(await header.locator("[data-header-brand]").isVisible(), "logo bağlantısı durur");
 }, { viewport: PHONE });
 
+await scenario("10d. telefon: üst çubuk sayfa adını yazıyorsa sayfanın kendi aynı başlığı gizli (çift başlık yok); masaüstünde sayfa başlığı durur (docs/history/463-*)", async ({ page }) => {
+  const header = page.locator("header[data-app-header]");
+  const routes = ["/", "/discover", "/communities", "/spaces", "/teams", "/saved", "/messages", "/settings", "/following", "/followers", "/my-content", "/insights", "/studio", "/tags", "/communities/all", "/profile/edit"];
+  const dupes = [];
+  for (const path of routes) {
+    await open(page, path);
+    await page.waitForTimeout(500);
+    const title = (await header.locator("[data-header-title]").count()) ? (await header.locator("[data-header-title]").innerText()).trim() : null;
+    if (!title) continue;
+    const visible = await page.evaluate((t) => [...document.querySelectorAll("main h1, main h2")].filter((el) => el.getClientRects().length > 0 && getComputedStyle(el).visibility !== "hidden" && el.textContent.trim() === t).length, title);
+    if (visible > 0) dupes.push(`${path}: «${title}» ×${visible}`);
+  }
+  assert.deepEqual(dupes, [], "sayfada üst çubukla aynı görünür başlık kalmamalı");
+}, { viewport: PHONE });
+
+await scenario("10e. masaüstü: aynı sayfalarda sayfanın kendi başlığı GÖRÜNÜR (yalnız telefonda gizlenir)", async ({ page }) => {
+  for (const [path, title] of [["/discover", "Keşfet"], ["/settings", "Ayarlar"], ["/my-content", "İçeriklerim"]]) {
+    await open(page, path);
+    await page.locator("main h1", { hasText: title }).first().waitFor({ state: "visible" });
+  }
+});
+
 await scenario("11. misafir masaüstü: kenar çubuğunda Ekipler/Kütüphane yok, altta «Giriş Yap»", async ({ page }) => {
   await open(page);
   const side = page.locator("aside[aria-label]:visible");
