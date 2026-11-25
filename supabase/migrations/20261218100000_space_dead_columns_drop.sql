@@ -178,6 +178,35 @@ AS $function$
   offset greatest(0, coalesce(p_offset, 0));
 $function$;
 
+-- 3b. team_list_spaces dönüşünden `is_favorite` çıkar (`space_user_state.favorite` düşüyor; istemci bu alanı hiç okumuyordu)
+drop function if exists public.team_list_spaces(uuid, integer, integer);
+CREATE FUNCTION public.team_list_spaces(p_team uuid, p_limit integer DEFAULT 50, p_offset integer DEFAULT 0)
+ RETURNS TABLE(id uuid, owner_id uuid, owner_username text, owner_display_name text, owner_avatar_url text, title text, description text, kind text, visibility text, cover_url text, cover_item_id uuid, cover_item_url text, preview_urls text[], image_count integer, prompt_count integer, note_count integer, member_count integer, my_role text, last_opened_at timestamp with time zone, created_at timestamp with time zone, updated_at timestamp with time zone, archived_at timestamp with time zone, access_mode text, guest_count integer, is_library boolean)
+ LANGUAGE sql
+ STABLE
+ SET search_path TO 'public'
+AS $function$
+  select s.id, s.owner_id, op.username, op.display_name, op.avatar_url, s.title, s.description, s.kind, s.visibility, s.cover_url, s.cover_item_id,
+         (select ci.media_url from public.space_items ci where ci.id = s.cover_item_id),
+         array(select pi.media_url from public.space_items pi where pi.space_id = s.id and pi.kind = 'image' order by pi.created_at desc limit 4),
+         (select count(*)::integer from public.space_items c where c.space_id = s.id and c.kind = 'image'),
+         (select count(*)::integer from public.space_items c where c.space_id = s.id and c.kind = 'prompt'),
+         (select count(*)::integer from public.space_items c where c.space_id = s.id and c.kind = 'note'),
+         (select count(*)::integer from public.space_members c where c.space_id = s.id),
+         public.space_role(s.id), us.last_opened_at, s.created_at, s.updated_at, s.archived_at, s.team_access_mode,
+         (select count(*)::integer from public.space_members c join public.team_members tm on tm.team_id = s.team_id and tm.user_id = c.user_id and tm.role = 'guest' where c.space_id = s.id),
+         exists (select 1 from public.teams t where t.id = s.team_id and t.library_space_id = s.id)
+    from public.spaces s
+    join public.space_members m on m.space_id = s.id and m.user_id = auth.uid()
+    left join public.profiles op on op.id = s.owner_id
+    left join public.space_user_state us on us.space_id = s.id and us.user_id = auth.uid()
+   where s.team_id = p_team and s.project_space_id is null
+   order by s.archived_at is not null, (s.id = (select t.library_space_id from public.teams t where t.id = p_team)) desc, s.updated_at desc, s.id
+   limit greatest(1, least(coalesce(p_limit, 50), 60)) offset greatest(0, coalesce(p_offset, 0))
+$function$;
+revoke execute on function public.team_list_spaces(uuid, integer, integer) from public, anon;
+grant execute on function public.team_list_spaces(uuid, integer, integer) to authenticated;
+
 drop function if exists public.follow_feed_settings_get();
 create function public.follow_feed_settings_get()
 returns table(group_posts boolean, include_tags boolean, include_tools boolean, show_versions boolean, show_results boolean, last_seen_at timestamptz)
