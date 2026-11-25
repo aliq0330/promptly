@@ -77,10 +77,9 @@ select public._check(3, 'geçersiz tür/görünürlük reddedilir',
   public._try($q$select public.create_space('A', '', 'nope')$q$) like '%space_invalid%'
   and public._try($q$select public.create_space('A', '', 'free', 'everyone')$q$) like '%space_invalid%');
 select public._set('S', public.create_space('Ejderha Dünyası', 'karakterler', 'character', 'private', array['Karakterler', 'Mekânlar', ' '])::text);
-select public._check(4, 'sahip: Space + sahip üyeliği + 2 grup (boş ad atlanır) + "created" etkinliği',
+select public._check(4, 'sahip: Space + sahip üyeliği + 2 grup (boş ad atlanır)',
   public._val(format($q$select role from public.space_members where space_id = %L and user_id = auth.uid()$q$, public._g('S'))) = 'owner'
-  and public._cnt(format($q$select count(*) from public.space_groups where space_id = %L$q$, public._g('S'))) = 2
-  and public._cnt(format($q$select count(*) from public.space_activity where space_id = %L and action = 'created'$q$, public._g('S'))) = 1);
+  and public._cnt(format($q$select count(*) from public.space_groups where space_id = %L$q$, public._g('S'))) = 2);
 select public._check(5, 'istemci spaces tablosuna doğrudan ekleyemez (yalnız RPC)',
   public._try(format($q$insert into public.spaces (owner_id, title) values (%L, 'doğrudan')$q$, :alice)) like '%permission denied%');
 
@@ -121,8 +120,9 @@ select public._try(format($q$insert into public.space_items (id, space_id, kind,
 select public._check(14, 'öğenin kimliği/kaynağı değiştirilemez',
   public._try($q$update public.space_items set kind = 'note' where id = 'b0000000-0000-4000-8000-000000000001'$q$) like '%space_invalid%'
   and public._try($q$update public.space_items set prompt_id = 'a0000000-0000-4000-8000-0000000000a3' where id = 'b0000000-0000-4000-8000-000000000001'$q$) like '%space_invalid%');
-select public._check(15, 'etkinlik: arka arkaya eklenen görseller tek satırda birleşir (count=2), konum değişikliği kaydedilmez',
-  public._cnt(format($q$select count from public.space_activity where space_id = %L and action = 'image_added'$q$, public._g('S'))) = 2);
+select public._check(15, 'etkinlik günlüğü yok: space_activity tablosu ve _space_log düştü (docs/history/461-*)',
+  to_regclass('public.space_activity') is null
+  and (select count(*) from pg_proc where proname = '_space_log' and pronamespace = 'public'::regnamespace) = 0);
 
 -- ============================================================================
 -- 3. Davet + roller
@@ -162,17 +162,15 @@ select public._check(22, 'görüntüleyici okur ama düzenleyemez (ekleme hata, 
   and public._cnt($q$with u as (update public.space_items set title = 'x' where id = 'b0000000-0000-4000-8000-000000000003' returning 1) select count(*) from u$q$) = 0
   and public._cnt($q$with d as (delete from public.space_items where id = 'b0000000-0000-4000-8000-000000000003' returning 1) select count(*) from d$q$) = 0
   and public._try(format($q$select public.space_save_layout(%L, '[]'::jsonb)$q$, public._g('S'))) like '%space_forbidden%');
-select public._check(23, 'üye gizli notu ve etkinlik geçmişini görür; üye listesini görür',
+select public._check(23, 'üye gizli notu görür; üye listesini görür',
   public._cnt($q$select count(*) from public.space_items where id = 'b0000000-0000-4000-8000-000000000004'$q$) = 1
-  and public._cnt(format($q$select count(*) from public.space_activity where space_id = %L$q$, public._g('S'))) > 0
   and public._cnt(format($q$select count(*) from public.space_members where space_id = %L$q$, public._g('S'))) = 3);
 select public._as_user(:dave);
-select public._check(24, 'yabancı özel Space''in hiçbir parçasını göremez (satır, öğe, grup, palet, üye, etkinlik)',
+select public._check(24, 'yabancı özel Space''in hiçbir parçasını göremez (satır, öğe, grup, palet, üye)',
   public._cnt(format($q$select count(*) from public.spaces where id = %L$q$, public._g('S'))) = 0
   and public._cnt(format($q$select count(*) from public.space_items where space_id = %L$q$, public._g('S'))) = 0
   and public._cnt(format($q$select count(*) from public.space_groups where space_id = %L$q$, public._g('S'))) = 0
   and public._cnt(format($q$select count(*) from public.space_members where space_id = %L$q$, public._g('S'))) = 0
-  and public._cnt(format($q$select count(*) from public.space_activity where space_id = %L$q$, public._g('S'))) = 0
   and public._try(format($q$select public.touch_space(%L)$q$, public._g('S'))) = 'ok'
   and public._cnt(format($q$select count(*) from public.space_user_state where space_id = %L$q$, public._g('S'))) = 0);
 
@@ -261,10 +259,9 @@ select public._check(44, 'arşivlenen Space salt-okunur: düzenleyici okur ama e
   and public._try(format($q$select public.space_save_layout(%L, '[]'::jsonb)$q$, public._g('S'))) like '%space_forbidden%'
   and public._try(format($q$insert into public.space_items (space_id, kind, title, created_by) values (%L, 'note', 'x', auth.uid())$q$, public._g('S'))) like '%row-level security%');
 select public._as_user(:alice);
-select public._check(45, 'sahip arşiv süzgecinde görür, geri alır (etkinlikte iz)',
+select public._check(45, 'sahip arşiv süzgecinde görür, geri alır',
   public._cnt($q$select count(*) from public.list_spaces('archived')$q$) = 1
-  and public._cnt(format($q$with u as (update public.spaces set archived_at = null where id = %L returning 1) select count(*) from u$q$, public._g('S'))) = 1
-  and public._cnt(format($q$select count(*) from public.space_activity where space_id = %L and action in ('archived', 'unarchived')$q$, public._g('S'))) = 2);
+  and public._cnt(format($q$with u as (update public.spaces set archived_at = null where id = %L returning 1) select count(*) from u$q$, public._g('S'))) = 1);
 select public._check(46, 'sahip rol değiştirir ve görüntüleyiciyi çıkarır; çıkarılan erişimini kaybeder',
   public._try(format($q$select public.set_space_member_role(%L, %L, 'editor')$q$, public._g('S'), :carol)) = 'ok'
   and public._try(format($q$select public.remove_space_member(%L, %L)$q$, public._g('S'), :carol)) = 'ok'
@@ -329,16 +326,14 @@ set role authenticated;
 select public._as_user(:dave);
 select public._set('S2', public.create_space('Dave alanı')::text);
 select public._try(format($q$insert into public.space_items (space_id, kind, title, created_by) values (%L, 'note', 'x', auth.uid())$q$, public._g('S2')));
-select public._check(56, 'sahip Space''ini siler: öğeler/gruplar/etkinlik zincirle gider, hata yok',
+select public._check(56, 'sahip Space''ini siler: öğeler/gruplar zincirle gider, hata yok',
   public._cnt(format($q$with d as (delete from public.spaces where id = %L returning 1) select count(*) from d$q$, public._g('S2'))) = 1
-  and public._q(format($q$select count(*) from public.space_items where space_id = %L$q$, public._g('S2'))) = '0'
-  and public._q(format($q$select count(*) from public.space_activity where space_id = %L$q$, public._g('S2'))) = '0');
-select public._check(57, 'istemci etkinlik/üyelik/durum tablolarına yazamaz',
-  public._try(format($q$insert into public.space_activity (space_id, action) values (%L, 'created')$q$, public._g('S'))) like '%permission denied%'
-  and public._try(format($q$insert into public.space_members (space_id, user_id, role) values (%L, auth.uid(), 'editor')$q$, public._g('S'))) like '%permission denied%'
-  and public._try(format($q$insert into public.space_user_state (user_id, space_id, favorite) values (auth.uid(), %L, true)$q$, public._g('S'))) like '%permission denied%');
+  and public._q(format($q$select count(*) from public.space_items where space_id = %L$q$, public._g('S2'))) = '0');
+select public._check(57, 'istemci üyelik/durum tablolarına yazamaz',
+  public._try(format($q$insert into public.space_members (space_id, user_id, role) values (%L, auth.uid(), 'editor')$q$, public._g('S'))) like '%permission denied%'
+  and public._try(format($q$insert into public.space_user_state (user_id, space_id) values (auth.uid(), %L)$q$, public._g('S'))) like '%permission denied%');
 select public._check(58, 'iç yardımcılar istemciden çağrılamaz',
-  public._try(format($q$select public._space_log(%L, 'created', null)$q$, public._g('S'))) like '%permission denied%');
+  public._try(format($q$select public._space_touch(%L)$q$, public._g('S'))) like '%permission denied%');
 reset role;
 select public._set('DEL', public._try($q$select public.delete_account_data('11111111-1111-4111-8111-111111111111')$q$));
 select public._check(59, 'hesap silme: sahibin Space''leri zincirle gider (tetikleyiciler engellemez)',
