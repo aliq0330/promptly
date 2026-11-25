@@ -521,7 +521,7 @@ await scenario("14. Telefon: ekranı kaplar, alt/üst menü DOM'da yok; ray + ya
   const nav = page.locator("nav[data-app-chrome]");
   await nav.locator("li").first().waitFor();
   const labels = (await nav.locator("li span.truncate").allTextContents()).map((s) => s.trim());
-  assert.deepEqual(labels, ["Ana Sayfa", "Odak", "Mesajlar", "Bildirimler", "Keşfet"], "telefon alt çubuğu (docs/history/460-*): Odak alt çubukta");
+  assert.deepEqual(labels, ["Ana Sayfa", "Odak", "Mesajlar", "Bildirimler", "Keşfet"], "telefon alt çubuğu (docs/history/462-*): Odak alt çubukta");
   const focusLink = nav.getByRole("link", { name: "Odak" });
   assert.equal(await focusLink.getAttribute("href"), "/promptly/focus/", "a plain link, not next/link");
   await focusLink.click();

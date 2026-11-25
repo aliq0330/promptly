@@ -57,6 +57,8 @@ import { PaletteTab } from "./tabs/palette-tab";
 import { NotesTab } from "./tabs/notes-tab";
 import { MembersTab } from "./tabs/members-tab";
 import { SpaceBoard } from "./board/space-board";
+import { CopyItemsDialog } from "./copy-items-dialog";
+import { Copy as CopyIcon } from "@/components/icons/copy";
 import { SaveIndicator } from "./save-indicator";
 
 type LoadState = { status: "loading" } | { status: "missing" } | { status: "error" } | { status: "ready"; data: SpaceData; owner: SpacePerson | null };
@@ -182,7 +184,7 @@ function SpaceView({ owner }: { owner: SpacePerson | null }) {
   const defaultTab: SpaceTab = "overview";
   const tab: SpaceTab = isSpaceTab(tabParam) && visibleTabs.includes(tabParam) ? tabParam : defaultTab;
   const focusId = searchParams.get("focus");
-  const [dialog, setDialog] = useState<null | "settings" | "delete" | "leave">(null);
+  const [dialog, setDialog] = useState<null | "settings" | "delete" | "leave" | "copy">(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -210,6 +212,7 @@ function SpaceView({ owner }: { owner: SpacePerson | null }) {
   }
 
   const menuItems: PopoverMenuItem[] = [
+    { key: "copy", label: t("spaces.copy.menu"), icon: CopyIcon, onSelect: () => setDialog("copy") },
     { key: "settings", label: t("spaces.page.settings"), icon: Settings, onSelect: () => setDialog("settings"), hidden: !caps.owner || Boolean(space.archivedAt) },
     { key: "archive", label: space.archivedAt ? t("spaces.card.unarchive") : t("spaces.card.archive"), icon: space.archivedAt ? ArchiveRestore : Archive, onSelect: () => void toggleArchive(), hidden: !caps.archive },
     { key: "leave", label: t("spaces.card.leave"), icon: LogOut, onSelect: () => setDialog("leave"), danger: true, hidden: !caps.leave },
@@ -332,7 +335,7 @@ function SpaceView({ owner }: { owner: SpacePerson | null }) {
 
         <div className="pt-5" role="tabpanel" aria-label={t(SPACE_TAB_LABEL[tab])}>
           {tab === "overview" && <OverviewTab onNavigate={goTo} />}
-          {tab === "board" && <SpaceBoard focusId={focusId} />}
+          {tab === "board" && <SpaceBoard focusId={focusId} openComment={searchParams.get("comment")} />}
           {tab === "images" && <ImagesTab focusId={focusId} onShowOnBoard={(itemId) => goTo("board", itemId)} />}
           {tab === "prompts" && <PromptsTab onShowOnBoard={(itemId) => goTo("board", itemId)} />}
           {tab === "palette" && <PaletteTab />}
@@ -341,6 +344,7 @@ function SpaceView({ owner }: { owner: SpacePerson | null }) {
         </div>
       </div>
 
+      {dialog === "copy" && <CopyItemsDialog sourceSpaceId={space.id} sourceTitle={space.title} onClose={() => setDialog(null)} />}
       {dialog === "settings" && <SpaceSettingsModal space={space} images={images} onClose={() => setDialog(null)} onSaved={setSpace} />}
       {dialog === "delete" && <DeleteSpaceDialog space={space} onClose={() => setDialog(null)} onDeleted={() => router.replace("/spaces")} />}
       {dialog === "leave" && userId && (

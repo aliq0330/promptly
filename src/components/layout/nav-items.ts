@@ -80,7 +80,7 @@ export const navGroups: NavGroup[] = [
 
 /**
  * «Sen» sayfasındaki kısayol kutularının sırası (telefon): alt çubukta olmayan her hedef. Topluluklar alt çubuktan buraya taşındı
- * (docs/history/460-*: alt çubuk Ana Sayfa · Odak · Mesajlar · Bildirimler · Keşfet).
+ * (docs/history/462-*: alt çubuk Ana Sayfa · Odak · Mesajlar · Bildirimler · Keşfet).
  */
 const ACCOUNT_SHORTCUT_HREFS = ["/saved", "/spaces", "/communities", "/teams", "/following", "/insights", "/studio"];
 export const accountShortcutItems: NavItem[] = ACCOUNT_SHORTCUT_HREFS.map((href) => navGroups.flatMap((group) => group.items).find((item) => item.href === href)!);
@@ -96,7 +96,7 @@ export const MESSAGES_HREF = "/messages";
 export const NOTIFICATIONS_HREF = "/notifications";
 
 /**
- * Telefon alt çubuğu (docs/history/460-*): Ana Sayfa · Odak · Mesajlar · Bildirimler · Keşfet. Üstteki aktif çizgi 5 eşit yuvada kayar. «Sen» artık alt
+ * Telefon alt çubuğu (docs/history/462-*): Ana Sayfa · Odak · Mesajlar · Bildirimler · Keşfet. Üstteki aktif çizgi 5 eşit yuvada kayar. «Sen» artık alt
  * çubukta değil, üst çubuğun sağındaki avatardır (`PhoneAccountButton`); Oluştur sağ alttaki mavi «+» hub'ıdır (`showsCreateHub`: yalnız Ana Sayfa,
  * Keşfet ve kendi profilin). Odak kendi tam ekran sayfasıdır (çubuk çizilmez, docs/history/248-*), bu yüzden orada hiçbir yuva "aktif" olmaz.
  * Keşfet arama kutusunu taşır (arama kendi sekmesi değildir). İkon: Keşfet her yerde Pusula (anlam başına tek ikon, docs/history/344-*).

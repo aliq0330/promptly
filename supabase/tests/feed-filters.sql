@@ -49,9 +49,9 @@ insert into public.prompt_requests (id, author_id, title, description, content_t
   ('f2000000-0000-4000-8000-000000000001', :carol, 'R1', 'd', 'image', 'public', false, now() - interval '20 minutes', 0, 0, 0);
 insert into public.presets (id, creator_id, title, content_type, status, visibility, tools, created_at, like_count, save_count, comment_count) values
   ('f3000000-0000-4000-8000-000000000001', :bobby, 'S1', 'image', 'published', 'public', '{flux}', now() - interval '10 minutes', 0, 0, 0);
--- Space (akışta paylaşılmış) bobby, alıntı carol → P1
-insert into public.spaces (id, owner_id, title, visibility, shared_at, like_count, comment_count) values
-  ('f4000000-0000-4000-8000-000000000001', :bobby, 'Space1', 'public', now() - interval '15 minutes', 0, 0);
+-- Space (özel çalışma tuvali; akışa hiç girmez) bobby, alıntı carol → P1
+insert into public.spaces (id, owner_id, title) values
+  ('f4000000-0000-4000-8000-000000000001', :bobby, 'Space1');
 insert into public.content_quotes (id, author_id, content_type, prompt_id, like_count, comment_count) values
   ('f5000000-0000-4000-8000-000000000001', :carol, 'prompt', 'f0000000-0000-4000-8000-000000000001', 0, 0);
 insert into public.follows (follower_id, following_id) values (:alice, :bobby);

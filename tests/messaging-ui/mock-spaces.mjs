@@ -62,10 +62,7 @@ export function setupSpaces(db) {
       updated_at: over.updated_at ?? `2026-09-${String(10 + n).padStart(2, "0")}T12:00:00Z`,
       updated_by: null,
       quote_count: over.quote_count ?? 0,
-      rating_avg: over.rating_avg ?? 0,
-      rating_count: over.rating_count ?? 0,
       comment_count: over.comment_count ?? 0,
-      activity_visibility: over.activity_visibility ?? "everyone",
       community_id: over.communityId ?? null, // docs/history/349-*: ekibe (tamamen kapalı topluluğa) bağlı Space
       team_id: over.teamId ?? null,
       team_project_id: over.teamProjectId ?? null, // docs/history/362-*: ekip projesinin alanı

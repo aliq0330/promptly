@@ -59,8 +59,14 @@ select public._check(2, 'sahip görünürlüğü "herkese açık"a çeviremez (s
   public._try(format($q$update public.spaces set visibility = 'public' where id = %L$q$, public._g('S1'))) = 'ok'
   and public._val(format($q$select visibility from public.spaces where id = %L$q$, public._g('S1'))) = 'private');
 select public._check(3, 'sahip kendi Space''ini okur (üyelik)', public._cnt(format($q$select count(*) from public.spaces where id = %L$q$, public._g('S1'))) = 1);
-select public._check(4, 'sahip bile yorum/puan yazamaz (space_engagement_closed)',
-  public._try(format($q$insert into public.prompt_comments (space_id, author_id, body, rating) values (%L, auth.uid(), 'x', 5)$q$, public._g('S1'))) like '%space_engagement_closed%');
+select public._check(4, 'sahip bile yorum/puan yazamaz: Space yorum/puan/beğeni/alıntı sütunları ve etkinlik günlüğü veritabanında YOK (461-*)',
+  public._try(format($q$insert into public.prompt_comments (space_id, author_id, body, rating) values (%L, auth.uid(), 'x', 5)$q$, public._g('S1'))) like '%does not exist%'
+  and (select count(*) from information_schema.columns where table_schema = 'public' and (
+         (table_name in ('prompt_comments', 'prompt_likes', 'content_quotes', 'community_posts', 'comment_subscriptions') and column_name = 'space_id')
+         or (table_name = 'prompt_comments' and column_name in ('rating', 'space_activity_id'))
+         or (table_name = 'spaces' and column_name in ('like_count', 'comment_count', 'quote_count', 'shared_at', 'rating_avg', 'rating_count'))
+         or (table_name = 'space_user_state' and column_name = 'favorite'))) = 0
+  and to_regclass('public.space_activity') is null);
 
 select public._as_user(:bobby);
 select public._check(5, 'üye olmayan Space''i okuyamaz, yorum/beğeni yazamaz',
@@ -72,9 +78,10 @@ select public._check(6, 'Space alıntısı kapalı (create_quote ve doğrudan ta
   public._try(format($q$select public.create_quote('space', %L, null)$q$, public._g('S1'))) <> 'ok'
   and public._try(format($q$insert into public.content_quotes (author_id, content_type, space_id) values (auth.uid(), 'space', %L)$q$, public._g('S1'))) <> 'ok');
 reset role;
-select public._check(7, 'tetikleyici: doğrudan (süper kullanıcı) content_quotes / community_posts Space yazımı da reddedilir',
-  public._try(format($q$insert into public.content_quotes (author_id, content_type, space_id) values (%L, 'space', %L)$q$, :bobby, public._g('S1'))) like '%space_engagement_closed%'
-  and public._try(format($q$insert into public.community_posts (space_id) values (%L)$q$, public._g('S1'))) like '%space_engagement_closed%');
+select public._check(7, 'doğrudan (süper kullanıcı) content_quotes / community_posts Space yazımı da imkânsız (sütun yok); tür kısıtı da Space kabul etmez',
+  public._try(format($q$insert into public.content_quotes (author_id, content_type, space_id) values (%L, 'space', %L)$q$, :bobby, public._g('S1'))) like '%does not exist%'
+  and public._try(format($q$insert into public.community_posts (space_id) values (%L)$q$, public._g('S1'))) like '%does not exist%'
+  and (select count(*) from pg_constraint where conname in ('content_quotes_type_check', 'community_posts_type_check') and pg_get_constraintdef(oid) like '%space%') = 0);
 
 -- ziyaretçi
 set role anon;

@@ -30,7 +30,7 @@ const MOTION_ICONS: Record<string, ComponentType<MotionIconProps>> = {
 const GUEST_REASONS: Record<string, AuthPromptReason> = { [MESSAGES_HREF]: "message", [NOTIFICATIONS_HREF]: "generic" };
 
 /**
- * Sağ alttaki mavi «+» — Oluştur hub'ı (docs/history/460-*; yalnız telefon). Yalnız Ana Sayfa, Keşfet ve KENDİ profilinde görünür (`showsCreateHub`);
+ * Sağ alttaki mavi «+» — Oluştur hub'ı (docs/history/462-*; yalnız telefon). Yalnız Ana Sayfa, Keşfet ve KENDİ profilinde görünür (`showsCreateHub`);
  * profilin kimin olduğu `?username=` adres parametresindedir, bu yüzden `useSearchParams` için Suspense içinde durur. Klavye açıkken gizlenir (`data-keyboard-hide`).
  */
 function CreateHub({ open, onOpen }: { open: boolean; onOpen: () => void }) {
@@ -56,7 +56,7 @@ function CreateHub({ open, onOpen }: { open: boolean; onOpen: () => void }) {
 }
 
 /**
- * Mobile-only bottom navigation (docs/history/460-*): Ana Sayfa · Odak · Mesajlar · Bildirimler · Keşfet. «Sen» üst çubuğun sağındaki avatardır,
+ * Mobile-only bottom navigation (docs/history/462-*): Ana Sayfa · Odak · Mesajlar · Bildirimler · Keşfet. «Sen» üst çubuğun sağındaki avatardır,
  * Oluştur sağ alttaki mavi «+» hub'ıdır (`CreateHub`). Mesajlar ve Bildirimler misafire de görünür: dokununca giriş penceresi açılır, yuvalar yer değiştirmez.
  * Odak tam sayfa yüklemesiyle açılır (`FullLoadLink`, docs/history/249-*).
  * Hidden inside an open chat (`/messages/local`, a conversation or a new-chat draft): the chat panel then runs to the

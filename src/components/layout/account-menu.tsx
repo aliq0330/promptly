@@ -329,7 +329,7 @@ function PopoverBody({ actions, close, name, shortcuts }: { actions: AccountActi
 }
 
 /**
- * «Sen» — telefonda üst çubuğun sağındaki avatar (docs/history/460-*; 387'de alt çubuğun son sekmesiydi): basınca alttan «Sen» sayfası açılır
+ * «Sen» — telefonda üst çubuğun sağındaki avatar (docs/history/462-*; 387'de alt çubuğun son sekmesiydi): basınca alttan «Sen» sayfası açılır
  * (profil, kısayol ızgarası, Ayarlar/Görünüm/Dil, çıkış). Avatarın köşesindeki küçük ok "menü açar" der. Yalnız telefonda (`md:hidden`) görünür.
  */
 export function PhoneAccountButton() {

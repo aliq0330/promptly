@@ -1,4 +1,4 @@
-# 460 — Telefon üst ve alt menü (mockup'a uygulama)
+# 462 — Telefon üst ve alt menü (mockup'a uygulama)
 
 Kullanıcı mobil kabuk mockup'ını onayladı ("sadece üst menüyü ve alt menüyü siteye uygula"): Substack'in telefon kabuğundan esinli yerleşim, Promptly'nin kendi ikon/renk/yazı diliyle. **Kart tasarımı (Not kartı / Tarif kartı) uygulanmadı** — yalnız kabuk.
 

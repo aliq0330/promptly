@@ -12,7 +12,7 @@ export function routeTitleKey(pathname: string): TranslationKey | null {
 }
 
 /**
- * Telefon üst çubuğundaki sayfa adı (docs/history/460-*): bilinen rotada sayfanın adı, profilde «Profil»; ayrıntı sayfaları gibi başlığı olmayan
+ * Telefon üst çubuğundaki sayfa adı (docs/history/462-*): bilinen rotada sayfanın adı, profilde «Profil»; ayrıntı sayfaları gibi başlığı olmayan
  * rotalarda `null` → çubuk logo yazısını (wordmark) gösterir.
  */
 export function phoneTitleKey(pathname: string): TranslationKey | null {

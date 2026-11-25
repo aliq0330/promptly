@@ -621,11 +621,10 @@ interface PostRow {
   prompt_requests: RequestRow | null;
   workflows: WorkflowRow | null;
   presets: PresetRow | null;
-  space_id: string | null;
   skill_id: string | null;
 }
 
-const POST_SELECT = `id, community_id, kind, like_count, comment_count, save_count, content_type, note, pinned_at, created_at, space_id, skill_id, author:author_id ( ${PROFILE_EMBED} ),
+const POST_SELECT = `id, community_id, kind, like_count, comment_count, save_count, content_type, note, pinned_at, created_at, skill_id, author:author_id ( ${PROFILE_EMBED} ),
   prompts ( ${PROMPT_SELECT} ), prompt_requests ( ${REQUEST_SELECT} ), workflows ( ${WORKFLOW_SELECT} ), presets ( ${PRESET_SELECT} )`;
 
 function mapPostRow(row: PostRow): CommunityPost {

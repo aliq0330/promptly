@@ -23,7 +23,7 @@ import { phoneTitleKey } from "@/lib/phone-chrome";
 
 /**
  * Üst çubuk. Tablet/masaüstü (md+) = DURUM, gezinme değil (docs/history/387-*): arama · Odak · bildirim · mesajlar; «Sen» rayda/kenar çubuğunda.
- * TELEFON (<md, docs/history/460-*): solda logo + sayfanın adı, sağda avatar («Sen» sayfasını açar). Odak, Mesajlar, Bildirimler ve arama (Keşfet)
+ * TELEFON (<md, docs/history/462-*): solda logo + sayfanın adı, sağda avatar («Sen» sayfasını açar). Odak, Mesajlar, Bildirimler ve arama (Keşfet)
  * alt çubuğa taşındı; üst çubukta tekrarlanmaz. Misafir "Giriş Yap" / "Kayıt Ol" (`GuestAuthMenu`) görür.
  */
 export function Header() {
