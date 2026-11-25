@@ -519,10 +519,10 @@ await scenario("14. Telefon: ekranı kaplar, alt/üst menü DOM'da yok; ray + ya
   await page.goto(`${BASE}/`);
   await page.locator("article").first().waitFor();
   const nav = page.locator("nav[data-app-chrome]");
-  const labels = (await nav.locator("li").allTextContents()).map((s) => s.trim());
-  assert.deepEqual(labels.slice(0, 4), ["Ana Sayfa", "Keşfet", "Oluştur", "Topluluklar"]);
-  assert.match(labels[4], /Sen$/, "son yuva «Sen»");
-  const focusLink = page.locator("header[data-app-header]").getByRole("link", { name: "Odak" });
+  await nav.locator("li").first().waitFor();
+  const labels = (await nav.locator("li span.truncate").allTextContents()).map((s) => s.trim());
+  assert.deepEqual(labels, ["Ana Sayfa", "Odak", "Mesajlar", "Bildirimler", "Keşfet"], "telefon alt çubuğu (docs/history/460-*): Odak alt çubukta");
+  const focusLink = nav.getByRole("link", { name: "Odak" });
   assert.equal(await focusLink.getAttribute("href"), "/promptly/focus/", "a plain link, not next/link");
   await focusLink.click();
   await slides(page).first().waitFor();

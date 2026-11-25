@@ -3,65 +3,10 @@
 import { useEffect, useSyncExternalStore } from "react";
 import { usePathname } from "next/navigation";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import type { TranslationKey } from "@/lib/i18n/translations";
+import { routeTitleKey } from "@/lib/phone-chrome";
 import { badgedTitle } from "@/lib/tab-badge";
 
 const SITE = "Promptly";
-
-/** Route (basePath-less, no trailing slash) → translation key of its title. */
-const ROUTE_TITLES: Record<string, TranslationKey> = {
-  "/": "nav.home",
-  "/discover": "nav.discover",
-  "/focus": "nav.focus",
-  "/prompts": "nav.prompts",
-  "/requests": "nav.requests",
-  "/requests/new": "nav.createPrompt",
-  "/workflows": "nav.workflows",
-  "/workflows/create": "nav.workflows",
-  "/presets": "nav.presets",
-  "/presets/create": "nav.presets",
-  "/skills": "skill.pageTitle",
-  "/skills/create": "skill.pageTitle",
-  "/skills/local": "skill.pageTitle",
-  "/spaces": "nav.spaces",
-  "/spaces/local": "nav.spaces",
-  "/communities/all": "nav.communities",
-  "/communities/post/local": "nav.communities",
-  "/team-join": "tm.title",
-  "/tags": "nav.tags",
-  "/saved": "nav.saved",
-  "/following": "nav.followingPeople",
-  "/followers": "nav.followers",
-  "/settings": "nav.settings",
-  "/settings/blocked": "nav.settings",
-  "/settings/account": "nav.settings",
-  "/settings/privacy": "nav.settings",
-  "/settings/preferences": "nav.settings",
-  "/settings/developer": "nav.settings",
-  "/settings/legal": "nav.settings",
-  "/settings/danger": "nav.settings",
-  "/create": "nav.createPrompt",
-  "/studio": "nav.studio",
-  "/generate": "nav.studio",
-  "/moderation": "moderation.title",
-  "/my-content": "myContent.title",
-  "/insights": "insights.title",
-  "/relations": "relations.title",
-  "/profile/edit": "profile.editProfileHeading",
-  "/messages": "header.messagesAriaLabel",
-  "/messages/local": "header.messagesAriaLabel",
-  "/groups": "nav.communities",
-  "/groups/join": "nav.communities",
-  "/teams": "tm.title",
-  "/teams/local": "tm.title",
-  "/communities": "nav.communities",
-  "/communities/join": "nav.communities",
-  "/communities/local": "nav.communities",
-  "/notifications": "header.notificationsAriaLabel",
-  "/login": "header.login",
-  "/signup": "auth.signUp",
-  "/reset-password": "auth.resetPasswordTitle",
-};
 
 // A page that knows its own content title (a prompt, a request…) publishes it
 // here; the root-level <PageTitle/> picks it up. Module-level on purpose: the
@@ -133,8 +78,7 @@ export function PageTitle() {
     () => null,
   );
 
-  const clean = pathname.length > 1 ? pathname.replace(/\/$/, "") : pathname;
-  const key = ROUTE_TITLES[clean];
+  const key = routeTitleKey(pathname);
 
   useEffect(() => {
     const base = custom ?? (key ? t(key) : null);

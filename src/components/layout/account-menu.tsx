@@ -4,6 +4,7 @@ import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeftRight } from "@/components/icons/arrow-left-right";
+import { ChevronDown } from "@/components/icons/chevron-down";
 import { ChevronRight } from "@/components/icons/chevron-right";
 import { ChevronUp } from "@/components/icons/chevron-up";
 import { Globe } from "@/components/icons/globe";
@@ -328,10 +329,10 @@ function PopoverBody({ actions, close, name, shortcuts }: { actions: AccountActi
 }
 
 /**
- * «Sen» — telefonda alt çubuğun son sekmesi (docs/history/387-*): avatar + etiket; basınca alttan «Sen» sayfası açılır
- * (profil, kısayol ızgarası, Ayarlar/Görünüm/Dil, çıkış). `className` alt çubuk öğesinin ortak görünümüdür.
+ * «Sen» — telefonda üst çubuğun sağındaki avatar (docs/history/460-*; 387'de alt çubuğun son sekmesiydi): basınca alttan «Sen» sayfası açılır
+ * (profil, kısayol ızgarası, Ayarlar/Görünüm/Dil, çıkış). Avatarın köşesindeki küçük ok "menü açar" der. Yalnız telefonda (`md:hidden`) görünür.
  */
-export function PhoneAccountTab({ active, className }: { active: boolean; className: string }) {
+export function PhoneAccountButton() {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const close = useCallback(() => setOpen(false), []);
@@ -340,9 +341,19 @@ export function PhoneAccountTab({ active, className }: { active: boolean; classN
   const id = useId();
   return (
     <>
-      <button type="button" onClick={() => setOpen(true)} aria-label={t("nav.youAria")} aria-haspopup="dialog" aria-expanded={open} data-nav-you="" className={className}>
-        <Avatar src={profile?.avatarUrl} alt={profile?.displayName ?? ""} size={24} className={active || open ? "ring-2 ring-primary" : undefined} />
-        <span>{t("nav.you")}</span>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        aria-label={t("nav.youAria")}
+        aria-haspopup="dialog"
+        aria-expanded={open}
+        data-header-you=""
+        className="relative ml-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary md:hidden"
+      >
+        <Avatar src={profile?.avatarUrl} alt={profile?.displayName ?? ""} size={32} className={open ? "ring-2 ring-primary" : undefined} />
+        <span aria-hidden className="absolute -bottom-0.5 -right-0.5 grid h-4.5 w-4.5 place-items-center rounded-full border border-border bg-surface text-text">
+          <ChevronDown size={12} />
+        </span>
       </button>
       {open && profile && (
         <Modal variant="sheet" onClose={close} labelledBy={id}>
