@@ -301,6 +301,23 @@ await scenario("7d kilit İngilizce: düğme etiketleri çevrilir", async ({ pag
   await page.getByRole("button", { name: "Lock", exact: true }).waitFor();
 }, { lang: "en", setup: (db) => board3(db) });
 
+await scenario("4 dışa aktarma (docs/history/460-*): düzenleyen JSON indirir (tarayıcıda, sunucuya yazmadan); izleyicide düğme yok", async ({ page, db }) => {
+  await openBoard(page);
+  const before = db.calls.length;
+  await page.getByRole("button", { name: "Dışa aktar" }).click();
+  const [download] = await Promise.all([page.waitForEvent("download"), page.getByRole("menuitem", { name: /Pano verisi/ }).click()]);
+  assert.match(download.suggestedFilename(), /\.json$/);
+  const text = await (await import("node:fs/promises")).readFile(await download.path(), "utf8");
+  const json = JSON.parse(text);
+  assert.ok(JSON.stringify(json).includes("Pano"), "başlık dosyada");
+  assert.equal(db.calls.slice(before).filter((c) => c.method !== "GET").length, 0, "dışa aktarma sunucuya yazmaz");
+}, { setup: (db) => board3(db) });
+
+await scenario("4b dışa aktarma: izleyici (düzenleyemeyen) için Dışa aktar düğmesi yok", async ({ page }) => {
+  await openBoard(page);
+  assert.equal(await page.getByRole("button", { name: "Dışa aktar" }).count(), 0);
+}, { setup: (db) => board3(db, { owner: U.carol.id, members: [[{ id: ME }, "viewer"]] }) });
+
 await browser.close();
 server.close();
 for (const [status, name] of results) console.log(status === "PASS" ? "✓" : "✗", name);

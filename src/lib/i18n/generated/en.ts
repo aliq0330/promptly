@@ -3933,6 +3933,7 @@ const dictionary: Record<string, string> = {
   "spaces.members.removeBody": "They lose access to the Space. The items they added stay in the Space.",
   "spaces.members.removeConfirm": "Remove",
   "spaces.members.access": "Access",
+  "spaces.board.export": "Export",
   "spaces.members.accessPrivate": "Spaces are private: only members can see them. Invite someone to give them a role.",
   "spaces.members.rolesTitle": "Roles",
   "spaces.members.roleHelp.owner": "all settings, members, archiving and deleting.",

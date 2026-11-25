@@ -3933,6 +3933,7 @@ const dictionary: Record<string, string> = {
   "spaces.members.removeBody": "Bu kişi Space'e erişimini kaybeder. Eklediği öğeler Space'te kalır.",
   "spaces.members.removeConfirm": "Çıkar",
   "spaces.members.access": "Erişim",
+  "spaces.board.export": "Dışa aktar",
   "spaces.members.accessPrivate": "Space'ler özeldir: yalnızca üyeler görür. Birini davet ederek ona rol verebilirsin.",
   "spaces.members.rolesTitle": "Roller",
   "spaces.members.roleHelp.owner": "tüm ayarlar, üyeler, arşivleme ve silme.",

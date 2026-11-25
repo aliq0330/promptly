@@ -362,6 +362,7 @@ export const spaceTranslations = {
   "spaces.members.removeBody": { tr: "Bu kişi Space'e erişimini kaybeder. Eklediği öğeler Space'te kalır.", en: "They lose access to the Space. The items they added stay in the Space." },
   "spaces.members.removeConfirm": { tr: "Çıkar", en: "Remove" },
   "spaces.members.access": { tr: "Erişim", en: "Access" },
+  "spaces.board.export": { tr: "Dışa aktar", en: "Export" },
   "spaces.members.accessPrivate": { tr: "Space'ler özeldir: yalnızca üyeler görür. Birini davet ederek ona rol verebilirsin.", en: "Spaces are private: only members can see them. Invite someone to give them a role." },
   "spaces.members.rolesTitle": { tr: "Roller", en: "Roles" },
   "spaces.members.roleHelp.owner": { tr: "tüm ayarlar, üyeler, arşivleme ve silme.", en: "all settings, members, archiving and deleting." },
