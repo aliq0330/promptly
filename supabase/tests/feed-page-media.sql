@@ -55,7 +55,7 @@ insert into public.prompt_requests (id, author_id, title, description, content_t
 insert into public.presets (id, creator_id, title, content_type, status, visibility, created_at) values
   ('a3000000-0000-4000-8000-000000000001', :bobby, 'S1', 'image', 'published', 'public', now() - interval '10 minutes');
 -- Space + alıntı: süzgeç açıkken girmez
-insert into public.spaces (id, owner_id, title, visibility, shared_at) values ('a4000000-0000-4000-8000-000000000001', :bobby, 'Space1', 'public', now() - interval '15 minutes');
+insert into public.spaces (id, owner_id, title) values ('a4000000-0000-4000-8000-000000000001', :bobby, 'Space1');
 insert into public.content_quotes (id, author_id, content_type, prompt_id) values ('a5000000-0000-4000-8000-000000000001', :carol, 'prompt', 'a0000000-0000-4000-8000-000000000001');
 
 create or replace function public._titles(p_media boolean, p_limit integer default 50, p_kinds text[] default null) returns text language sql stable as $$
