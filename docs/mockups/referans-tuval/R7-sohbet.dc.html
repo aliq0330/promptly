@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>Referans sohbet</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap">
+<style>
+body{margin:0;font-family:Inter,system-ui,sans-serif;color:#363737}
+.i{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.s{width:18px;height:18px}
+.ic{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center}
+.sk{background:#eee;border-radius:8px}
+.note{position:absolute;font:400 12px/1.5 Inter,sans-serif;color:#6b6b6b;background:#fff;border:1px dashed rgba(0,0,0,.25);border-radius:8px;padding:8px 10px;width:230px}
+</style>
+</helmet>
+<div style="width:1440px;height:900px;background:#fff;overflow:hidden;position:relative;display:flex">
+  <div style="width:80px;border-right:1px solid rgba(0,0,0,.1);display:flex;flex-direction:column;align-items:center;padding:16px 0;gap:8px;box-sizing:border-box;flex:none">
+    <i style="width:26px;height:26px;background:#ff6719;border-radius:6px;display:block;margin:6px 0 14px"></i>
+    <div class="ic"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-8 9 8v10H3z"/></svg></div>
+    <div class="ic"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 13l3-8h12l3 8v6H3zM3 13h5l1 3h6l1-3h5"/></svg></div>
+    <div class="ic"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 14v-2a8 8 0 0 1 16 0v2M4 14h3v6H4zM17 14h3v6h-3z"/></svg></div>
+    <div class="ic" style="background:#f0f0f0"><svg class="i" viewBox="0 0 24 24" aria-hidden="true" style="fill:#363737"><path d="M4 5h16v11H9l-5 4z"/></svg></div>
+    <div class="ic"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16v-5a6 6 0 0 1 12 0v5l2 2H4zM10 21h4"/></svg></div>
+    <div class="ic"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></div>
+    <div class="ic"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="9" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg></div>
+    <div style="width:40px;height:40px;border-radius:8px;background:#ff6719;color:#fff;display:flex;align-items:center;justify-content:center;margin-top:4px"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></div>
+  </div>
+  <div style="width:400px;border-right:1px solid rgba(0,0,0,.1);padding:24px 16px;box-sizing:border-box;flex:none;position:relative">
+    <div style="display:flex;gap:8px;align-items:center">
+      <div style="flex:1;height:40px;border:1px solid rgba(0,0,0,.1);border-radius:8px;box-shadow:0 1px 2px rgba(0,0,0,.05);display:flex;align-items:center;padding:0 12px;gap:10px;font:400 15px Inter,sans-serif;color:#777"><svg class="i s" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>Sohbetlerde ara</div>
+      <div style="width:40px;height:40px;border-radius:8px;display:flex;align-items:center;justify-content:center"><svg class="i s" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4l11-11-4-4L4 16zM13 7l4 4"/></svg></div>
+    </div>
+    <div style="margin-top:12px;height:40px;border:1px solid rgba(0,0,0,.1);border-radius:8px;display:flex;align-items:center;padding:3px;box-sizing:border-box;gap:2px">
+      <span style="flex:1;height:32px;border-radius:8px;background:#eee;display:flex;align-items:center;justify-content:center;font:600 13px Inter,sans-serif">Tümü</span>
+      <span style="flex:1;height:32px;display:flex;align-items:center;justify-content:center;font:600 13px Inter,sans-serif;color:#777">Doğrudan</span>
+      <span style="flex:1.5;height:32px;display:flex;align-items:center;justify-content:center;font:600 13px Inter,sans-serif;color:#777">Abone sohbetleri</span>
+      <span style="flex:1;height:32px;display:flex;align-items:center;justify-content:center;font:600 13px Inter,sans-serif;color:#777">Okunmamış</span>
+    </div>
+    <div style="margin-top:34px;text-align:center">
+      <div style="font:600 13px Inter,sans-serif">Henüz mesaj yok</div>
+      <div style="font:400 13px Inter,sans-serif;color:#777;margin:4px 0 12px">Başlamak için bir mesaj gönder.</div>
+      <span style="display:inline-flex;height:32px;padding:0 8px;border-radius:8px;background:#161718;color:#eee;align-items:center;font:600 13px Inter,sans-serif;box-shadow:inset 0 1px 0 rgba(255,255,255,.2)">Mesaj gönder</span>
+    </div>
+    <div class="note" style="left:16px;bottom:24px">Ölçülen: arama alanı + oluştur düğmesi, 4 segmentli süzgeç, boş durum. Satır görünümü giriş istediği için ölçülemedi.</div>
+  </div>
+  <div style="flex:1;display:flex;flex-direction:column;position:relative">
+    <div style="height:64px;border-bottom:1px solid rgba(0,0,0,.1);display:flex;align-items:center;gap:12px;padding:0 16px;flex:none"><div class="sk" style="width:32px;height:32px"></div><div class="sk" style="width:300px;height:20px"></div></div>
+    <div style="flex:1;display:flex;align-items:center;justify-content:center;color:#9a9a9a;font:400 14px Inter,sans-serif">Konuşma seçilmedi</div>
+    <div style="height:88px;border-top:1px solid rgba(0,0,0,.1);display:flex;align-items:center;gap:12px;padding:0 16px;flex:none">
+      <div style="width:40px;height:40px;border-radius:50%;background:#eee;display:flex;align-items:center;justify-content:center;color:#363737"><svg class="i s" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></div>
+      <div style="flex:1;height:40px;border-radius:20px;background:#eee;display:flex;align-items:center;padding:0 16px;font:400 15px Inter,sans-serif;color:#777">Mesaj yaz…</div>
+    </div>
+    <div class="note" style="right:24px;top:84px">Ölçülen: üst çubuk 64, alt yazma alanı: yuvarlak «+» 40 + hap alan (köşe 20, #eee, kenarlıksız). Konuşma balonları ölçülmedi.</div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

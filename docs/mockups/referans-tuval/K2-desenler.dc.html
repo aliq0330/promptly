@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>Karşılaştırma desenler ve karar</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&amp;family=Bricolage+Grotesque:wght@700;800&amp;display=swap">
+<style>
+body{margin:0;font-family:'DM Sans',system-ui,sans-serif;color:#121218}
+h2{font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:21px;letter-spacing:-.02em;margin:0 0 14px}
+.c{border:1px solid #ececf2;border-radius:16px;padding:16px 18px;background:#fff;display:flex;gap:14px}
+.n{width:28px;height:28px;border-radius:50%;background:#eceffd;color:#2e4bc9;font-weight:600;font-size:13px;display:flex;align-items:center;justify-content:center;flex:none}
+.c b{font-size:15px;display:block;margin-bottom:4px}
+.c p{margin:0;font-size:13px;line-height:1.5;color:#464854}
+.c small{display:block;margin-top:6px;font-size:12px;color:#62646f}
+.x{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid #ececf2;font-size:13px;line-height:1.45;color:#464854}
+.x b{color:#121218;font-weight:600;flex:none;width:150px}
+</style>
+</helmet>
+<div style="width:1240px;height:1000px;box-sizing:border-box;padding:44px 48px;background:#f8f8fb;display:flex;flex-direction:column;gap:24px">
+  <div>
+    <h1 style="margin:0;font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:32px;letter-spacing:-.02em">Neyi alırız, neyi almayız</h1>
+    <p style="margin:6px 0 0;font-size:14px;color:#62646f;max-width:860px;line-height:1.5">Ölçülenlerden Promptly'ye taşınması anlamlı olanlar ve bilerek taşınmayanlar. Promptly zaten referansın çoğuyla aynı yönde; fark çoğu yerde yoğunluk ve sakinlik.</p>
+  </div>
+  <div style="display:grid;grid-template-columns:1.25fr 1fr;gap:36px;flex:1;min-height:0">
+    <div>
+      <h2>Uyarlanacak 6 fikir</h2>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div class="c"><span class="n">1</span><div><b>Bildirimler: düz satır listesi</b><p>Kartsız satır, 20 px iç boşluk, alt çizgi, okunmamış için sağda 8 px nokta. Gruplama sunucuda kalır; yalnız görünüm sakinleşir, genişleme satır içinde.</p><small>U3 · features/notifications · küçük–orta</small></div></div>
+        <div class="c"><span class="n">2</span><div><b>Mesajlar listesi: arama + oluştur tek satır, altında segment</b><p>Referanstaki 40 yükseklik arama alanı ve yanında oluştur düğmesi; altında tam genişlik segment (Tümü · Kişisel · Topluluk · Ekip). Çip satırı yerine segment.</p><small>U2 · features/messages · küçük</small></div></div>
+        <div class="c"><span class="n">3</span><div><b>Ayarlar: tek sütun, satır = etiket + değer + ok</b><p>Referansta ölçülemedi; ilke olarak 600 px okuma sütunu ve düz satırlar. Switch satırları aynı ritimde. Alt sayfalar Promptly'nin mevcut kategori yapısında kalır.</p><small>U4 · features/settings · öneri, referanssız</small></div></div>
+        <div class="c"><span class="n">4</span><div><b>Pencere: köşe 20, başlık 17/600, tek karartı</b><p>Mevcut rounded-lg (16) yerine 20 ve düz %45 karartı. Paylaş ve giriş penceresi aynı iskeleti kullanır; telefonda alt kart davranışı değişmez.</p><small>U6 · components/ui/modal.tsx · küçük</small></div></div>
+        <div class="c"><span class="n">5</span><div><b>Odak: kenarlık + 3 px yumuşak halka</b><p>Alanda mavi kenarlık yanında yarı saydam halka; klavye odağı için çerçeve (outline) kalır. İkisi birlikte hem fare hem klavye kullanıcısına net.</p><small>U5 · components/ui/field.tsx · küçük</small></div></div>
+        <div class="c"><span class="n">6</span><div><b>Detay çubuğunda sayaçlı hap</b><p>Beğeni, yorum, kaydet: 40 yükseklik, kenarlıklı hap, sayaç yanında. Kartta yalnız simge kuralı değişmez; yalnız detay eylem çubuğu.</p><small>U5 · features/content/detail-parts.tsx · orta</small></div></div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:22px">
+      <div>
+        <h2>Bilerek almıyoruz</h2>
+        <div class="x"><b>8 px köşeli düğme</b><span>Hap düğme Promptly imzası; Bölüm 4 kuralı.</span></div>
+        <div class="x"><b>Silik alan kenarlığı</b><span>rgba(0,0,0,.1) kenarlık 3:1 kontrastı geçmez; --p-control-border kalır.</span></div>
+        <div class="x"><b>Siyah seçili çip</b><span>Seçili durum = primary-soft + mavi metin kuralı.</span></div>
+        <div class="x"><b>Turuncu tek vurgu</b><span>Promptly'de turuncu «senin olan» rolünde; mavi eylem.</span></div>
+        <div class="x"><b>Etiketsiz ray / alt menü</b><span>Promptly'de hedef sayısı fazla; etiket keşfedilebilirliği korur.</span></div>
+        <div class="x"><b>Tek 600 px sütun</b><span>Promptly gönderi ızgarası ve yan sütun kullanır; yalnız liste sayfalarında uygun.</span></div>
+        <div class="x" style="border-bottom:0"><b>Serif gövde</b><span>Promptly'de uzun metin yok; mono prompt bloğu imza öğe.</span></div>
+      </div>
+      <div style="border:1px dashed #cfd0dc;border-radius:16px;padding:16px 18px;background:#fff">
+        <b style="font-size:14px">Referansta ölçülemeyenler</b>
+        <p style="margin:6px 0 0;font-size:13px;line-height:1.5;color:#464854">Giriş gerektirdiği için görülemedi: ayarlar sayfaları, gerçek bildirim listesi, sohbet balonları ve mesaj menüleri, hover ve basılı durumları, karanlık mod. Bu yüzden U3 ve U4 «öneri» olarak işaretli.</p>
+      </div>
+      <div style="border-radius:16px;padding:16px 18px;background:#eceffd;color:#2e4bc9">
+        <b style="font-size:14px">Önerilen sıra</b>
+        <p style="margin:6px 0 0;font-size:13px;line-height:1.5">1 Pencere köşesi + odak halkası (hepsi tek yerde, ucuz) → 2 Mesajlar listesi → 3 Bildirim satırları → 4 Detay hapları → 5 Ayarlar sütunu.</p>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1240,"height":1000}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

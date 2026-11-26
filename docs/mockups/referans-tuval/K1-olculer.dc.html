@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>Karşılaştırma ölçüler</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&amp;family=Bricolage+Grotesque:wght@700;800&amp;display=swap">
+<style>
+body{margin:0;font-family:'DM Sans',system-ui,sans-serif;color:#121218}
+.g{display:grid;grid-template-columns:150px 1fr 1fr 190px;gap:0 20px;padding:11px 0;border-bottom:1px solid #e4e4ec;align-items:start;font-size:13px;line-height:1.4}
+.g.hd{font-size:12px;font-weight:600;color:#62646f;padding-bottom:8px;border-bottom:2px solid #121218}
+.g b{font-weight:600}
+.t{display:inline-block;font-size:12px;font-weight:600;padding:2px 9px;border-radius:999px;white-space:nowrap}
+.a{background:#eceffd;color:#2e4bc9}
+.y{background:#f0f0f5;color:#464854}
+.f{background:#fbe9de;color:#a64718}
+.n{background:#3b5be2;color:#fff}
+small{color:#62646f;font-size:12px}
+</style>
+</helmet>
+<div style="width:1240px;height:1000px;box-sizing:border-box;padding:44px 48px;background:#fff">
+  <h1 style="margin:0;font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:32px;letter-spacing:-.02em">Ölçü ölçü karşılaştırma</h1>
+  <p style="margin:6px 0 18px;font-size:14px;color:#62646f;max-width:820px;line-height:1.5">Sol sütun referansın tarayıcıdan okunan değerleri; ortadaki Promptly kodundan (tokenlar, Button, Field, Tabs, Chip, Modal, nav bileşenleri). Karar etiketi: <span class="t a">Aynı</span> <span class="t y">Yakın</span> <span class="t f">Bilerek farklı</span> <span class="t n">Alınabilir</span></p>
+  <div class="g hd"><span>BİLEŞEN</span><span>REFERANS (ölçülen)</span><span>PROMPTLY (kodda)</span><span>KARAR</span></div>
+  <div class="g"><b>Ana düğme</b><span>40 yük · köşe 8 · 15/600 · içte beyaz ışık çizgisi</span><span>40 yük (md) · tam hap · 14/600 · düz mavi dolgu</span><span><span class="t f">Bilerek farklı</span><br><small>Hap Promptly kimliği (Bölüm 4)</small></span></div>
+  <div class="g"><b>Metin alanı</b><span>40 · köşe 8 · kenarlık rgba(0,0,0,.1) · 15/400</span><span>44 (dense 40) · köşe 16 · kenarlık #868899 (≥3:1)</span><span><span class="t f">Bilerek farklı</span><br><small>Referans kenarlığı erişilebilirlik sınırının altında</small></span></div>
+  <div class="g"><b>Odak</b><span>mavi kenarlık #005dd9 + 3 px yarı saydam halka</span><span>mavi 2 px çerçeve (outline), 2 px boşluk</span><span><span class="t y">Yakın</span><br><small>İkisi de mavi; halka tarzı denenebilir</small></span></div>
+  <div class="g"><b>Kategori çipi</b><span>42 · hap · 14/600 · seçili koyu dolgu</span><span>36 · hap · 13/500 · seçili primary-soft + mavi metin</span><span><span class="t f">Bilerek farklı</span><br><small>Seçili durum = renk kuralı (siyah ters çevirme yok)</small></span></div>
+  <div class="g"><b>Segment / sekme</b><span>40 kap · 32 sekme · köşe 8 · seçili #eee</span><span>Tabs segmented: kap köşe 16 (p-0.5) · sekme 36, köşe 12 · seçili beyaz + halka</span><span><span class="t y">Yakın</span></span></div>
+  <div class="g"><b>Etkileşim hapı</b><span>40 · köşe 20 · #e6e6e6 kenarlık · sayaç yanında</span><span>Kartta yalnız simge; detayda DetailActionBar (hap yok)</span><span><span class="t n">Alınabilir</span><br><small>Sayaçlı hap detay çubuğunda denenebilir</small></span></div>
+  <div class="g"><b>Kart</b><span>#f5f5f5 · köşe 16 · kenarlıksız · gölgesiz</span><span>Görsel kart kutusuz · card-flat/soft · shadow-card</span><span><span class="t y">Yakın</span></span></div>
+  <div class="g"><b>Liste satırı</b><span>Kartsız · 20 iç boşluk · alt çizgi · okunmamış 8 px nokta</span><span>Bildirimler genişleyen kart; Mesajlar düz satır</span><span><span class="t n">Alınabilir</span><br><small>Bildirim listesi düz satıra yaklaşabilir</small></span></div>
+  <div class="g"><b>Modal</b><span>Ortada · köşe 20 · 442 geniş · büyük gölge · %50 karartı</span><span>rounded-lg 16 · shadow-pop · telefonda yerden kopuk alt kart</span><span><span class="t a">Aynı</span><br><small>Mantık aynı, köşe 20'ye çekilebilir</small></span></div>
+  <div class="g"><b>Paylaş</b><span>Önizleme kartı + 5 eylem (64×64) tek satır</span><span>İnsanlar önce (4 sütun) + altında tek simge satırı</span><span><span class="t a">Aynı</span><br><small>Promptly daha zengin; elden geçirmeye gerek yok</small></span></div>
+  <div class="g"><b>Ray</b><span>80 · etiketsiz · simge kutusu 48×48 köşe 12</span><span>84 · etiketli (12 px) · satır 60 · seçili primary-soft</span><span><span class="t y">Yakın</span><br><small>Etiketsiz ray düşünülebilir, risk: keşfedilebilirlik</small></span></div>
+  <div class="g"><b>Kenar çubuğu</b><span>232 (satır 200×48) · 7 hedef · «Oluştur» altta</span><span>248 · satır 40 köşe 22 · gruplu (Çalışma, Kütüphane) · Sen kartı</span><span><span class="t f">Bilerek farklı</span><br><small>Promptly'nin ürün alanı daha geniş</small></span></div>
+  <div class="g"><b>Alt menü (telefon)</b><span>4 simge · etiketsiz · ≈64</span><span>5 yuva · etiketli · 64 · kayan aktif çizgi</span><span><span class="t f">Bilerek farklı</span></span></div>
+  <div class="g"><b>Yazı yığını</b><span>Sistem sans + Spectral (okuma)</span><span>DM Sans + Bricolage (başlık) + JetBrains Mono (prompt)</span><span><span class="t a">Aynı</span><br><small>İki ses ilkesi ortak</small></span></div>
+  <div class="g" style="border-bottom:0"><b>Vurgu rengi</b><span>Turuncu #ff6719, tek vurgu</span><span>Mavi #3b5be2 eylem, turuncu yalnız «senin olan»</span><span><span class="t a">Aynı</span><br><small>Rol ayrımı Promptly'de daha net</small></span></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1240,"height":1000}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

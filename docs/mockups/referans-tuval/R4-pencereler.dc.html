@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>Referans pencereler</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap">
+<style>
+body{margin:0;font-family:Inter,system-ui,sans-serif;color:#363737}
+.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.scrim{background:#808080;border-radius:12px;position:relative;overflow:hidden}
+.modal{background:#fff;border:1px solid rgba(0,0,0,.1);border-radius:20px;box-shadow:0 10px 15px -3px rgba(0,0,0,.1),0 4px 6px -4px rgba(0,0,0,.05);box-sizing:border-box;position:relative}
+.cap{font-size:12px;color:#6b6b6b;line-height:1.45;margin:10px 0 0}
+.h{font-size:12px;font-weight:600;color:#6b6b6b;margin:0 0 10px}
+.inp{height:40px;border:1px solid #005dd9;border-radius:8px;box-shadow:0 1px 2px rgba(0,0,0,.05),0 0 0 3px rgba(0,118,255,.2);padding:0 12px;display:flex;align-items:center;font:400 15px Inter,sans-serif;color:#777;box-sizing:border-box}
+.b{height:40px;border-radius:8px;display:flex;align-items:center;justify-content:center;font:600 15px Inter,sans-serif}
+.x{position:absolute;right:16px;top:16px;width:32px;height:32px;border-radius:8px;color:#777;display:flex;align-items:center;justify-content:center}
+.sh{display:flex;flex-direction:column;align-items:center;gap:8px;font:500 11px Inter,sans-serif}
+.sh i{width:64px;height:64px;border-radius:20px;background:#eee;display:flex;align-items:center;justify-content:center;color:#363737}
+</style>
+</helmet>
+<div style="width:1240px;height:800px;box-sizing:border-box;padding:48px;background:#fff;display:flex;flex-direction:column;gap:22px">
+  <h1 style="margin:0;font-size:32px;font-weight:700;line-height:1.1">Pencereler</h1>
+  <div style="display:flex;gap:36px;align-items:flex-start">
+    <div style="width:420px">
+      <p class="h">GİRİŞ PENCERESİ · 442 × 346 · köşe 20</p>
+      <div class="scrim" style="height:520px">
+        <div class="modal" style="width:360px;position:absolute;left:30px;top:70px;padding:20px">
+          <div class="x"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></div>
+          <div style="width:48px;height:48px;border-radius:8px;background:rgba(255,103,25,.2);margin:0 auto 14px;display:flex;align-items:center;justify-content:center"><i style="width:22px;height:22px;background:#ff6719;border-radius:4px;display:block"></i></div>
+          <div style="text-align:center;font:600 17px/24px Inter,sans-serif">Hesabına giriş yap</div>
+          <div style="text-align:center;font:400 15px/20px Inter,sans-serif;color:#777;margin:2px 0 18px">İlk kez mi? <span style="color:#d74d00">Hesap oluştur</span></div>
+          <div class="inp">E-posta adresin</div>
+          <div class="b" style="background:#ff6719;color:#fff;margin-top:8px;box-shadow:inset 0 1px 0 rgba(255,255,255,.2)">Devam et</div>
+          <div style="display:flex;align-items:center;gap:12px;margin:14px 0;font:400 11px Inter,sans-serif;color:#777"><i style="flex:1;height:1px;background:rgba(0,0,0,.1)"></i>YA DA<i style="flex:1;height:1px;background:rgba(0,0,0,.1)"></i></div>
+          <div class="b" style="border:1px solid rgba(0,0,0,.1);color:#363737;box-shadow:0 1px 2px rgba(0,0,0,.05)">Parola ile giriş</div>
+        </div>
+      </div>
+      <p class="cap">Ortalanmış kart, 20 px padding, simge karosu → başlık → alt satır → alan → ana düğme → «ya da» ayracı → ikincil düğme. Arka plan düz %50 karartı, bulanıklık yok. Alan açılışta odaklı (mavi halka).</p>
+    </div>
+    <div style="width:420px">
+      <p class="h">PAYLAŞ PENCERESİ · 442 × 435</p>
+      <div class="scrim" style="height:520px">
+        <div class="modal" style="width:360px;position:absolute;left:30px;top:44px;padding:20px">
+          <div style="font:600 17px/24px Inter,sans-serif">Bu yazıyı paylaş</div>
+          <div class="x"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></div>
+          <div style="margin-top:16px;height:196px;border-radius:12px;background:linear-gradient(180deg,#9c8777,#6f5d4f);position:relative;overflow:hidden;color:#fff">
+            <div style="position:absolute;left:14px;right:14px;bottom:14px"><div style="font:600 10px Inter,sans-serif;letter-spacing:.05em;opacity:.85">YAYIN ADI</div><div style="font:700 16px/1.3 Inter,sans-serif;margin:4px 0">Örnek yazı başlığı</div><div style="font:400 11px Inter,sans-serif;opacity:.8">Özet metnin ilk cümlesi burada kısalır…</div></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-top:16px">
+            <div class="sh"><i><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg></i>Bağlantı</div>
+            <div class="sh"><i><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/></svg></i>Sosyal</div>
+            <div class="sh"><i><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18v12H3zM3 7l9 6 9-6"/></svg></i>E-posta</div>
+            <div class="sh"><i><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10v16l-5-4-5 4z"/></svg></i>Notlar</div>
+            <div class="sh"><i><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="18" cy="12" r="1.2"/></svg></i>Daha fazla</div>
+          </div>
+        </div>
+      </div>
+      <p class="cap">Yukarıda önizleme kartı (köşe 12), altında 5 eşit eylem: 64×64 kare, köşe ≈ 20, #eee zemin, altında 11/500 etiket. Tek satır, kaydırma yok.</p>
+    </div>
+    <div style="width:390px">
+      <p class="h">TELEFONDA · alttan açılan kart</p>
+      <div class="scrim" style="height:520px;width:390px">
+        <div class="modal" style="position:absolute;left:0;right:0;bottom:0;top:90px;border-radius:20px 20px 0 0;padding:20px 20px 0">
+          <div style="width:44px;height:4px;background:#d4d4d4;border-radius:2px;margin:-10px auto 14px"></div>
+          <div class="x" style="top:20px"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></div>
+          <div style="width:48px;height:48px;border-radius:8px;background:rgba(255,103,25,.2);margin:6px auto 12px"></div>
+          <div style="text-align:center;font:600 17px/24px Inter,sans-serif">Hesabına giriş yap</div>
+          <div class="inp" style="margin-top:20px">E-posta adresin</div>
+          <div class="b" style="background:#ff6719;color:#fff;margin-top:8px">Devam et</div>
+          <div class="b" style="border:1px solid rgba(0,0,0,.1);margin-top:14px">Parola ile giriş</div>
+          <div style="margin:18px -20px 0;height:120px;background:linear-gradient(135deg,#fff,#ffe9dc);border-top:1px solid rgba(0,0,0,.08);padding:16px 20px;font:700 20px Inter,sans-serif">Oturumu açık tut<div style="font:400 12px Inter,sans-serif;color:#777;margin-top:6px">Uygulamayı indir · QR ile</div></div>
+        </div>
+      </div>
+      <p class="cap">Aynı içerik tutamaçlı alt kart olur: üst köşeler 20, kenarlara tam yapışık (yerden kopuk değil), alt bölümde kampanya şeridi.</p>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1240,"height":800}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

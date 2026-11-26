@@ -1,0 +1,44 @@
+{
+  "v": 3,
+  "createdOnFiles": { "v": 1, "at": "2026-11-26T12:00:00Z" },
+  "title": "Referans UI → Promptly uyarlama tuvali",
+  "launch": { "view": "canvas" },
+  "pages": [],
+  "boards": {
+    "Main.dc.html": { "x": 0, "y": 300, "w": 1240, "h": 1000, "title": "R1 · Tasarım dili tahtası (ölçülen)" },
+    "R2-bilesenler.dc.html": { "x": 1320, "y": 300, "w": 1240, "h": 1000, "title": "R2 · Bileşenler: düğme, alan, çip, sekme, menü" },
+    "R3-gezinme.dc.html": { "x": 2640, "y": 300, "w": 1240, "h": 800, "title": "R3 · Gezinme: kenar çubuğu, ray, alt menü" },
+    "R4-pencereler.dc.html": { "x": 3960, "y": 300, "w": 1240, "h": 800, "title": "R4 · Pencereler: giriş, paylaş, alt kart" },
+    "R5-anasayfa.dc.html": { "x": 0, "y": 1680, "w": 1440, "h": 900, "title": "R5 · Ana sayfa (1440)" },
+    "R6-gelenkutusu.dc.html": { "x": 1520, "y": 1680, "w": 1440, "h": 900, "title": "R6 · Gelen kutusu (1440)" },
+    "R7-sohbet.dc.html": { "x": 3040, "y": 1680, "w": 1440, "h": 900, "title": "R7 · Sohbet (1440)" },
+    "R8-tablet.dc.html": { "x": 4560, "y": 1680, "w": 820, "h": 1000, "title": "R8 · Tablet gelen kutusu (820)" },
+    "R9-telefon.dc.html": { "x": 0, "y": 3060, "w": 1400, "h": 900, "title": "R9 · Telefon seti (390)" },
+    "K1-olculer.dc.html": { "x": 0, "y": 4340, "w": 1240, "h": 1000, "title": "K1 · Karşılaştırma: ölçüler" },
+    "K2-desenler.dc.html": { "x": 1320, "y": 4340, "w": 1240, "h": 1000, "title": "K2 · Karşılaştırma: desenler ve karar" },
+    "U1-anasayfa.dc.html": { "x": 0, "y": 5720, "w": 1440, "h": 900, "title": "U1 · Promptly Ana Sayfa (uyarlama)" },
+    "U2-mesajlar.dc.html": { "x": 1520, "y": 5720, "w": 1440, "h": 900, "title": "U2 · Promptly Mesajlar (uyarlama)" },
+    "U3-bildirimler.dc.html": { "x": 3040, "y": 5720, "w": 1440, "h": 900, "title": "U3 · Promptly Bildirimler (uyarlama)" },
+    "U4-ayarlar.dc.html": { "x": 4560, "y": 5720, "w": 1440, "h": 900, "title": "U4 · Promptly Ayarlar (uyarlama)" },
+    "U5-bilesenler.dc.html": { "x": 0, "y": 7000, "w": 1240, "h": 1000, "title": "U5 · Promptly bileşenleri (uyarlama)" },
+    "U6-pencereler.dc.html": { "x": 1320, "y": 7000, "w": 1240, "h": 800, "title": "U6 · Promptly pencereleri (uyarlama)" },
+    "U7-telefon.dc.html": { "x": 2640, "y": 7000, "w": 1400, "h": 900, "title": "U7 · Promptly telefon seti (uyarlama)" }
+  },
+  "order": [
+    "Main.dc.html", "R2-bilesenler.dc.html", "R3-gezinme.dc.html", "R4-pencereler.dc.html",
+    "R5-anasayfa.dc.html", "R6-gelenkutusu.dc.html", "R7-sohbet.dc.html", "R8-tablet.dc.html",
+    "R9-telefon.dc.html", "K1-olculer.dc.html", "K2-desenler.dc.html",
+    "U1-anasayfa.dc.html", "U2-mesajlar.dc.html", "U3-bildirimler.dc.html", "U4-ayarlar.dc.html",
+    "U5-bilesenler.dc.html", "U6-pencereler.dc.html", "U7-telefon.dc.html"
+  ],
+  "notes": {
+    "tA": { "x": 0, "y": 40, "text": "A · Referans: ölçülen tasarım dili", "kind": "title1", "maxW": 5200 },
+    "sA": { "x": 0, "y": 150, "w": 720, "text": "Kaynak: herkese açık sayfalar (ana sayfa, keşfet, gelen kutusu, sohbet, yazı, giriş) 390 / 820 / 1440 genişlikte, tarayıcıdan okunan hesaplanmış stiller. Çizimler markasız yeniden çizimdir; yazılar örnektir. Giriş gerektiren ayarlar ve gerçek bildirim ekranı ölçülemedi.", "size": "m", "fill": "orange" },
+    "tB": { "x": 0, "y": 1420, "text": "B · Referans: ekranlar (masaüstü ve tablet)", "kind": "title1", "maxW": 5400 },
+    "tC": { "x": 0, "y": 2800, "text": "C · Referans: telefon", "kind": "title1", "maxW": 1400 },
+    "tD": { "x": 0, "y": 4080, "text": "D · Referans ↔ Promptly karşılaştırması", "kind": "title1", "maxW": 2560 },
+    "tE": { "x": 0, "y": 5460, "text": "E · Promptly'ye uyarlama: ekranlar", "kind": "title1", "maxW": 6000 },
+    "tF": { "x": 0, "y": 6740, "text": "F · Promptly'ye uyarlama: bileşenler ve telefon", "kind": "title1", "maxW": 4040 }
+  },
+  "designSystems": []
+}

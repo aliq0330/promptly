@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>Referans bileşenler</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap">
+<style>
+body{margin:0;font-family:Inter,system-ui,sans-serif;color:#363737}
+.h{font-size:12px;font-weight:600;color:#6b6b6b;margin:0 0 12px}
+.cap{font-size:11px;color:#6b6b6b;margin-top:6px;line-height:1.35}
+.btn{height:40px;padding:0 16px;border:0;border-radius:8px;font:600 15px/20px Inter,sans-serif;display:inline-flex;align-items:center;justify-content:center;gap:8px;cursor:default}
+.pri{background:#ff6719;color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.2),0 1px 2px rgba(0,0,0,.2)}
+.dk{background:#161718;color:#eee;box-shadow:inset 0 1px 0 rgba(255,255,255,.2)}
+.gh{background:transparent;color:#363737}
+.ol{background:#fff;color:#363737;border:1px solid rgba(0,0,0,.1);box-shadow:0 1px 2px rgba(0,0,0,.05)}
+.sm{height:32px;padding:0 8px;font-size:13px}
+.inp{height:40px;border:1px solid rgba(0,0,0,.1);border-radius:8px;box-shadow:0 1px 2px rgba(0,0,0,.05);padding:0 12px;display:flex;align-items:center;font:400 15px/20px Inter,sans-serif;color:#777;box-sizing:border-box;background:#fff;width:100%}
+.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.pill{height:42px;padding:0 16px;border-radius:999px;border:1px solid rgba(0,0,0,.1);display:inline-flex;align-items:center;font:600 14px Inter,sans-serif;color:#777}
+.seg{display:inline-flex;gap:0;background:#fff;border:1px solid rgba(0,0,0,.1);border-radius:8px;height:40px;align-items:center;padding:3px;box-sizing:border-box}
+.seg span{height:32px;padding:0 10px;display:flex;align-items:center;border-radius:8px;font:600 13px Inter,sans-serif;color:#777}
+.seg .on{background:#eee;color:#363737}
+.eng{height:40px;padding:0 12px;border:1px solid #e6e6e6;border-radius:20px;display:inline-flex;align-items:center;gap:6px;font:400 13px Inter,sans-serif;color:#363737}
+.menu{width:240px;background:#fff;border:1px solid rgba(0,0,0,.1);border-radius:12px;box-shadow:0 4px 6px -1px rgba(0,0,0,.1),0 2px 4px -2px rgba(0,0,0,.06);padding:6px;box-sizing:border-box}
+.menu div{height:36px;display:flex;align-items:center;gap:10px;padding:0 10px;border-radius:8px;font:500 14px Inter,sans-serif}
+.menu .a{background:#f0f0f0}
+.col{display:flex;flex-direction:column;gap:14px;align-items:flex-start}
+</style>
+</helmet>
+<div style="width:1240px;height:1000px;box-sizing:border-box;padding:48px;background:#fff;display:flex;flex-direction:column;gap:30px">
+  <h1 style="margin:0;font-size:32px;font-weight:700;line-height:1.1">Bileşenler</h1>
+  <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:40px 48px">
+    <div>
+      <p class="h">DÜĞMELER · 40 yükseklik · köşe 8</p>
+      <div class="col">
+        <span class="btn pri">Devam et</span>
+        <div style="display:flex;gap:10px"><span class="btn dk">Mesaj gönder</span><span class="btn ol">Parola ile giriş</span><span class="btn gh">Giriş yap</span></div>
+        <div style="display:flex;gap:10px;align-items:center"><span class="btn pri sm">Uygulamayı al</span><span class="btn sm gh" style="background:#eee;border-radius:999px">Giriş yap</span></div>
+        <span style="height:48px;padding:0 16px;border-radius:12px;background:#fff;color:#111;font:600 15px Inter,sans-serif;display:inline-flex;align-items:center;gap:8px;box-shadow:0 1px 2px rgba(0,0,0,.12),0 8px 16px -6px rgba(0,0,0,.4);outline:1px solid rgba(0,0,0,.08)">Vitrin düğmesi 48 · köşe 12</span>
+      </div>
+      <p class="cap">Ana eylem dolu turuncu + içte 1 px beyaz ışık çizgisi. İkincil güçlü eylem siyah. Üçüncül düğme zeminsiz; ana şeritte 32 yükseklik.</p>
+    </div>
+    <div>
+      <p class="h">ALANLAR · 40 · köşe 8 · 1 px kenarlık</p>
+      <div class="col" style="gap:12px">
+        <div class="inp"><svg class="i" viewBox="0 0 24 24" aria-hidden="true" style="margin-right:10px"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>Sohbetlerde ara</div>
+        <div class="inp" style="border-color:#005dd9;box-shadow:0 1px 2px rgba(0,0,0,.05),0 0 0 3px rgba(0,118,255,.2);color:#363737">ad@ornek.com</div>
+        <div class="inp">E-posta adresin</div>
+        <div style="display:flex;width:100%;border:1px solid #9a6600;border-radius:8px;overflow:hidden;height:40px"><div style="flex:1;display:flex;align-items:center;padding:0 12px;font:400 15px Inter,sans-serif;color:#9b9b9b">E-posta yaz…</div><div style="background:#b38b3d;color:#fff;font:600 14px Inter,sans-serif;display:flex;align-items:center;padding:0 20px">Abone ol</div></div>
+      </div>
+      <p class="cap">Odakta kenarlık mavi (#005dd9) + 3 px yarı saydam halka; marka renginden bağımsız. Aboneliklerde alan ve düğme tek kapsülde birleşir.</p>
+    </div>
+    <div>
+      <p class="h">ÇİPLER VE SEKMELER</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <span class="pill" style="background:#363737;color:#fff;border-color:#363737">Tümü</span><span class="pill">Kültür</span><span class="pill">Teknoloji</span><span class="pill">İş dünyası</span>
+      </div>
+      <p class="cap">Ana sayfa kategori çipi: 42 yükseklik, hap, 14/600. Seçili = koyu dolgu.</p>
+      <div style="display:flex;gap:6px;margin-top:16px"><span style="height:32px;padding:0 8px;border-radius:8px;background:#161718;color:#eee;font:600 13px Inter,sans-serif;display:flex;align-items:center">Keşfet</span><span style="height:32px;padding:0 8px;border-radius:8px;background:#eee;color:#777;font:600 13px Inter,sans-serif;display:flex;align-items:center">Çok satanlar</span><span style="height:32px;padding:0 8px;border-radius:8px;background:#eee;color:#777;font:600 13px Inter,sans-serif;display:flex;align-items:center">Kültür</span></div>
+      <p class="cap">Keşfet ve telefon süzgeci: 32 yükseklik, köşe 8, 13/600; seçili = siyah.</p>
+      <div style="margin-top:16px"><div class="seg"><span class="on">Tümü</span><span>Dinle</span><span>Ücretli</span><span>Kaydedilen</span></div></div>
+      <p class="cap">Segment: 40 kap, 32 sekme, seçili sekme #eee zemin.</p>
+    </div>
+    <div>
+      <p class="h">ETKİLEŞİM · İKON DÜĞMELERİ</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <span class="eng"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-8-5-8-11a4.5 4.5 0 0 1 8-2.5A4.5 4.5 0 0 1 20 9c0 6-8 11-8 11z"/></svg>13</span>
+        <span class="eng"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg>4</span>
+        <span class="eng"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M17 3l3 3-3 3M4 11V9a3 3 0 0 1 3-3h13M7 21l-3-3 3-3M20 13v2a3 3 0 0 1-3 3H4"/></svg>1</span>
+        <span class="eng" style="color:#777">Paylaş</span>
+      </div>
+      <p class="cap">Yazı sayfasında eylemler 40 yükseklik, 20 köşe, #e6e6e6 kenarlık, sayaç yanında.</p>
+      <div style="display:flex;gap:10px;align-items:center;margin-top:18px">
+        <span style="width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center"><svg class="i" style="width:24px;height:24px" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-8 9 8v10H3z"/></svg></span>
+        <span style="width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:#f0f0f0"><svg class="i" style="width:24px;height:24px" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg></span>
+        <span style="width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#777"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></span>
+        <span style="width:40px;height:40px;border-radius:8px;display:flex;align-items:center;justify-content:center;background:#ff6719;color:#fff"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></span>
+      </div>
+      <p class="cap">Gezinme simgesi 48×48 / köşe 12 · kapat 32 · oluştur 40 turuncu kare.</p>
+    </div>
+    <div>
+      <p class="h">AÇILIR MENÜ</p>
+      <div class="menu">
+        <div class="a"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h18M3 6h18M3 18h18"/></svg>Önceliğe göre</div>
+        <div><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6v6l4 2M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z"/></svg>En yeni</div>
+        <div><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-8-5-8-11a4.5 4.5 0 0 1 8-2.5A4.5 4.5 0 0 1 20 9c0 6-8 11-8 11z"/></svg>En beğenilen</div>
+      </div>
+      <p class="cap">Panel: 1 px kenarlık, köşe 12, orta gölge, satır 36, seçili satır #f0f0f0. Sıralama tetikleyicisi 40 yükseklik kenarlıklı düğme (simge + ad).</p>
+    </div>
+    <div>
+      <p class="h">LİSTE SATIRI · ETİKET · NOKTA</p>
+      <div style="border-bottom:1px solid rgba(0,0,0,.1);padding:20px 0 16px">
+        <div style="display:flex;justify-content:space-between;align-items:center;font:500 12px Inter,sans-serif;color:#777;letter-spacing:.04em"><span>YAYIN ADI</span><span style="display:flex;gap:8px;align-items:center;letter-spacing:0;font-weight:400">15:21<i style="width:8px;height:8px;border-radius:50%;background:#ff6719;display:block"></i></span></div>
+        <div style="font:700 17px/1.3 Inter,sans-serif;margin:8px 0 6px">Örnek yazı başlığı iki satıra uzayabilir</div>
+        <div style="font:400 14px/1.45 Inter,sans-serif;color:#777">İki satırla sınırlı özet metin, ikincil renkte.</div>
+      </div>
+      <p class="cap">Satır: iç boşluk 20, alt çizgi 1 px, etiket 12/500 büyük harf, saat sağda, okunmamış = 8 px turuncu nokta, başlık 17/700.</p>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1240,"height":1000}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>
