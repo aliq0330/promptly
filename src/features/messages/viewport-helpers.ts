@@ -25,6 +25,7 @@ export function useFitPanelToKeyboard(panel: HTMLElement | null, enabled: boolea
     let fitted = false;
     const clear = () => {
       for (const prop of ["top", "height", "bottom"]) style.removeProperty(prop);
+      panel.removeAttribute("data-keyboard-fit");
       fitted = false;
     };
 
@@ -37,6 +38,8 @@ export function useFitPanelToKeyboard(panel: HTMLElement | null, enabled: boolea
         style.setProperty("top", `${frame.top}px`);
         style.setProperty("height", `${frame.height}px`);
         style.setProperty("bottom", "auto");
+        // Panelin altında/üstünde kalan düzen alanında sayfa görünmesin (globals.css `[data-keyboard-fit]`, iOS 26'nın yüzen çubukları).
+        panel?.setAttribute("data-keyboard-fit", "background");
         fitted = true;
       } else if (fitted) {
         clear();

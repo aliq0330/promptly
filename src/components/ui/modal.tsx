@@ -334,6 +334,9 @@ export function Modal({
     keyboard && variant !== "side"
       ? ({ top: keyboard.top, height: keyboard.height, bottom: "auto", "--sheet-max-h": `${keyboard.height}px`, "--sheet-snap": `${keyboard.height}px` } as React.CSSProperties)
       : undefined;
+  // Katman görünür alan kadardır; altında/üstünde kalan düzen alanında (klavyenin arkası, iOS 26'nın yüzen adres hapı ve Otomatik Doldur
+  // şeridi — görünür alan ölçümü bunları dışarıda bırakır) sayfa görünmesin diye zemin `globals.css` `[data-keyboard-fit]` ile taşırılır.
+  const keyboardFit = keyboard && variant !== "side" ? "" : undefined;
   // Klavye açılınca odaktaki yazma alanı kartın kaydırılan gövdesinde görünür kalır (klavye alanı örtmesin).
   // Yazarken arka yer görünmesin (docs/history/378-*, mockup K4): telefonda klavye açıkken pencere görünür alanın TAMAMINI kaplar (opak zemin, kartın
   // yüksekliği/köşesi/kenarlığı kalkar); başlık üstte, düğmeler klavyenin hemen üstünde, gövde kayar.
@@ -410,6 +413,7 @@ export function Modal({
             (isSide ? "justify-end" : "flex-col justify-end")
           }
           style={overlayStyle}
+          data-keyboard-fit={keyboardFit}
           role="dialog"
           aria-modal="true"
           aria-labelledby={labelledBy}
@@ -435,6 +439,7 @@ export function Modal({
           ref={overlayRef}
           className={"fixed inset-0 flex flex-col overflow-y-auto bg-scrim p-4 animate-fade-in " + coverOverlay + (keyboard ? "max-sm:!p-0 " : "") + (keyboard ? "" : "backdrop-blur-[2px] ") + (overLayers ? "z-(--z-toast)" : "z-(--z-overlay)")}
           style={overlayStyle}
+          data-keyboard-fit={keyboardFit}
           role="dialog"
           aria-modal="true"
           aria-labelledby={labelledBy}
@@ -454,6 +459,7 @@ export function Modal({
         ref={overlayRef}
         className={"fixed inset-0 flex flex-col overflow-y-auto bg-scrim animate-fade-in sm:p-4 " + coverOverlay + (keyboard ? "" : "backdrop-blur-[2px] ") + (overLayers ? "z-(--z-toast)" : "z-(--z-overlay)")}
         style={overlayStyle}
+        data-keyboard-fit={keyboardFit}
         role="dialog"
         aria-modal="true"
         aria-labelledby={labelledBy}
