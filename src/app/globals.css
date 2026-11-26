@@ -642,6 +642,22 @@
     }
   }
 
+  /* Klavye açıkken görünür alana oturtulan katman (`Modal`, telefondaki tam ekran sohbet paneli; docs/history/468-*): katman yalnız
+   * `visualViewport` kadardır, ama iOS 26 Safari o alanı yüzen adres hapının ve Otomatik Doldur çubuğunun şeridini DIŞARIDA bırakarak
+   * bildirir (klavye kayarken de adım adım ölçülür). Katmanın altında/üstünde kalan düzen alanında sayfa görünmesin diye katmanın zemini
+   * her yöne taşırılır (gölge yayılımı: düzen yok, tıklama yok, kırpılmaz). Telefonda opak yüzey, daha genişte pencerenin karartısı. */
+  [data-keyboard-fit] {
+    box-shadow: 0 0 0 100vh var(--kb-fill, var(--color-scrim));
+  }
+  @media (max-width: 639.98px) {
+    [data-keyboard-fit] {
+      --kb-fill: var(--color-surface);
+    }
+  }
+  [data-keyboard-fit="background"] {
+    --kb-fill: var(--color-background);
+  }
+
   /* Scrolling down hides the header (below `lg`; the desktop sidebar never moves); the bottom nav stays as it is — scrolling up
    * brings the header back (`useChromeAutoHide`); a focused control keeps its bar. */
   [data-app-header],
