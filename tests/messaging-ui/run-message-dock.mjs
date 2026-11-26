@@ -161,9 +161,9 @@ await scenario("8a. Tablet (md, 900px): dock yok; mesaj simgesi eskisi gibi /mes
   assert.equal(await icon.evaluate((el) => el.tagName), "A");
 }, { setup: setup1, viewport: { width: 900, height: 800 } });
 
-await scenario("8b. Telefon (390px): dock yok; simgeye basınca /messages sayfası açılır", async ({ page }) => {
+await scenario("8b. Telefon (390px): dock yok; alt menüdeki Mesajlar'a basınca /messages sayfası açılır (üst çubukta mesaj simgesi yok)", async ({ page }) => {
   await page.goto(`${BASE}/`);
-  const icon = page.locator("[data-header-messages]");
+  const icon = page.locator("nav[data-app-nav] a[href*='/messages']");
   await icon.waitFor();
   await page.waitForTimeout(500);
   assert.equal(await pill(page).count(), 0); assert.equal(await panel(page).count(), 0);

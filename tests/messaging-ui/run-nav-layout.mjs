@@ -50,6 +50,9 @@ const texts = async (loc) => (await loc.allTextContents()).map((x) => x.trim());
 const open = async (page, path = "/discover") => {
   await page.goto(`${BASE}${path}`);
   await page.locator("header[data-app-header]").waitFor();
+  // Gezinme yüzeyleri (ray · kenar çubuğu · alt çubuk) hidrasyondan sonra çizilir: hepsi DOM'a girene kadar bekle (soğuk açılışta sayım erken okunuyordu).
+  await page.locator("aside[data-app-chrome]").first().waitFor({ state: "attached" });
+  await page.locator("nav[data-app-nav]").waitFor({ state: "attached" });
 };
 
 await scenario("1. masaüstü: kenar çubuğu = Oluştur + üç grup (başlıksız · Çalışma · Kütüphane); Profil/Ayarlar/Yasal satırı yok", async ({ page }) => {
@@ -98,6 +101,7 @@ await scenario("3. masaüstü: üst çubuk = arama · Odak (ikon + yazı) · bil
   const focus = header.locator("a[href*='/focus']");
   assert.equal(await focus.count(), 1);
   assert.match(await focus.innerText(), /Odak/);
+  await header.getByRole("button", { name: /Bildirim/ }).first().waitFor();
   assert.ok(await header.getByRole("button", { name: /Bildirim/ }).count() >= 1, "bildirim zili");
   await header.locator("[data-header-messages]").waitFor();
   await page.locator("[data-message-dock-pill]").waitFor();
@@ -138,31 +142,35 @@ await scenario("5. tablet: «Sen» menüsü rayın yanına açılır ve rayda ol
   await shot(page, "tablet-account-menu");
 }, { viewport: TABLET });
 
-await scenario("6. telefon: alt çubuk = Ana Sayfa · Keşfet · + · Topluluklar · Sen (Odak yok); üst çubuk = logo · Ara · Odak · Bildirim · Mesaj", async ({ page }) => {
+await scenario("6. telefon: alt çubuk = Ana Sayfa · Odak · Mesajlar · Bildirimler · Keşfet; üst çubuk = logo + sayfa adı + avatar (arama/Odak/zil/mesaj üstte yok)", async ({ page }) => {
   await open(page);
   const nav = page.locator("nav[data-app-nav]");
-  const slots = await texts(nav.locator("li"));
-  assert.deepEqual(slots.slice(0, 4), ["Ana Sayfa", "Keşfet", "Oluştur", "Topluluklar"]);
-  assert.match(slots[4], /Sen$/);
-  assert.equal(await nav.locator("a[href*='/focus']").count(), 0, "Odak alt çubukta değil");
+  await nav.locator("li").first().waitFor();
+  assert.deepEqual(await texts(nav.locator("li span.truncate")), ["Ana Sayfa", "Odak", "Mesajlar", "Bildirimler", "Keşfet"]);
   assert.equal(await nav.locator("a[aria-current='page']").innerText(), "Keşfet");
+  assert.equal(await nav.locator("[data-nav-create], [data-nav-you]").count(), 0, "Oluştur ve Sen alt çubukta değil");
   const header = page.locator("header[data-app-header]");
-  assert.ok(await header.locator("a[href*='/focus']").isVisible(), "Odak üst çubukta");
-  // Keşfet'in kendi arama kutusu var; öteki sayfalarda üst çubukta arama ikonu durur.
+  assert.equal(await header.locator("[data-header-title]").innerText(), "Keşfet", "üst çubukta sayfanın adı");
+  assert.ok(await header.locator("[data-header-you]").isVisible(), "avatar sağda");
+  for (const hidden of ["a[href*='/focus']", "[data-header-messages]", "[data-notification-bell], a[href*='/notifications']", "a[aria-label='Ara']"]) {
+    assert.equal(await header.locator(`${hidden}:visible`).count(), 0, `üst çubukta görünmez: ${hidden}`);
+  }
+  // Ana Sayfa'da başlık «Ana Sayfa», avatar sağda.
   await open(page, "/");
-  assert.ok(await header.getByRole("link", { name: "Ara" }).isVisible(), "arama ikonu");
-  assert.equal(await header.getByRole("button", { name: /Hesap menüsü/ }).count(), 0, "üst çubukta avatar yok");
+  assert.equal(await header.locator("[data-header-title]").innerText(), "Ana Sayfa");
+  const you = await header.locator("[data-header-you]").boundingBox();
+  assert.ok(you.x + you.width > PHONE.width - 24, `avatar sağ kenarda (${Math.round(you.x + you.width)})`);
   assert.ok(await page.locator("aside:visible").count() === 0, "ray/kenar çubuğu yok");
   assert.ok(await overflowFree(page));
   await shot(page, "phone");
 }, { viewport: PHONE });
 
-await scenario("7. telefon: «Sen» sekmesi alttan sayfa açar — profil, 6 kısayol, İçeriklerim · Ayarlar · Görünüm · Dil · Çıkış; sürükleyerek/dışına dokunarak kapanır", async ({ page }) => {
+await scenario("7. telefon: avatar alttan «Sen» sayfası açar — profil, 7 kısayol (Topluluklar dahil), İçeriklerim · Ayarlar · Görünüm · Dil · Çıkış; gezinince kapanır", async ({ page }) => {
   await open(page);
-  await page.locator("nav[data-app-nav] [data-nav-you]").click();
+  await page.locator("header[data-app-header] [data-header-you]").click();
   const sheet = page.locator("[data-account-sheet]");
   await sheet.waitFor();
-  assert.deepEqual(await texts(sheet.locator("ul a")), ["Kaydedilenler", "Spaces", "Ekipler", "Takip", "Panel", "Studio"]);
+  assert.deepEqual(await texts(sheet.locator("ul a")), ["Kaydedilenler", "Spaces", "Topluluklar", "Ekipler", "Takip", "Panel", "Studio"]);
   assert.match(await sheet.getByRole("menuitem", { name: "Profilim" }).innerText(), /Profilini gör/);
   for (const row of ["İçeriklerim", "Ayarlar", "Görünüm", "Dil", "Çıkış Yap"]) {
     assert.ok(await sheet.getByRole("menuitem", { name: new RegExp(row, "i") }).first().isVisible(), `satır: ${row}`);
@@ -176,27 +184,95 @@ await scenario("7. telefon: «Sen» sekmesi alttan sayfa açar — profil, 6 kı
   assert.equal(await page.locator("[data-account-sheet]").count(), 0, "gezinince sayfa kapanır");
 }, { viewport: PHONE });
 
-await scenario("8. telefon: Escape «Sen» sayfasını kapatır ve odağı geri verir", async ({ page }) => {
+await scenario("8. telefon: Escape «Sen» sayfasını kapatır", async ({ page }) => {
   await open(page);
-  await page.locator("nav[data-app-nav] [data-nav-you]").click();
+  await page.locator("header[data-app-header] [data-header-you]").click();
   await page.locator("[data-account-sheet]").waitFor();
   await page.keyboard.press("Escape");
   await page.waitForFunction(() => !document.querySelector("[data-account-sheet]"));
 }, { viewport: PHONE });
 
-await scenario("9. telefon: «Sen» çubuk göstergesi — profil/ayarlar sayfasında 5. yuvada yanar", async ({ page }) => {
-  await open(page, "/settings");
-  await page.locator("nav[data-app-nav]").waitFor();
+await scenario("9. telefon: alt çubuk çizgisi — Ana Sayfa 1., Mesajlar 3. (200%), Keşfet 5. yuvada; yuvası olmayan sayfada (Ayarlar) görünmez", async ({ page }) => {
+  const indicator = () => page.locator("nav[data-app-nav] [data-nav-indicator]").evaluate((el) => [el.style.transform, el.style.opacity]);
+  await open(page, "/");
+  await page.waitForFunction(() => document.querySelector("nav[data-app-nav] [data-nav-indicator]")?.style.transform === "translateX(0%)");
+  await open(page, "/discover");
   await page.waitForFunction(() => document.querySelector("nav[data-app-nav] [data-nav-indicator]")?.style.transform === "translateX(400%)");
+  await open(page, "/messages");
+  await page.waitForFunction(() => document.querySelector("nav[data-app-nav] [data-nav-indicator]")?.style.transform === "translateX(200%)");
+  await open(page, "/settings");
+  await page.waitForFunction(() => document.querySelector("nav[data-app-nav] [data-nav-indicator]")?.style.opacity === "0");
+  assert.equal((await indicator())[1], "0");
 }, { viewport: PHONE });
 
-await scenario("10. misafir telefon: son yuva «Giriş Yap» bağlantısı; üstte Odak; Mesajlar/Bildirim yok", async ({ page }) => {
+await scenario("10. misafir telefon: aynı beş yuva; Mesajlar/Bildirimler giriş penceresi açar; üstte avatar yok, Giriş Yap menüsü var", async ({ page }) => {
   await open(page);
   const nav = page.locator("nav[data-app-nav]");
-  assert.equal(await nav.getByRole("link", { name: "Giriş Yap" }).count(), 1);
-  assert.equal(await nav.locator("[data-nav-you]").count(), 0);
-  assert.ok(await page.locator("header[data-app-header] a[href*='/focus']").isVisible());
+  await nav.locator("li").first().waitFor();
+  assert.deepEqual(await texts(nav.locator("li span.truncate")), ["Ana Sayfa", "Odak", "Mesajlar", "Bildirimler", "Keşfet"]);
+  assert.equal(await page.locator("[data-header-you]").count(), 0, "misafirde avatar yok");
+  await nav.getByRole("button", { name: "Mesajlar" }).click();
+  await page.getByRole("dialog").waitFor();
+  assert.match(await page.getByRole("dialog").innerText(), /Giriş/);
+  await page.keyboard.press("Escape");
+  await page.waitForFunction(() => !document.querySelector("[role=dialog]"));
+  assert.ok(await page.locator("header[data-app-header] button[aria-label='Hesap menüsü'], header[data-app-header] [aria-haspopup='menu']").first().isVisible(), "giriş/kayıt menüsü üstte");
 }, { viewport: PHONE, guest: true });
+
+await scenario("10b. telefon: mavi «+» hub'ı YALNIZ Ana Sayfa, Keşfet ve kendi profilinde; başka sayfada ve başkasının profilinde yok", async ({ page }) => {
+  const hub = page.locator("[data-create-hub]");
+  for (const path of ["/", "/discover", "/profile/real?username=alice"]) {
+    await open(page, path);
+    await hub.waitFor({ timeout: 6000 });
+    const box = await hub.boundingBox();
+    const navBox = await page.locator("nav[data-app-nav]").boundingBox();
+    assert.ok(box.x + box.width <= PHONE.width - 8 && box.x > PHONE.width / 2, `${path}: hub sağda`);
+    assert.ok(box.y + box.height <= navBox.y, `${path}: hub alt çubuğun üstünde`);
+    assert.ok(box.width >= 44 && box.height >= 44, `${path}: dokunma hedefi`);
+  }
+  for (const path of ["/communities", "/saved", "/settings", "/messages", "/profile/real?username=bob"]) {
+    await open(page, path);
+    await page.waitForTimeout(500);
+    assert.equal(await hub.count(), 0, `${path}: hub yok`);
+  }
+  // Hub Oluştur menüsünü açar.
+  await open(page, "/");
+  await hub.click();
+  await page.locator("[data-create-menu]").waitFor();
+}, { viewport: PHONE });
+
+await scenario("10c. telefon: sayfa adı üst çubukta — Mesajlar, Topluluklar, Kaydedilenler; başlığı olmayan rotada logo yazısı", async ({ page }) => {
+  const header = page.locator("header[data-app-header]");
+  for (const [path, title] of [["/messages", "Mesajlar"], ["/communities", "Topluluklar"], ["/saved", "Kaydedilenler"]]) {
+    await open(page, path);
+    assert.equal(await header.locator("[data-header-title]").innerText(), title, path);
+  }
+  await open(page, "/prompts/local?id=nope");
+  assert.equal(await header.locator("[data-header-title]").count(), 0, "başlıksız rotada sayfa adı yok");
+  assert.ok(await header.locator("[data-header-brand]").isVisible(), "logo bağlantısı durur");
+}, { viewport: PHONE });
+
+await scenario("10d. telefon: üst çubuk sayfa adını yazıyorsa sayfanın kendi aynı başlığı gizli (çift başlık yok); masaüstünde sayfa başlığı durur (docs/history/463-*)", async ({ page }) => {
+  const header = page.locator("header[data-app-header]");
+  const routes = ["/", "/discover", "/communities", "/spaces", "/teams", "/saved", "/messages", "/settings", "/following", "/followers", "/my-content", "/insights", "/studio", "/tags", "/communities/all", "/profile/edit"];
+  const dupes = [];
+  for (const path of routes) {
+    await open(page, path);
+    await page.waitForTimeout(500);
+    const title = (await header.locator("[data-header-title]").count()) ? (await header.locator("[data-header-title]").innerText()).trim() : null;
+    if (!title) continue;
+    const visible = await page.evaluate((t) => [...document.querySelectorAll("main h1, main h2")].filter((el) => el.getClientRects().length > 0 && getComputedStyle(el).visibility !== "hidden" && el.textContent.trim() === t).length, title);
+    if (visible > 0) dupes.push(`${path}: «${title}» ×${visible}`);
+  }
+  assert.deepEqual(dupes, [], "sayfada üst çubukla aynı görünür başlık kalmamalı");
+}, { viewport: PHONE });
+
+await scenario("10e. masaüstü: aynı sayfalarda sayfanın kendi başlığı GÖRÜNÜR (yalnız telefonda gizlenir)", async ({ page }) => {
+  for (const [path, title] of [["/discover", "Keşfet"], ["/settings", "Ayarlar"], ["/my-content", "İçeriklerim"]]) {
+    await open(page, path);
+    await page.locator("main h1", { hasText: title }).first().waitFor({ state: "visible" });
+  }
+});
 
 await scenario("11. misafir masaüstü: kenar çubuğunda Ekipler/Kütüphane yok, altta «Giriş Yap»", async ({ page }) => {
   await open(page);

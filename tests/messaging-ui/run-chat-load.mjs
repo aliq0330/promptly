@@ -123,7 +123,7 @@ await scenario("3. Oturum yenilenip kullanıcı nesnesi değişince açık sohbe
 async function openCreateMenu(page) {
   const menu = page.locator("[data-create-menu]");
   for (let attempt = 0; attempt < 3 && !(await menu.isVisible()); attempt++) {
-    await page.locator("nav[data-app-nav] [data-nav-create]").click();
+    await page.locator("[data-create-hub]").click();
     await menu.waitFor({ timeout: 2500 }).catch(() => {});
   }
   await menu.waitFor();

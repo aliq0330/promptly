@@ -98,12 +98,13 @@ const firstFeedCard = "main [data-discover-all] article:has(a[data-card-link])";
 
 await scenario("0. telefon: görünür başlık + haftanın sayıları; editoryal bölümler sırayla; altında Tüm paylaşımlar", async ({ page }) => {
   await page.goto(`${BASE}/discover`);
-  const h1 = page.getByRole("heading", { level: 1, name: "Keşfet" });
+  // Telefonda sayfa adı üst çubuktadır, başlık tekrar edilmez (docs/history/463-*): h1 DOM'da durur ama gizlidir.
+  const h1 = page.locator("main h1", { hasText: "Keşfet" });
   await page.getByText("Bu hafta 124 yeni prompt, 18 workflow ve 6 Skill paylaşıldı.").waitFor();
+  assert.equal(await page.locator("header[data-app-header] [data-header-title]").innerText(), "Keşfet", "üst çubuk sayfa adını yazar");
   await page.locator("[data-discover-editorial]").waitFor();
   assert.equal(await page.locator("[data-discover-editorial-loading]").count(), 0, "iskelet gitti");
-  const h1Box = await h1.boundingBox();
-  assert.ok((h1Box?.width ?? 0) > 40, "başlık görünür (sr-only değil)");
+  assert.equal(await h1.isVisible(), false, "sayfanın kendi başlığı telefonda gizli (üst çubukta var)");
   const order = ["Gündemdeki konular", "Popüler promptlar", "Takip edebileceğin yaratıcılar", "Yükselen araçlar", "Tüm paylaşımlar"];
   const ys = [];
   for (const name of order) {
@@ -160,7 +161,8 @@ await scenario("4. Geri'de editoryal yeniden yüklenmez (3 dk önbellek)", async
 
 await scenario("5. İngilizce: başlık, sayı cümlesi ve bölüm adları çevrili", async ({ page }) => {
   await page.goto(`${BASE}/discover`);
-  await page.getByRole("heading", { level: 1, name: "Discover" }).waitFor();
+  await page.locator("header[data-app-header] [data-header-title]").getByText("Discover").waitFor();
+  await page.locator("main h1", { hasText: "Discover" }).waitFor({ state: "attached" });
   await page.getByText("This week 124 new prompts, 18 workflows and 6 Skills were shared.").waitFor();
   await page.getByRole("heading", { level: 2, name: "Trending topics" }).waitFor();
   await page.getByRole("heading", { level: 2, name: "All posts" }).waitFor();

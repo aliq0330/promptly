@@ -245,7 +245,7 @@ await scenario("13. telefon: yorum metni geniş sütunda (kutu yok), yatay taşm
   const vw = 390;
   // Kutu yok (docs/history/458-*): avatar sütunu + metin; telefonda metin sütunu ekranın büyük kısmını kullanır.
   assert.equal(await node(page, "Mert:").locator("div.rounded-lg.border").count(), 0, "yorum kutusu yok");
-  const body = await node(page, "Mert:").locator("p.text-h3").first().boundingBox();
+  const body = await node(page, "Mert:").locator("p.text-small").first().boundingBox();
   assert.ok(body.width >= vw - 130, `metin sütunu geniş (${body.width})`);
   assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1), "taşma yok");
   await openMenu(page, "Kendi yorumum");

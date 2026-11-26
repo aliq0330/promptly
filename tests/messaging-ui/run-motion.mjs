@@ -63,7 +63,7 @@ await scenario("2. alt menü: Keşfet'e geçince çizgi kayar ve yalnız pusula 
   await nav(page).waitFor();
   await nav(page).getByRole("link", { name: "Keşfet" }).click();
   await page.waitForURL(/\/discover/);
-  await page.waitForFunction(() => document.querySelector("nav[data-app-nav] [data-nav-indicator]")?.style.transform === "translateX(100%)");
+  await page.waitForFunction(() => document.querySelector("nav[data-app-nav] [data-nav-indicator]")?.style.transform === "translateX(400%)");
   assert.equal(await nav(page).locator(".mi-compass.mi-play").count(), 1, "compass plays");
   assert.equal(await nav(page).locator(".mi-home.mi-play").count(), 0, "home does not");
   // Aynı sekmeye tekrar basınca yeniden oynamaz (aktif olmadı).
@@ -72,17 +72,17 @@ await scenario("2. alt menü: Keşfet'e geçince çizgi kayar ve yalnız pusula 
   assert.equal(await nav(page).locator(".mi-compass.mi-play").count(), 1);
 });
 
-await scenario("3. alt menü: '+' menüyü açınca ✕ olur, kapatınca geri döner", async ({ page }) => {
+await scenario("3. mavi '+' hub'ı: menüyü açınca ✕ olur, kapatınca geri döner", async ({ page }) => {
   await page.goto(`${BASE}/`);
   await nav(page).waitFor();
-  const plus = nav(page).locator("[data-nav-create] svg.mi-plus");
+  const plus = page.locator("[data-create-hub] svg.mi-plus");
   assert.equal(await plus.getAttribute("data-open"), "false");
-  await nav(page).locator("[data-nav-create]").click();
-  await page.waitForFunction(() => document.querySelector("nav[data-app-nav] svg.mi-plus")?.getAttribute("data-open") === "true");
+  await page.locator("[data-create-hub]").click();
+  await page.waitForFunction(() => document.querySelector("[data-create-hub] svg.mi-plus")?.getAttribute("data-open") === "true");
   const rotated = await plus.evaluate((el) => getComputedStyle(el).transform);
   assert.notEqual(rotated, "none", "the plus is rotated");
   await page.keyboard.press("Escape");
-  await page.waitForFunction(() => document.querySelector("nav[data-app-nav] svg.mi-plus")?.getAttribute("data-open") === "false");
+  await page.waitForFunction(() => document.querySelector("[data-create-hub] svg.mi-plus")?.getAttribute("data-open") === "false");
 });
 
 await scenario("4. hareketi azalt: geçiş yine çalışır, animasyon süreleri ~0", async ({ page }) => {
@@ -92,7 +92,7 @@ await scenario("4. hareketi azalt: geçiş yine çalışır, animasyon süreleri
   await page.waitForURL(/\/discover/);
   const d = await nav(page).locator(".mi-compass .mi-needle").evaluate((el) => parseFloat(getComputedStyle(el).animationDuration));
   assert.ok(d < 0.05, `animation duration collapsed (${d}s)`);
-  assert.equal(await indicatorX(page), "translateX(100%)");
+  assert.equal(await indicatorX(page), "translateX(400%)");
 }, { reducedMotion: "reduce" });
 
 await scenario("5. masaüstü: alt menü yok, taşma yok", async ({ page }) => {

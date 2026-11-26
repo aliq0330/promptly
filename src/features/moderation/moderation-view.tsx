@@ -16,7 +16,7 @@ import { Chip } from "@/components/ui/chip";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
-import { formatRelativeTime } from "@/lib/utils";
+import { formatRelativeTime, cn } from "@/lib/utils";
 import { StorageCleanupCard } from "@/features/moderation/storage-cleanup-card";
 import { DnaBackfillCard } from "@/features/moderation/dna-backfill-card";
 import { MediaAppearanceCard } from "@/features/moderation/media-appearance-card";
@@ -32,6 +32,7 @@ import { SheetChips, SheetSection } from "@/features/content/list-toolbar";
 import { fetchReportQueue, moderateReport, type ModerationAction, type ModerationReport, type ReportReasonFilter, type ReportStatus } from "@/lib/supabase/moderation";
 import { REPORT_REASON_CODES } from "@/lib/report-reasons";
 import { REPORT_REASON_TITLE } from "@/features/moderation/report-modal";
+import { usePhoneDuplicateClass } from "@/components/layout/phone-title";
 
 type Filter = ReportStatus | "all";
 const FILTERS: { id: Filter; key: TranslationKey }[] = [
@@ -86,6 +87,7 @@ function writeParams(updates: Record<string, string | null>) {
 
 export function ModerationView() {
   const { t } = useTranslation();
+  const duplicate = usePhoneDuplicateClass(t("moderation.title"));
   const { user, loading: authLoading } = useAuth();
   const isModerator = useIsModerator();
   const [tab, setTabState] = useState<AdminTab>(() => {
@@ -118,7 +120,7 @@ export function ModerationView() {
   return (
     <div className="mx-auto w-full max-w-4xl space-y-4 px-3 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-8">
       <div>
-        <h1 className="text-h1 font-bold text-text">{t("moderation.title")}</h1>
+        <h1 className={cn("text-h1 font-bold text-text", duplicate)}>{t("moderation.title")}</h1>
         <p className="text-small text-text-secondary">{t("moderation.subtitle")}</p>
       </div>
       {/* Sade düzen (docs/history/235-*): tek "Şikâyetler ▾" bölüm menüsü; şikâyet durumu süzgeci Filtre penceresinde. */}
