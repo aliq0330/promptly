@@ -122,3 +122,21 @@ Promptly değerleri koddandır (`src/app/globals.css`, `components/ui/*`, `compo
 **Bilerek almıyoruz:** 8 px köşeli düğme, silik alan kenarlığı, siyah seçili çip, turuncu tek vurgu, etiketsiz ray/alt menü, tek 600 px sütun, serif gövde.
 
 Bu bir **öneridir**; hiçbir uygulama kodu değiştirilmedi. Uygulanırsa `CLAUDE.md` Bölüm 4'teki ilgili kural ve `docs/history/` kaydı birlikte güncellenir.
+
+## 10. Oluşturma akışları: telefonda tam ekran sayfa, tablet/masaüstünde pencere
+
+Kaynak: kullanıcının paylaştığı gerçek ekran görüntüsü (referansın «yeni grup sohbeti» alt kartı, iPhone). Tuvalde G1–G5.
+
+**Referanstan çıkan desenler:** (1) üstte geri · ortalı başlık · kapat; (2) büyük yuvarlak görsel + kalem rozeti; (3) küçük bölüm etiketleri (GRUP ADI, İZİNLER); (4) izin = soru başlığı + soluk açıklama + açılır seçici; (5) altta sabit tam genişlik «Oluştur», ad yokken gri. Referansta soru başlıkları bir önceki seçiciye yapışık duruyor (alan çiftleri arası ritim zayıf); bu alınmadı, Promptly'de alanlar arası 18–22 px.
+
+**Karar (kullanıcı isteği, öneri aşamasında):** Ekip, Topluluk ve Space oluşturma bugün `Modal`'dır (`CreateTeamModal`, `CreateCommunityModal`, `CreateSpaceModal`). Önerilen düzen:
+- **Telefon (`< md`)**: kendi adresi olan tam ekran sayfa (`/teams/new`, `/communities/new`, `/spaces/new`); uygulama menüleri gizli (compose formlarındaki `data-compose-open` kalıbı). Üst çubuk: ✕ · başlık · küçük «Oluştur». Gövde kayar. Altta sabit tam genişlik «Oluştur» (48 px hap); klavye açıkken alt çubuk gizlenir (`data-keyboard-hide`), eylem üst çubuktaki düğmede kalır. Eksik alanda «Oluştur» soluk ama basılabilir, basınca hata alanın altında çıkar. Bittiğinde kısa onay sayfası (Üye davet et · İlk projeyi aç · Ekip sayfasına git).
+- **Tablet ve masaüstü (`md+`)**: aynı form `Modal` içinde (ortada, köşe 20, gövde kayar, alt çubukta Vazgeç + Oluştur). Görsel/avatar ad alanının solunda; iki izin yan yana.
+- **Tek form bileşeni, iki kabuk:** alanlar bir kez yazılır; telefonda sayfa kabuğu, `md+`'da `Modal` kabuğu sarar. Bağlantılar (`/…/new`) her genişlikte çalışır; `md+`'da bağlantı sayfanın üstünde pencere açar.
+
+**Alanlar (mevcut koddan):**
+- Ekip: ad (zorunlu, 2–60), açıklama (≤500), renk (mavi / pus / nötr).
+- Topluluk: görsel, ad (zorunlu), açıklama, sohbette kim yazar (Herkes / Yönetim), akışa kim paylaşır, üye sınırı, kurallar + kabul anahtarı, kişi davet (hepsi isteğe bağlı ayrıntı).
+- Space: başlık (zorunlu), açıklama, tür (Moodboard · Karakter · Marka · Oyun dünyası · İç mekân · Serbest), başlangıç (Boş / Şablonla). Space her zaman özeldir.
+
+Referanstaki «izin başına açılır seçici» yerine 2–3 seçenekli alanlarda `ChoiceGroup segmented` önerilir (bileşen kuralı: kısa tek seçim = segment). Bu bir **öneridir**; kod değişmedi. Uygulanırsa `CLAUDE.md` Bölüm 4 (Oluşturma formları) ve rota tablosu güncellenir.

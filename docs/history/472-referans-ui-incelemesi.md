@@ -14,3 +14,6 @@ Giriş gerektiren ayarlar, gerçek bildirim listesi, sohbet balonları, hover du
 
 ## Karar bekleyenler
 Önerilen beş fikir (pencere köşesi 20 + odak halkası, Mesajlar listesi segmenti, bildirim düz satırları, detay hapları, ayarlar sütunu) için uygulama kararı kullanıcıdadır; Promptly'nin bilinçli farkları (hap düğme, ≥3:1 alan kenarlığı, mavi eylem/turuncu "senin olan", etiketli ray/alt menü) korunur.
+
+## Ek: oluşturma akışları (G1–G5)
+Kullanıcı bir referans ekran görüntüsü paylaştı (yeni grup sohbeti alt kartı) ve Ekip / Topluluk / Space oluşturmanın telefonda modal değil ayrı tam ekran sayfa, tablet/masaüstünde modal olmasını istedi. Tuvale G satırı eklendi (referans, telefon sayfaları, telefon durumları, masaüstü pencereleri, tablet pencere); karar ve alan listesi `docs/design-references/substack-tasarim-dili.md` Bölüm 10'da. Öneri; kod değişmedi.

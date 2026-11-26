@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>Masaüstü oluşturma pencereleri</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&amp;family=Bricolage+Grotesque:wght@700;800&amp;display=swap">
+<style>
+body{margin:0;font-family:'DM Sans',system-ui,sans-serif;color:#121218}
+.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.cap{font-size:12px;font-weight:600;color:#62646f;margin:0 0 10px}
+.scrim{height:780px;border-radius:16px;position:relative;overflow:hidden;background:#8d8e97}
+.bg{position:absolute;inset:0;background:#f8f8fb;opacity:.5}
+.bg i{display:block;position:absolute;background:#fff;border-radius:16px}
+.modal{position:absolute;left:50%;transform:translateX(-50%);background:#fff;border:1px solid #ececf2;border-radius:20px;box-shadow:0 24px 56px -18px rgba(18,18,24,.3),0 3px 10px -2px rgba(18,18,24,.1);display:flex;flex-direction:column;overflow:hidden}
+.hd{display:flex;align-items:center;padding:18px 20px 12px;flex:none}
+.hd b{flex:1;font:700 20px 'Bricolage Grotesque',sans-serif;letter-spacing:-.02em}
+.x{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#62646f}
+.bd{padding:4px 20px 8px;flex:1;overflow:hidden}
+.ft{display:flex;justify-content:flex-end;gap:8px;padding:14px 20px;border-top:1px solid #ececf2;flex:none}
+.b{height:40px;padding:0 20px;border-radius:999px;font:600 14px 'DM Sans',sans-serif;display:flex;align-items:center}
+.lab{display:flex;align-items:baseline;gap:6px;font:600 13px 'DM Sans',sans-serif;margin:0 0 8px}
+.lab small{font:400 12px 'DM Sans',sans-serif;color:#62646f}
+.fld{height:44px;border:1px solid #868899;border-radius:16px;background:#fff;padding:0 16px;display:flex;align-items:center;font-size:14px;color:#62646f;box-sizing:border-box}
+.ta{height:76px;border:1px solid #868899;border-radius:16px;background:#fff;padding:12px 16px;font-size:14px;color:#62646f;box-sizing:border-box}
+.f{margin-bottom:18px}
+.seg{display:flex;background:#f0f0f5;border-radius:16px;padding:2px;height:40px;box-sizing:border-box}
+.seg span{flex:1;border-radius:12px;display:flex;align-items:center;justify-content:center;font:500 13px 'DM Sans',sans-serif;color:#62646f}
+.seg span.on{background:#fff;color:#121218;font-weight:600;box-shadow:0 1px 2px rgba(18,18,24,.08)}
+.sec{font:600 12px 'DM Sans',sans-serif;color:#62646f;margin:6px 0 12px;padding-top:6px;border-top:1px solid #ececf2}
+.tile{border:1px solid #e4e4ec;border-radius:16px;background:#fff;padding:10px 12px;display:flex;align-items:center;gap:10px;font:500 13px 'DM Sans',sans-serif;height:48px;box-sizing:border-box}
+.tile.on{border-color:#3b5be2;background:#eceffd;color:#2e4bc9}
+.tile i{width:24px;height:24px;border-radius:8px;background:#f0f0f5;display:block}
+.tile.on i{background:#3b5be2}
+.av{width:72px;height:72px;border-radius:50%;position:relative;flex:none}
+.av span{position:absolute;right:-4px;bottom:-2px;width:30px;height:30px;border-radius:50%;background:#fff;border:1px solid #cfd0dc;display:flex;align-items:center;justify-content:center}
+</style>
+</helmet>
+<div style="width:1900px;height:900px;box-sizing:border-box;padding:28px 40px;background:#fff;display:flex;gap:30px">
+  <div style="width:560px">
+    <p class="cap">EKİP OLUŞTUR · pencere 480</p>
+    <div class="scrim"><div class="bg"><i style="left:0;top:0;width:90px;bottom:0;border-radius:0"></i><i style="left:130px;top:50px;width:200px;height:120px"></i><i style="left:350px;top:50px;width:200px;height:120px"></i><i style="left:130px;top:190px;width:200px;height:120px"></i></div>
+      <div class="modal" style="top:120px;width:480px">
+        <div class="hd"><b>Ekip oluştur</b><span class="x"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></span></div>
+        <div class="bd">
+          <div style="display:flex;gap:16px;align-items:flex-end;margin-bottom:18px"><div class="av" style="background:#3b5be2;color:#fff;display:flex;align-items:center;justify-content:center;font:700 30px 'Bricolage Grotesque',sans-serif">T<span style="color:#121218"><svg class="i" viewBox="0 0 24 24" aria-hidden="true" style="width:14px;height:14px"><path d="M4 20h4l11-11-4-4L4 16zM13 7l4 4"/></svg></span></div><div style="flex:1"><p class="lab">Ekip adı <small>Zorunlu</small></p><div class="fld">Örn. Tasarım Ekibi</div></div></div>
+          <div class="f"><p class="lab">Açıklama <small>İsteğe bağlı</small></p><div class="ta">Ekip ne yapar?</div></div>
+          <div class="f"><p class="lab">Renk</p><div style="display:flex;gap:12px"><i style="width:36px;height:36px;border-radius:50%;background:#3b5be2;display:block;box-shadow:0 0 0 3px #fff,0 0 0 5px #3b5be2"></i><i style="width:36px;height:36px;border-radius:50%;background:#a64718;display:block"></i><i style="width:36px;height:36px;border-radius:50%;background:#62646f;display:block"></i></div></div>
+        </div>
+        <div class="ft"><span class="b" style="color:#464854">Vazgeç</span><span class="b" style="background:#f0f0f5;color:#62646f">Oluştur</span></div>
+      </div>
+    </div>
+  </div>
+  <div style="width:640px">
+    <p class="cap">TOPLULUK OLUŞTUR · pencere 560, gövde kayar, alt çubuk sabit</p>
+    <div class="scrim"><div class="bg"><i style="left:0;top:0;width:90px;bottom:0;border-radius:0"></i><i style="left:130px;top:50px;width:200px;height:120px"></i><i style="left:350px;top:50px;width:200px;height:120px"></i></div>
+      <div class="modal" style="top:36px;width:560px;height:700px">
+        <div class="hd"><b>Topluluk oluştur</b><span class="x"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></span></div>
+        <div class="bd">
+          <div style="display:flex;gap:16px;align-items:flex-end;margin-bottom:18px"><div class="av" style="background:conic-gradient(from 200deg,#3b5be2,#9aa8e8,#3b5be2 40%,#f29051 75%)"><span><svg class="i" viewBox="0 0 24 24" aria-hidden="true" style="width:14px;height:14px"><path d="M4 20h4l11-11-4-4L4 16zM13 7l4 4"/></svg></span></div><div style="flex:1"><p class="lab">Topluluk adı <small>Zorunlu</small></p><div class="fld" style="color:#121218">Görsel Prompt Meraklıları</div></div></div>
+          <div class="f"><p class="lab">Açıklama <small>İsteğe bağlı</small></p><div class="ta">Bu topluluk ne hakkında?</div></div>
+          <p class="sec">İzinler</p>
+          <div class="f"><p class="lab">Sohbette kim yazabilir</p><div class="seg"><span class="on">Herkes</span><span>Yalnız yönetim</span></div></div>
+          <div class="f"><p class="lab">Akışa kim gönderi paylaşabilir</p><div class="seg"><span class="on">Herkes</span><span>Yalnız yönetim</span></div></div>
+          <div class="f"><p class="lab">Üye sınırı <small>İsteğe bağlı</small></p><div class="fld" style="width:180px">Sınırsız</div></div>
+          <p class="sec">Kurallar ve davet</p>
+          <div class="f"><p class="lab">Kurallar <small>İsteğe bağlı</small></p><div class="ta">Topluluğun kuralları…</div></div>
+          <div class="f" style="display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid #e4e4ec;border-radius:16px;font-size:14px"><span style="flex:1">Katılırken kuralları kabul etsinler</span><i style="width:44px;height:26px;border-radius:999px;background:#cfd0dc;display:block"></i></div>
+        </div>
+        <div class="ft"><span class="b" style="color:#464854">Vazgeç</span><span class="b" style="background:#3b5be2;color:#fff">Oluştur</span></div>
+      </div>
+    </div>
+  </div>
+  <div style="width:560px">
+    <p class="cap">SPACE OLUŞTUR · pencere 520</p>
+    <div class="scrim"><div class="bg"><i style="left:0;top:0;width:90px;bottom:0;border-radius:0"></i><i style="left:130px;top:50px;width:200px;height:120px"></i><i style="left:350px;top:50px;width:200px;height:120px"></i></div>
+      <div class="modal" style="top:60px;width:500px">
+        <div class="hd"><b>Space oluştur</b><span class="x"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></span></div>
+        <div class="bd">
+          <div class="f"><p class="lab">Başlık <small>Zorunlu</small></p><div class="fld" style="color:#121218">Gün batımı portreleri</div></div>
+          <div class="f"><p class="lab">Açıklama <small>İsteğe bağlı</small></p><div class="ta" style="height:60px">Bu Space ne için?</div></div>
+          <div class="f"><p class="lab">Tür</p><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px"><div class="tile on"><i></i>Moodboard</div><div class="tile"><i></i>Karakter</div><div class="tile"><i></i>Marka</div><div class="tile"><i></i>Oyun dünyası</div><div class="tile"><i></i>İç mekân</div><div class="tile"><i></i>Serbest</div></div></div>
+          <div class="f"><p class="lab">Başlangıç</p><div class="seg"><span>Boş</span><span class="on">Şablonla</span></div></div>
+        </div>
+        <div class="ft"><span class="b" style="color:#464854">Vazgeç</span><span class="b" style="background:#3b5be2;color:#fff">Oluştur</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1900,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>
