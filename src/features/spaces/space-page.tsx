@@ -201,6 +201,15 @@ function SpaceView({ owner }: { owner: SpacePerson | null }) {
   const coverUrls = space.coverUrl ? [space.coverUrl] : coverItem?.mediaUrl ? [coverItem.mediaUrl] : images.slice(-4).map((item) => item.mediaUrl!).reverse();
 
   const leadPalette = palettes.find((palette) => palette.colors.length > 0) ?? null;
+  /** Kopyalama penceresi kaynağı arşivleyince sayfa kendini tazeler (üstteki arşiv şeridi görünsün). */
+  async function refreshSpace() {
+    try {
+      const fresh = await fetchSpace(space.id);
+      if (fresh) setSpace(fresh);
+    } catch {
+      // Tazeleme başarısızsa sayfa bir sonraki açılışta doğru durumu gösterir.
+    }
+  }
   async function toggleArchive() {
     setError(null);
     try {
@@ -344,7 +353,7 @@ function SpaceView({ owner }: { owner: SpacePerson | null }) {
         </div>
       </div>
 
-      {dialog === "copy" && <CopyItemsDialog sourceSpaceId={space.id} sourceTitle={space.title} onClose={() => setDialog(null)} />}
+      {dialog === "copy" && <CopyItemsDialog sourceSpaceId={space.id} sourceTitle={space.title} onArchived={() => void refreshSpace()} onClose={() => setDialog(null)} />}
       {dialog === "settings" && <SpaceSettingsModal space={space} images={images} onClose={() => setDialog(null)} onSaved={setSpace} />}
       {dialog === "delete" && <DeleteSpaceDialog space={space} onClose={() => setDialog(null)} onDeleted={() => router.replace("/spaces")} />}
       {dialog === "leave" && userId && (
