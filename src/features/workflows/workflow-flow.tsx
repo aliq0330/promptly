@@ -277,7 +277,7 @@ function StepCard({ step, steps, index }: { step: WorkflowStep; steps: WorkflowS
               href={studioHref}
               aria-label={t("studio.openInStudio")}
               title={t("studio.openInStudio")}
-              className="flex h-9 w-9 items-center justify-center rounded-md text-text-muted transition-colors hover:bg-surface-soft hover:text-primary-text"
+              className="flex h-9 w-9 items-center justify-center rounded-sm text-text-muted transition-colors hover:bg-surface-soft hover:text-primary-text"
             >
               <WandSparkles size={16} />
             </Link>
@@ -286,7 +286,7 @@ function StepCard({ step, steps, index }: { step: WorkflowStep; steps: WorkflowS
             href={c.href}
             aria-label={t("workflow.flowOpen")}
             title={t("workflow.flowOpen")}
-            className="flex h-9 w-9 items-center justify-center rounded-md text-text-muted transition-colors hover:bg-surface-soft hover:text-primary-text"
+            className="flex h-9 w-9 items-center justify-center rounded-sm text-text-muted transition-colors hover:bg-surface-soft hover:text-primary-text"
           >
             <ArrowUpRight size={16} />
           </Link>
@@ -340,7 +340,7 @@ function Connector({ from, to }: { from: WorkflowStep; to: WorkflowStep }) {
       <span className={cn("h-3 w-px", linked ? "bg-primary/50" : "bg-border-strong")} />
       <span
         className={cn(
-          "flex max-w-full items-center gap-1.5 rounded-full px-3 py-1 text-caption font-semibold",
+          "flex max-w-full items-center gap-1.5 rounded-sm px-3 py-1 text-caption font-semibold",
           linked ? "bg-primary-soft text-primary-text" : "text-text-muted",
         )}
       >

@@ -72,7 +72,7 @@ function PickerBody({
                 gridRef.current?.scrollTo({ top: 0 });
               }}
               className={cn(
-                "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-lg leading-none transition-colors focus-visible:outline-2 focus-visible:outline-focus",
+                "flex h-9 w-9 shrink-0 items-center justify-center rounded-sm text-lg leading-none transition-colors focus-visible:outline-2 focus-visible:outline-focus",
                 tab.id === current.id ? "bg-primary-soft" : "hover:bg-surface-soft",
               )}
             >

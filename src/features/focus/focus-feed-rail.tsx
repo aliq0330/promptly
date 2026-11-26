@@ -28,9 +28,9 @@ export type FocusRailLayout = "reel" | "panel" | "bar";
 
 const ACTION: Record<FocusRailLayout, string> = {
   reel: "h-auto min-w-12 flex-col gap-0.5 rounded-lg bg-transparent px-1 py-0.5 text-caption font-semibold text-on-art hover:bg-transparent hover:text-on-art [&>:first-child]:box-content [&>:first-child]:p-1.5",
-  panel: "h-11 min-w-11 flex-row gap-2 rounded-full bg-transparent px-3 text-label font-semibold text-text hover:bg-surface-soft",
+  panel: "h-11 min-w-11 flex-row gap-2 rounded-sm bg-transparent px-3 text-label font-semibold text-text hover:bg-surface-soft",
   // Only the COUNT is for screen readers: the reaction emoji is itself a `<span>` (first child) and must stay visible.
-  bar: "h-12 w-12 min-w-12 shrink-0 rounded-full border border-border bg-transparent px-0 text-text hover:bg-surface-soft [&>span:not(:first-child)]:sr-only",
+  bar: "h-12 w-12 min-w-12 shrink-0 rounded-sm border border-border bg-transparent px-0 text-text hover:bg-surface-soft [&>span:not(:first-child)]:sr-only",
 };
 
 const ICON: Record<FocusRailLayout, number> = { reel: 24, panel: 20, bar: 20 };
@@ -72,7 +72,7 @@ function SoundButton() {
       aria-label={muted ? t("focusFeed.soundOn") : t("focusFeed.soundOff")}
       title={muted ? t("focusFeed.soundOn") : t("focusFeed.soundOff")}
       data-focus-sound=""
-      className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-art-chip text-on-art transition-colors hover:bg-black/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+      className="inline-flex h-12 w-12 items-center justify-center rounded-sm bg-art-chip text-on-art transition-colors hover:bg-black/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
     >
       {muted ? <VolumeX size={24} aria-hidden /> : <Volume2 size={24} aria-hidden />}
     </button>

@@ -170,7 +170,7 @@ export function FocusWorkflowCard({ workflow }: { workflow: Workflow }) {
             {workflow.contentTypes.map((type) => {
               const TypeIcon = CONTENT_TYPE_META[type].icon;
               return (
-                <span key={type} className="inline-flex h-5 items-center gap-1 rounded-full bg-surface-soft px-2 text-caption font-medium text-text-secondary">
+                <span key={type} className="inline-flex h-5 items-center gap-1 rounded-xs bg-surface-soft px-2 text-caption font-medium text-text-secondary">
                   <TypeIcon size={12} aria-hidden />
                   {t(CONTENT_TYPE_META[type].labelKey)}
                 </span>

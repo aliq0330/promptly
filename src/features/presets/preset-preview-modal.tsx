@@ -87,7 +87,7 @@ export function PresetPreviewModal({
             {preset.tools.length > 0 ? (
               <ToolChips refs={preset.tools} />
             ) : (
-              <span className="inline-flex h-6 items-center rounded-full bg-surface-soft px-2.5 text-caption font-medium text-text-secondary">{t("preset.generalTool")}</span>
+              <span className="inline-flex h-6 items-center rounded-xs bg-surface-soft px-2.5 text-caption font-medium text-text-secondary">{t("preset.generalTool")}</span>
             )}
           </div>
         </div>
@@ -97,7 +97,7 @@ export function PresetPreviewModal({
             href={presetHref(preset)}
             target="_blank"
             aria-label={t("preset.openInNewTab", { name: preset.title })}
-            className="mr-auto inline-flex h-9 items-center gap-1.5 rounded-md px-2 text-small text-text-muted hover:bg-surface-soft hover:text-text"
+            className="mr-auto inline-flex h-9 items-center gap-1.5 rounded-sm px-2 text-small text-text-muted hover:bg-surface-soft hover:text-text"
           >
             <ArrowUpRight size={16} aria-hidden />
             <span className="max-sm:sr-only">{t("preset.openPage")}</span>
@@ -107,7 +107,7 @@ export function PresetPreviewModal({
             type="button"
             data-preview-apply
             onClick={onApply}
-            className="inline-flex h-9 shrink-0 items-center rounded-md bg-primary px-4 text-small font-medium text-primary-foreground hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+            className="inline-flex h-9 shrink-0 items-center rounded-sm bg-primary px-4 text-small font-medium text-primary-foreground hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
           >
             {t("common.apply")}
           </button>

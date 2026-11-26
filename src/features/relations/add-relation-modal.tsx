@@ -141,7 +141,7 @@ export function AddRelationModal({
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder={t("relations.add.searchPlaceholder")}
                 aria-label={t("relations.add.searchPlaceholder")}
-                className="h-11 w-full rounded-lg card-inset pl-9 pr-3 text-small text-text shadow-xs placeholder:text-text-muted hover:border-border-strong focus:border-focus focus:outline-none"
+                className="h-11 w-full rounded-sm card-inset pl-9 pr-3 text-small text-text shadow-xs placeholder:text-text-muted hover:border-border-strong focus:border-focus focus:outline-none"
               />
             </div>
             {!query.trim() && <p className="text-caption text-text-muted">{t("relations.add.searchHint")}</p>}
@@ -206,7 +206,7 @@ export function AddRelationModal({
                   onChange={(event) => setNote(event.target.value.slice(0, 200))}
                   placeholder={t("relations.add.notePlaceholder")}
                   rows={2}
-                  className="w-full resize-none rounded-lg card-inset px-3 py-2 text-small text-text shadow-xs placeholder:text-text-muted hover:border-border-strong focus:border-focus focus:outline-none"
+                  className="w-full resize-none rounded-sm card-inset px-3 py-2 text-small text-text shadow-xs placeholder:text-text-muted hover:border-border-strong focus:border-focus focus:outline-none"
                 />
               </label>
             </div>

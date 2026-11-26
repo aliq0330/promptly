@@ -235,9 +235,9 @@ export function ComposeStep({ id, anchorId, headerExtra, children }: { id: strin
   const sub = stepSubtitle(step, t);
   const badge =
     step.state === "missing" ? (
-      <span className="rounded-full bg-danger-soft px-3 py-0.5 text-caption font-semibold text-danger">{t("cs.requiredMissing")}</span>
+      <span className="rounded-xs bg-danger-soft px-3 py-0.5 text-caption font-semibold text-danger">{t("cs.requiredMissing")}</span>
     ) : step.required ? (
-      <span className="rounded-full bg-primary-soft px-3 py-0.5 text-caption font-semibold text-primary-text">{t("cs.required")}</span>
+      <span className="rounded-xs bg-primary-soft px-3 py-0.5 text-caption font-semibold text-primary-text">{t("cs.required")}</span>
     ) : (
       <span className="text-caption text-text-muted">{t("cs.optional")}</span>
     );
@@ -289,7 +289,7 @@ export function ComposeStep({ id, anchorId, headerExtra, children }: { id: strin
         {children}
         {active && next && (
           <div className="flex justify-end border-t border-border-soft pt-3 md:max-lg:hidden">
-            <button type="button" onClick={() => ctx.activate(next.id)} data-compose-next={next.id} className="min-h-9 rounded-full px-1 text-small font-semibold text-primary-text hover:text-primary-hover">
+            <button type="button" onClick={() => ctx.activate(next.id)} data-compose-next={next.id} className="min-h-9 rounded-sm px-1 text-small font-semibold text-primary-text hover:text-primary-hover">
               {t("cs.next", { title: next.title })}
             </button>
           </div>
@@ -344,7 +344,7 @@ export function ComposeAudienceRow({ label, icon: Icon = Globe }: { label: strin
         <span className="block text-caption text-text-muted">{t("cs.whoSees")}</span>
         <span className="block truncate text-body font-semibold text-text">{label}</span>
       </span>
-      <button type="button" onClick={() => revealComposeField("compose-publish")} className="min-h-9 rounded-full px-2 text-small font-semibold text-primary-text hover:text-primary-hover">
+      <button type="button" onClick={() => revealComposeField("compose-publish")} className="min-h-9 rounded-sm px-2 text-small font-semibold text-primary-text hover:text-primary-hover">
         {t("cs.change")}
       </button>
     </div>

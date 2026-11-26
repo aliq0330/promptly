@@ -158,11 +158,11 @@ export function TelegramSection() {
                   </span>
                   <p className="break-words text-body font-semibold tracking-[-0.01em] text-text [overflow-wrap:anywhere]">{telegramLinkLabel(row)}</p>
                 </div>
-                <span className="shrink-0 rounded-full bg-success-soft px-2.5 py-0.5 text-caption font-semibold text-success">{t("tg.linkedBadge")}</span>
+                <span className="shrink-0 rounded-xs bg-success-soft px-2.5 py-0.5 text-caption font-semibold text-success">{t("tg.linkedBadge")}</span>
               </div>
               <div className="flex flex-wrap gap-1.5">
                 {row.scopes.map((scope) => (
-                  <span key={scope} className={cn("rounded-full px-2.5 py-0.5 text-caption font-semibold", scope === "write" ? "bg-secondary-soft text-secondary" : "bg-primary-soft text-primary-text")}>
+                  <span key={scope} className={cn("rounded-xs px-2.5 py-0.5 text-caption font-semibold", scope === "write" ? "bg-secondary-soft text-secondary" : "bg-primary-soft text-primary-text")}>
                     {scope === "write" ? t("apps.scope.write") : t("apps.scope.read")}
                   </span>
                 ))}

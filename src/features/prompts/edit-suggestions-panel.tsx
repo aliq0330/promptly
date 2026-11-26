@@ -190,7 +190,7 @@ export function EditSuggestionsPanel({
                         rows={4}
                         value={draftText}
                         onChange={(event) => setDraftText(event.target.value)}
-                        className="w-full resize-none rounded-lg card-inset px-3 py-2 font-mono text-caption text-text shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
+                        className="w-full resize-none rounded-sm card-inset px-3 py-2 font-mono text-caption text-text shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
                       />
                       <div className="flex flex-wrap items-center gap-2">
                         <Button type="button" size="sm" onClick={() => confirmAccept(suggestion)} disabled={isBusy || !draftText.trim()}>

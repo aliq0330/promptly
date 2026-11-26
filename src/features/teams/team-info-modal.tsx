@@ -150,7 +150,7 @@ export function TeamInfoModal({
                   onClick={() => onOpenChannelInfo(channel.id)}
                   aria-label={`${t("tm.info.channelInfo")}: #${channel.name}`}
                   data-info-channel-info={channel.name}
-                  className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-text-muted transition-colors hover:bg-surface hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+                  className="grid h-9 w-9 shrink-0 place-items-center rounded-sm text-text-muted transition-colors hover:bg-surface hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
                 >
                   <Info size={16} aria-hidden />
                 </button>

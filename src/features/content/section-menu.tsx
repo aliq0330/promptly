@@ -11,7 +11,7 @@ import { DialogShell } from "@/components/ui/dialog-shell";
 
 /** Ortak sade kontrol satırı simge düğmesi (docs/history/231-*, 232-*): arama · filtre · görünüm · "+". */
 export const CONTROL_ICON_BUTTON =
-  "grid h-11 w-11 shrink-0 place-items-center rounded-xl text-text transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus";
+  "grid h-11 w-11 shrink-0 place-items-center rounded-sm text-text transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus";
 
 /** sm+ = açılır kutu, altı = alt sayfa (paylaşılan `Modal`). */
 function useWide() {

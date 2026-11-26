@@ -67,7 +67,7 @@ export function OnlineMembersStrip({
             <li key={member.userId}>
               <Link
                 href={profileHref({ username: member.username })}
-                className="flex max-w-[12rem] items-center gap-2 rounded-full py-0.5 pr-2 transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+                className="flex max-w-[12rem] items-center gap-2 rounded-sm py-0.5 pr-2 transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
               >
                 <PresenceAvatar userId={member.userId} src={member.avatarUrl} alt={member.displayName} size={40} />
                 <span className="min-w-0 leading-tight">

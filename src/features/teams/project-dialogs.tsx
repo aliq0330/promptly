@@ -374,7 +374,7 @@ export function ProjectSettingsDialog({ project, canManage, onClose, onDone, onD
                   onChange={(event) => setConfirm(event.target.value)}
                   aria-label={t("tp.settings.deleteConfirm")}
                   placeholder={project.project.title}
-                  className="h-10 w-full rounded-lg card-inset px-3 text-small"
+                  className="h-10 w-full rounded-sm card-inset px-3 text-small"
                 />
                 <Button type="button" variant="outline" className="text-danger" disabled={busy || confirm.trim().toLowerCase() !== project.project.title.toLowerCase()} onClick={() => void remove()}>
                   {t("tp.settings.deleteConfirmButton")}
@@ -476,13 +476,13 @@ export function VariableDialog({ projectId, fileId, variable, onClose, onDone }:
             placeholder="musteri"
             autoCapitalize="none"
             autoCorrect="off"
-            className="h-11 w-full rounded-lg card-inset px-3 font-mono text-small disabled:opacity-50"
+            className="h-11 w-full rounded-sm card-inset px-3 font-mono text-small disabled:opacity-50"
           />
           <span className="mt-1 block text-caption text-text-muted">{t("tp.variable.nameHint")}</span>
         </label>
         <label className="block">
           <span className="mb-1.5 block text-label font-semibold text-text">{t("tp.variable.value")}</span>
-          <input value={value} onChange={(event) => setValue(event.target.value)} maxLength={500} className="h-11 w-full rounded-lg card-inset px-3 text-small" />
+          <input value={value} onChange={(event) => setValue(event.target.value)} maxLength={500} className="h-11 w-full rounded-sm card-inset px-3 text-small" />
         </label>
         <FormError message={error} />
       </div>

@@ -559,7 +559,7 @@ export function SearchView({ idle, scope }: { idle?: ReactNode; scope?: SearchSc
                           key={tokenKey(token)}
                           type="button"
                           onClick={() => setTokens(toggleToken(tokens, token))}
-                          className="flex min-h-11 items-center gap-2 rounded-lg card-flat px-4 text-left text-label text-text hover:border-primary"
+                          className="flex min-h-11 items-center gap-2 rounded-sm card-flat px-4 text-left text-label text-text hover:border-primary"
                         >
                           <Icon size={16} className="shrink-0 text-primary-text" aria-hidden />
                           <span className="min-w-0 flex-1 truncate">{t("search.removeNamed", { label })}</span>

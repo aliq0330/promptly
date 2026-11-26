@@ -112,7 +112,7 @@ export function VariableList({
                     type="button"
                     onClick={() => setConfirmingId(variable.tempId)}
                     aria-label={t("variable.deleteAriaLabel", { name: variable.name })}
-                    className="flex h-9 w-9 items-center justify-center rounded-md text-text-muted transition-colors hover:bg-danger-soft hover:text-danger"
+                    className="flex h-9 w-9 items-center justify-center rounded-sm text-text-muted transition-colors hover:bg-danger-soft hover:text-danger"
                   >
                     <TrashIcon size={16} />
                   </button>

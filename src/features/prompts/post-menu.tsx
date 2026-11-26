@@ -264,7 +264,7 @@ export function PostMenu({
         aria-label={t("common.postOptions")}
         aria-haspopup="menu"
         aria-expanded={open}
-        className="flex h-9 w-9 items-center justify-center rounded-md text-text-muted transition-colors duration-200 hover:bg-surface-soft hover:text-text"
+        className="flex h-9 w-9 items-center justify-center rounded-sm text-text-muted transition-colors duration-200 hover:bg-surface-soft hover:text-text"
       >
         <MoreVertical size={16} />
       </button>

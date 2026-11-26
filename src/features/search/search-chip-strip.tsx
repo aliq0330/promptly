@@ -35,7 +35,7 @@ export function SearchChipStrip({
           <span
             key={key}
             className={cn(
-              "inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-primary-soft pl-3 pr-1 text-label font-medium whitespace-nowrap text-text",
+              "inline-flex h-9 shrink-0 items-center gap-1.5 rounded-sm bg-primary-soft pl-3 pr-1 text-label font-medium whitespace-nowrap text-text",
               pendingKey === key && "ring-2 ring-primary",
             )}
           >
@@ -48,7 +48,7 @@ export function SearchChipStrip({
                 event.stopPropagation();
                 onRemove(key);
               }}
-              className="flex h-9 w-9 items-center justify-center rounded-full text-text-muted hover:bg-surface hover:text-text"
+              className="flex h-9 w-9 items-center justify-center rounded-sm text-text-muted hover:bg-surface hover:text-text"
             >
               <X size={16} />
             </button>

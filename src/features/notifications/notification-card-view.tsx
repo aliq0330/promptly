@@ -180,7 +180,7 @@ function QuickActionsRow({
         </>
       )}
       <span className="flex-1" />
-      <Link href={detail} onClick={() => { void markRead(card); onNavigate?.(); }} className="inline-flex h-11 items-center gap-1.5 rounded-full px-3 text-small font-semibold text-primary-text hover:bg-primary-soft" data-action="detail" aria-label={`${t("nc.detail")} · ${formatRelativeTime(card.sortAt, language)}`}>
+      <Link href={detail} onClick={() => { void markRead(card); onNavigate?.(); }} className="inline-flex h-11 items-center gap-1.5 rounded-sm px-3 text-small font-semibold text-primary-text hover:bg-primary-soft" data-action="detail" aria-label={`${t("nc.detail")} · ${formatRelativeTime(card.sortAt, language)}`}>
         {t("nc.detail")}
         <ArrowRight size={16} aria-hidden />
       </Link>

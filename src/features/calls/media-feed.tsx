@@ -46,7 +46,7 @@ export function VideoFeed({
           {offLabel}
         </span>
       )}
-      {label && <span className="absolute bottom-2 left-2 rounded-full bg-art-chip px-2.5 py-0.5 text-caption font-semibold text-on-art">{label}</span>}
+      {label && <span className="absolute bottom-2 left-2 rounded-xs bg-art-chip px-2.5 py-0.5 text-caption font-semibold text-on-art">{label}</span>}
     </div>
   );
 }

@@ -126,7 +126,7 @@ export function ConversationSearchPanel({
               if (event.key === "Enter" && hits.length > 0) void step(1);
             }}
             placeholder={t("chat.search.placeholder")}
-            className="h-9 w-full rounded-full border border-border-soft bg-background pl-9 pr-8 text-small text-text placeholder:text-text-muted focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15 [&::-webkit-search-cancel-button]:hidden"
+            className="h-9 w-full rounded-sm border border-border-soft bg-background pl-9 pr-8 text-small text-text placeholder:text-text-muted focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15 [&::-webkit-search-cancel-button]:hidden"
           />
           {input && (
             <button

@@ -180,7 +180,7 @@ export function DetailArtThumb({ onOpen, children }: { onOpen: () => void; child
       type="button"
       onClick={onOpen}
       aria-label={t("media.viewFullscreen")}
-      className="h-12 w-12 overflow-hidden rounded-md border border-border-soft opacity-85 transition-opacity hover:opacity-100"
+      className="h-12 w-12 overflow-hidden rounded-sm border border-border-soft opacity-85 transition-opacity hover:opacity-100"
     >
       {children}
     </button>
@@ -449,7 +449,7 @@ export function BandActionRow({ label, children, ...rest }: { label: string; chi
 }
 
 /** The big primary pill of a `BandActionRow` (a `Button`/`Link` class, merged after `buttonClassName`). */
-export const BAND_PRIMARY_CLASS = "h-12 gap-2 rounded-full px-7 text-body font-semibold shadow-md";
+export const BAND_PRIMARY_CLASS = "h-12 gap-2 rounded-sm px-7 text-body font-semibold shadow-md";
 
 /** A raised content card (comments, side-column blocks, info lists). */
 export function DetailCard({

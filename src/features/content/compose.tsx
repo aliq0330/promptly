@@ -181,7 +181,7 @@ export function ComposeShell({
           onClick={onClose}
           aria-label={t("common.close")}
           data-compose-close=""
-          className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-text transition-colors hover:bg-surface-soft"
+          className="grid h-10 w-10 shrink-0 place-items-center rounded-sm text-text transition-colors hover:bg-surface-soft"
         >
           <X size={24} />
         </button>

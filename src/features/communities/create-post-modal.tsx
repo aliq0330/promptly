@@ -160,7 +160,7 @@ export function CreatePostModal({
                           type="button"
                           onClick={() => setPicked(item)}
                           data-post-recent-pick={item.id}
-                          className="inline-flex h-9 shrink-0 items-center rounded-full border border-border-strong bg-surface px-4 text-small font-semibold text-text hover:border-primary hover:text-primary-text"
+                          className="inline-flex h-9 shrink-0 items-center rounded-sm border border-border-strong bg-surface px-4 text-small font-semibold text-text hover:border-primary hover:text-primary-text"
                         >
                           {t("cs.post.pick")}
                         </button>

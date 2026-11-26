@@ -40,7 +40,7 @@ export function InfoPanelShell({
             type="button"
             onClick={onClose}
             aria-label={t("common.close")}
-            className="flex h-11 w-11 items-center justify-center rounded-full text-text-secondary transition-colors hover:bg-surface hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+            className="flex h-11 w-11 items-center justify-center rounded-sm text-text-secondary transition-colors hover:bg-surface hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
           >
             <ChevronLeft size={24} aria-hidden />
           </button>

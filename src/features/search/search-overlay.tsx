@@ -309,7 +309,7 @@ export function SearchOverlay({
                   onMouseDown={(event) => event.preventDefault()}
                   onClick={() => pick(entry)}
                   className={cn(
-                    "flex min-h-11 w-full items-center gap-3 rounded-md px-2.5 py-2 text-left text-label text-text transition-colors",
+                    "flex min-h-11 w-full items-center gap-3 rounded-sm px-2.5 py-2 text-left text-label text-text transition-colors",
                     index === active ? "bg-surface-soft" : "hover:bg-surface-soft",
                   )}
                 >
@@ -534,7 +534,7 @@ function RailButton({ current, onClick, count, children }: { current: boolean; o
       aria-current={current ? "true" : undefined}
       onClick={onClick}
       className={cn(
-        "flex min-h-10 items-center gap-2 rounded-md px-3 text-left text-label transition-colors",
+        "flex min-h-10 items-center gap-2 rounded-sm px-3 text-left text-label transition-colors",
         current ? "bg-primary-soft font-semibold text-text" : "text-text-secondary hover:bg-surface-soft",
       )}
     >

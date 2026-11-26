@@ -97,7 +97,7 @@ export function MultiImagePicker({
               onClick={() => remove(item.key)}
               disabled={disabled}
               aria-label={t("media.removeImage")}
-              className="absolute right-1 top-1 flex h-9 w-9 items-center justify-center rounded-full bg-art-chip text-on-art transition-colors hover:bg-black/85 disabled:opacity-50"
+              className="absolute right-1 top-1 flex h-9 w-9 items-center justify-center rounded-sm bg-art-chip text-on-art transition-colors hover:bg-black/85 disabled:opacity-50"
             >
               <X size={16} />
             </button>
@@ -108,7 +108,7 @@ export function MultiImagePicker({
                   onClick={() => move(item.key, -1)}
                   disabled={disabled || index === 0}
                   aria-label={t("media.moveLeft")}
-                  className="flex h-9 w-9 items-center justify-center rounded-full bg-art-chip text-on-art hover:bg-black/85 disabled:pointer-events-none disabled:opacity-50"
+                  className="flex h-9 w-9 items-center justify-center rounded-sm bg-art-chip text-on-art hover:bg-black/85 disabled:pointer-events-none disabled:opacity-50"
                 >
                   <ChevronLeft size={16} />
                 </button>
@@ -117,7 +117,7 @@ export function MultiImagePicker({
                   onClick={() => move(item.key, 1)}
                   disabled={disabled || index === items.length - 1}
                   aria-label={t("media.moveRight")}
-                  className="flex h-9 w-9 items-center justify-center rounded-full bg-art-chip text-on-art hover:bg-black/85 disabled:pointer-events-none disabled:opacity-50"
+                  className="flex h-9 w-9 items-center justify-center rounded-sm bg-art-chip text-on-art hover:bg-black/85 disabled:pointer-events-none disabled:opacity-50"
                 >
                   <ChevronRight size={16} />
                 </button>

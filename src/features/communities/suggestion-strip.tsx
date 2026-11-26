@@ -97,10 +97,10 @@ export function SuggestionStrip({ onToast, onGoInvites }: { onToast: (message: s
           <p className="text-caption text-text-muted">{t("communities.strip.help")}</p>
         </div>
         <div className="hidden shrink-0 gap-1 md:flex">
-          <button type="button" onClick={() => scrollBy(-1)} aria-label={t("communities.strip.prev")} className="flex h-9 w-9 items-center justify-center rounded-full border border-border-soft bg-surface text-text-secondary hover:border-border-strong">
+          <button type="button" onClick={() => scrollBy(-1)} aria-label={t("communities.strip.prev")} className="flex h-9 w-9 items-center justify-center rounded-sm border border-border-soft bg-surface text-text-secondary hover:border-border-strong">
             <ChevronLeft size={16} aria-hidden />
           </button>
-          <button type="button" onClick={() => scrollBy(1)} aria-label={t("communities.strip.next")} className="flex h-9 w-9 items-center justify-center rounded-full border border-border-soft bg-surface text-text-secondary hover:border-border-strong">
+          <button type="button" onClick={() => scrollBy(1)} aria-label={t("communities.strip.next")} className="flex h-9 w-9 items-center justify-center rounded-sm border border-border-soft bg-surface text-text-secondary hover:border-border-strong">
             <ChevronRight size={16} aria-hidden />
           </button>
         </div>

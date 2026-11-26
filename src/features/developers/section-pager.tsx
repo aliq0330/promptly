@@ -93,7 +93,7 @@ export function SectionPager({ sections }: { sections: PagerSection[] }) {
   }
 
   const arrowClassName =
-    "flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-soft text-primary-text transition-colors hover:bg-primary-soft/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:bg-surface-soft disabled:text-text-muted disabled:opacity-50";
+    "flex h-10 w-10 shrink-0 items-center justify-center rounded-sm bg-primary-soft text-primary-text transition-colors hover:bg-primary-soft/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:bg-surface-soft disabled:text-text-muted disabled:opacity-50";
 
   return (
     <nav
@@ -130,7 +130,7 @@ export function SectionPager({ sections }: { sections: PagerSection[] }) {
           ))}
         </ul>
       )}
-      <div className="relative flex h-[3.125rem] w-[16.5rem] max-w-[calc(100vw-1.5rem)] items-center gap-1.5 overflow-hidden rounded-full border border-border-soft bg-surface px-1.5 shadow-md">
+      <div className="relative flex h-[3.125rem] w-[16.5rem] max-w-[calc(100vw-1.5rem)] items-center gap-1.5 overflow-hidden rounded-sm border border-border-soft bg-surface px-1.5 shadow-md">
         <button type="button" aria-label={t("devNav.prev")} disabled={index === 0} onClick={() => goTo(neighborSection(index, total, -1))} className={arrowClassName}>
           <ChevronUp size={20} />
         </button>
@@ -140,7 +140,7 @@ export function SectionPager({ sections }: { sections: PagerSection[] }) {
           aria-expanded={open}
           aria-label={`${t("devNav.list")}: ${current.label}`}
           onClick={() => setOpen((value) => !value)}
-          className="min-w-0 flex-1 rounded-full px-1 text-center leading-tight focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+          className="min-w-0 flex-1 rounded-sm px-1 text-center leading-tight focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
         >
           <span className="block truncate text-label font-semibold text-text">{current.label}</span>
           <span className="block text-caption text-text-muted">{t("devNav.position", { n: index + 1, total })}</span>

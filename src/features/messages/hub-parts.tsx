@@ -52,7 +52,7 @@ export function HubHeader({
           href={backHref}
           data-hub-back
           aria-label={t("hub.backTo", { name: backLabel })}
-          className="-ml-2 inline-flex h-10 min-w-0 items-center gap-0.5 rounded-full pl-1 pr-3 text-small font-semibold text-primary-text transition-colors hover:bg-primary-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+          className="-ml-2 inline-flex h-10 min-w-0 items-center gap-0.5 rounded-sm pl-1 pr-3 text-small font-semibold text-primary-text transition-colors hover:bg-primary-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
         >
           <ChevronLeft size={20} aria-hidden className="shrink-0" />
           <span className="truncate">{backLabel}</span>
@@ -84,7 +84,7 @@ export function HubTopLink({ href, label, dataAttr, children }: { href: string; 
       {...{ [dataAttr]: "" }}
       aria-label={label}
       title={label}
-      className="flex h-10 w-10 items-center justify-center rounded-full text-text-secondary transition-colors hover:bg-surface-soft hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+      className="flex h-10 w-10 items-center justify-center rounded-sm text-text-secondary transition-colors hover:bg-surface-soft hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
     >
       {children}
     </Link>

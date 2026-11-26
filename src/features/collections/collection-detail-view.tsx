@@ -204,7 +204,7 @@ export function CollectionDetailView() {
               </>
             )}
             {collection.visibility === "public" && (
-              <ShareButton url={collectionHref(collection)} title={collection.name} className="h-11 min-w-11 rounded-full px-3" />
+              <ShareButton url={collectionHref(collection)} title={collection.name} className="h-11 min-w-11 rounded-sm px-3" />
             )}
             {canManageCollection(role) && (
               <div className="ml-auto">

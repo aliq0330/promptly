@@ -256,7 +256,7 @@ export function PromptDnaEditor({
                         maxLength={60}
                         placeholder={t("dna.customLabelPlaceholder")}
                         aria-label={t("dna.customLabel")}
-                        className="h-9 w-full rounded-md card-flat px-3 text-small text-text"
+                        className="h-9 w-full rounded-sm card-flat px-3 text-small text-text"
                       />
                     )}
                     <textarea
@@ -302,7 +302,7 @@ export function PromptDnaEditor({
                         type="button"
                         onClick={() => onChange(sections.filter((candidate) => candidate.id !== section.id))}
                         aria-label={t("dna.removeAria", { label: heading })}
-                        className="flex h-9 w-9 items-center justify-center rounded-md text-text-muted hover:bg-surface-soft hover:text-danger"
+                        className="flex h-9 w-9 items-center justify-center rounded-sm text-text-muted hover:bg-surface-soft hover:text-danger"
                       >
                         <TrashIcon size={16} />
                       </button>
@@ -322,7 +322,7 @@ export function PromptDnaEditor({
           onClick={() => setMenuOpen((open) => !open)}
           aria-expanded={menuOpen}
           aria-controls="dna-add-menu"
-          className="inline-flex h-9 items-center gap-1.5 rounded-md px-2 text-label font-medium text-primary-text hover:bg-primary-soft"
+          className="inline-flex h-9 items-center gap-1.5 rounded-sm px-2 text-label font-medium text-primary-text hover:bg-primary-soft"
         >
           <Plus size={16} />
           {t("dna.addSection")}
@@ -339,7 +339,7 @@ export function PromptDnaEditor({
                   type="button"
                   disabled={taken}
                   onClick={() => startAdd(type)}
-                  className="inline-flex h-9 items-center gap-1.5 rounded-full border border-border bg-surface px-3 text-label font-medium text-text-secondary transition-colors hover:border-border-strong hover:text-text disabled:pointer-events-none disabled:opacity-50"
+                  className="inline-flex h-9 items-center gap-1.5 rounded-sm border border-border bg-surface px-3 text-label font-medium text-text-secondary transition-colors hover:border-border-strong hover:text-text disabled:pointer-events-none disabled:opacity-50"
                 >
                   <Icon size={12} aria-hidden="true" />
                   {label(type)}

@@ -208,7 +208,7 @@ export function BulkImportCard() {
             value={url}
             onChange={(event) => setUrl(event.target.value)}
             disabled={busy}
-            className="h-10 min-w-0 flex-1 rounded-md card-inset px-3 text-small text-text"
+            className="h-10 min-w-0 flex-1 rounded-sm card-inset px-3 text-small text-text"
             data-testid="bulk-url"
           />
           <Button type="button" size="sm" variant="outline" onClick={() => void fromUrl()} disabled={busy || url.trim() === ""} data-testid="bulk-fetch">
@@ -275,7 +275,7 @@ export function BulkImportCard() {
               onChange={(event) => setTag(event.target.value)}
               disabled={busy}
               maxLength={80}
-              className="h-10 w-full max-w-xs rounded-md card-inset px-3 text-small text-text"
+              className="h-10 w-full max-w-xs rounded-sm card-inset px-3 text-small text-text"
               data-testid="bulk-tag"
             />
             <p className={`text-caption ${tagInvalid ? "text-danger" : "text-text-muted"}`}>{tagInvalid ? t("exchange.admin.tagInvalid") : t("exchange.admin.tagHint")}</p>

@@ -195,7 +195,7 @@ export function BulkManageCard() {
             onChange={(event) => setTag(event.target.value)}
             disabled={busy}
             maxLength={80}
-            className="h-10 min-w-0 flex-1 rounded-md card-inset px-3 text-small text-text sm:max-w-xs"
+            className="h-10 min-w-0 flex-1 rounded-sm card-inset px-3 text-small text-text sm:max-w-xs"
             data-testid="manage-tag"
           />
           <Button type="button" size="sm" variant="outline" onClick={() => void load()} disabled={busy || !user} data-testid="manage-load">
@@ -226,7 +226,7 @@ export function BulkManageCard() {
                   value={status}
                   onChange={(event) => (setStatus(event.target.value as StatusFilter), setShown(SHOW_STEP))}
                   aria-label={t("exchange.manage.statusAria")}
-                  className="h-9 rounded-md card-inset px-2 text-small text-text"
+                  className="h-9 rounded-sm card-inset px-2 text-small text-text"
                   data-testid="manage-status"
                 >
                   <option value="all">{t("exchange.manage.statusAll")}</option>
@@ -240,7 +240,7 @@ export function BulkManageCard() {
                   onChange={(event) => (setQuery(event.target.value), setShown(SHOW_STEP))}
                   placeholder={t("exchange.manage.search")}
                   aria-label={t("exchange.manage.search")}
-                  className="h-9 min-w-0 flex-1 rounded-md card-inset px-3 text-small text-text sm:max-w-xs"
+                  className="h-9 min-w-0 flex-1 rounded-sm card-inset px-3 text-small text-text sm:max-w-xs"
                   data-testid="manage-search"
                 />
               </div>
@@ -258,7 +258,7 @@ export function BulkManageCard() {
                     value={firstN}
                     onChange={(event) => setFirstN(Math.max(1, Math.min(10000, Number(event.target.value) || 1)))}
                     aria-label={t("exchange.manage.firstN")}
-                    className="h-9 w-20 rounded-md card-inset px-2 text-small text-text"
+                    className="h-9 w-20 rounded-sm card-inset px-2 text-small text-text"
                     data-testid="manage-first-n"
                   />
                   <Button type="button" size="sm" variant="outline" disabled={busy || filtered.length === 0} onClick={() => setSelected(new Set(filtered.slice(0, firstN).map((r) => r.id)))} data-testid="manage-select-first">

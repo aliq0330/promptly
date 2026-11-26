@@ -79,7 +79,7 @@ export function TagPicker({ picker, disabled }: TagPickerProps) {
             <span
               key={tag.slug}
               className={cn(
-                "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-caption font-medium",
+                "inline-flex items-center gap-1 rounded-sm border px-2.5 py-1 text-caption font-medium",
                 source === "automatic"
                   ? "border-primary/40 bg-primary/10 text-primary-text"
                   : "border-border bg-surface text-text",
@@ -129,7 +129,7 @@ export function TagPicker({ picker, disabled }: TagPickerProps) {
                     }}
                     disabled={isAccepting}
                     title={tag.isCandidate ? t("tagPicker.candidateHint") : undefined}
-                    className="inline-flex items-center gap-1 rounded-full border border-dashed border-border px-2.5 py-1 text-caption font-medium text-text-muted transition-colors hover:border-primary hover:text-primary-text disabled:opacity-50"
+                    className="inline-flex items-center gap-1 rounded-sm border border-dashed border-border px-2.5 py-1 text-caption font-medium text-text-muted transition-colors hover:border-primary hover:text-primary-text disabled:opacity-50"
                   >
                     <Plus size={12} />
                     {tag.label}
@@ -161,7 +161,7 @@ export function TagPicker({ picker, disabled }: TagPickerProps) {
               setCreateError(null);
             }}
             placeholder={t("tagPicker.searchOrCreatePlaceholder")}
-            className="h-9 w-full rounded-lg card-inset px-3 text-small text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
+            className="h-9 w-full rounded-sm card-inset px-3 text-small text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
           />
           {normalizedQuery && (
             <div className="absolute z-20 mt-1 max-h-64 w-full overflow-y-auto rounded-md card-flat shadow-lg">

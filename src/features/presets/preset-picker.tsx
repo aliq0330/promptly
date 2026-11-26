@@ -120,7 +120,7 @@ export function PresetLists({
             type="button"
             data-preset-pick={preset.id}
             onClick={() => onApply(bundleOf(preset))}
-            className="inline-flex h-9 shrink-0 items-center justify-center rounded-md bg-primary px-3 text-small font-medium text-primary-foreground hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+            className="inline-flex h-9 shrink-0 items-center justify-center rounded-sm bg-primary px-3 text-small font-medium text-primary-foreground hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
           >
             {t("common.apply")}
           </button>

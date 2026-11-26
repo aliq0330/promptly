@@ -182,7 +182,7 @@ export function PresetDetailView({ presetId }: { presetId?: string } = {}) {
           below={<EngageReactionSummary id={preset.id} likeCount={preset.likeCount} contentType="preset" />}
           primary={
             <div className="flex flex-wrap items-center gap-2">
-              <Link href={`/studio?preset=${preset.id}`} className={buttonClassName({ size: "lg", className: "h-14 rounded-full px-7 shadow-md" })}>
+              <Link href={`/studio?preset=${preset.id}`} className={buttonClassName({ size: "lg", className: "h-14 rounded-sm px-7 shadow-md" })}>
                 <WandSparkles size={20} aria-hidden /> {t("studio.openInStudio")}
               </Link>
               {/* "Bir promptla dene" (docs/history/228-*): pick a prompt that fits this preset, Studio opens with both. */}
@@ -190,7 +190,7 @@ export function PresetDetailView({ presetId }: { presetId?: string } = {}) {
                 type="button"
                 onClick={() => setTryPicker(true)}
                 aria-haspopup="dialog"
-                className={buttonClassName({ variant: "outline", size: "lg", className: "h-14 rounded-full px-6" })}
+                className={buttonClassName({ variant: "outline", size: "lg", className: "h-14 rounded-sm px-6" })}
               >
                 {t("presetTry.button")}
               </button>

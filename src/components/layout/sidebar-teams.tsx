@@ -70,7 +70,7 @@ function MyTeams() {
                 href={teamLink(team.id)}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "flex h-10 items-center gap-3 rounded-xl px-3 text-small transition-colors",
+                  "flex h-10 items-center gap-3 rounded-sm px-3 text-small transition-colors",
                   active ? "bg-primary-soft font-semibold text-primary-text" : "font-medium text-text-secondary hover:bg-surface-soft hover:text-text",
                 )}
               >

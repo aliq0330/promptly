@@ -185,10 +185,10 @@ export function PresetEditor({ editId }: { editId: string | null }) {
         <h1 className="mb-2 text-h2 font-bold text-text">{t("auth.loginRequiredTitle")}</h1>
         <p className="mb-4 text-small text-text-muted">{t("preset.loginRequiredBody")}</p>
         <div className="flex justify-center gap-2">
-          <Link href="/login" className="inline-flex h-9 items-center rounded-md bg-primary px-4 text-small font-medium text-primary-foreground hover:bg-primary-hover">
+          <Link href="/login" className="inline-flex h-9 items-center rounded-sm bg-primary px-4 text-small font-medium text-primary-foreground hover:bg-primary-hover">
             {t("header.login")}
           </Link>
-          <Link href="/signup" className="inline-flex h-9 items-center rounded-md border border-border px-4 text-small font-medium text-text hover:bg-accent-surface">
+          <Link href="/signup" className="inline-flex h-9 items-center rounded-sm border border-border px-4 text-small font-medium text-text hover:bg-accent-surface">
             {t("auth.createAccount")}
           </Link>
         </div>
@@ -200,7 +200,7 @@ export function PresetEditor({ editId }: { editId: string | null }) {
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
         <h1 className="mb-2 text-h2 font-bold text-text">{loadState === "forbidden" ? t("preset.noEditPermissionTitle") : t("preset.notFoundTitle")}</h1>
         <p className="mb-4 text-small text-text-muted">{loadState === "forbidden" ? t("preset.noEditPermissionBody") : t("preset.notFoundBody")}</p>
-        <Link href={DISCOVER_SECTION_HREF.presets} className="inline-flex h-9 items-center rounded-md border border-border px-4 text-small font-medium text-text hover:bg-accent-surface">
+        <Link href={DISCOVER_SECTION_HREF.presets} className="inline-flex h-9 items-center rounded-sm border border-border px-4 text-small font-medium text-text hover:bg-accent-surface">
           {t("preset.backToPresets")}
         </Link>
       </div>
@@ -325,7 +325,7 @@ export function PresetEditor({ editId }: { editId: string | null }) {
         <section id="preset-parameters" className="overflow-hidden rounded-xl border border-border-strong bg-surface shadow-card" data-preset-parameters="">
           <div className="flex flex-wrap items-center gap-3 px-4 pb-3 pt-4 sm:px-5">
             <h2 className="font-display text-h2 font-bold text-text">{t("compose.sectionParameters")}</h2>
-            <span className="rounded-full bg-primary-soft px-3 py-0.5 text-caption font-semibold text-primary-text">{t("cs.preset.paramCount", { count: Object.keys(effectiveSelection).length })}</span>
+            <span className="rounded-xs bg-primary-soft px-3 py-0.5 text-caption font-semibold text-primary-text">{t("cs.preset.paramCount", { count: Object.keys(effectiveSelection).length })}</span>
             <p className="w-full text-caption text-text-muted lg:ml-auto lg:w-auto">{t("cs.preset.paramHint")}</p>
           </div>
           <div className="border-t border-border-soft px-4 py-4 sm:px-5">

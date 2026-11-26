@@ -219,7 +219,7 @@ export function SendStateOverlay({
             event.stopPropagation();
             onRetry();
           }}
-          className="inline-flex items-center gap-1 rounded-full bg-danger px-3 py-1.5 text-caption font-medium text-danger-foreground hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-danger"
+          className="inline-flex items-center gap-1 rounded-sm bg-danger px-3 py-1.5 text-caption font-medium text-danger-foreground hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-danger"
         >
           <RefreshCw size={12} aria-hidden />
           {t("common.retry")}

@@ -127,7 +127,7 @@ export function DnaConstellation({ sections, centerTitle, mapHref }: { sections:
             </svg>
 
             <div
-              className="absolute z-10 flex max-w-[11rem] -translate-x-1/2 -translate-y-1/2 animate-pop-in items-center gap-1.5 rounded-full border border-primary bg-primary-soft px-3 py-2 text-label font-semibold text-primary-text shadow-card"
+              className="absolute z-10 flex max-w-[11rem] -translate-x-1/2 -translate-y-1/2 animate-pop-in items-center gap-1.5 rounded-sm border border-primary bg-primary-soft px-3 py-2 text-label font-semibold text-primary-text shadow-card"
               style={{ left: cx, top: cy }}
               data-dna-center
             >
@@ -197,7 +197,7 @@ export function DnaConstellation({ sections, centerTitle, mapHref }: { sections:
           type="button"
           onClick={() => setShowAll(true)}
           data-dna-show-all
-          className="inline-flex h-11 items-center gap-1.5 rounded-full border border-border bg-surface px-4 text-label font-medium text-text shadow-xs transition-colors hover:border-border-strong"
+          className="inline-flex h-11 items-center gap-1.5 rounded-sm border border-border bg-surface px-4 text-label font-medium text-text shadow-xs transition-colors hover:border-border-strong"
         >
           <Plus size={16} aria-hidden />
           {t("dna.constellationMore", { count: hidden })}

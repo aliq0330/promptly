@@ -770,11 +770,11 @@ export function GroupsManagerModal({ onClose }: { onClose: () => void }) {
                           setEditName(group.name);
                         }}
                         aria-label={t("spaces.groups.rename", { name: group.name })}
-                        className="rounded-full p-2 text-text-muted hover:bg-surface-soft hover:text-text"
+                        className="rounded-sm p-2 text-text-muted hover:bg-surface-soft hover:text-text"
                       >
                         <Pencil size={16} />
                       </button>
-                      <button type="button" onClick={() => setConfirmDelete(group.id)} aria-label={t("spaces.groups.delete", { name: group.name })} className="rounded-full p-2 text-text-muted hover:bg-danger-soft hover:text-danger">
+                      <button type="button" onClick={() => setConfirmDelete(group.id)} aria-label={t("spaces.groups.delete", { name: group.name })} className="rounded-sm p-2 text-text-muted hover:bg-danger-soft hover:text-danger">
                         <TrashIcon size={16} />
                       </button>
                     </>
@@ -833,7 +833,7 @@ export function GroupPill({ groupId }: { groupId: string | null }) {
   const group = groups.find((entry) => entry.id === groupId);
   if (!group) return null;
   return (
-    <span className={cn("inline-flex max-w-full items-center gap-1 truncate rounded-full px-2 py-0.5 text-caption font-medium", SPACE_COLOR_CLASS[group.color].surface, SPACE_COLOR_CLASS[group.color].text)}>
+    <span className={cn("inline-flex max-w-full items-center gap-1 truncate rounded-xs px-2 py-0.5 text-caption font-medium", SPACE_COLOR_CLASS[group.color].surface, SPACE_COLOR_CLASS[group.color].text)}>
       <Layers size={12} aria-hidden />
       <span className="truncate">{group.name}</span>
     </span>

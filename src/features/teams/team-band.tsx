@@ -113,7 +113,7 @@ export function TeamBand({
       }
       kicker={
         <>
-          <span className="rounded-full bg-surface/80 px-2.5 py-0.5 font-semibold text-text">{t("tc.band.kicker")}</span>
+          <span className="rounded-sm bg-surface/80 px-2.5 py-0.5 font-semibold text-text">{t("tc.band.kicker")}</span>
           <VisibilityTag icon={Lock} label={t("tm.header.inviteOnly")} data-team-visibility="" />
         </>
       }
@@ -186,7 +186,7 @@ export function TeamBand({
                 </span>
               ))}
               {Math.max(0, team.memberCount - Math.min(3, faces.length)) > 0 && (
-                <span className="-ml-1.5 grid h-8 min-w-8 place-items-center rounded-full bg-surface px-1.5 text-caption font-semibold text-text ring-2 ring-surface">+{Math.max(0, team.memberCount - Math.min(3, faces.length))}</span>
+                <span className="-ml-1.5 grid h-8 min-w-8 place-items-center rounded-sm bg-surface px-1.5 text-caption font-semibold text-text ring-2 ring-surface">+{Math.max(0, team.memberCount - Math.min(3, faces.length))}</span>
               )}
             </div>
           )}

@@ -119,7 +119,7 @@ export function GifPicker({ onPick, onClose }: { onPick: (gif: GifItem) => void;
                 type="button"
                 onClick={() => setInput("")}
                 aria-label={t("gif.clearSearch")}
-                className="absolute right-1.5 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full text-text-muted hover:bg-surface-soft hover:text-text"
+                className="absolute right-1.5 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-sm text-text-muted hover:bg-surface-soft hover:text-text"
               >
                 <X size={16} aria-hidden />
               </button>

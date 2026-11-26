@@ -164,7 +164,7 @@ function DrawerFrame({ ctx, title, header, children }: { ctx: AreaItemContext; t
           <DrawerContext.Provider value>{children}</DrawerContext.Provider>
         </div>
       </aside>
-      <button type="button" onClick={close} aria-label={t("common.close")} data-drawer-close className="absolute right-3 top-3 z-10 grid h-11 w-11 place-items-center rounded-full text-text-secondary hover:bg-surface-soft md:right-4 md:top-3.5">
+      <button type="button" onClick={close} aria-label={t("common.close")} data-drawer-close className="absolute right-3 top-3 z-10 grid h-11 w-11 place-items-center rounded-sm text-text-secondary hover:bg-surface-soft md:right-4 md:top-3.5">
         <X size={20} aria-hidden />
       </button>
     </Modal>
@@ -266,7 +266,7 @@ function ItemBody({ ctx, role, item, palette, onChanged }: { ctx: AreaItemContex
   const itemGroupId = (item ?? transferable)?.groupId ?? null;
   const groupLabel = itemGroupId ? (groups.find((group) => group.id === itemGroupId)?.name ?? null) : null;
   const groupChip = groupLabel ? (
-    <span className="rounded-full bg-surface-soft px-2 py-0.5 text-caption font-semibold text-text-secondary" data-item-group>
+    <span className="rounded-xs bg-surface-soft px-2 py-0.5 text-caption font-semibold text-text-secondary" data-item-group>
       {groupLabel}
     </span>
   ) : null;
@@ -291,7 +291,7 @@ function ItemBody({ ctx, role, item, palette, onChanged }: { ctx: AreaItemContex
         </div>
       </div>
       {hasMenu && (
-        <button type="button" onClick={() => setMenu("menu")} aria-label={t("tp.item.moreAria")} data-path-more className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-text-secondary hover:bg-surface-soft">
+        <button type="button" onClick={() => setMenu("menu")} aria-label={t("tp.item.moreAria")} data-path-more className="grid h-11 w-11 shrink-0 place-items-center rounded-sm text-text-secondary hover:bg-surface-soft">
           <MoreVertical size={20} aria-hidden />
         </button>
       )}
@@ -307,7 +307,7 @@ function ItemBody({ ctx, role, item, palette, onChanged }: { ctx: AreaItemContex
           {title}
         </h1>
         <div className="flex flex-wrap items-center gap-2 text-small text-text-secondary">
-          <span className={cn("inline-flex items-center gap-1.5 rounded-full py-1 pl-2 pr-2.5 font-semibold", KIND_TONE[kind])}>
+          <span className={cn("inline-flex items-center gap-1.5 rounded-sm py-1 pl-2 pr-2.5 font-semibold", KIND_TONE[kind])}>
             <Icon size={16} aria-hidden />
             {t(KIND_LABEL[kind])}
           </span>
@@ -336,7 +336,7 @@ function ItemBody({ ctx, role, item, palette, onChanged }: { ctx: AreaItemContex
       {item?.kind === "note" && <NoteSection item={item} />}
       {palette && <PaletteSection palette={palette} />}
       {item?.kind === "content" && resolved?.href && (
-        <Link href={resolved.href} className="inline-flex h-11 items-center gap-2 rounded-full border border-border bg-surface px-4 text-small font-semibold text-text hover:bg-surface-soft" data-item-open-content>
+        <Link href={resolved.href} className="inline-flex h-11 items-center gap-2 rounded-sm border border-border bg-surface px-4 text-small font-semibold text-text hover:bg-surface-soft" data-item-open-content>
           <ArrowUpRight size={16} aria-hidden />
           {t("tp.item.openContent")}
         </Link>
@@ -356,7 +356,7 @@ function ItemBody({ ctx, role, item, palette, onChanged }: { ctx: AreaItemContex
             boardIds.map((id) => {
               const board = ctx.placement?.boards.find((entry) => entry.id === id);
               return board ? (
-                <Link key={id} href={ctx.placement!.boardHref(id, null)} className="rounded-full bg-primary-soft px-2.5 py-1 text-caption font-semibold text-primary-text" data-item-board={id}>
+                <Link key={id} href={ctx.placement!.boardHref(id, null)} className="rounded-sm bg-primary-soft px-2.5 py-1 text-caption font-semibold text-primary-text" data-item-board={id}>
                   {board.title}
                 </Link>
               ) : null;
@@ -377,7 +377,7 @@ function ItemBody({ ctx, role, item, palette, onChanged }: { ctx: AreaItemContex
           <ul className="-mx-1 space-y-0.5">
             {onBoard && item && (
               <li>
-                <Link href={ctx.boardHref(item.id)} className="flex min-h-12 items-center gap-3 rounded-xl px-2 text-body font-semibold text-text hover:bg-surface-soft" data-item-show-on-board>
+                <Link href={ctx.boardHref(item.id)} className="flex min-h-12 items-center gap-3 rounded-sm px-2 text-body font-semibold text-text hover:bg-surface-soft" data-item-show-on-board>
                   <Presentation size={20} aria-hidden />
                   {t("tp.item.showOnBoard")}
                 </Link>
@@ -385,7 +385,7 @@ function ItemBody({ ctx, role, item, palette, onChanged }: { ctx: AreaItemContex
             )}
             {place && (
               <li>
-                <button type="button" onClick={() => setMenu("board")} className="flex min-h-12 w-full items-center gap-3 rounded-xl px-2 text-left text-body font-semibold text-text hover:bg-surface-soft" data-item-add-to-board>
+                <button type="button" onClick={() => setMenu("board")} className="flex min-h-12 w-full items-center gap-3 rounded-sm px-2 text-left text-body font-semibold text-text hover:bg-surface-soft" data-item-add-to-board>
                   <Presentation size={20} aria-hidden />
                   {t("tp.item.addToBoard")}
                 </button>
@@ -393,7 +393,7 @@ function ItemBody({ ctx, role, item, palette, onChanged }: { ctx: AreaItemContex
             )}
             {mayGroup && (
               <li>
-                <button type="button" onClick={() => setMenu("group")} className="flex min-h-12 w-full items-center gap-3 rounded-xl px-2 text-left text-body font-semibold text-text hover:bg-surface-soft" data-item-group-add>
+                <button type="button" onClick={() => setMenu("group")} className="flex min-h-12 w-full items-center gap-3 rounded-sm px-2 text-left text-body font-semibold text-text hover:bg-surface-soft" data-item-group-add>
                   <FolderPlus size={20} aria-hidden />
                   {t("tf.group.add")}
                 </button>
@@ -401,7 +401,7 @@ function ItemBody({ ctx, role, item, palette, onChanged }: { ctx: AreaItemContex
             )}
             {mayEdit && (
               <li>
-                <button type="button" onClick={() => setMenu("edit")} className="flex min-h-12 w-full items-center gap-3 rounded-xl px-2 text-left text-body font-semibold text-text hover:bg-surface-soft" data-item-edit>
+                <button type="button" onClick={() => setMenu("edit")} className="flex min-h-12 w-full items-center gap-3 rounded-sm px-2 text-left text-body font-semibold text-text hover:bg-surface-soft" data-item-edit>
                   <Pencil size={20} aria-hidden />
                   {t("tp.item.edit")}
                 </button>
@@ -409,7 +409,7 @@ function ItemBody({ ctx, role, item, palette, onChanged }: { ctx: AreaItemContex
             )}
             {mayPropose && (
               <li>
-                <button type="button" onClick={() => setMenu("propose")} className="flex min-h-12 w-full items-center gap-3 rounded-xl px-2 text-left text-body font-semibold text-text hover:bg-surface-soft" data-item-propose>
+                <button type="button" onClick={() => setMenu("propose")} className="flex min-h-12 w-full items-center gap-3 rounded-sm px-2 text-left text-body font-semibold text-text hover:bg-surface-soft" data-item-propose>
                   <Pencil size={20} aria-hidden />
                   {t("tp.review.propose")}
                 </button>
@@ -417,7 +417,7 @@ function ItemBody({ ctx, role, item, palette, onChanged }: { ctx: AreaItemContex
             )}
             {mayRemoveFromBoard && (
               <li>
-                <button type="button" onClick={() => setMenu("delete")} className="flex min-h-12 w-full items-center gap-3 rounded-xl px-2 text-left text-body font-semibold text-text hover:bg-surface-soft" data-item-remove-from-board>
+                <button type="button" onClick={() => setMenu("delete")} className="flex min-h-12 w-full items-center gap-3 rounded-sm px-2 text-left text-body font-semibold text-text hover:bg-surface-soft" data-item-remove-from-board>
                   <Trash2 size={20} aria-hidden />
                   {t("tf.board.removeFromBoard")}
                 </button>
@@ -425,7 +425,7 @@ function ItemBody({ ctx, role, item, palette, onChanged }: { ctx: AreaItemContex
             )}
             {mayDelete && (
               <li>
-                <button type="button" onClick={() => setMenu(isMirror ? "deleteFile" : "delete")} className="flex min-h-12 w-full items-center gap-3 rounded-xl px-2 text-left text-body font-semibold text-danger hover:bg-danger-soft" data-item-delete>
+                <button type="button" onClick={() => setMenu(isMirror ? "deleteFile" : "delete")} className="flex min-h-12 w-full items-center gap-3 rounded-sm px-2 text-left text-body font-semibold text-danger hover:bg-danger-soft" data-item-delete>
                   <Trash2 size={20} aria-hidden />
                   {t(isMirror || ctx.placement ? "tf.board.deleteFromFile" : "tp.item.delete")}
                 </button>
@@ -570,7 +570,7 @@ function ReviewBar({ item, role, onChanged, extra }: { item: SpaceItem; role: Pr
               rows={2}
               maxLength={2000}
               placeholder={t("tp.item.askPlaceholder")}
-              className="w-full resize-none rounded-lg card-inset px-3 py-2 text-small"
+              className="w-full resize-none rounded-sm card-inset px-3 py-2 text-small"
               data-item-change-note
             />
           </label>
@@ -700,7 +700,7 @@ function PromptSection({ ctx, item, role, onChanged }: { ctx: AreaItemContext; i
                     <li key={name} className="flex items-center gap-3 border-t border-border-soft px-4 py-2.5 text-small" data-item-variable={name}>
                       <span className="prompt-text text-secondary">{`{${found?.name ?? name}}`}</span>
                       <span className={cn("min-w-0 flex-1 truncate font-semibold", found ? "text-text" : "text-text-muted")}>{found ? found.value : "—"}</span>
-                      <span className={cn("shrink-0 rounded-full px-2.5 py-0.5 text-caption font-semibold", found ? "bg-success-soft text-success" : "bg-warning-soft text-warning")}>
+                      <span className={cn("shrink-0 rounded-xs px-2.5 py-0.5 text-caption font-semibold", found ? "bg-success-soft text-success" : "bg-warning-soft text-warning")}>
                         {t(found ? "tp.item.varFile" : "tp.item.varMissing")}
                       </span>
                     </li>
@@ -772,7 +772,7 @@ function ImageSection({ ctx, item, title, creator }: { ctx: AreaItemContext; ite
       >
         <SpaceImage url={item.mediaUrl} alt={title} available={available} reason={reason ? t(reason) : undefined} className="h-full w-full" imgClassName="object-cover" />
         {available && (
-          <span className="absolute bottom-3 right-3 inline-flex h-9 items-center gap-1.5 rounded-full bg-art-chip px-3 text-small font-semibold text-on-art">
+          <span className="absolute bottom-3 right-3 inline-flex h-9 items-center gap-1.5 rounded-sm bg-art-chip px-3 text-small font-semibold text-on-art">
             <Maximize2 size={16} aria-hidden />
             {t("tp.item.enlarge")}
           </span>

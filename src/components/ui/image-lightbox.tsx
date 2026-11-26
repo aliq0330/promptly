@@ -82,7 +82,7 @@ export function ImageLightbox({
             type="button"
             onClick={onClose}
             aria-label={t("common.close")}
-            className="rounded-full p-2 text-on-art hover:bg-white/10"
+            className="rounded-sm p-2 text-on-art hover:bg-white/10"
           >
             <X size={24} />
           </button>
@@ -110,7 +110,7 @@ export function ImageLightbox({
               type="button"
               onClick={() => setIndex((prev) => (prev - 1 + images.length) % images.length)}
               aria-label={t("media.previousImage")}
-              className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-black/40 p-2 text-on-art hover:bg-black/60 sm:left-4"
+              className="absolute left-2 top-1/2 -translate-y-1/2 rounded-sm bg-black/40 p-2 text-on-art hover:bg-black/60 sm:left-4"
             >
               <ChevronLeft size={24} />
             </button>
@@ -121,7 +121,7 @@ export function ImageLightbox({
               type="button"
               onClick={() => setIndex((prev) => (prev + 1) % images.length)}
               aria-label={t("media.nextImage")}
-              className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-black/40 p-2 text-on-art hover:bg-black/60 sm:right-4"
+              className="absolute right-2 top-1/2 -translate-y-1/2 rounded-sm bg-black/40 p-2 text-on-art hover:bg-black/60 sm:right-4"
             >
               <ChevronRight size={24} />
             </button>

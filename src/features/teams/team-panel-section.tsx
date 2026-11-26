@@ -156,7 +156,7 @@ export function TeamPanelSection({ ctx }: { ctx: TeamCtx }) {
                       <span className="w-8 text-right font-semibold tabular-nums text-text" title={t("tm.panel.col.added")}>
                         {project.added}
                       </span>
-                      {project.pending > 0 && <span className="rounded-full bg-warning-soft px-2 text-caption font-semibold text-warning">{t("tp.card.pending", { count: project.pending })}</span>}
+                      {project.pending > 0 && <span className="rounded-sm bg-warning-soft px-2 text-caption font-semibold text-warning">{t("tp.card.pending", { count: project.pending })}</span>}
                     </Link>
                   </li>
                 ))}

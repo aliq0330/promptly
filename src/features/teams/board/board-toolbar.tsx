@@ -162,7 +162,7 @@ export function BoardToolbar(props: BoardToolbarProps) {
           onClick={() => toggle("zoom")}
           data-testid="board-zoom-button"
           data-board-zoom={props.zoomPercent}
-          className={cn("flex h-10 shrink-0 items-center gap-1 rounded-md px-2.5 text-small font-semibold tabular-nums text-text hover:bg-surface-soft", menu === "zoom" && "bg-surface-soft")}
+          className={cn("flex h-10 shrink-0 items-center gap-1 rounded-sm px-2.5 text-small font-semibold tabular-nums text-text hover:bg-surface-soft", menu === "zoom" && "bg-surface-soft")}
         >
           {props.zoomPercent}%
           <ChevronDown size={12} className="text-text-muted" aria-hidden />
@@ -177,7 +177,7 @@ export function BoardToolbar(props: BoardToolbarProps) {
               type="button"
               onClick={() => { props.onPencilWidth(width); close(); }}
               aria-pressed={props.pencilWidth === width}
-              className={cn("flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-small font-semibold hover:bg-surface-soft", props.pencilWidth === width && "bg-primary-soft text-primary-text")}
+              className={cn("flex min-h-11 w-full items-center gap-3 rounded-sm px-3 text-small font-semibold hover:bg-surface-soft", props.pencilWidth === width && "bg-primary-soft text-primary-text")}
             >
               <span className="block w-8 rounded-full bg-current" style={{ height: width }} />
               {t(`tb.tool.stroke.${width}` as const)}

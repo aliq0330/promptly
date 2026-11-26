@@ -313,7 +313,7 @@ export function VariableSpecEditor({
                     type="button"
                     onClick={() => removeOption(index)}
                     aria-label={t("variable.optionRemoveAria", { n: index + 1 })}
-                    className="mt-1.5 grid h-9 w-9 shrink-0 place-items-center rounded-md text-text-muted transition-colors hover:bg-danger-soft hover:text-danger"
+                    className="mt-1.5 grid h-9 w-9 shrink-0 place-items-center rounded-sm text-text-muted transition-colors hover:bg-danger-soft hover:text-danger"
                   >
                     <X size={16} />
                   </button>
@@ -461,7 +461,7 @@ function OptionMedia({
           value={option.color}
           onChange={(event) => onColor(event.target.value)}
           aria-label={t("variable.optionColorAria", { n })}
-          className="h-10 w-12 cursor-pointer rounded-md card-inset p-1"
+          className="h-10 w-12 cursor-pointer rounded-sm card-inset p-1"
         />
         <span className="font-mono text-caption text-text-muted">{option.color}</span>
         <button type="button" onClick={onClear} className="text-label font-medium text-text-muted hover:text-danger hover:underline">

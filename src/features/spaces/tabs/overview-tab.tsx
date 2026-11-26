@@ -230,7 +230,7 @@ function OverviewAside({ groupsCount }: { groupsCount?: number }) {
           <h2 className="text-label font-semibold text-text-muted">{t("spaces.groups.title")}</h2>
           <ul className="flex flex-wrap gap-1.5">
             {groups.map((group) => (
-              <li key={group.id} className={cn("inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-caption font-medium", SPACE_COLOR_CLASS[group.color].surface, SPACE_COLOR_CLASS[group.color].text)}>
+              <li key={group.id} className={cn("inline-flex items-center gap-1.5 rounded-sm px-2.5 py-1 text-caption font-medium", SPACE_COLOR_CLASS[group.color].surface, SPACE_COLOR_CLASS[group.color].text)}>
                 {group.name}
                 <span className="opacity-70">{items.filter((item) => item.groupId === group.id).length}</span>
               </li>

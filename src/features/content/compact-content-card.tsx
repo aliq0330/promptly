@@ -148,7 +148,7 @@ function RemoveButton({ onRemove }: { onRemove: () => void }) {
       onClick={onRemove}
       aria-label={t("commentExtras.removeContent")}
       data-comment-extra-remove="attachment"
-      className="absolute -right-2 -top-2 flex h-9 w-9 items-center justify-center rounded-full border-2 border-surface bg-text text-background shadow-xs hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+      className="absolute -right-2 -top-2 flex h-9 w-9 items-center justify-center rounded-sm border-2 border-surface bg-text text-background shadow-xs hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
     >
       <X size={16} aria-hidden />
     </button>

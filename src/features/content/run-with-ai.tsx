@@ -242,7 +242,7 @@ function RunOutcome({
           value={text}
           aria-label={t("run.manualCopyLabel")}
           onFocus={(event) => event.currentTarget.select()}
-          className="prompt-text w-full resize-none rounded-lg card-soft px-3 py-2 text-text-secondary shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
+          className="prompt-text w-full resize-none rounded-sm card-soft px-3 py-2 text-text-secondary shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
         />
       )}
 

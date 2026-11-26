@@ -255,11 +255,11 @@ function SpaceView({ owner }: { owner: SpacePerson | null }) {
           art={<SpaceCoverArt urls={coverUrls} className="absolute inset-0 h-full w-full" iconSize={40} />}
           kicker={
             <>
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-surface/80 px-2.5 py-0.5 font-semibold text-text">
+              <span className="inline-flex items-center gap-1.5 rounded-sm bg-surface/80 px-2.5 py-0.5 font-semibold text-text">
                 <SpacesIcon size={16} aria-hidden />
                 Space · {t(SPACE_KIND_LABEL[space.kind])}
               </span>
-              {space.archivedAt && <span className="rounded-full bg-warning-soft px-2 py-0.5 text-warning">{t("spaces.page.archivedBadge")}</span>}
+              {space.archivedAt && <span className="rounded-sm bg-warning-soft px-2 py-0.5 text-warning">{t("spaces.page.archivedBadge")}</span>}
             </>
           }
           title={<h1>{space.title}</h1>}

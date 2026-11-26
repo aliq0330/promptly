@@ -1675,7 +1675,7 @@ export function SpaceBoard({ focusId, team, openComment }: { focusId: string | n
           <p className="text-small font-semibold leading-none text-text">{t("tb.comments.newTitle")}</p>
           <CommentTargetChip item={draftPin.itemId ? (items.find((entry) => entry.id === draftPin.itemId) ?? null) : null} itemTitle={itemTitle} />
         </div>
-        <button type="button" onClick={() => setDraftPin(null)} aria-label={t("common.cancel")} className="grid h-9 w-9 place-items-center rounded-full text-text-secondary hover:bg-surface-soft">
+        <button type="button" onClick={() => setDraftPin(null)} aria-label={t("common.cancel")} className="grid h-9 w-9 place-items-center rounded-sm text-text-secondary hover:bg-surface-soft">
           <X size={20} aria-hidden />
         </button>
       </div>
@@ -1749,7 +1749,7 @@ export function SpaceBoard({ focusId, team, openComment }: { focusId: string | n
                 </>
               )}
               <Divider />
-              <button type="button" onClick={fit} title={t("spaces.board.fit")} className="h-9 min-w-14 shrink-0 rounded-full px-2 text-caption font-semibold tabular-nums text-text-secondary hover:bg-surface-soft" data-board-zoom={Math.round(vp.zoom * 100)}>
+              <button type="button" onClick={fit} title={t("spaces.board.fit")} className="h-9 min-w-14 shrink-0 rounded-sm px-2 text-caption font-semibold tabular-nums text-text-secondary hover:bg-surface-soft" data-board-zoom={Math.round(vp.zoom * 100)}>
                 {Math.round(vp.zoom * 100)}%
               </button>
               <PopoverMenu
@@ -1787,7 +1787,7 @@ export function SpaceBoard({ focusId, team, openComment }: { focusId: string | n
               )}
               <Divider />
               <ToolButton icon={Minus} label={t("spaces.board.zoomOut")} onClick={() => zoomBy(1 / 1.2)} />
-              <button type="button" onClick={fit} title={t("spaces.board.fit")} className="h-9 min-w-14 shrink-0 rounded-full px-2 text-caption font-semibold tabular-nums text-text-secondary hover:bg-surface-soft" data-board-zoom={Math.round(vp.zoom * 100)}>
+              <button type="button" onClick={fit} title={t("spaces.board.fit")} className="h-9 min-w-14 shrink-0 rounded-sm px-2 text-caption font-semibold tabular-nums text-text-secondary hover:bg-surface-soft" data-board-zoom={Math.round(vp.zoom * 100)}>
                 {Math.round(vp.zoom * 100)}%
               </button>
               <ToolButton icon={Plus} label={t("spaces.board.zoomIn")} onClick={() => zoomBy(1.2)} />
@@ -1867,7 +1867,7 @@ export function SpaceBoard({ focusId, team, openComment }: { focusId: string | n
               <div key={frame.groupId} data-group-frame={group.id} className={cn("pointer-events-none absolute rounded-xl border-2 border-dashed", colors.border)} style={{ left: frame.rect.x, top: frame.rect.y, width: frame.rect.w, height: frame.rect.h, zIndex: 0 }}>
                 <span
                   data-group-label={group.id}
-                  className={cn("pointer-events-auto absolute left-2 top-1.5 inline-flex max-w-[calc(100%-1rem)] cursor-pointer items-center gap-1 truncate rounded-full px-2.5 py-1 text-caption font-semibold", colors.surface, colors.text)}
+                  className={cn("pointer-events-auto absolute left-2 top-1.5 inline-flex max-w-[calc(100%-1rem)] cursor-pointer items-center gap-1 truncate rounded-sm px-2.5 py-1 text-caption font-semibold", colors.surface, colors.text)}
                 >
                   <Group size={12} aria-hidden />
                   <span className="truncate">{group.name}</span>
@@ -1987,7 +1987,7 @@ export function SpaceBoard({ focusId, team, openComment }: { focusId: string | n
         )}
         {tool === "connect" && (
           <div className="pointer-events-none absolute inset-x-0 top-3 z-20 flex justify-center px-3">
-            <div role="status" data-board-connect-hint="" className="pointer-events-auto flex max-w-full items-center gap-2 rounded-full bg-text px-4 py-1.5 text-small text-background shadow-md">
+            <div role="status" data-board-connect-hint="" className="pointer-events-auto flex max-w-full items-center gap-2 rounded-sm bg-text px-4 py-1.5 text-small text-background shadow-md">
               <Spline size={16} aria-hidden />
               <span className="min-w-0 truncate">{activeFrom ? t("spaces.connect.hintTo") : t("spaces.connect.hintFrom")}</span>
               <button type="button" onClick={() => setToolMode("select")} className="shrink-0 font-semibold underline underline-offset-2">
@@ -2011,7 +2011,7 @@ export function SpaceBoard({ focusId, team, openComment }: { focusId: string | n
       {/* Bildirimler */}
       {(error || layoutNotice || undoNotice) && (
         <div className="pointer-events-none absolute inset-x-0 top-14 z-30 flex justify-center px-3">
-          <div role={error ? "alert" : "status"} className={cn("pointer-events-auto flex max-w-lg items-center gap-2 rounded-full px-4 py-2 text-small shadow-md", error ? "bg-danger text-danger-foreground" : "bg-text text-background")}>
+          <div role={error ? "alert" : "status"} className={cn("pointer-events-auto flex max-w-lg items-center gap-2 rounded-sm px-4 py-2 text-small shadow-md", error ? "bg-danger text-danger-foreground" : "bg-text text-background")}>
             <span className="min-w-0 break-words">{error ?? layoutNotice ?? undoNotice}</span>
             {!error && undoNotice && editable && (
               <button type="button" onClick={() => void undo()} className="shrink-0 font-semibold underline underline-offset-2">
@@ -2026,7 +2026,7 @@ export function SpaceBoard({ focusId, team, openComment }: { focusId: string | n
                 setUndoNotice(null);
                 dismissLayoutNotice();
               }}
-              className="shrink-0 rounded-full p-0.5 opacity-80 hover:opacity-100"
+              className="shrink-0 rounded-sm p-0.5 opacity-80 hover:opacity-100"
             >
               <X size={16} />
             </button>
@@ -2044,7 +2044,7 @@ export function SpaceBoard({ focusId, team, openComment }: { focusId: string | n
               : undefined
           }
         >
-          <div role="toolbar" aria-label={t("spaces.board.selectionToolbar")} data-board-selection={selectedItems.length} className="scrollbar-none pointer-events-auto flex max-w-full items-center gap-0.5 overflow-x-auto rounded-full border border-border-soft bg-surface px-1.5 py-1 shadow-md">
+          <div role="toolbar" aria-label={t("spaces.board.selectionToolbar")} data-board-selection={selectedItems.length} className="scrollbar-none pointer-events-auto flex max-w-full items-center gap-0.5 overflow-x-auto rounded-sm border border-border-soft bg-surface px-1.5 py-1 shadow-md">
             <span className="shrink-0 px-2 text-caption font-semibold text-text-secondary">{t("spaces.board.selected", { count: selectedItems.length })}</span>
             <ToolButton icon={Send} label={t("spaces.copy.selection")} onClick={() => setDialog({ kind: "copy" })} />
             {single && single.kind !== "palette" && single.kind !== "shape" && <ToolButton icon={ArrowUpRight} label={t("spaces.board.open")} onClick={() => openItem(single.id)} />}
@@ -2090,7 +2090,7 @@ export function SpaceBoard({ focusId, team, openComment }: { focusId: string | n
                     aria-haspopup="dialog"
                     aria-expanded={moveOpen}
                     data-board-move-button=""
-                    className="flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-primary-soft px-3 text-caption font-semibold text-primary-text"
+                    className="flex h-9 shrink-0 items-center gap-1.5 rounded-sm bg-primary-soft px-3 text-caption font-semibold text-primary-text"
                   >
                     {t(size === "desktop" ? "tb.move.button" : "tb.move.buttonShort")}
                   </button>
@@ -2174,9 +2174,9 @@ export function SpaceBoard({ focusId, team, openComment }: { focusId: string | n
       {/* Ekip modu katmanları (docs/history/367-*) */}
       {commentMode && !draftPin && (
         <div className="pointer-events-none absolute inset-x-0 bottom-4 z-30 flex justify-center px-3">
-          <div role="status" data-board-comment-hint="" className="pointer-events-auto flex max-w-md items-center gap-3 rounded-full bg-text py-2 pl-5 pr-2 text-small text-background shadow-md">
+          <div role="status" data-board-comment-hint="" className="pointer-events-auto flex max-w-md items-center gap-3 rounded-sm bg-text py-2 pl-5 pr-2 text-small text-background shadow-md">
             <span className="min-w-0 flex-1">{t("tb.comments.hint")}</span>
-            <button type="button" onClick={() => setToolMode("select")} aria-label={t("tb.comments.exitMode")} className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-background/15">
+            <button type="button" onClick={() => setToolMode("select")} aria-label={t("tb.comments.exitMode")} className="grid h-10 w-10 shrink-0 place-items-center rounded-sm bg-background/15">
               <X size={20} aria-hidden />
             </button>
           </div>
@@ -2272,7 +2272,7 @@ function ToolButton({ icon: Icon, label, onClick, active, disabled, danger, clas
       title={label}
       aria-pressed={active}
       className={cn(
-        "relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors disabled:opacity-50",
+        "relative flex h-9 w-9 shrink-0 items-center justify-center rounded-sm transition-colors disabled:opacity-50",
         active ? "bg-primary-soft text-primary-text" : danger ? "text-danger hover:bg-danger-soft" : "text-text-secondary hover:bg-surface-soft hover:text-text",
         className,
       )}

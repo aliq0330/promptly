@@ -106,7 +106,7 @@ function SharedCard({
             ))}
           <span
             data-shared-type
-            className="absolute left-2 top-2 inline-flex h-6 items-center gap-1 rounded-full bg-background/85 px-2 text-caption font-semibold text-text shadow-xs backdrop-blur"
+            className="absolute left-2 top-2 inline-flex h-6 items-center gap-1 rounded-xs bg-background/85 px-2 text-caption font-semibold text-text shadow-xs backdrop-blur"
           >
             <Icon size={12} className="shrink-0" aria-hidden />
             {typeLabel}

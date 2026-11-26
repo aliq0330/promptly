@@ -110,7 +110,7 @@ export function ExtraSettingsSection({
           <span className="block text-label font-semibold text-text">{t("extra.title")}</span>
           <span className="block text-caption text-text-secondary">{t("extra.hint")}</span>
         </span>
-        {count > 0 && <span className="shrink-0 rounded-full bg-primary px-2 py-0.5 text-caption font-semibold text-primary-foreground">{t("extra.count", { count })}</span>}
+        {count > 0 && <span className="shrink-0 rounded-xs bg-primary px-2 py-0.5 text-caption font-semibold text-primary-foreground">{t("extra.count", { count })}</span>}
         <ChevronRight size={16} className="shrink-0 text-text-muted" aria-hidden />
       </button>
 

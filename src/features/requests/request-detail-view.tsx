@@ -211,12 +211,12 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
   // The page's one big action: answer the request (others) or close/reopen it (owner, until a reply is chosen).
   const primary = showManagementAction ? (
     isOwnRequest ? (
-      <Button type="button" variant="outline" size="lg" className="h-14 rounded-full px-7" onClick={handleToggleStatus}>
+      <Button type="button" variant="outline" size="lg" className="h-14 rounded-sm px-7" onClick={handleToggleStatus}>
         <MessageSquareOff size={20} />
         {isClosed ? t("request.markAsOpen") : t("request.closeRequest")}
       </Button>
     ) : (
-      <Link href={`/create?answerRequest=${live.id}`} className={buttonClassName({ size: "lg", className: "h-14 rounded-full px-7 shadow-md" })}>
+      <Link href={`/create?answerRequest=${live.id}`} className={buttonClassName({ size: "lg", className: "h-14 rounded-sm px-7 shadow-md" })}>
         <Reply size={20} />
         {t("request.reply")}
       </Link>

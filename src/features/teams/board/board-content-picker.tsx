@@ -47,7 +47,7 @@ export function ContentPickerDialog({ type, onClose, onPick }: { type: Extract<S
           onChange={(event) => setQuery(event.target.value)}
           placeholder={t("tb.pick.search")}
           aria-label={t("tb.pick.search")}
-          className="h-11 w-full rounded-lg card-inset px-3 text-body"
+          className="h-11 w-full rounded-sm card-inset px-3 text-body"
         />
         {rows === null && <p className="text-small text-text-muted">{t("common.loading")}</p>}
         {rows !== null && rows.length === 0 && <p className="text-small text-text-muted">{t("tb.pick.empty")}</p>}

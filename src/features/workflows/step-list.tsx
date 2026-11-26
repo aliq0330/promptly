@@ -152,7 +152,7 @@ export function StepList({
                         {carried.map((input) => {
                           const output = step.outputs.find((o) => o.id === input.source!.outputId);
                           return (
-                            <span key={input.id} className="max-w-[10rem] truncate rounded-full bg-primary-soft px-2 py-0.5 text-caption text-primary-text">
+                            <span key={input.id} className="max-w-[10rem] truncate rounded-xs bg-primary-soft px-2 py-0.5 text-caption text-primary-text">
                               {output?.label}
                             </span>
                           );

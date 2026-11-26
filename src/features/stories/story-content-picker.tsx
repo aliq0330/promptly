@@ -80,7 +80,7 @@ export function StoryContentPicker({ onPick, onClose }: { onPick: (item: Linkabl
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder={t("stories.link.searchPlaceholder")}
-              className="min-h-11 w-full rounded-full border border-border bg-surface-soft pl-9 pr-3 text-small text-text focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15"
+              className="min-h-11 w-full rounded-sm border border-border bg-surface-soft pl-9 pr-3 text-small text-text focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15"
             />
           </label>
           <p className="mt-2 text-caption text-text-muted">{query ? t("stories.link.searchingAll") : t("stories.link.yourContent")}</p>

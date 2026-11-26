@@ -38,7 +38,7 @@ export function SelectionSummary({
           <li
             key={`${entry.fieldId}:${entry.optionValue ?? ""}`}
             data-extra-chip={entry.fieldId}
-            className="inline-flex max-w-full items-center gap-1 rounded-full bg-primary-soft py-1 pl-2.5 pr-1 text-caption font-medium text-text"
+            className="inline-flex max-w-full items-center gap-1 rounded-sm bg-primary-soft py-1 pl-2.5 pr-1 text-caption font-medium text-text"
           >
             <span className="shrink-0 text-text-muted">{entry.fieldName}:</span>
             <span className="truncate">{entry.label}</span>

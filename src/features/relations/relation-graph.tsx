@@ -356,7 +356,7 @@ export function RelationGraph({
                   tabIndex={-1}
                   onClick={() => onSelect(neighborKey)}
                   data-edge-label={edge.type}
-                  className="absolute -translate-x-1/2 -translate-y-1/2 animate-fade-in whitespace-nowrap rounded-full border border-border-soft bg-surface px-2 py-0.5 text-caption font-medium text-text-secondary shadow-xs hover:border-border-strong hover:text-text"
+                  className="absolute -translate-x-1/2 -translate-y-1/2 animate-fade-in whitespace-nowrap rounded-sm border border-border-soft bg-surface px-2 py-0.5 text-caption font-medium text-text-secondary shadow-xs hover:border-border-strong hover:text-text"
                   style={{ left: mid.x, top: mid.y, animationDelay: "420ms" }}
                 >
                   {text}
@@ -424,7 +424,7 @@ export function RelationGraph({
                   </span>
                   <span className={cn("block font-semibold leading-snug text-text", isCenter ? "line-clamp-2 text-small" : "line-clamp-2 text-label")}>{node.title}</span>
                   {relationText && (
-                    <span data-node-relation title={relationText} className="mt-0.5 inline-block max-w-full truncate rounded-full bg-primary-soft px-1.5 text-caption font-medium text-primary-text">
+                    <span data-node-relation title={relationText} className="mt-0.5 inline-block max-w-full truncate rounded-sm bg-primary-soft px-1.5 text-caption font-medium text-primary-text">
                       {relationText}
                     </span>
                   )}
@@ -440,7 +440,7 @@ export function RelationGraph({
           type="button"
           onClick={() => setExpandedFor(center.key)}
           data-relation-show-all
-          className="absolute bottom-3 left-3 z-10 inline-flex h-11 items-center gap-1.5 rounded-full border border-border bg-surface px-4 text-label font-medium text-text shadow-card transition-colors hover:border-border-strong"
+          className="absolute bottom-3 left-3 z-10 inline-flex h-11 items-center gap-1.5 rounded-sm border border-border bg-surface px-4 text-label font-medium text-text shadow-card transition-colors hover:border-border-strong"
         >
           <Plus size={16} aria-hidden />
           {t("relations.showMoreNodes", { count: hiddenCount })}

@@ -73,13 +73,13 @@ function LoginGate({ message }: { message: string }) {
       <div className="flex justify-center gap-2">
         <Link
           href="/login"
-          className="inline-flex h-9 items-center rounded-md bg-primary px-4 text-small font-medium text-primary-foreground hover:bg-primary-dark"
+          className="inline-flex h-9 items-center rounded-sm bg-primary px-4 text-small font-medium text-primary-foreground hover:bg-primary-dark"
         >
           {t("header.login")}
         </Link>
         <Link
           href="/signup"
-          className="inline-flex h-9 items-center rounded-md border border-border px-4 text-small font-medium text-text hover:bg-accent-surface"
+          className="inline-flex h-9 items-center rounded-sm border border-border px-4 text-small font-medium text-text hover:bg-accent-surface"
         >
           {t("auth.createAccount")}
         </Link>
@@ -706,7 +706,7 @@ export function CreatePromptForm() {
         <p className="mb-4 text-small text-text-muted">{t("prompt.noEditPermissionBody")}</p>
         <Link
           href="/discover"
-          className="inline-flex h-9 items-center rounded-md border border-border px-4 text-small font-medium text-text hover:bg-accent-surface"
+          className="inline-flex h-9 items-center rounded-sm border border-border px-4 text-small font-medium text-text hover:bg-accent-surface"
         >
           {t("common.backToDiscover")}
         </Link>
@@ -733,7 +733,7 @@ export function CreatePromptForm() {
         </p>
         <Link
           href={isAnswerMode ? DISCOVER_SECTION_HREF.requests : "/discover"}
-          className="inline-flex h-9 items-center rounded-md border border-border px-4 text-small font-medium text-text hover:bg-accent-surface"
+          className="inline-flex h-9 items-center rounded-sm border border-border px-4 text-small font-medium text-text hover:bg-accent-surface"
         >
           {isAnswerMode ? t("common.backToRequests") : t("common.backToDiscover")}
         </Link>
@@ -748,7 +748,7 @@ export function CreatePromptForm() {
         <p className="mb-4 text-small text-text-muted">{t("request.requestDeletedNoNewReplies")}</p>
         <Link
           href={DISCOVER_SECTION_HREF.requests}
-          className="inline-flex h-9 items-center rounded-md border border-border px-4 text-small font-medium text-text hover:bg-accent-surface"
+          className="inline-flex h-9 items-center rounded-sm border border-border px-4 text-small font-medium text-text hover:bg-accent-surface"
         >
           {t("common.backToRequests")}
         </Link>
@@ -763,7 +763,7 @@ export function CreatePromptForm() {
         <p className="mb-4 text-small text-text-muted">{t("request.requestClosedNoNewReplies")}</p>
         <Link
           href={requestHref(answeredRequest)}
-          className="inline-flex h-9 items-center rounded-md border border-border px-4 text-small font-medium text-text hover:bg-accent-surface"
+          className="inline-flex h-9 items-center rounded-sm border border-border px-4 text-small font-medium text-text hover:bg-accent-surface"
         >
           {t("request.viewRequest")}
         </Link>

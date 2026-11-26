@@ -121,13 +121,13 @@ export function SelectionToolbar({
               }
             }}
             aria-label={t("composer.editTextAria")}
-            className="h-9 w-56 max-w-[60vw] rounded-md card-inset px-2.5 text-small text-text focus:border-primary/60"
+            className="h-9 w-56 max-w-[60vw] rounded-sm card-inset px-2.5 text-small text-text focus:border-primary/60"
           />
           <button
             type="button"
             onClick={onEditApply}
             aria-label={t("composer.apply")}
-            className="flex h-9 w-9 items-center justify-center rounded-md bg-primary text-primary-foreground hover:bg-primary-hover"
+            className="flex h-9 w-9 items-center justify-center rounded-sm bg-primary text-primary-foreground hover:bg-primary-hover"
           >
             <Check size={16} />
           </button>
@@ -147,7 +147,7 @@ export function SelectionToolbar({
             type="button"
             onClick={action.onClick}
             className={cn(
-              "inline-flex h-9 items-center gap-1.5 rounded-md px-2.5 text-label font-medium transition-colors",
+              "inline-flex h-9 items-center gap-1.5 rounded-sm px-2.5 text-label font-medium transition-colors",
               action.primary ? "bg-primary text-primary-foreground hover:bg-primary-hover" : "text-text-secondary hover:bg-surface-soft hover:text-text",
             )}
           >

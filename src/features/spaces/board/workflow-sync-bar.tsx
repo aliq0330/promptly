@@ -125,12 +125,12 @@ export function WorkflowSyncBar({
               type="button"
               disabled={busy !== null}
               onClick={() => void apply(id, plan)}
-              className="inline-flex h-9 items-center gap-1.5 rounded-full bg-primary px-4 text-small font-semibold text-primary-foreground hover:bg-primary-hover disabled:opacity-50"
+              className="inline-flex h-9 items-center gap-1.5 rounded-sm bg-primary px-4 text-small font-semibold text-primary-foreground hover:bg-primary-hover disabled:opacity-50"
             >
               {busy === id && <Loader2 size={16} className="animate-spin" aria-hidden />}
               {busy === id ? t("wfSpace.sync.updating") : t("wfSpace.sync.update")}
             </button>
-            <button type="button" disabled={busy !== null} onClick={() => setDismissed((prev) => new Set(prev).add(id))} className="inline-flex h-9 items-center rounded-full px-3 text-small font-semibold text-text-secondary hover:bg-surface-soft">
+            <button type="button" disabled={busy !== null} onClick={() => setDismissed((prev) => new Set(prev).add(id))} className="inline-flex h-9 items-center rounded-sm px-3 text-small font-semibold text-text-secondary hover:bg-surface-soft">
               {t("wfSpace.sync.dismiss")}
             </button>
           </div>
@@ -148,12 +148,12 @@ export function WorkflowSyncBar({
               type="button"
               disabled={busy !== null}
               onClick={() => void convert(id, frame, title, input)}
-              className="inline-flex h-9 items-center gap-1.5 rounded-full bg-primary px-4 text-small font-semibold text-primary-foreground hover:bg-primary-hover disabled:opacity-50"
+              className="inline-flex h-9 items-center gap-1.5 rounded-sm bg-primary px-4 text-small font-semibold text-primary-foreground hover:bg-primary-hover disabled:opacity-50"
             >
               {busy === `legacy:${id}` && <Loader2 size={16} className="animate-spin" aria-hidden />}
               {busy === `legacy:${id}` ? t("wfSpace.legacy.converting") : t("wfSpace.legacy.convert")}
             </button>
-            <button type="button" disabled={busy !== null} onClick={() => setDismissed((prev) => new Set(prev).add(`legacy:${id}`))} className="inline-flex h-9 items-center rounded-full px-3 text-small font-semibold text-text-secondary hover:bg-surface-soft">
+            <button type="button" disabled={busy !== null} onClick={() => setDismissed((prev) => new Set(prev).add(`legacy:${id}`))} className="inline-flex h-9 items-center rounded-sm px-3 text-small font-semibold text-text-secondary hover:bg-surface-soft">
               {t("wfSpace.sync.dismiss")}
             </button>
           </div>

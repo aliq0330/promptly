@@ -132,7 +132,7 @@ export function PopoverRow({
         <span className="block truncate text-small font-semibold">{label}</span>
         {hint && <span className="block text-caption leading-snug text-text-secondary">{hint}</span>}
       </span>
-      {tag && <span className="shrink-0 rounded-full bg-primary-soft px-2 py-0.5 text-caption font-semibold text-primary-text">{tag}</span>}
+      {tag && <span className="shrink-0 rounded-xs bg-primary-soft px-2 py-0.5 text-caption font-semibold text-primary-text">{tag}</span>}
       {trailing}
     </button>
   );

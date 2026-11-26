@@ -136,7 +136,7 @@ export function WorkflowRunner({ workflowId, steps }: { workflowId: string; step
                     aria-label={`${t("workflow.stepN", { n: String(itemIndex + 1) })}: ${item.title || t("workflow.untitledStep")}`}
                     title={item.title || t("workflow.untitledStep")}
                     className={cn(
-                      "flex h-9 min-w-9 items-center justify-center gap-1 rounded-full border px-2.5 text-label font-semibold transition-colors",
+                      "flex h-9 min-w-9 items-center justify-center gap-1 rounded-sm border px-2.5 text-label font-semibold transition-colors",
                       current
                         ? "border-primary bg-primary text-primary-foreground"
                         : done

@@ -72,7 +72,7 @@ export function TeamChannelsInbox() {
                       {channel.lastMessageAt ? formatRelativeTime(channel.lastMessageAt, language) : t("tm.chat.noMessages")}
                     </span>
                   </span>
-                  {channel.unreadCount > 0 && !channel.muted && <span className="rounded-full bg-primary px-1.5 text-caption text-primary-foreground">{channel.unreadCount}</span>}
+                  {channel.unreadCount > 0 && !channel.muted && <span className="rounded-sm bg-primary px-1.5 text-caption text-primary-foreground">{channel.unreadCount}</span>}
                 </Link>
               </li>
             ))}

@@ -358,7 +358,7 @@ function TeamCard({ team, approvals }: { team: TeamSummary; approvals: number })
       coverOverlay={
         <>
           <VisibilityTag icon={Lock} label={t("tm.header.inviteOnly")} data-team-visibility="" />
-          {team.recent && <span className="min-w-0 truncate rounded-full bg-surface/90 px-2.5 py-0.5 text-caption text-text-secondary shadow-xs">{recentLine(t, language, team.recent)}</span>}
+          {team.recent && <span className="min-w-0 truncate rounded-xs bg-surface/90 px-2.5 py-0.5 text-caption text-text-secondary shadow-xs">{recentLine(t, language, team.recent)}</span>}
         </>
       }
       footerStart={
@@ -384,7 +384,7 @@ function TeamCard({ team, approvals }: { team: TeamSummary; approvals: number })
             data-team-open-chat
             data-team-chip={team.unreadCount > 0 ? "unread" : undefined}
             aria-label={t("tm.card.openChat")}
-            className="tap-area inline-flex items-center gap-1.5 rounded-full p-1.5 text-text-secondary hover:bg-surface-soft"
+            className="tap-area inline-flex items-center gap-1.5 rounded-sm p-1.5 text-text-secondary hover:bg-surface-soft"
           >
             <MessageCircle size={16} aria-hidden />
             {team.unreadCount > 0 && <CountBadge>{team.unreadCount}</CountBadge>}
@@ -450,7 +450,7 @@ export function CreateTeamModal({ onClose, onCreated }: { onClose: () => void; o
           <label htmlFor="team-desc" className={fieldLabelClassName}>
             {t("tm.create.description")}
           </label>
-          <textarea id="team-desc" value={description} onChange={(e) => setDescription(e.target.value)} maxLength={500} rows={3} className="w-full rounded-lg card-inset px-4 py-2.5 text-small" />
+          <textarea id="team-desc" value={description} onChange={(e) => setDescription(e.target.value)} maxLength={500} rows={3} className="w-full rounded-sm card-inset px-4 py-2.5 text-small" />
         </div>
         <div>
           <span className={fieldLabelClassName}>{t("tm.create.tone")}</span>

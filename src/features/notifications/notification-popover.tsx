@@ -106,11 +106,11 @@ export function NotificationPopover({ anchor, onClose }: { anchor: HTMLElement |
 
         <div className="flex shrink-0 items-center gap-1 py-4 pl-5 pr-2">
           <h2 className="flex-1 font-display text-h2 font-bold tracking-[-0.01em] text-text">{t("header.notificationsAriaLabel")}</h2>
-          <button type="button" onClick={() => void markAllRead()} disabled={unreadCount === 0} data-action="mark-all-read" className="h-11 rounded-full px-3 text-small font-semibold text-primary-text hover:bg-primary-soft disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus">
+          <button type="button" onClick={() => void markAllRead()} disabled={unreadCount === 0} data-action="mark-all-read" className="h-11 rounded-sm px-3 text-small font-semibold text-primary-text hover:bg-primary-soft disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus">
             <span className="max-[520px]:hidden">{t("notifications.markAllRead")}</span>
             <CheckCheck size={20} aria-hidden className="hidden max-[520px]:block" />
           </button>
-          <Link href="/settings/notifications" onClick={onClose} aria-label={t("nc.settings")} title={t("nc.settings")} data-action="settings" className="grid size-11 place-items-center rounded-full text-text-secondary hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus">
+          <Link href="/settings/notifications" onClick={onClose} aria-label={t("nc.settings")} title={t("nc.settings")} data-action="settings" className="grid size-11 place-items-center rounded-sm text-text-secondary hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus">
             <Filter size={20} aria-hidden />
           </Link>
         </div>
@@ -127,7 +127,7 @@ export function NotificationPopover({ anchor, onClose }: { anchor: HTMLElement |
                 listRef.current?.scrollTo({ top: 0 });
               }}
               data-action="show-new"
-              className="inline-flex h-11 items-center gap-2 rounded-full bg-primary px-4 text-small font-semibold text-primary-foreground hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
+              className="inline-flex h-11 items-center gap-2 rounded-sm bg-primary px-4 text-small font-semibold text-primary-foreground hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
             >
               <span aria-hidden className="size-2 rounded-full bg-primary-foreground" />
               {t("nc.newCount", { count: list.newCount })}
@@ -146,7 +146,7 @@ export function NotificationPopover({ anchor, onClose }: { anchor: HTMLElement |
           {list.status === "error" && (
             <div className="px-3 py-8 text-center">
               <p className="text-small text-text-muted">{t("nc.loadFailed")}</p>
-              <button type="button" onClick={() => void list.reload()} className="mt-2 h-11 rounded-full px-4 text-small font-semibold text-primary-text hover:bg-primary-soft">{t("nc.retry")}</button>
+              <button type="button" onClick={() => void list.reload()} className="mt-2 h-11 rounded-sm px-4 text-small font-semibold text-primary-text hover:bg-primary-soft">{t("nc.retry")}</button>
             </div>
           )}
           {list.status === "ready" && list.cards.length === 0 && <p className="px-3 py-10 text-center text-small text-text-muted" data-notification-empty="">{view === "all" ? t("notifications.noneYet") : t("notifications.noneInCategory")}</p>}
@@ -158,7 +158,7 @@ export function NotificationPopover({ anchor, onClose }: { anchor: HTMLElement |
         <UndoBar placement="inline" />
 
         <div className={cn("shrink-0 border-t border-border-soft p-4")}>
-          <Link href="/notifications" onClick={onClose} data-action="see-all" className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-primary-soft text-body font-semibold text-primary-text hover:bg-primary-soft/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus">
+          <Link href="/notifications" onClick={onClose} data-action="see-all" className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-sm bg-primary-soft text-body font-semibold text-primary-text hover:bg-primary-soft/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus">
             {t("nc.seeAll")}
             <ArrowRight size={16} aria-hidden />
           </Link>

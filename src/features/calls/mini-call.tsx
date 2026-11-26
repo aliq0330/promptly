@@ -33,7 +33,7 @@ export function MiniCall({ call, peer, onExpand }: { call: CallApi; peer: CallPe
   const remoteOn = connected && snapshot.remoteStream !== null && snapshot.remoteCamera;
   const waiting = !connected;
   const status = connected ? (snapshot.unstable ? t("calls.status.unstable") : formatCallDuration(seconds)) : snapshot.phase === "connecting" ? t("calls.status.connecting") : snapshot.phase === "ringing" ? t("calls.status.ringing") : t("calls.status.calling");
-  const round = "inline-flex h-9 w-9 items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus";
+  const round = "inline-flex h-9 w-9 items-center justify-center rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus";
 
   return (
     <div

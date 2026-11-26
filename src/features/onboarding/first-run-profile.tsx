@@ -198,7 +198,7 @@ export function FirstRunProfileStep({ onDone }: { onDone: () => void }) {
                     data-first-run-color={index}
                     style={{ backgroundColor: color }}
                     className={cn(
-                      "tap-area h-9 w-9 rounded-full transition-shadow duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+                      "tap-area h-9 w-9 rounded-sm transition-shadow duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                       selected && "ring-2 ring-text ring-offset-2 ring-offset-surface",
                     )}
                   />

@@ -42,7 +42,7 @@ export function PhoneHomeIdentity({
 }) {
   return (
     <div className="space-y-3 md:hidden" data-phone-home-identity data-testid={testId}>
-      <Link href={backHref} className="-ml-1 inline-flex h-9 items-center gap-0.5 rounded-full pr-2 text-small font-medium text-text-secondary hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus" data-phone-back {...backProps}>
+      <Link href={backHref} className="-ml-1 inline-flex h-9 items-center gap-0.5 rounded-sm pr-2 text-small font-medium text-text-secondary hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus" data-phone-back {...backProps}>
         <ArrowLeft size={20} aria-hidden />
         {backLabel}
       </Link>
@@ -143,5 +143,5 @@ export function PhoneHomeRow({ thumb, title, sub, href, action, testId }: { thum
 }
 
 /** Küçük hap düğme sınıfı (önizleme satırlarındaki "İncele" / "Katıl"). */
-export const PHONE_HOME_PILL = "inline-flex h-8 shrink-0 items-center rounded-full bg-primary px-4 text-small font-semibold text-primary-foreground hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2";
-export const PHONE_HOME_PILL_OUTLINE = "inline-flex h-8 shrink-0 items-center rounded-full border border-border-strong bg-surface px-4 text-small font-semibold text-text hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus";
+export const PHONE_HOME_PILL = "inline-flex h-8 shrink-0 items-center rounded-sm bg-primary px-4 text-small font-semibold text-primary-foreground hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2";
+export const PHONE_HOME_PILL_OUTLINE = "inline-flex h-8 shrink-0 items-center rounded-sm border border-border-strong bg-surface px-4 text-small font-semibold text-text hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus";

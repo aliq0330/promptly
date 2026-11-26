@@ -10,7 +10,7 @@ import { categoryHref, cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 
 const SUB_CHIP =
-  "inline-flex h-9 shrink-0 items-center rounded-full border px-4 text-label font-medium whitespace-nowrap transition-colors duration-200 ease-soft";
+  "inline-flex h-9 shrink-0 items-center rounded-sm border px-4 text-label font-medium whitespace-nowrap transition-colors duration-200 ease-soft";
 
 /**
  * A category's page (`/categories/local?type=&category=&sub=`, docs/history/211-*): the topic-page template for one taxonomy

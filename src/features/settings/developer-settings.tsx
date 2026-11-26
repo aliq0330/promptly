@@ -51,8 +51,8 @@ function Tile({ href, icon, title, lead, status, statusTone, action, primary, ti
       </span>
       <span className="text-small leading-relaxed text-text-secondary">{lead}</span>
       <span className="mt-auto flex flex-wrap items-center justify-between gap-2">
-        <span className={statusTone === "ok" ? "rounded-full bg-success-soft px-2.5 py-0.5 text-caption font-semibold text-success" : "rounded-full bg-surface-soft px-2.5 py-0.5 text-caption font-semibold text-text-secondary"}>{status}</span>
-        <span className={primary ? "rounded-full bg-primary px-4 py-1.5 text-small font-semibold text-primary-foreground" : "rounded-full border border-border-strong px-4 py-1.5 text-small font-semibold text-text"}>{action}</span>
+        <span className={statusTone === "ok" ? "rounded-xs bg-success-soft px-2.5 py-0.5 text-caption font-semibold text-success" : "rounded-xs bg-surface-soft px-2.5 py-0.5 text-caption font-semibold text-text-secondary"}>{status}</span>
+        <span className={primary ? "rounded-sm bg-primary px-4 py-1.5 text-small font-semibold text-primary-foreground" : "rounded-sm border border-border-strong px-4 py-1.5 text-small font-semibold text-text"}>{action}</span>
       </span>
     </Link>
   );

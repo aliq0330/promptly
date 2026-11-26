@@ -128,7 +128,7 @@ export default function EditProfilePage() {
         <p className="mb-4 text-small text-text-muted">{t("profile.loginRequiredToEditBody")}</p>
         <Link
           href="/login"
-          className="inline-flex h-9 items-center rounded-md bg-primary px-4 text-small font-medium text-primary-foreground hover:bg-primary-dark"
+          className="inline-flex h-9 items-center rounded-sm bg-primary px-4 text-small font-medium text-primary-foreground hover:bg-primary-dark"
         >
           {t("common.login")}
         </Link>
@@ -151,7 +151,7 @@ export default function EditProfilePage() {
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="flex h-9 items-center gap-1.5 rounded-md border border-border bg-transparent px-3 text-small font-medium text-text transition-colors hover:bg-accent-surface"
+                className="flex h-9 items-center gap-1.5 rounded-sm border border-border bg-transparent px-3 text-small font-medium text-text transition-colors hover:bg-accent-surface"
               >
                 <Camera size={16} />
                 {t("profile.changePhoto")}
@@ -163,7 +163,7 @@ export default function EditProfilePage() {
                     setAvatarUrl(null);
                     setAvatarFile(null);
                   }}
-                  className="flex h-9 items-center gap-1.5 rounded-md px-2 text-small font-medium text-text-muted transition-colors hover:text-text"
+                  className="flex h-9 items-center gap-1.5 rounded-sm px-2 text-small font-medium text-text-muted transition-colors hover:text-text"
                 >
                   <X size={16} />
                   {t("common.remove")}
@@ -190,7 +190,7 @@ export default function EditProfilePage() {
             type="text"
             value={`@${ownProfile?.username ?? ""}`}
             disabled
-            className="h-10 w-full rounded-md border border-border bg-accent-surface/40 px-3 text-small text-text-muted"
+            className="h-10 w-full rounded-sm border border-border bg-accent-surface/40 px-3 text-small text-text-muted"
           />
           <p className="mt-1 text-caption text-text-muted">
             <Link href="/settings" className="underline decoration-border-strong underline-offset-2 hover:text-text">
@@ -211,7 +211,7 @@ export default function EditProfilePage() {
             value={displayName}
             onChange={(event) => setDisplayName(event.target.value)}
             className={cn(
-              "h-10 w-full rounded-md border bg-background px-3 text-small text-text",
+              "h-10 w-full rounded-sm border bg-background px-3 text-small text-text",
               nameError ? "border-danger" : "border-border",
             )}
           />
@@ -232,7 +232,7 @@ export default function EditProfilePage() {
             value={bio}
             onChange={(event) => setBio(event.target.value)}
             placeholder={t("profile.bioPlaceholder")}
-            className="w-full resize-none rounded-lg card-inset px-3 py-2 text-small text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
+            className="w-full resize-none rounded-sm card-inset px-3 py-2 text-small text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
           />
         </div>
 
@@ -246,7 +246,7 @@ export default function EditProfilePage() {
             value={website}
             onChange={(event) => setWebsite(event.target.value)}
             placeholder={t("profile.websitePlaceholder")}
-            className="h-10 w-full rounded-lg card-inset px-3 text-small text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
+            className="h-10 w-full rounded-sm card-inset px-3 text-small text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
           />
         </div>
 
@@ -261,7 +261,7 @@ export default function EditProfilePage() {
                   type="button"
                   onClick={() => toggleInterest(interest)}
                   className={cn(
-                    "rounded-full border px-2.5 py-1 text-caption font-medium transition-colors",
+                    "rounded-sm border px-2.5 py-1 text-caption font-medium transition-colors",
                     active
                       ? "border-primary bg-primary text-primary-foreground"
                       : "border-border bg-surface text-text-muted hover:text-text",

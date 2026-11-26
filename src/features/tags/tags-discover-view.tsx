@@ -134,7 +134,7 @@ export function TagsDiscoverView() {
                     key={mode}
                     type="button"
                     onClick={() => setSortMode(mode)}
-                    className={`rounded-full border px-2.5 py-1 text-caption font-medium transition-colors ${
+                    className={`rounded-sm border px-2.5 py-1 text-caption font-medium transition-colors ${
                       sortMode === mode
                         ? "border-primary bg-primary text-primary-foreground"
                         : "border-border bg-surface text-text-muted hover:text-text"

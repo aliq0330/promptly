@@ -18,7 +18,7 @@ export function SaveIndicator({ status, onRetry, className }: { status: "idle" |
       {status === "error" && <CloudOff size={12} aria-hidden />}
       {status === "saving" ? t("spaces.save.saving") : status === "saved" ? t("spaces.save.saved") : t("spaces.save.failed")}
       {status === "error" && (
-        <button type="button" onClick={onRetry} className="inline-flex items-center gap-1 rounded-full px-2 py-1 font-semibold text-danger underline-offset-2 hover:underline">
+        <button type="button" onClick={onRetry} className="inline-flex items-center gap-1 rounded-sm px-2 py-1 font-semibold text-danger underline-offset-2 hover:underline">
           <AlertCircle size={12} aria-hidden />
           {t("common.retry")}
         </button>

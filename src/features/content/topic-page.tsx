@@ -144,7 +144,7 @@ export function TopicPage({
       actions={
         <BandActionRow label={actionsLabel} data-topic-actions="">
           {primary}
-          <ShareButton url={shareUrl} title={shareTitle} label={primary ? undefined : t("common.share")} className="h-11 min-w-11 rounded-full px-3" />
+          <ShareButton url={shareUrl} title={shareTitle} label={primary ? undefined : t("common.share")} className="h-11 min-w-11 rounded-sm px-3" />
         </BandActionRow>
       }
     >

@@ -259,7 +259,7 @@ export function HighlightEditor({
               value={title}
               maxLength={STORY_LIMITS.highlightTitleMax}
               onChange={(event) => setTitle(event.target.value)}
-              className="min-h-11 w-full rounded-md card-flat px-3 text-small text-text focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15"
+              className="min-h-11 w-full rounded-sm card-flat px-3 text-small text-text focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15"
             />
           </label>
           <p className="text-caption text-text-muted">{t("stories.highlight.privacyNote")}</p>
@@ -286,7 +286,7 @@ export function HighlightEditor({
                       )}
                     </button>
                     {order >= 0 && (
-                      <button type="button" onClick={() => setCover(story.id)} aria-pressed={isCover} className={cn("flex min-h-9 w-full items-center justify-center gap-1 rounded-full text-caption", isCover ? "font-semibold text-primary-text" : "text-text-muted hover:text-text")}>
+                      <button type="button" onClick={() => setCover(story.id)} aria-pressed={isCover} className={cn("flex min-h-9 w-full items-center justify-center gap-1 rounded-sm text-caption", isCover ? "font-semibold text-primary-text" : "text-text-muted hover:text-text")}>
                         {isCover && <Check size={12} aria-hidden />} {isCover ? t("stories.highlight.cover") : t("stories.highlight.makeCover")}
                       </button>
                     )}

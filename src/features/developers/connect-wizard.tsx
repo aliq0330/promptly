@@ -52,7 +52,7 @@ export function ConnectWizard({ mcpMeUrl, keysHref, headingLevel = "h4" }: { mcp
           key: id,
           label: t(`guide.method.${id}.title` as "guide.method.oauth.title"),
           description: t(`guide.method.${id}.desc` as "guide.method.oauth.desc"),
-          badge: id === "oauth" ? <span className="rounded-full bg-secondary-soft px-2 py-0.5 text-caption font-semibold text-secondary">{t("guide.method.oauth.badge")}</span> : undefined,
+          badge: id === "oauth" ? <span className="rounded-xs bg-secondary-soft px-2 py-0.5 text-caption font-semibold text-secondary">{t("guide.method.oauth.badge")}</span> : undefined,
           attrs: { "data-guide-method-tile": id },
         }))}
       />
@@ -155,7 +155,7 @@ function ConnectorSketch() {
         </div>
         <div className="space-y-1">
           <p className="text-caption text-text-muted">{t("guide.sketch.url")}</p>
-          <div className="flex h-8 items-center rounded-md border-2 border-primary bg-surface px-2.5 text-caption font-semibold text-primary-text ring-4 ring-primary/15">
+          <div className="flex h-8 items-center rounded-sm border-2 border-primary bg-surface px-2.5 text-caption font-semibold text-primary-text ring-4 ring-primary/15">
             {t("guide.sketch.paste")}
           </div>
           <p className="flex items-center justify-end gap-1 text-caption font-semibold text-primary-text">

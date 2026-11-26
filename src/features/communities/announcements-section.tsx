@@ -132,7 +132,7 @@ export function AnnouncementsSection({
                     <button type="button" onClick={() => setEditing(item)} aria-label={t("common.edit")} className={iconButtonClassName(false, "h-9 w-9 rounded-md")}>
                       <Pencil size={16} />
                     </button>
-                    <button type="button" onClick={() => setDeleting(item)} aria-label={t("common.delete")} className="flex h-9 w-9 items-center justify-center rounded-md text-text-muted hover:bg-danger-soft hover:text-danger">
+                    <button type="button" onClick={() => setDeleting(item)} aria-label={t("common.delete")} className="flex h-9 w-9 items-center justify-center rounded-sm text-text-muted hover:bg-danger-soft hover:text-danger">
                       <TrashIcon size={16} />
                     </button>
                   </div>

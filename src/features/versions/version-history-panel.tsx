@@ -278,7 +278,7 @@ function VersionPicker<V extends HistoryVersion>({
       <select
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="h-9 rounded-md card-flat px-2 text-small font-normal text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+        className="h-9 rounded-sm card-flat px-2 text-small font-normal text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
       >
         {versions.map((version) => (
           <option key={version.id} value={version.id}>

@@ -15,7 +15,7 @@ import { buttonClassName } from "@/components/ui/button";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { UserProfile } from "@/types";
 
-const ICON_BUTTON_CLASS = "h-11 min-w-11 rounded-full border-0 bg-surface-soft px-3 text-text hover:bg-border-soft";
+const ICON_BUTTON_CLASS = "h-11 min-w-11 rounded-sm border-0 bg-surface-soft px-3 text-text hover:bg-border-soft";
 /** The one primary pill: fills the row on phones, its natural width beside the name from `sm`. */
 const PRIMARY_CLASS = "h-11 flex-1 sm:flex-none sm:px-6";
 
@@ -49,7 +49,7 @@ export function OwnProfileActions({ user }: { user: UserProfile }) {
         href="/settings"
         title={t("settings.pageTitle")}
         aria-label={t("settings.pageTitle")}
-        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-surface-soft text-text transition-colors hover:bg-border-soft"
+        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-sm bg-surface-soft text-text transition-colors hover:bg-border-soft"
       >
         <Settings size={20} />
       </Link>
@@ -71,7 +71,7 @@ export function OtherProfileActions({
     <ProfileActionsRow>
       <FollowButtonView {...followState} size="md" className={PRIMARY_CLASS} />
       {blockState.isBlocked ? (
-        <span className="inline-flex h-11 items-center rounded-full bg-surface-soft px-4 text-small text-text-muted">
+        <span className="inline-flex h-11 items-center rounded-sm bg-surface-soft px-4 text-small text-text-muted">
           {t("profile.youBlockedThisUser")}
         </span>
       ) : (

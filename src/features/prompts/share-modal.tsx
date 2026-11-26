@@ -353,7 +353,7 @@ export function ShareModal({ target, onClose }: { target: ShareModalTarget; onCl
         </div>
 
         {/* Küçük içerik çipi: neyin paylaşıldığını söyler, açıklama göstermez (docs/history/447-*; eski kart uzun açıklamayı kesmeden gösteriyordu). */}
-        <div className="mt-3 flex min-w-0 items-center gap-2 rounded-full bg-surface-soft py-1 pl-1 pr-3" data-share-preview="">
+        <div className="mt-3 flex min-w-0 items-center gap-2 rounded-sm bg-surface-soft py-1 pl-1 pr-3" data-share-preview="">
           <StorageBackground
             as="span"
             url={preview.thumbnailUrl}
@@ -470,7 +470,7 @@ function ShareAction({
   const className = "flex w-16 flex-col items-center gap-1 text-center disabled:cursor-not-allowed disabled:opacity-50";
   const face = (
     <>
-      <span className="grid h-11 w-11 place-items-center rounded-full bg-surface-soft text-text transition-colors group-hover:bg-primary-soft group-hover:text-primary-text">
+      <span className="grid h-11 w-11 place-items-center rounded-sm bg-surface-soft text-text transition-colors group-hover:bg-primary-soft group-hover:text-primary-text">
         <Icon size={20} />
       </span>
       <span className="w-full truncate text-caption text-text-secondary">{label}</span>

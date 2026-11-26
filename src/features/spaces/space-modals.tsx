@@ -89,7 +89,7 @@ export function SpaceDialog({
               {title}
             </h2>
           </div>
-          <button type="button" onClick={onClose} disabled={busy} aria-label={t("common.close")} className="rounded-full p-1.5 text-text-muted hover:bg-surface-soft hover:text-text">
+          <button type="button" onClick={onClose} disabled={busy} aria-label={t("common.close")} className="rounded-sm p-1.5 text-text-muted hover:bg-surface-soft hover:text-text">
             <X size={20} />
           </button>
         </div>

@@ -139,7 +139,7 @@ export function UsersPanel({ userId, onSelectUser }: { userId: string | null; on
           value={sort}
           onChange={(event) => setSort(event.target.value as AdminUserSort)}
           aria-label={t("admin.users.sortAria")}
-          className="h-10 rounded-lg card-flat px-2 text-small text-text"
+          className="h-10 rounded-sm card-flat px-2 text-small text-text"
         >
           {SORTS.map((s) => (
             <option key={s.id} value={s.id}>

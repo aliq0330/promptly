@@ -83,7 +83,7 @@ function Inbox() {
       trailing={
         <>
           {list.newCount > 0 && (
-            <button type="button" onClick={() => void list.reload()} data-action="show-new" className="mr-1 inline-flex h-11 items-center gap-2 rounded-full bg-primary px-4 text-small font-semibold text-primary-foreground hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2">
+            <button type="button" onClick={() => void list.reload()} data-action="show-new" className="mr-1 inline-flex h-11 items-center gap-2 rounded-sm bg-primary px-4 text-small font-semibold text-primary-foreground hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2">
               <span aria-hidden className="size-2 rounded-full bg-primary-foreground" />
               {t("nc.newCount", { count: list.newCount })}
             </button>
@@ -114,7 +114,7 @@ function Inbox() {
       {list.status === "error" && (
         <div className="py-10 text-center">
           <p className="text-small text-text-muted">{t("nc.loadFailed")}</p>
-          <button type="button" onClick={() => void list.reload()} className="mt-2 h-11 rounded-full px-4 text-small font-semibold text-primary-text hover:bg-primary-soft">{t("nc.retry")}</button>
+          <button type="button" onClick={() => void list.reload()} className="mt-2 h-11 rounded-sm px-4 text-small font-semibold text-primary-text hover:bg-primary-soft">{t("nc.retry")}</button>
         </div>
       )}
       {list.status === "ready" && list.cards.length === 0 && (

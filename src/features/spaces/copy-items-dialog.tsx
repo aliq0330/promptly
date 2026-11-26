@@ -197,7 +197,7 @@ export function CopyItemsDialog({
             <Button type="button" variant="outline" onClick={onClose}>
               {t("common.close")}
             </Button>
-            <Link href={outcome.href} className="inline-flex h-10 items-center rounded-full bg-primary px-4 text-small font-semibold text-primary-foreground" data-copy-open>
+            <Link href={outcome.href} className="inline-flex h-10 items-center rounded-sm bg-primary px-4 text-small font-semibold text-primary-foreground" data-copy-open>
               {t("spaces.copy.open")}
             </Link>
           </>

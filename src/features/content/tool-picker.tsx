@@ -60,7 +60,7 @@ export function ToolPicker({
         {resolved.map((item) => (
           <span
             key={item.ref}
-            className="inline-flex h-8 items-center gap-1.5 rounded-full border border-border bg-primary-soft pl-2 pr-1.5 text-label font-medium text-text"
+            className="inline-flex h-8 items-center gap-1.5 rounded-sm border border-border bg-primary-soft pl-2 pr-1.5 text-label font-medium text-text"
           >
             <ToolLogo toolId={item.tool.id} name={item.tool.name} size="sm" tile={false} className="h-4 w-4" />
             {item.label}
@@ -68,7 +68,7 @@ export function ToolPicker({
               type="button"
               aria-label={t("common.remove")}
               onClick={() => onChange(value.filter((ref) => ref !== item.ref))}
-              className="rounded-full p-1 text-text-muted hover:bg-surface hover:text-text"
+              className="rounded-sm p-1 text-text-muted hover:bg-surface hover:text-text"
             >
               <X size={12} />
             </button>
@@ -78,7 +78,7 @@ export function ToolPicker({
           <button
             type="button"
             onClick={() => setOpen(true)}
-            className="inline-flex h-9 items-center gap-1.5 rounded-full border border-dashed border-border-strong px-3 text-label font-medium text-text-secondary hover:border-text hover:text-text"
+            className="inline-flex h-9 items-center gap-1.5 rounded-sm border border-dashed border-border-strong px-3 text-label font-medium text-text-secondary hover:border-text hover:text-text"
           >
             <Plus size={16} />
             {t("tool.add")}
@@ -177,7 +177,7 @@ function ToolPickerModal({
             onChange={(event) => setQuery(event.target.value)}
             placeholder={t("tool.search")}
             aria-label={t("tool.search")}
-            className="h-10 w-full rounded-lg card-inset pl-9 pr-3 text-small text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
+            className="h-10 w-full rounded-sm card-inset pl-9 pr-3 text-small text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
           />
         </div>
         <ul ref={listRef} className="-mx-1 min-h-0 flex-1 space-y-1 overflow-y-auto px-1 [overflow-anchor:none]">
@@ -233,7 +233,7 @@ function ToolPickerModal({
                         aria-pressed={modelId === model.id}
                         onClick={() => setModel(toolId, modelId === model.id ? null : model.id)}
                         className={cn(
-                          "h-9 rounded-full border px-2.5 text-caption font-medium",
+                          "h-9 rounded-sm border px-2.5 text-caption font-medium",
                           modelId === model.id
                             ? "border-transparent bg-primary-soft text-primary-text"
                             : "border-border text-text-secondary hover:border-border-strong",

@@ -104,7 +104,7 @@ export function FeaturedPostCard({ prompt, stats, reason }: { prompt: Prompt; st
           </span>
         )}
         {tool && (
-          <span className="absolute left-3 top-3 inline-flex h-7 items-center gap-1.5 rounded-full bg-art-chip px-3 text-caption font-semibold text-on-art">
+          <span className="absolute left-3 top-3 inline-flex h-7 items-center gap-1.5 rounded-sm bg-art-chip px-3 text-caption font-semibold text-on-art">
             <meta.icon size={12} aria-hidden />
             {tool}
           </span>
@@ -131,7 +131,7 @@ export function FeaturedPostCard({ prompt, stats, reason }: { prompt: Prompt; st
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {total > 0 && (
-            <span className="inline-flex h-7 items-center gap-1.5 rounded-full bg-success-soft px-3 text-caption font-semibold text-success">
+            <span className="inline-flex h-7 items-center gap-1.5 rounded-sm bg-success-soft px-3 text-caption font-semibold text-success">
               <CircleCheck size={16} aria-hidden />
               {t("featured.worked", { percent, votes: total })}
             </span>

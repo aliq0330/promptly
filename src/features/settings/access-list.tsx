@@ -164,7 +164,7 @@ export function PermissionLegend() {
     <dl className="grid gap-2 sm:grid-cols-3" data-permission-legend="">
       {PERMISSIONS.map((scope) => (
         <div key={scope} className="flex flex-col items-start gap-1 rounded-md bg-surface-soft p-3">
-          <dt className={cn("rounded-full px-2.5 py-0.5 text-caption font-semibold", scopeClass(scope))}>{t(SCOPE_KEY[scope])}</dt>
+          <dt className={cn("rounded-xs px-2.5 py-0.5 text-caption font-semibold", scopeClass(scope))}>{t(SCOPE_KEY[scope])}</dt>
           <dd className="text-caption leading-relaxed text-text-secondary">{t(HINT_KEY[scope])}</dd>
         </div>
       ))}
@@ -228,18 +228,18 @@ export function AccessList({ access }: { access: DeveloperAccess }) {
             >
               <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
                 <span className="min-w-0 break-words text-body font-semibold tracking-[-0.01em] text-text [overflow-wrap:anywhere]">{row.title}</span>
-                <span className="rounded-full bg-surface-soft px-2.5 py-0.5 text-caption font-semibold text-text-secondary">
+                <span className="rounded-xs bg-surface-soft px-2.5 py-0.5 text-caption font-semibold text-text-secondary">
                   {t(KIND_KEY[row.kind])}
                   {row.host ? ` · ${row.host}` : ""}
                 </span>
-                {row.expired && <span className="rounded-full bg-warning-soft px-2.5 py-0.5 text-caption font-semibold text-warning">{t("apiKeys.statusExpired")}</span>}
+                {row.expired && <span className="rounded-xs bg-warning-soft px-2.5 py-0.5 text-caption font-semibold text-warning">{t("apiKeys.statusExpired")}</span>}
               </div>
               <div className="flex flex-wrap gap-1.5">
                 {row.kind === "legacy" ? (
-                  <span className="rounded-full bg-warning-soft px-2.5 py-0.5 text-caption font-semibold text-warning">{t("apps.legacy")}</span>
+                  <span className="rounded-xs bg-warning-soft px-2.5 py-0.5 text-caption font-semibold text-warning">{t("apps.legacy")}</span>
                 ) : (
                   row.scopes.map((scope) => (
-                    <span key={scope} className={cn("rounded-full px-2.5 py-0.5 text-caption font-semibold", scopeClass(scope))}>
+                    <span key={scope} className={cn("rounded-xs px-2.5 py-0.5 text-caption font-semibold", scopeClass(scope))}>
                       {t(SCOPE_KEY[scope as keyof typeof SCOPE_KEY] ?? SCOPE_KEY.read)}
                     </span>
                   ))

@@ -145,7 +145,7 @@ export function FormDisclosure({
           {hint && <span className="block truncate text-caption text-text-muted">{hint}</span>}
         </span>
         {badge ? (
-          <span aria-hidden className="shrink-0 rounded-full bg-secondary px-1.5 text-caption font-semibold leading-4 text-background">
+          <span aria-hidden className="shrink-0 rounded-sm bg-secondary px-1.5 text-caption font-semibold leading-4 text-background">
             {badge}
           </span>
         ) : null}

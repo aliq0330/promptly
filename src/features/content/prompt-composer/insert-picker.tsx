@@ -131,7 +131,7 @@ export function InsertPicker({
                 onPick(visible[0]);
               }
             }}
-            className="h-10 w-full rounded-lg card-inset pl-9 pr-3 text-small text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
+            className="h-10 w-full rounded-sm card-inset pl-9 pr-3 text-small text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
           />
         </div>
       </div>
@@ -188,7 +188,7 @@ export function InsertPicker({
                 {item.description && <span className="mt-0.5 block truncate text-caption text-text-muted">{item.description}</span>}
               </span>
               {item.usage > 0 && (
-                <span className="shrink-0 rounded-full bg-surface-soft px-2 py-0.5 text-caption text-text-secondary">
+                <span className="shrink-0 rounded-xs bg-surface-soft px-2 py-0.5 text-caption text-text-secondary">
                   {t("composer.usedTimes", { count: item.usage })}
                 </span>
               )}

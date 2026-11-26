@@ -239,7 +239,7 @@ export function AddToSpaceModal({
                         className="peer sr-only"
                         aria-label={t("spaces.add.image")}
                       />
-                      <SpaceImage url={media.url} alt="" className="h-20 w-20 rounded-md opacity-60 ring-primary peer-checked:opacity-100 peer-checked:ring-2 peer-focus-visible:ring-2" />
+                      <SpaceImage url={media.url} alt="" className="h-20 w-20 rounded-sm opacity-60 ring-primary peer-checked:opacity-100 peer-checked:ring-2 peer-focus-visible:ring-2" />
                       {on && <Check size={16} className="absolute right-1 top-1 rounded-full bg-primary p-0.5 text-primary-foreground" aria-hidden />}
                     </label>
                   );
@@ -287,7 +287,7 @@ export function AddToSpaceModal({
                           {space.imageCount} · {t(SPACE_KIND_LABEL[space.kind])}
                         </span>
                       </span>
-                      {already && <span className="shrink-0 rounded-full bg-warning-soft px-2 py-0.5 text-caption font-medium text-warning">{t("spaces.add.already")}</span>}
+                      {already && <span className="shrink-0 rounded-xs bg-warning-soft px-2 py-0.5 text-caption font-medium text-warning">{t("spaces.add.already")}</span>}
                       {selected === space.id && <Check size={16} className="shrink-0 text-primary-text" aria-hidden />}
                     </button>
                   </li>

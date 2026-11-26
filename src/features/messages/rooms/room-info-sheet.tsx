@@ -106,7 +106,7 @@ export function RoomInfoSheet({
               </h2>
               <p className="truncate text-small text-text-muted">{t("rooms.info.title", { community: community.name })}</p>
             </div>
-            <button type="button" onClick={onClose} aria-label={t("common.close")} className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-surface-soft text-text-secondary hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus">
+            <button type="button" onClick={onClose} aria-label={t("common.close")} className="grid h-9 w-9 shrink-0 place-items-center rounded-sm bg-surface-soft text-text-secondary hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus">
               <X size={20} aria-hidden />
             </button>
           </div>
@@ -160,11 +160,11 @@ export function RoomInfoSheet({
               <div className="space-y-2" data-room-admin>
                 <p className="text-caption font-semibold text-text-muted">{t("rooms.info.adminHeading")}</p>
                 <div className="flex gap-2">
-                  <button type="button" data-room-edit onClick={() => setEditing(true)} className="flex h-11 flex-1 items-center justify-center rounded-full border border-border text-small font-semibold text-text hover:bg-surface-soft">
+                  <button type="button" data-room-edit onClick={() => setEditing(true)} className="flex h-11 flex-1 items-center justify-center rounded-sm border border-border text-small font-semibold text-text hover:bg-surface-soft">
                     {t("rooms.info.edit")}
                   </button>
                   {!room.isDefault && (
-                    <button type="button" data-room-archive onClick={() => setConfirmArchive(true)} className={cn("flex h-11 flex-1 items-center justify-center rounded-full border border-border text-small font-semibold text-text hover:bg-surface-soft")}>
+                    <button type="button" data-room-archive onClick={() => setConfirmArchive(true)} className={cn("flex h-11 flex-1 items-center justify-center rounded-sm border border-border text-small font-semibold text-text hover:bg-surface-soft")}>
                       {t("rooms.manage.archive")}
                     </button>
                   )}

@@ -180,7 +180,7 @@ export function RoomsManageSection({ group, onToast }: { group: ChatGroup; onToa
         {room.isDefault && <Lock size={16} className="shrink-0 text-text-muted" aria-label={t("rooms.manage.defaultRoom")} />}
         <DropdownMenu
           label={t("rooms.manage.rowMenu", { name: room.name })}
-          triggerClassName="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-text-secondary transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+          triggerClassName="flex h-11 w-11 shrink-0 items-center justify-center rounded-sm text-text-secondary transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
         >
           {(close) => (
             <>
@@ -227,7 +227,7 @@ export function RoomsManageSection({ group, onToast }: { group: ChatGroup; onToa
           <p className="text-small text-text-secondary">{t("rooms.manage.intro")}</p>
           {!isOwner && <p className="mt-1 text-caption text-text-muted">{t("rooms.manage.deleteOwnerOnly")}</p>}
         </div>
-        <span data-rooms-count className="shrink-0 rounded-full bg-surface-soft px-3 py-1.5 text-small font-semibold tabular-nums text-text-secondary">
+        <span data-rooms-count className="shrink-0 rounded-sm bg-surface-soft px-3 py-1.5 text-small font-semibold tabular-nums text-text-secondary">
           {t("rooms.manage.count", { count: active.length, max: ROOM_LIMIT })}
         </span>
       </div>
@@ -257,7 +257,7 @@ export function RoomsManageSection({ group, onToast }: { group: ChatGroup; onToa
                 type="button"
                 onClick={() => setArchivedOpen((open) => !open)}
                 aria-expanded={archivedOpen}
-                className="flex min-h-12 w-full items-center justify-between rounded-xl border border-dashed border-border-strong px-4 text-small font-semibold text-text-secondary hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+                className="flex min-h-12 w-full items-center justify-between rounded-sm border border-dashed border-border-strong px-4 text-small font-semibold text-text-secondary hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
               >
                 <span>{t("rooms.manage.archived")}</span>
                 <span className="flex items-center gap-1.5">

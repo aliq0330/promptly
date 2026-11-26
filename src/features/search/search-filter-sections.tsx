@@ -234,14 +234,14 @@ function TokenFinder({
           {selected.map((token) => {
             const { icon: Icon, label } = tokenChip(token, t);
             return (
-              <span key={tokenKey(token)} className="inline-flex h-10 items-center gap-1.5 rounded-full bg-primary-soft pl-3 pr-1 text-label font-medium text-text">
+              <span key={tokenKey(token)} className="inline-flex h-10 items-center gap-1.5 rounded-sm bg-primary-soft pl-3 pr-1 text-label font-medium text-text">
                 <Icon size={16} className="text-primary-text" aria-hidden />
                 {label}
                 <button
                   type="button"
                   aria-label={`${t("search.removeFilter")}: ${label}`}
                   onClick={() => onToggle(token)}
-                  className="flex h-9 w-9 items-center justify-center rounded-full text-text-muted hover:bg-surface hover:text-text"
+                  className="flex h-9 w-9 items-center justify-center rounded-sm text-text-muted hover:bg-surface hover:text-text"
                 >
                   <X size={16} />
                 </button>

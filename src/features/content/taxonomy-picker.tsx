@@ -306,7 +306,7 @@ function Leaf({ selected, onClick, subtle, children, ...rest }: { selected: bool
       onClick={onClick}
       {...rest}
       className={cn(
-        "flex min-h-11 w-full items-center gap-3 rounded-md px-2 py-2 text-left text-small transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus @md:min-h-12 @md:px-2.5",
+        "flex min-h-11 w-full items-center gap-3 rounded-sm px-2 py-2 text-left text-small transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus @md:min-h-12 @md:px-2.5",
         selected ? "bg-primary-soft font-medium text-text" : cn("hover:bg-surface-soft hover:text-text", subtle ? "text-text-muted" : "text-text-secondary"),
       )}
     >

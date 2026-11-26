@@ -43,7 +43,7 @@ export function SwitchRow({
       <span
         aria-hidden
         className={cn(
-          "grid h-10 w-10 shrink-0 place-items-center rounded-full transition-colors duration-200",
+          "grid h-10 w-10 shrink-0 place-items-center rounded-sm transition-colors duration-200",
           checked ? "bg-primary-soft text-primary-text" : "bg-surface-soft text-text-secondary",
         )}
       >

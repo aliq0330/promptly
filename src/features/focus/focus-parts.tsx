@@ -28,7 +28,7 @@ export function FocusCreator({ user, onImage = false }: { user: UserProfile; onI
     <Link
       href={profileHref(user)}
       className={cn(
-        "relative z-10 inline-flex min-w-0 max-w-full items-center gap-1.5 rounded-full py-0.5 pr-2.5 outline-none focus-visible:ring-2 focus-visible:ring-focus",
+        "relative z-10 inline-flex min-w-0 max-w-full items-center gap-1.5 rounded-sm py-0.5 pr-2.5 outline-none focus-visible:ring-2 focus-visible:ring-focus",
         onImage ? "bg-art-chip pl-0.5 text-on-art hover:bg-art-chip" : "-ml-0.5 pl-0.5 text-text-secondary hover:text-primary-text",
       )}
     >

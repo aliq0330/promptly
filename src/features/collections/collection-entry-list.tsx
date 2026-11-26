@@ -125,7 +125,7 @@ export function CollectionEntryList({
                 setSearchOpen(false);
               }}
               aria-label={t("common.clear")}
-              className="absolute right-1.5 top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-lg text-text hover:bg-surface-soft"
+              className="absolute right-1.5 top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-sm text-text hover:bg-surface-soft"
             >
               <X size={20} aria-hidden />
             </button>

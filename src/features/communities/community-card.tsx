@@ -129,7 +129,7 @@ export function CommunityCard({
       }
       coverOverlay={
         unseen > 0 ? (
-          <span data-shelf-unseen={unseen} className="ml-auto rounded-full bg-primary px-2 py-0.5 text-caption font-semibold text-primary-foreground shadow-xs">
+          <span data-shelf-unseen={unseen} className="ml-auto rounded-xs bg-primary px-2 py-0.5 text-caption font-semibold text-primary-foreground shadow-xs">
             {t("communities.shelf.unseen", { count: unseen >= 99 ? "99+" : unseen })}
           </span>
         ) : undefined

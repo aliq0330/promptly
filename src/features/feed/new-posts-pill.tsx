@@ -18,7 +18,7 @@ export function NewPostsPill({ count, plus, onClick }: { count: number; plus: bo
         type="button"
         onClick={onClick}
         data-action="show-new-posts"
-        className="pointer-events-auto inline-flex h-11 animate-pop-in items-center gap-2 rounded-full bg-primary px-4 text-small font-semibold text-primary-foreground shadow-md hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+        className="pointer-events-auto inline-flex h-11 animate-pop-in items-center gap-2 rounded-sm bg-primary px-4 text-small font-semibold text-primary-foreground shadow-md hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-background"
       >
         <ArrowUp size={16} aria-hidden />
         {label}

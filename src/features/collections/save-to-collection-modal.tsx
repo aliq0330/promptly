@@ -313,7 +313,7 @@ export function SaveToCollectionModal({
                       </span>
                       <span
                         className={cn(
-                          "flex h-7 w-7 shrink-0 items-center justify-center rounded-full border transition-colors",
+                          "flex h-7 w-7 shrink-0 items-center justify-center rounded-sm border transition-colors",
                           isMember ? "border-primary bg-primary text-primary-foreground" : "border-border text-text-muted",
                         )}
                       >

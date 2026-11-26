@@ -148,7 +148,7 @@ export function ReactionSheet({
                 aria-label={key === "all" ? undefined : `${t(REACTION_LABEL[key])} ${counts[key]}`}
                 onClick={() => setTab(key)}
                 className={cn(
-                  "inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full border px-3 text-small font-semibold tabular-nums transition-colors duration-200 ease-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus",
+                  "inline-flex h-9 shrink-0 items-center gap-1.5 rounded-sm border px-3 text-small font-semibold tabular-nums transition-colors duration-200 ease-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus",
                   active === key ? "border-border bg-primary-soft text-primary-text" : "border-transparent text-text-muted hover:bg-surface-soft hover:text-text",
                 )}
               >

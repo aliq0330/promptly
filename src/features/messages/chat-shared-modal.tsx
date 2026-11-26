@@ -66,7 +66,7 @@ export function ChatSharedModal({
                 aria-selected={tab === kind}
                 onClick={() => setTab(kind)}
                 className={cn(
-                  "h-9 rounded-full px-4 text-small font-medium transition-colors",
+                  "h-9 rounded-sm px-4 text-small font-medium transition-colors",
                   tab === kind ? "bg-primary-soft text-primary-text" : "bg-surface-soft text-text-secondary hover:text-text",
                 )}
               >

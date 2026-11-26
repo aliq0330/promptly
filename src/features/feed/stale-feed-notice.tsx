@@ -17,7 +17,7 @@ export function StaleFeedNotice({ onRetry }: { onRetry: () => void }) {
       <button
         type="button"
         onClick={onRetry}
-        className="shrink-0 rounded-full px-3 py-2 font-semibold text-primary-text transition-colors hover:text-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+        className="shrink-0 rounded-sm px-3 py-2 font-semibold text-primary-text transition-colors hover:text-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
       >
         {t("common.retry")}
       </button>

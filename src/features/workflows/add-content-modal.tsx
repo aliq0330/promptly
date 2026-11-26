@@ -65,7 +65,7 @@ export function AddContentModal({
               aria-pressed={mode === value}
               onClick={() => setMode(value)}
               className={cn(
-                "h-9 flex-1 rounded-md border px-3 text-label font-medium transition-colors",
+                "h-9 flex-1 rounded-sm border px-3 text-label font-medium transition-colors",
                 mode === value ? "border-primary bg-primary-soft text-primary-text" : "border-border text-text-secondary hover:border-border-strong",
               )}
             >
@@ -123,7 +123,7 @@ function ExistingList({ onSelect }: { onSelect: (ref: WorkflowContentRef) => voi
           onChange={(event) => setQuery(event.target.value)}
           placeholder={t("workflow.pickerSearch")}
           aria-label={t("workflow.pickerSearch")}
-          className="h-10 w-full rounded-lg card-inset pl-9 pr-3 text-small text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
+          className="h-10 w-full rounded-sm card-inset pl-9 pr-3 text-small text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
         />
       </div>
       {list === null ? (
@@ -240,7 +240,7 @@ function ScratchForm({ onSelect }: { onSelect: (ref: WorkflowContentRef) => void
           value={body}
           onChange={(event) => setBody(event.target.value)}
           aria-invalid={errors.body}
-          className={cn("w-full rounded-md card-inset px-3 py-2 text-small text-text prompt-text")}
+          className={cn("w-full rounded-sm card-inset px-3 py-2 text-small text-text prompt-text")}
         />
         {errors.body && <p className="mt-1 text-caption text-danger">{t("workflow.fieldRequired")}</p>}
       </div>

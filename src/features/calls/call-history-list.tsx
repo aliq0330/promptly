@@ -94,10 +94,10 @@ export function CallHistoryList({ embedded = false }: { embedded?: boolean }) {
                 </Link>
                 {calls && peer && (
                   <span className={cn("flex shrink-0 items-center gap-1", embedded ? "pr-3" : "pr-1")}>
-                    <button type="button" disabled={calls.busy} onClick={() => startCall("audio")} aria-label={t("calls.startVoiceAria", { name })} title={t("calls.startVoice")} data-call-again="audio" className="inline-flex h-10 w-10 items-center justify-center rounded-full text-primary-text hover:bg-primary-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:opacity-50">
+                    <button type="button" disabled={calls.busy} onClick={() => startCall("audio")} aria-label={t("calls.startVoiceAria", { name })} title={t("calls.startVoice")} data-call-again="audio" className="inline-flex h-10 w-10 items-center justify-center rounded-sm text-primary-text hover:bg-primary-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:opacity-50">
                       <Phone size={20} aria-hidden />
                     </button>
-                    <button type="button" disabled={calls.busy} onClick={() => startCall("video")} aria-label={t("calls.startVideoAria", { name })} title={t("calls.startVideo")} data-call-again="video" className="inline-flex h-10 w-10 items-center justify-center rounded-full text-primary-text hover:bg-primary-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:opacity-50">
+                    <button type="button" disabled={calls.busy} onClick={() => startCall("video")} aria-label={t("calls.startVideoAria", { name })} title={t("calls.startVideo")} data-call-again="video" className="inline-flex h-10 w-10 items-center justify-center rounded-sm text-primary-text hover:bg-primary-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:opacity-50">
                       <Video size={20} aria-hidden />
                     </button>
                   </span>

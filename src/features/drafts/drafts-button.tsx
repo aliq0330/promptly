@@ -152,14 +152,14 @@ export function DraftsButton({
           aria-label={count > 0 ? t("draft.buttonLabel", { count }) : t("draft.buttonLabelEmpty")}
           title={count > 0 ? t("draft.buttonLabel", { count }) : t("draft.buttonLabelEmpty")}
           data-drafts-button=""
-          className="relative flex h-9 min-w-9 shrink-0 items-center justify-center gap-1.5 rounded-full px-2 text-text-secondary transition-colors hover:bg-surface-soft hover:text-text lg:px-3"
+          className="relative flex h-9 min-w-9 shrink-0 items-center justify-center gap-1.5 rounded-sm px-2 text-text-secondary transition-colors hover:bg-surface-soft hover:text-text lg:px-3"
         >
           <FileText size={20} aria-hidden />
           <span className="hidden text-small font-semibold text-primary-text lg:inline">
             {t("cs.drafts.mine")}
             {count > 0 ? ` (${count})` : ""}
           </span>
-          {count > 0 && <span className="absolute right-0.5 top-0.5 min-w-4 rounded-full bg-primary px-1 text-center text-caption font-semibold leading-4 text-primary-foreground lg:hidden">{count}</span>}
+          {count > 0 && <span className="absolute right-0.5 top-0.5 min-w-4 rounded-sm bg-primary px-1 text-center text-caption font-semibold leading-4 text-primary-foreground lg:hidden">{count}</span>}
         </button>
       ) : (
         <Button
@@ -293,7 +293,7 @@ function DraftCard({
         <span className="min-w-0 flex-1 space-y-1">
           <span className={cn("block truncate text-body font-semibold", title ? "text-text" : "text-text-muted")}>{title || t("draft.untitled")}</span>
           <span className="flex flex-wrap items-center gap-1.5 text-caption text-text-muted">
-            {typeLabel && <span className="rounded-full bg-surface-elevated px-2 py-0.5 font-semibold text-text-secondary">{typeLabel}</span>}
+            {typeLabel && <span className="rounded-sm bg-surface-elevated px-2 py-0.5 font-semibold text-text-secondary">{typeLabel}</span>}
             <span>{meta.join(" · ")}</span>
           </span>
           {detail ? (

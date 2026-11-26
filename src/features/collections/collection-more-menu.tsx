@@ -131,7 +131,7 @@ export function CollectionMoreMenu({
         aria-haspopup="menu"
         aria-expanded={open}
         className={cn(
-          "flex h-9 w-9 items-center justify-center rounded-full bg-surface/90 text-text-muted shadow-sm transition-colors hover:bg-surface-soft hover:text-text",
+          "flex h-9 w-9 items-center justify-center rounded-sm bg-surface/90 text-text-muted shadow-sm transition-colors hover:bg-surface-soft hover:text-text",
           triggerClassName,
         )}
       >

@@ -167,7 +167,7 @@ export function CreateCommunityModal({ onClose, onCreated }: { onClose: () => vo
             onClick={onClose}
             disabled={busy}
             aria-label={t("common.close")}
-            className="flex h-9 w-9 items-center justify-center rounded-md text-text-muted hover:bg-surface-soft hover:text-text disabled:opacity-50"
+            className="flex h-9 w-9 items-center justify-center rounded-sm text-text-muted hover:bg-surface-soft hover:text-text disabled:opacity-50"
           >
             <X size={20} />
           </button>

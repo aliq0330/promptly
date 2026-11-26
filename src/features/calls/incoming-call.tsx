@@ -80,7 +80,7 @@ export function IncomingCall({
             onClick={onReject}
             disabled={busy}
             data-incoming-reject
-            className="inline-flex h-12 min-w-32 flex-1 items-center justify-center gap-2 rounded-full bg-danger px-5 text-body font-semibold text-danger-foreground transition-colors hover:bg-danger/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-surface disabled:opacity-50"
+            className="inline-flex h-12 min-w-32 flex-1 items-center justify-center gap-2 rounded-sm bg-danger px-5 text-body font-semibold text-danger-foreground transition-colors hover:bg-danger/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-surface disabled:opacity-50"
           >
             <PhoneOff size={20} aria-hidden /> {t("calls.incoming.reject")}
           </button>
@@ -89,7 +89,7 @@ export function IncomingCall({
             onClick={onAccept}
             disabled={busy}
             data-incoming-accept
-            className="inline-flex h-12 min-w-32 flex-1 items-center justify-center gap-2 rounded-full bg-success px-5 text-body font-semibold text-success-foreground transition-colors hover:bg-success/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-surface disabled:opacity-50"
+            className="inline-flex h-12 min-w-32 flex-1 items-center justify-center gap-2 rounded-sm bg-success px-5 text-body font-semibold text-success-foreground transition-colors hover:bg-success/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-surface disabled:opacity-50"
           >
             {type === "video" ? <Video size={20} aria-hidden /> : <Phone size={20} aria-hidden />} {t("calls.incoming.accept")}
           </button>

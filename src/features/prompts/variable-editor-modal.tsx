@@ -125,7 +125,7 @@ export function VariableEditorModal({
               onChange={(event) => setName(event.target.value)}
               onBlur={() => setTouched(true)}
               placeholder={t("variable.namePlaceholder")}
-              className="h-10 w-full rounded-lg card-inset px-3 text-small text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
+              className="h-10 w-full rounded-sm card-inset px-3 text-small text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
             />
             {normalizedName && (
               <p className="mt-1.5 font-mono text-caption text-primary-text">{`{${normalizedName}}`}</p>
@@ -153,7 +153,7 @@ export function VariableEditorModal({
               value={description}
               onChange={(event) => setDescription(event.target.value)}
               placeholder={t("variable.descriptionPlaceholder")}
-              className="w-full resize-none rounded-lg card-inset px-3 py-2 text-small text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
+              className="w-full resize-none rounded-sm card-inset px-3 py-2 text-small text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
             />
           </div>
 

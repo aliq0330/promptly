@@ -95,7 +95,7 @@ export function UserActions({ user, onChanged, onDeleted }: { user: AdminUser; o
               <label className="text-caption text-text-muted" htmlFor="admin-suspend-days">
                 {t("admin.actions.duration")}
               </label>
-              <select id="admin-suspend-days" value={days} onChange={(event) => setDays(Number(event.target.value))} className="h-10 rounded-lg card-flat px-2 text-small text-text">
+              <select id="admin-suspend-days" value={days} onChange={(event) => setDays(Number(event.target.value))} className="h-10 rounded-sm card-flat px-2 text-small text-text">
                 {DAYS.map((d) => (
                   <option key={d.days} value={d.days}>
                     {t(d.key)}

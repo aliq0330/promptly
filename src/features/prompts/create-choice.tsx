@@ -99,7 +99,7 @@ export function CreateMenuList({ tag = null, community = null, onPick }: { tag?:
         data-create-share-existing=""
         className="group mt-2 flex min-h-16 w-full items-center gap-3 px-1 py-3 text-left"
       >
-        <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-surface-soft text-text-secondary group-hover:text-primary-text">
+        <span className="grid h-11 w-11 shrink-0 place-items-center rounded-sm bg-surface-soft text-text-secondary group-hover:text-primary-text">
           <Quote size={20} />
         </span>
         <span className="min-w-0 flex-1">

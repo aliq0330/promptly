@@ -101,7 +101,7 @@ export function WorksBadge({ works, tone = "plain", className }: { works: boolea
       data-works-badge={works ? "yes" : "no"}
       title={t("prompt.works.badgeHint")}
       className={cn(
-        "inline-flex h-[22px] shrink-0 items-center gap-1 rounded-full px-2 text-caption font-semibold",
+        "inline-flex h-[22px] shrink-0 items-center gap-1 rounded-sm px-2 text-caption font-semibold",
         tone === "overlay" ? "bg-art-chip text-on-art" : works ? "bg-success-soft text-success" : "bg-danger-soft text-danger",
         className,
       )}

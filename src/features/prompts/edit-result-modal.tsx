@@ -101,7 +101,7 @@ export function EditResultModal({ result, onClose, onUpdated }: { result: Prompt
                 rows={4}
                 value={textContent}
                 onChange={(event) => setTextContent(event.target.value)}
-                className="w-full resize-none rounded-lg card-inset px-3 py-2 text-small text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
+                className="w-full resize-none rounded-sm card-inset px-3 py-2 text-small text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
               />
             </div>
           ) : (
@@ -121,7 +121,7 @@ export function EditResultModal({ result, onClose, onUpdated }: { result: Prompt
               value={tool}
               onChange={(event) => setTool(event.target.value)}
               placeholder={t("result.toolFieldPlaceholder")}
-              className="h-10 w-full rounded-lg card-inset px-3 text-small text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
+              className="h-10 w-full rounded-sm card-inset px-3 text-small text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
             />
             <datalist id="edit-result-tool-suggestions">
               {TOOL_SUGGESTIONS.map((suggestion) => (
@@ -162,13 +162,13 @@ export function EditResultModal({ result, onClose, onUpdated }: { result: Prompt
                       value={modificationSummary}
                       onChange={(event) => setModificationSummary(event.target.value)}
                       placeholder={t("result.modificationSummaryPlaceholder")}
-                      className="h-10 w-full rounded-lg card-inset px-3 text-small text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
+                      className="h-10 w-full rounded-sm card-inset px-3 text-small text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
                     />
                   </div>
                   {result.originalPrompt && (
                     <div>
                       <p className="mb-1.5 text-caption font-semibold text-text-muted">{t("result.originalPromptText")}</p>
-                      <p className="max-h-24 overflow-y-auto whitespace-pre-wrap rounded-md card-inset px-3 py-2 font-mono text-caption text-text-muted">
+                      <p className="max-h-24 overflow-y-auto whitespace-pre-wrap rounded-sm card-inset px-3 py-2 font-mono text-caption text-text-muted">
                         {result.originalPrompt.promptText}
                       </p>
                     </div>
@@ -182,7 +182,7 @@ export function EditResultModal({ result, onClose, onUpdated }: { result: Prompt
                       rows={4}
                       value={modifiedPromptText}
                       onChange={(event) => setModifiedPromptText(event.target.value)}
-                      className="w-full resize-none rounded-lg card-inset px-3 py-2 font-mono text-caption text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
+                      className="w-full resize-none rounded-sm card-inset px-3 py-2 font-mono text-caption text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
                     />
                   </div>
                 </div>

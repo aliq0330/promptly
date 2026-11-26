@@ -24,7 +24,7 @@ export function MediaPlayButton({ playing, onToggle, className }: { playing: boo
       aria-label={playing ? t("focusFeed.pause") : t("focusFeed.play")}
       aria-pressed={playing}
       className={cn(
-        "absolute left-1/2 top-1/2 z-10 flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-art-chip text-on-art outline-none backdrop-blur-md transition-opacity duration-200 ease-soft focus-visible:ring-2 focus-visible:ring-white",
+        "absolute left-1/2 top-1/2 z-10 flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-sm bg-art-chip text-on-art outline-none backdrop-blur-md transition-opacity duration-200 ease-soft focus-visible:ring-2 focus-visible:ring-white",
         playing ? "opacity-0 focus-visible:opacity-100 group-hover:opacity-100" : "opacity-100",
         className,
       )}

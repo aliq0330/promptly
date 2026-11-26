@@ -82,7 +82,7 @@ export function SpacesFilterSheet({
           <button type="button" onClick={onReset} disabled={!dirty} className="text-small font-semibold text-primary-text hover:underline disabled:pointer-events-none disabled:text-text-muted disabled:no-underline">
             {t("spaces.filter.reset")}
           </button>
-          <button type="button" onClick={onClose} className="inline-flex h-10 items-center rounded-full bg-primary px-5 text-small font-semibold text-primary-foreground hover:bg-primary-hover">
+          <button type="button" onClick={onClose} className="inline-flex h-10 items-center rounded-sm bg-primary px-5 text-small font-semibold text-primary-foreground hover:bg-primary-hover">
             {t("spaces.filter.done")}
           </button>
         </div>

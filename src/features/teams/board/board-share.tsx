@@ -108,7 +108,7 @@ export function ShareDialog({
           <h2 id={titleId} className="min-w-0 flex-1 truncate font-display text-h3 font-extrabold text-text">
             {t("tb.share.title", { name: team.fileTitle ?? team.projectTitle })}
           </h2>
-          <button type="button" onClick={onClose} aria-label={t("common.close")} className="grid h-10 w-10 place-items-center rounded-full hover:bg-surface-soft">
+          <button type="button" onClick={onClose} aria-label={t("common.close")} className="grid h-10 w-10 place-items-center rounded-sm hover:bg-surface-soft">
             <X size={20} aria-hidden />
           </button>
         </header>
@@ -126,7 +126,7 @@ export function ShareDialog({
           <>
             <div className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain px-5 pb-3">
               {canInvite && (
-                <button type="button" onClick={onInvite} data-board-invite="" className="flex h-12 w-full items-center gap-3 rounded-xl border border-border px-4 text-left text-body text-text-secondary hover:bg-surface-soft">
+                <button type="button" onClick={onInvite} data-board-invite="" className="flex h-12 w-full items-center gap-3 rounded-sm border border-border px-4 text-left text-body text-text-secondary hover:bg-surface-soft">
                   <UserPlus size={20} aria-hidden />
                   {t("tb.share.invite")}
                 </button>

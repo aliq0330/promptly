@@ -103,7 +103,7 @@ function NextEventCard({ event, onOpen }: { event: CommunityEvent; onOpen: () =>
         <span className="block break-words text-small font-semibold text-text">{event.title}</span>
         <span className="block text-caption text-text-muted">{formatEventRange(event.startsAt, event.endsAt, event.timezone, language)}</span>
       </span>
-      <span className="shrink-0 rounded-full bg-text px-3 py-1.5 text-caption font-semibold text-background">{t("communities.overview.allEvents")}</span>
+      <span className="shrink-0 rounded-sm bg-text px-3 py-1.5 text-caption font-semibold text-background">{t("communities.overview.allEvents")}</span>
     </button>
   );
 }

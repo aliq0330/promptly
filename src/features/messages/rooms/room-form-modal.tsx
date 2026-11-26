@@ -161,7 +161,7 @@ export function RoomFormModal({
                 maxLength={ROOM_DESCRIPTION_MAX}
                 onChange={(event) => setDescription(event.target.value)}
                 placeholder={t("rooms.form.descriptionPlaceholder")}
-                className="mt-1.5 h-12 w-full rounded-lg card-flat px-4 text-body text-text outline-none placeholder:text-text-muted focus:border-focus focus:ring-2 focus:ring-primary/20"
+                className="mt-1.5 h-12 w-full rounded-sm card-flat px-4 text-body text-text outline-none placeholder:text-text-muted focus:border-focus focus:ring-2 focus:ring-primary/20"
               />
             </div>
 
@@ -216,7 +216,7 @@ export function RoomFormModal({
                   onChange={(event) => setNewSection(event.target.value)}
                   placeholder={t("rooms.form.sectionNewPlaceholder")}
                   aria-label={t("rooms.form.sectionNewPlaceholder")}
-                  className="h-12 w-full rounded-lg card-flat px-4 text-body text-text outline-none placeholder:text-text-muted focus:border-focus focus:ring-2 focus:ring-primary/20"
+                  className="h-12 w-full rounded-sm card-flat px-4 text-body text-text outline-none placeholder:text-text-muted focus:border-focus focus:ring-2 focus:ring-primary/20"
                 />
               )}
             </div>

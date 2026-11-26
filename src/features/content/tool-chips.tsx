@@ -14,7 +14,7 @@ export function ToolChips({ refs, className, linked }: { refs: string[] | null |
   return (
     <div className={cn("flex flex-wrap gap-1.5", className)}>
       {items.map((item) => {
-        const chip = "inline-flex h-6 items-center gap-1 rounded-full bg-primary-soft px-2.5 text-caption font-medium text-text-secondary";
+        const chip = "inline-flex h-6 items-center gap-1 rounded-xs bg-primary-soft px-2.5 text-caption font-medium text-text-secondary";
         return linked ? (
           <Link key={item.ref} href={toolHref(item.tool.id)} className={cn(chip, "transition-colors hover:bg-primary/15 hover:text-primary-text")}>
             <ToolLogo toolId={item.tool.id} name={item.tool.name} size="sm" tile={false} className="h-4 w-4" />
@@ -41,7 +41,7 @@ export function ToolLine({ label, refs, legacy }: { label: string; refs: string[
       {hasKnown ? (
         <ToolChips refs={refs} linked />
       ) : (
-        <Link href={`/discover?q=${encodeURIComponent(legacy ?? "")}`} className="tap-area inline-flex h-6 items-center rounded-full bg-primary-soft px-2.5 text-caption font-medium text-text-secondary transition-colors hover:bg-primary/15 hover:text-primary-text">{legacy}</Link>
+        <Link href={`/discover?q=${encodeURIComponent(legacy ?? "")}`} className="tap-area inline-flex h-6 items-center rounded-sm bg-primary-soft px-2.5 text-caption font-medium text-text-secondary transition-colors hover:bg-primary/15 hover:text-primary-text">{legacy}</Link>
       )}
     </div>
   );

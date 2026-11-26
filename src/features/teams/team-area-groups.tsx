@@ -66,13 +66,13 @@ export function ViewSegment({ view, onView, itemCount, groupCount }: { view: Gro
       aria-selected={view === key}
       onClick={() => onView(key)}
       data-area-view={key}
-      className={cn("h-10 flex-1 rounded-full text-small font-semibold transition-colors", view === key ? "bg-surface text-text shadow-xs" : "text-text-secondary")}
+      className={cn("h-10 flex-1 rounded-sm text-small font-semibold transition-colors", view === key ? "bg-surface text-text shadow-xs" : "text-text-secondary")}
     >
       {label} <span className="font-semibold opacity-60">{count}</span>
     </button>
   );
   return (
-    <div role="tablist" aria-label={t("tf.view.aria")} className="flex min-w-0 flex-1 gap-1 rounded-full bg-surface-soft p-1 md:max-w-xs" data-testid="area-view-segment">
+    <div role="tablist" aria-label={t("tf.view.aria")} className="flex min-w-0 flex-1 gap-1 rounded-sm bg-surface-soft p-1 md:max-w-xs" data-testid="area-view-segment">
       {tab("items", t("tf.view.items"), itemCount)}
       {tab("groups", t("tf.view.groups"), groupCount)}
     </div>
@@ -146,7 +146,7 @@ export function FolderHeader({ title, dot, onBack, onMenu }: { title: string; do
   const { t } = useTranslation();
   return (
     <div className="flex items-center gap-1" data-testid="area-folder-header">
-      <button type="button" onClick={onBack} aria-label={t("tf.folder.back")} data-area-folder-back="" className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-text hover:bg-surface-soft">
+      <button type="button" onClick={onBack} aria-label={t("tf.folder.back")} data-area-folder-back="" className="grid h-11 w-11 shrink-0 place-items-center rounded-sm text-text hover:bg-surface-soft">
         <ChevronLeft size={24} aria-hidden />
       </button>
       <h3 className="flex min-w-0 flex-1 items-center gap-2 font-display text-h3 font-bold text-text">
@@ -156,7 +156,7 @@ export function FolderHeader({ title, dot, onBack, onMenu }: { title: string; do
         </span>
       </h3>
       {onMenu && (
-        <button type="button" onClick={onMenu} aria-label={t("tf.folder.menu")} data-area-folder-menu="" className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-text-secondary hover:bg-surface-soft">
+        <button type="button" onClick={onMenu} aria-label={t("tf.folder.menu")} data-area-folder-menu="" className="grid h-11 w-11 shrink-0 place-items-center rounded-sm text-text-secondary hover:bg-surface-soft">
           <MoreVertical size={20} aria-hidden />
         </button>
       )}
@@ -320,7 +320,7 @@ export function GroupMenuDialog({
 
   const row = (key: string, icon: ReactNode, label: string, hint: string | null, onClick: () => void, danger = false) => (
     <li key={key}>
-      <button type="button" onClick={onClick} disabled={busy} data-group-menu-item={key} className={cn("flex min-h-14 w-full items-center gap-4 rounded-xl px-2 text-left text-body font-semibold hover:bg-surface-soft disabled:opacity-50", danger ? "text-danger hover:bg-danger-soft" : "text-text")}>
+      <button type="button" onClick={onClick} disabled={busy} data-group-menu-item={key} className={cn("flex min-h-14 w-full items-center gap-4 rounded-sm px-2 text-left text-body font-semibold hover:bg-surface-soft disabled:opacity-50", danger ? "text-danger hover:bg-danger-soft" : "text-text")}>
         <span aria-hidden className="shrink-0">
           {icon}
         </span>
@@ -399,7 +399,7 @@ export function SelectionBar({ count, allSelected, onAll, onClose, actions }: { 
     <div className="sticky bottom-[calc(5rem+env(safe-area-inset-bottom))] z-10 pt-2 md:bottom-4" data-testid="area-select-bar" data-keyboard-hide="">
       <div className="mx-auto max-w-xl space-y-2 rounded-lg card-flat p-2.5 shadow-pop">
         <div className="flex items-center gap-1.5">
-          <button type="button" onClick={onClose} aria-label={t("tf.select.close")} className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-text-secondary hover:bg-surface-soft" data-select-close="">
+          <button type="button" onClick={onClose} aria-label={t("tf.select.close")} className="grid h-10 w-10 shrink-0 place-items-center rounded-sm text-text-secondary hover:bg-surface-soft" data-select-close="">
             <span aria-hidden className="text-h3 leading-none">
               ×
             </span>

@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 import type { PromptContentType } from "@/types";
 
 const chipClassName =
-  "inline-flex min-h-8 max-w-full items-center gap-1.5 rounded-full border px-3 text-small transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus";
+  "inline-flex min-h-8 max-w-full items-center gap-1.5 rounded-sm border px-3 text-small transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus";
 
 /**
  * "Ne üretiyorsun?" (docs/history/244-*): Görsel · Metin · Ses · Video, satır içi seçenek düğmeleri (eskiden hap + alt sayfaydı).

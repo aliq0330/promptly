@@ -157,12 +157,12 @@ function ShowcaseCard({ prompt, active, open, onToggle }: { prompt: Prompt; acti
           <p className="line-clamp-6 font-mono text-caption leading-relaxed text-on-art">{prompt.promptText}</p>
           {open && (
             <div className="flex items-center gap-1.5" onClick={(event) => event.stopPropagation()}>
-              <CopyPromptButton text={prompt.promptText} promptId={prompt.id} size="sm" variant="primary" className="h-8 min-w-0 rounded-full px-3" />
+              <CopyPromptButton text={prompt.promptText} promptId={prompt.id} size="sm" variant="primary" className="h-8 min-w-0 rounded-sm px-3" />
               <Link
                 href={promptHref(prompt)}
                 aria-label={t("showcase.open")}
                 title={t("showcase.open")}
-                className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/15 text-on-art transition-colors hover:bg-white/25"
+                className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-white/15 text-on-art transition-colors hover:bg-white/25"
               >
                 <ArrowUpRight size={16} aria-hidden />
               </Link>

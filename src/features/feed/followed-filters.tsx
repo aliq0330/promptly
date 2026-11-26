@@ -117,7 +117,7 @@ export function FollowedFilterSections({
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder={t("feed.filterPeopleSearch")}
                 aria-label={t("feed.filterPeopleSearch")}
-                className="h-10 w-full rounded-md card-flat px-3 text-small text-text outline-none placeholder:text-text-muted focus-visible:ring-2 focus-visible:ring-focus"
+                className="h-10 w-full rounded-sm card-flat px-3 text-small text-text outline-none placeholder:text-text-muted focus-visible:ring-2 focus-visible:ring-focus"
               />
             )}
             {shownPeople.length === 0 ? (
@@ -207,7 +207,7 @@ export function FollowedFilterSummary({
           type="button"
           onClick={pill.remove}
           aria-label={t("feed.removeFilter", { name: pill.label })}
-          className="inline-flex h-9 items-center gap-1.5 rounded-full bg-primary-soft px-3 text-label font-medium text-primary-text transition-colors hover:bg-primary-soft/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+          className="inline-flex h-9 items-center gap-1.5 rounded-sm bg-primary-soft px-3 text-label font-medium text-primary-text transition-colors hover:bg-primary-soft/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
         >
           {pill.label}
           <X size={16} aria-hidden />

@@ -292,7 +292,7 @@ export function DiscoverView({
               onChange={(event) => setQuery(event.target.value)}
               maxLength={100}
               placeholder={t("communities.search.placeholder")}
-              className="h-10 w-full rounded-full border border-border-soft bg-background pl-9 pr-3 text-small text-text shadow-xs transition-colors duration-200 ease-soft placeholder:text-text-muted hover:border-border-strong focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15"
+              className="h-10 w-full rounded-sm border border-border-soft bg-background pl-9 pr-3 text-small text-text shadow-xs transition-colors duration-200 ease-soft placeholder:text-text-muted hover:border-border-strong focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15"
             />
           </label>
         )}
@@ -315,7 +315,7 @@ export function DiscoverView({
             onClick={() => setCategory(value)}
             aria-pressed={category === value}
             className={
-              "shrink-0 rounded-full border px-3 py-1.5 text-caption font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus " +
+              "shrink-0 rounded-sm border px-3 py-1.5 text-caption font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus " +
               (category === value ? "border-primary/50 bg-primary-soft text-primary-text" : "border-border-soft bg-surface text-text-secondary hover:border-border-strong")
             }
           >

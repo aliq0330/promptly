@@ -134,7 +134,7 @@ export function CommentSection({
               aria-pressed={follow.contentFollowing}
               data-comment-follow
               className={cn(
-                "inline-flex h-9 items-center gap-1.5 whitespace-nowrap rounded-full px-4 text-small font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus",
+                "inline-flex h-9 items-center gap-1.5 whitespace-nowrap rounded-sm px-4 text-small font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus",
                 follow.contentFollowing ? "bg-primary text-primary-foreground hover:bg-primary-hover" : "bg-primary-soft text-primary-text hover:bg-primary-soft/70",
               )}
             >
@@ -145,7 +145,7 @@ export function CommentSection({
           {(topLevel.length > 1 || hasMore) && (
             <>
               {/* Tablet/masaüstü: satır içi çipler (pencere/açılır kutu yok). Telefon: tek hap, alt sayfa (SectionMenu). */}
-              <div role="group" aria-label={t("comments.sort.label")} className="hidden gap-0.5 rounded-full bg-surface-soft p-1 sm:flex">
+              <div role="group" aria-label={t("comments.sort.label")} className="hidden gap-0.5 rounded-sm bg-surface-soft p-1 sm:flex">
                 {sortItems.map((item) => (
                   <button
                     key={item.key}
@@ -154,7 +154,7 @@ export function CommentSection({
                     aria-pressed={sort === item.key}
                     onClick={() => setSort(item.key)}
                     className={cn(
-                      "h-9 rounded-full px-3 text-small transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus",
+                      "h-9 rounded-sm px-3 text-small transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus",
                       sort === item.key ? "bg-surface font-semibold text-primary-text shadow-xs" : "font-medium text-text-secondary hover:text-text",
                     )}
                   >
@@ -186,7 +186,7 @@ export function CommentSection({
           type="button"
           onClick={showNewComments}
           data-new-comments
-          className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-small font-semibold text-primary-foreground transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
+          className="inline-flex items-center gap-2 rounded-sm bg-primary px-4 py-2 text-small font-semibold text-primary-foreground transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
         >
           <ArrowUp size={16} aria-hidden />
           {newCount === 1 ? t("comments.newOne") : t("comments.newMany", { count: newCount })}

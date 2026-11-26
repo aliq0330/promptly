@@ -165,7 +165,7 @@ export function CallScreen({
           {/* Üst şerit: küçült · (görüntü varken) ad + durum · bağlantı kalitesi. Avatar panelinde ad/durum zaten ortada durur. */}
           {live && (
             <div className={cn("absolute inset-x-0 top-0 z-10 flex items-center gap-3 px-4 pt-[max(0.75rem,env(safe-area-inset-top))]", showMainFeed ? "art-scrim-top pb-10" : "pb-2")}>
-              <button type="button" onClick={onMinimize} aria-label={t("calls.minimize")} title={t("calls.minimize")} data-call-minimize className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-art-chip text-on-art hover:bg-art-chip/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus">
+              <button type="button" onClick={onMinimize} aria-label={t("calls.minimize")} title={t("calls.minimize")} data-call-minimize className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-sm bg-art-chip text-on-art hover:bg-art-chip/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus">
                 <Minimize2 size={20} aria-hidden />
               </button>
               {showMainFeed ? (
@@ -186,12 +186,12 @@ export function CallScreen({
           {live && connected && (!snapshot.remoteMic || (isVideo && !snapshot.remoteCamera && !swapped)) && (
             <div className="absolute inset-x-0 bottom-3 z-10 flex flex-wrap items-center justify-center gap-2 px-4" data-call-remote-state>
               {!snapshot.remoteMic && (
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-art-chip px-3 py-1 text-small text-on-art">
+                <span className="inline-flex items-center gap-1.5 rounded-sm bg-art-chip px-3 py-1 text-small text-on-art">
                   <MicOff size={16} aria-hidden /> {t("calls.remoteMuted", { name })}
                 </span>
               )}
               {isVideo && !snapshot.remoteCamera && (
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-art-chip px-3 py-1 text-small text-on-art">
+                <span className="inline-flex items-center gap-1.5 rounded-sm bg-art-chip px-3 py-1 text-small text-on-art">
                   <VideoOff size={16} aria-hidden /> {t("calls.remoteCameraOff", { name })}
                 </span>
               )}
@@ -204,7 +204,7 @@ export function CallScreen({
               type="button"
               data-call-tap-to-play
               onClick={onResumeAudio}
-              className="absolute inset-x-6 top-1/2 z-20 inline-flex h-12 -translate-y-1/2 items-center justify-center rounded-full bg-surface px-5 text-body font-semibold text-text shadow-md"
+              className="absolute inset-x-6 top-1/2 z-20 inline-flex h-12 -translate-y-1/2 items-center justify-center rounded-sm bg-surface px-5 text-body font-semibold text-text shadow-md"
             >
               {t("calls.tapToPlay")}
             </button>

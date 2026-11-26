@@ -49,7 +49,7 @@ export function ProjectVariablesPanel({
       <div className="flex items-center gap-2">
         <h3 className="min-w-0 flex-1 text-body font-bold text-text">{t("tp.variable.fileTitle")}</h3>
         {canWrite && (
-          <button type="button" onClick={() => setEditing("new")} className="inline-flex h-9 items-center gap-1 rounded-full bg-primary-soft px-3 text-caption font-semibold text-primary-text" data-variable-add>
+          <button type="button" onClick={() => setEditing("new")} className="inline-flex h-9 items-center gap-1 rounded-sm bg-primary-soft px-3 text-caption font-semibold text-primary-text" data-variable-add>
             <Plus size={12} aria-hidden />
             {t("tp.variable.add")}
           </button>
@@ -67,10 +67,10 @@ export function ProjectVariablesPanel({
                 <span className="min-w-0 flex-1 truncate text-small text-text">{variable.value || <span className="text-text-muted">{t("tp.variable.noValue")}</span>}</span>
                 {canWrite && own && (
                   <>
-                    <button type="button" onClick={() => setEditing(own)} aria-label={t("tp.variable.edit")} className="grid h-9 w-9 place-items-center rounded-full text-text-muted hover:bg-surface">
+                    <button type="button" onClick={() => setEditing(own)} aria-label={t("tp.variable.edit")} className="grid h-9 w-9 place-items-center rounded-sm text-text-muted hover:bg-surface">
                       <Pencil size={12} aria-hidden />
                     </button>
-                    <button type="button" onClick={() => void remove(own)} aria-label={t("tp.variable.delete")} className="grid h-9 w-9 place-items-center rounded-full text-text-muted hover:bg-surface">
+                    <button type="button" onClick={() => void remove(own)} aria-label={t("tp.variable.delete")} className="grid h-9 w-9 place-items-center rounded-sm text-text-muted hover:bg-surface">
                       <Trash2 size={12} aria-hidden />
                     </button>
                   </>

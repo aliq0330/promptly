@@ -110,7 +110,7 @@ export function StatisticsModal({ target, onClose }: { target: StatisticsTarget;
             type="button"
             onClick={onClose}
             aria-label={t("common.close")}
-            className="flex h-11 w-11 items-center justify-center rounded-full bg-surface-soft text-text transition-colors hover:bg-border-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+            className="flex h-11 w-11 items-center justify-center rounded-sm bg-surface-soft text-text transition-colors hover:bg-border-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
           >
             <X size={20} />
           </button>

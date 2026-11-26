@@ -196,7 +196,7 @@ export function useCommentExtras() {
 export type CommentExtrasController = ReturnType<typeof useCommentExtras>;
 
 const TOOL_BUTTON =
-  "flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-text-secondary transition-colors hover:bg-surface-soft hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:pointer-events-none disabled:opacity-50";
+  "flex h-9 w-9 shrink-0 items-center justify-center rounded-sm text-text-secondary transition-colors hover:bg-surface-soft hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:pointer-events-none disabled:opacity-50";
 const TOOL_ON = "bg-primary-soft text-primary-text hover:bg-primary-soft hover:text-primary-text";
 
 /** Fotoğraf · GIF · İçerik düğmeleri (yazma çubuğunun yanında ya da altında). Seçici pencereler burada açılır. */
@@ -283,7 +283,7 @@ export function CommentExtrasToolbar({ extras, userId, disabled = false, classNa
 }
 
 const REMOVE_BUTTON =
-  "absolute -right-2 -top-2 flex h-7 w-7 items-center justify-center rounded-full border-2 border-surface bg-text text-background shadow-xs hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus";
+  "absolute -right-2 -top-2 flex h-7 w-7 items-center justify-center rounded-sm border-2 border-surface bg-text text-background shadow-xs hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus";
 
 /** Seçili ekler: görsel önizlemesi + küçük içerik kartı (her birinde ✕), ipucu ve varsa hata. Hiç ek yoksa hiçbir şey çizmez. */
 export function CommentExtrasPreview({

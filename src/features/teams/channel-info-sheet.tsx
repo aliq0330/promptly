@@ -104,7 +104,7 @@ export function ChannelInfoSheet({
               </h2>
               <p className="truncate text-small text-text-muted">{t("tm.chan.title", { team: team.name })}</p>
             </div>
-            <button type="button" onClick={onClose} aria-label={t("common.close")} className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-surface-soft text-text-secondary hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus">
+            <button type="button" onClick={onClose} aria-label={t("common.close")} className="grid h-9 w-9 shrink-0 place-items-center rounded-sm bg-surface-soft text-text-secondary hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus">
               <X size={20} aria-hidden />
             </button>
           </div>
@@ -183,16 +183,16 @@ export function ChannelInfoSheet({
               <div className="space-y-2" data-channel-admin>
                 <p className="text-caption font-semibold text-text-muted">{t("tm.chan.adminHeading")}</p>
                 <div className="flex gap-2">
-                  <Link href={teamLink(team.slug, "chat", { channel: channel.name, settings: "1" })} data-channel-edit className="flex h-11 flex-1 items-center justify-center rounded-full border border-border text-small font-semibold text-text hover:bg-surface-soft">
+                  <Link href={teamLink(team.slug, "chat", { channel: channel.name, settings: "1" })} data-channel-edit className="flex h-11 flex-1 items-center justify-center rounded-sm border border-border text-small font-semibold text-text hover:bg-surface-soft">
                     {t("tm.chan.edit")}
                   </Link>
                   {!locked && (
-                    <button type="button" data-channel-archive onClick={() => setConfirm("archive")} className="flex h-11 flex-1 items-center justify-center rounded-full border border-border text-small font-semibold text-text hover:bg-surface-soft">
+                    <button type="button" data-channel-archive onClick={() => setConfirm("archive")} className="flex h-11 flex-1 items-center justify-center rounded-sm border border-border text-small font-semibold text-text hover:bg-surface-soft">
                       {t("tm.chan.archive")}
                     </button>
                   )}
                   {!locked && (
-                    <button type="button" data-channel-delete onClick={() => setConfirm("delete")} className="flex h-11 flex-1 items-center justify-center rounded-full border border-danger/40 text-small font-semibold text-danger hover:bg-danger-soft">
+                    <button type="button" data-channel-delete onClick={() => setConfirm("delete")} className="flex h-11 flex-1 items-center justify-center rounded-sm border border-danger/40 text-small font-semibold text-danger hover:bg-danger-soft">
                       {t("tm.chan.delete")}
                     </button>
                   )}

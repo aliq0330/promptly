@@ -62,7 +62,7 @@ export function CommentComposeSheet({
             onClick={onCancel}
             disabled={submitting}
             aria-label={t("common.close")}
-            className="-mr-2 flex h-11 w-11 items-center justify-center rounded-full text-text-secondary hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+            className="-mr-2 flex h-11 w-11 items-center justify-center rounded-sm text-text-secondary hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
           >
             <X size={20} aria-hidden />
           </button>

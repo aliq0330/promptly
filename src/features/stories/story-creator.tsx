@@ -455,7 +455,7 @@ export function StoryCreator() {
     return (
       <div className="mx-auto w-full max-w-xl space-y-6 px-3 py-6 sm:px-5">
         <header className="flex items-center gap-2">
-          <button type="button" onClick={() => router.back()} aria-label={t("common.back")} className="flex h-10 w-10 items-center justify-center rounded-full text-text-secondary hover:bg-surface-soft">
+          <button type="button" onClick={() => router.back()} aria-label={t("common.back")} className="flex h-10 w-10 items-center justify-center rounded-sm text-text-secondary hover:bg-surface-soft">
             <ArrowLeft size={20} aria-hidden />
           </button>
           <h1 className="text-h2">{t("stories.create.title")}</h1>
@@ -500,7 +500,7 @@ export function StoryCreator() {
                         await deleteDraft(draft.id);
                         setDrafts((prev) => (prev ?? []).filter((d) => d.id !== draft.id));
                       }}
-                      className="flex h-9 w-9 items-center justify-center rounded-full hover:bg-surface-soft hover:text-danger"
+                      className="flex h-9 w-9 items-center justify-center rounded-sm hover:bg-surface-soft hover:text-danger"
                     >
                       <TrashIcon size={16} />
                     </button>
@@ -538,7 +538,7 @@ export function StoryCreator() {
           onClick={() => (isPreview ? setStep("edit") : setStep("choose"))}
           aria-label={t("common.back")}
           disabled={Boolean(busy)}
-          className="flex h-10 w-10 items-center justify-center rounded-full text-text-secondary hover:bg-surface-soft"
+          className="flex h-10 w-10 items-center justify-center rounded-sm text-text-secondary hover:bg-surface-soft"
         >
           <ArrowLeft size={20} aria-hidden />
         </button>
@@ -776,7 +776,7 @@ function ToolButton({ icon: Icon, label, onClick, pressed }: { icon: typeof Type
       onClick={onClick}
       aria-pressed={pressed}
       className={cn(
-        "inline-flex min-h-10 items-center gap-1.5 rounded-full border px-4 text-label font-medium transition-colors duration-200 ease-soft",
+        "inline-flex min-h-10 items-center gap-1.5 rounded-sm border px-4 text-label font-medium transition-colors duration-200 ease-soft",
         pressed ? "border-primary bg-primary-soft text-primary-text" : "border-border bg-surface text-text-secondary hover:border-border-strong hover:text-text",
       )}
     >
@@ -808,7 +808,7 @@ function LayerPanel({ layer, onChange, onRemove, onDone }: { layer: StoryTextLay
         </div>
         <div className="flex gap-1" role="group" aria-label={t("stories.editor.size")}>
           {STORY_TEXT_SIZES.map((size) => (
-            <button key={size} type="button" aria-pressed={layer.size === size} onClick={() => onChange({ size })} className={cn("flex h-9 min-w-9 items-center justify-center rounded-md px-2 text-label font-semibold", layer.size === size ? "bg-primary-soft text-primary-text" : "text-text-secondary hover:bg-surface-soft")}>
+            <button key={size} type="button" aria-pressed={layer.size === size} onClick={() => onChange({ size })} className={cn("flex h-9 min-w-9 items-center justify-center rounded-sm px-2 text-label font-semibold", layer.size === size ? "bg-primary-soft text-primary-text" : "text-text-secondary hover:bg-surface-soft")}>
               {t(SIZE_LABEL[size])}
             </button>
           ))}
@@ -857,7 +857,7 @@ function StickerPanel({ sticker, onChange, onRemove }: { sticker: StorySticker; 
         maxLength={isPoll ? STORY_LIMITS.pollQuestionMax : STORY_LIMITS.questionMax}
         onChange={(event) => onChange({ ...sticker, question: event.target.value })}
         placeholder={isPoll ? t("stories.editor.pollQuestionPlaceholder") : t("stories.editor.questionPlaceholder")}
-        className="min-h-10 w-full rounded-md card-flat px-3 text-small text-text focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15"
+        className="min-h-10 w-full rounded-sm card-flat px-3 text-small text-text focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15"
       />
       {sticker.kind === "poll" && (
         <div className="space-y-1.5">
@@ -869,10 +869,10 @@ function StickerPanel({ sticker, onChange, onRemove }: { sticker: StorySticker; 
                 aria-label={t("stories.editor.pollOption", { n: index + 1 })}
                 placeholder={t("stories.editor.pollOption", { n: index + 1 })}
                 onChange={(event) => onChange({ ...sticker, options: sticker.options.map((o, i) => (i === index ? event.target.value : o)) })}
-                className="min-h-10 min-w-0 flex-1 rounded-md card-flat px-3 text-small text-text focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15"
+                className="min-h-10 min-w-0 flex-1 rounded-sm card-flat px-3 text-small text-text focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15"
               />
               {sticker.options.length > STORY_LIMITS.pollOptionsMin && (
-                <button type="button" aria-label={t("stories.editor.removeOption")} onClick={() => onChange({ ...sticker, options: sticker.options.filter((_, i) => i !== index) })} className="flex h-10 w-10 items-center justify-center rounded-md text-text-muted hover:bg-surface-soft hover:text-danger">
+                <button type="button" aria-label={t("stories.editor.removeOption")} onClick={() => onChange({ ...sticker, options: sticker.options.filter((_, i) => i !== index) })} className="flex h-10 w-10 items-center justify-center rounded-sm text-text-muted hover:bg-surface-soft hover:text-danger">
                   <X size={16} aria-hidden />
                 </button>
               )}

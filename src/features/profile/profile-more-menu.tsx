@@ -92,7 +92,7 @@ export function ProfileMoreMenu({
         aria-label={t("profile.profileOptionsAriaLabel")}
         aria-haspopup="menu"
         aria-expanded={open}
-        className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-text-secondary transition-colors hover:bg-surface-soft hover:text-text", triggerClassName)}
+        className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-sm text-text-secondary transition-colors hover:bg-surface-soft hover:text-text", triggerClassName)}
       >
         <MoreVertical size={20} />
       </button>

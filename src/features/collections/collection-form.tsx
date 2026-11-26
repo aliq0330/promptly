@@ -119,7 +119,7 @@ export function CollectionForm({
           maxLength={NAME_MAX}
           placeholder={t("collection.namePlaceholder")}
           autoFocus
-          className="h-10 w-full rounded-lg card-inset px-3 text-small text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/15 shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
+          className="h-10 w-full rounded-sm card-inset px-3 text-small text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/15 shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
         />
         <p className="text-right text-caption text-text-muted">
           {trimmed.length}/{NAME_MAX}

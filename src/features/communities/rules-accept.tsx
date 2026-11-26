@@ -17,7 +17,7 @@ export function RulesAcceptBox({ rules, accepted, onChange, disabled }: { rules:
       <h3 className="flex items-center gap-1.5 text-label font-semibold text-text">
         <ScrollText size={16} aria-hidden /> {t("communities.rules.title")}
       </h3>
-      <div className="max-h-48 overflow-y-auto whitespace-pre-wrap break-words rounded-lg card-inset px-4 py-3 text-small text-text-secondary" tabIndex={0}>
+      <div className="max-h-48 overflow-y-auto whitespace-pre-wrap break-words rounded-sm card-inset px-4 py-3 text-small text-text-secondary" tabIndex={0}>
         {rules}
       </div>
       <label className="flex cursor-pointer items-start gap-2 text-small text-text">

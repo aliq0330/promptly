@@ -80,7 +80,7 @@ export function NotesTab({ onShowOnBoard, autoAdd }: { onShowOnBoard: (id: strin
             onChange={(event) => setQuery(event.target.value)}
             placeholder={t("spaces.notes.search")}
             aria-label={t("spaces.notes.search")}
-            className="h-11 w-full rounded-full border border-border bg-surface pl-10 pr-4 text-small text-text placeholder:text-text-muted"
+            className="h-11 w-full rounded-sm border border-border bg-surface pl-10 pr-4 text-small text-text placeholder:text-text-muted"
           />
         </div>
         {caps.edit && (
@@ -124,7 +124,7 @@ export function NotesTab({ onShowOnBoard, autoAdd }: { onShowOnBoard: (id: strin
                   <h3 className="min-w-0 break-words text-body font-semibold text-text">{note.title || t("spaces.notes.untitled")}</h3>
                   <ItemReviewBadge state={note.revState} />
                   {note.isPrivate && (
-                    <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-surface/80 px-2 py-0.5 text-caption text-text-secondary" title={t("spaces.notes.privateHelp")}>
+                    <span className="inline-flex shrink-0 items-center gap-1 rounded-xs bg-surface/80 px-2 py-0.5 text-caption text-text-secondary" title={t("spaces.notes.privateHelp")}>
                       <Lock size={12} aria-hidden />
                       {t("spaces.notes.privateBadge")}
                     </span>
@@ -132,7 +132,7 @@ export function NotesTab({ onShowOnBoard, autoAdd }: { onShowOnBoard: (id: strin
                 </div>
                 {note.body && <p className="mt-1.5 whitespace-pre-wrap break-words text-small text-text-secondary">{note.body}</p>}
                 {attached && (
-                  <button type="button" onClick={() => setOpenId(attached.id)} className="mt-2 inline-flex max-w-full items-center gap-1 self-start truncate rounded-full bg-surface/80 px-2 py-0.5 text-caption text-text-secondary hover:text-text">
+                  <button type="button" onClick={() => setOpenId(attached.id)} className="mt-2 inline-flex max-w-full items-center gap-1 self-start truncate rounded-sm bg-surface/80 px-2 py-0.5 text-caption text-text-secondary hover:text-text">
                     <Link2 size={12} aria-hidden />
                     <span className="truncate">{itemTitle(attached)}</span>
                   </button>

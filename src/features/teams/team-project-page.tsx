@@ -161,7 +161,7 @@ function useItemParams(): { item: string | null; focus: string | null } {
 function FloatingAction({ onClick, label, attrs }: { onClick: () => void; label: string; attrs?: Record<string, string> }) {
   return (
     <div className="pointer-events-none sticky bottom-[calc(5rem+env(safe-area-inset-bottom))] z-10 flex justify-end pt-2 md:bottom-6">
-      <Button type="button" onClick={onClick} className="pointer-events-auto h-12 gap-2 rounded-full px-5 shadow-md" {...attrs}>
+      <Button type="button" onClick={onClick} className="pointer-events-auto h-12 gap-2 rounded-sm px-5 shadow-md" {...attrs}>
         <Plus size={20} aria-hidden />
         {label}
       </Button>
@@ -246,7 +246,7 @@ function ProjectInfoSheet({
           <div className="flex items-center gap-2">
             <h3 className="min-w-0 flex-1 text-body font-bold text-text">{t("tp.people.title")}</h3>
             {lead && (
-              <button type="button" onClick={onAccess} className="inline-flex h-9 items-center gap-1 rounded-full bg-primary-soft px-3 text-caption font-semibold text-primary-text" data-project-edit-access>
+              <button type="button" onClick={onAccess} className="inline-flex h-9 items-center gap-1 rounded-sm bg-primary-soft px-3 text-caption font-semibold text-primary-text" data-project-edit-access>
                 <UsersRound size={12} aria-hidden />
                 {t("tp.people.edit")}
               </button>
@@ -422,7 +422,7 @@ function ProjectHome({ ctx, detail, onChanged }: { ctx: TeamCtx; detail: Project
                 {t("tp.file.new")}
               </Button>
             )}
-            <button type="button" onClick={() => setDialog("info")} aria-label={t("tp.info.open")} data-path-info className="grid h-10 w-10 place-items-center rounded-full bg-surface text-primary-text xl:hidden">
+            <button type="button" onClick={() => setDialog("info")} aria-label={t("tp.info.open")} data-path-info className="grid h-10 w-10 place-items-center rounded-sm bg-surface text-primary-text xl:hidden">
               <Info size={20} aria-hidden />
             </button>
           </header>
@@ -435,7 +435,7 @@ function ProjectHome({ ctx, detail, onChanged }: { ctx: TeamCtx; detail: Project
           )}
 
           {lead && (detail.pendingCount ?? 0) > 0 && (
-            <Link href={projectLink(team.id, project.id, { review: true })} className="flex min-h-12 items-center gap-3 rounded-lg card-flat px-4 py-3 text-small hover:shadow-card" data-project-review-link>
+            <Link href={projectLink(team.id, project.id, { review: true })} className="flex min-h-12 items-center gap-3 rounded-sm card-flat px-4 py-3 text-small hover:shadow-card" data-project-review-link>
               <span aria-hidden className="h-2 w-2 shrink-0 rounded-full bg-heart" />
               <span className="min-w-0 flex-1 font-semibold text-text">{t("tc.proj.waitingBanner", { count: detail.pendingCount ?? 0 })}</span>
               <span className="font-semibold text-primary-text">{t("tc.over.open")}</span>
@@ -574,7 +574,7 @@ function FileCard({ href, title, meta, tone, chip, chipTone, attrs }: { href: st
         <span className="block truncate text-body font-semibold text-text">{title}</span>
         <span className="block text-small text-text-secondary max-sm:line-clamp-2 sm:truncate">{meta}</span>
         {chip && (
-          <span className={cn("mt-2 inline-flex h-6 items-center rounded-full px-2.5 text-caption font-semibold", chipTone === "warning" ? "bg-warning-soft text-warning" : chipTone === "primary" ? "bg-primary-soft text-primary-text" : "bg-surface-soft text-text-secondary")}>
+          <span className={cn("mt-2 inline-flex h-6 items-center rounded-xs px-2.5 text-caption font-semibold", chipTone === "warning" ? "bg-warning-soft text-warning" : chipTone === "primary" ? "bg-primary-soft text-primary-text" : "bg-surface-soft text-text-secondary")}>
             {chip}
           </span>
         )}
@@ -623,7 +623,7 @@ function FilePage({ ctx, detail, file, onChanged }: { ctx: TeamCtx; detail: Proj
         <h1 className="min-w-0 flex-1 break-words font-display text-h2 font-extrabold leading-tight text-text" data-file-title>
           {file.title}
         </h1>
-        <button type="button" onClick={() => setDialog("info")} aria-label={t("tp.info.open")} data-path-info className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-border bg-surface text-text-secondary hover:bg-surface-soft">
+        <button type="button" onClick={() => setDialog("info")} aria-label={t("tp.info.open")} data-path-info className="grid h-10 w-10 shrink-0 place-items-center rounded-sm border border-border bg-surface text-text-secondary hover:bg-surface-soft">
           <Info size={20} aria-hidden />
         </button>
       </div>
@@ -772,7 +772,7 @@ function BoardPage({ ctx, detail, boardId, onChanged }: { ctx: TeamCtx; detail: 
       <Breadcrumbs crumbs={[{ label: t("tc.tab.overview"), href: overview }, { label: project.title, href: projectLink(team.id, project.id) }, ...(fileOfBoard ? [{ label: fileOfBoard.title, href: parentHref }] : []), { label: heading }]} />
       {renaming ? (
         <div className="flex min-w-0 items-center gap-2 px-1">
-          <input value={title} onChange={(event) => setTitle(event.target.value)} maxLength={80} aria-label={t("tp.board.rename")} className="h-10 min-w-0 flex-1 rounded-lg card-inset px-3 text-body" />
+          <input value={title} onChange={(event) => setTitle(event.target.value)} maxLength={80} aria-label={t("tp.board.rename")} className="h-10 min-w-0 flex-1 rounded-sm card-inset px-3 text-body" />
           <Button type="button" size="sm" onClick={() => void rename()}>
             {t("common.save")}
           </Button>
@@ -795,7 +795,7 @@ function BoardPage({ ctx, detail, boardId, onChanged }: { ctx: TeamCtx; detail: 
               <Trash2 size={16} aria-hidden />
             </Button>
           )}
-          <button type="button" onClick={() => setDialog("info")} aria-label={t("tp.info.open")} data-path-info className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-border bg-surface text-text-secondary hover:bg-surface-soft">
+          <button type="button" onClick={() => setDialog("info")} aria-label={t("tp.info.open")} data-path-info className="grid h-10 w-10 shrink-0 place-items-center rounded-sm border border-border bg-surface text-text-secondary hover:bg-surface-soft">
             <Info size={20} aria-hidden />
           </button>
         </div>

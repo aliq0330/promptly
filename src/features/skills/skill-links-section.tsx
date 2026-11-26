@@ -119,7 +119,7 @@ export function SkillLinksEditor({ skillId, ensureDraft, disabled }: { skillId: 
           {links.map((link) => (
             <li key={link.id} className="flex items-center gap-2 rounded-lg card-flat px-3 py-2" data-skill-link={link.linkedSkillId}>
               <span className="min-w-0 flex-1 truncate text-small font-semibold text-text">{skills.get(link.linkedSkillId)?.title ?? t("skill.links.unavailable")}</span>
-              <button type="button" onClick={() => void remove(link)} aria-label={t("skill.links.remove")} className="rounded-full p-1.5 text-text-muted hover:bg-surface-soft hover:text-text">
+              <button type="button" onClick={() => void remove(link)} aria-label={t("skill.links.remove")} className="rounded-sm p-1.5 text-text-muted hover:bg-surface-soft hover:text-text">
                 <X size={16} aria-hidden />
               </button>
             </li>

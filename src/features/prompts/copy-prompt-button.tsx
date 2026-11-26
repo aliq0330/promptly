@@ -92,7 +92,7 @@ export function CopyPromptButton({
       className={cn(
         "relative z-10 inline-flex shrink-0 items-center gap-1.5 rounded-sm border font-medium transition-[background-color,border-color,color] duration-200 ease-soft",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-        size === "sm" ? "h-9 px-2 text-caption" : size === "md" ? "h-9 px-3 text-label" : "h-14 gap-2 rounded-full px-7 text-body font-semibold shadow-md",
+        size === "sm" ? "h-9 px-2 text-caption" : size === "md" ? "h-9 px-3 text-label" : "h-14 gap-2 rounded-sm px-7 text-body font-semibold shadow-md",
         state === "copied"
           ? "border-primary/30 bg-primary-soft text-primary-text"
           : state === "failed"

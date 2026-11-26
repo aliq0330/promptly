@@ -169,15 +169,15 @@ export function FieldCatalogPicker({
     const extra = optionLabels.length - shown.length;
     return (
       <span className="mt-1 flex flex-wrap items-center gap-1">
-        <span className="rounded-full bg-surface px-2 py-0.5 text-caption font-medium text-text-secondary">{t(GENERATOR_FIELD_TYPE_LABELS[field.type])}</span>
+        <span className="rounded-xs bg-surface px-2 py-0.5 text-caption font-medium text-text-secondary">{t(GENERATOR_FIELD_TYPE_LABELS[field.type])}</span>
         {shown.map((label, index) => (
-          <span key={`${label}-${index}`} className="max-w-[9rem] truncate rounded-full bg-surface px-2 py-0.5 text-caption text-text-muted">
+          <span key={`${label}-${index}`} className="max-w-[9rem] truncate rounded-xs bg-surface px-2 py-0.5 text-caption text-text-muted">
             {label}
           </span>
         ))}
         {extra > 0 && <span className="text-caption text-text-muted">+{extra}</span>}
         {optionLabels.length === 0 && field.min !== undefined && field.max !== undefined && (
-          <span className="rounded-full bg-surface px-2 py-0.5 text-caption text-text-muted">{field.min}–{field.max}</span>
+          <span className="rounded-xs bg-surface px-2 py-0.5 text-caption text-text-muted">{field.min}–{field.max}</span>
         )}
         {optionLabels.length === 0 && field.min === undefined && (
           <span className="text-caption text-text-muted">{t("fieldCatalog.freeText")}</span>
@@ -262,7 +262,7 @@ export function FieldCatalogPicker({
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder={t("fieldCatalog.searchPlaceholder")}
-              className="h-11 w-full rounded-full border border-transparent bg-surface-soft pl-10 pr-4 text-small text-text placeholder:text-text-muted transition-colors duration-200 ease-soft hover:bg-primary-soft/50 focus:border-primary/40 focus:bg-surface"
+              className="h-11 w-full rounded-sm border border-transparent bg-surface-soft pl-10 pr-4 text-small text-text placeholder:text-text-muted transition-colors duration-200 ease-soft hover:bg-primary-soft/50 focus:border-primary/40 focus:bg-surface"
             />
           </div>
         </div>
@@ -293,7 +293,7 @@ export function FieldCatalogPicker({
                         aria-pressed={active}
                         onClick={() => setPreviewPackageId(active ? null : pkg.id)}
                         className={cn(
-                          "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-caption font-medium transition-colors duration-200 ease-soft",
+                          "inline-flex items-center gap-1.5 rounded-sm px-3 py-1.5 text-caption font-medium transition-colors duration-200 ease-soft",
                           active ? "bg-primary text-primary-foreground" : "bg-surface-soft text-text hover:bg-primary-soft",
                         )}
                       >
@@ -315,7 +315,7 @@ export function FieldCatalogPicker({
                         type="button"
                         onClick={() => setPreviewPackageId(null)}
                         aria-label={t("fieldCatalog.hidePreview")}
-                        className="flex h-9 w-9 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-surface hover:text-text"
+                        className="flex h-9 w-9 items-center justify-center rounded-sm text-text-muted transition-colors hover:bg-surface hover:text-text"
                       >
                         <X size={16} />
                       </button>
@@ -434,7 +434,7 @@ export function FieldCatalogPicker({
                       type="button"
                       onClick={() => removeSelected(field.id)}
                       aria-label={t("fieldCatalog.removeField", { name: catalogText(field.label, language) })}
-                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-danger-soft hover:text-danger"
+                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm text-text-muted transition-colors hover:bg-danger-soft hover:text-danger"
                     >
                       <X size={16} />
                     </button>

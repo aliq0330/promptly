@@ -125,7 +125,7 @@ export function ZoomMenuBody({ props, onDone }: { props: ZoomMenuProps; onDone: 
         run();
         if (!opts.keep) onDone();
       }}
-      className="flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-left text-body font-semibold text-text hover:bg-surface-soft disabled:text-text-muted disabled:opacity-50"
+      className="flex min-h-11 w-full items-center gap-3 rounded-sm px-3 text-left text-body font-semibold text-text hover:bg-surface-soft disabled:text-text-muted disabled:opacity-50"
     >
       <span aria-hidden className="grid h-6 w-6 place-items-center text-text-secondary">{icon}</span>
       <span className="flex-1">{label}</span>
@@ -239,7 +239,7 @@ export function MovePopover({
         disabled={busy}
         data-board-move-new=""
         onClick={() => void run(() => (currentPage && !currentPage.isMain ? createBoardInGroup(team.currentId, t("tb.pages.newDefaultName")) : createBoard(team.projectId, t("tb.pages.newDefaultName"), team.fileId ?? "")).then((id) => { team.reload(); return id; }))}
-        className="flex min-h-11 w-full items-center gap-3 rounded-xl px-2.5 text-small font-semibold text-primary-text hover:bg-surface-soft disabled:opacity-50"
+        className="flex min-h-11 w-full items-center gap-3 rounded-sm px-2.5 text-small font-semibold text-primary-text hover:bg-surface-soft disabled:opacity-50"
       >
         <Plus size={20} aria-hidden />
         {t("tb.move.new")}

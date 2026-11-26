@@ -36,7 +36,7 @@ export function RoomSidePanel({
   const { enabled, members } = useCommunityOnlineMembers(group.id, { limit: 6 });
   const firstPin = pinned[0];
   const pageHref = communityHref(group.id);
-  const link = "flex min-h-11 items-center justify-between gap-2 rounded-lg border border-border-soft px-3 text-small font-semibold text-text transition-colors hover:border-border-strong hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus";
+  const link = "flex min-h-11 items-center justify-between gap-2 rounded-sm border border-border-soft px-3 text-small font-semibold text-text transition-colors hover:border-border-strong hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus";
   void language;
   return (
     <aside data-room-panel aria-label={t("rooms.panel.title")} className={cn("w-[300px] shrink-0 flex-col gap-5 overflow-y-auto border-l border-border-soft bg-surface px-4 py-5", className)}>

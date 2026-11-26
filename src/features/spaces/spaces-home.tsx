@@ -461,7 +461,7 @@ function FirstSpaceEmpty({ onCreate }: { onCreate: () => void }) {
         </Button>
       </div>
       <figure aria-label={t("spaces.empty.exampleLabel")} className="relative rounded-lg card-soft p-4">
-        <figcaption className="absolute right-3 top-3 rounded-full bg-surface px-2 py-0.5 text-caption font-semibold text-text-muted">{t("spaces.empty.exampleBadge")}</figcaption>
+        <figcaption className="absolute right-3 top-3 rounded-xs bg-surface px-2 py-0.5 text-caption font-semibold text-text-muted">{t("spaces.empty.exampleBadge")}</figcaption>
         <div aria-hidden className="grid grid-cols-3 gap-2 pt-6">
           <span className="col-span-2 row-span-2 flex aspect-square items-center justify-center rounded-md bg-primary-soft text-primary-text">
             <ImageIcon size={24} />
