@@ -44,7 +44,8 @@ Kullanıcı kararı: Pro plan alınmayacak, prosuz yapılabilecek her şey yapı
   - Rastgele veri: 40 kullanıcı, 1 500 prompt, 4 085 etiket, 1 872 beğeni, 540 ilgi cevabı, 49 engel; sonradan gizlenen/taslağa dönen içerik dahil.
   - Kapsam: 5 süzgeç × 3 sayfa = 600 sayfa, 14 996 satır, **fark 0**.
   - Kasıtlı hata (engel süzgeci kaldırıldı) 120 sayfanın 89'unda yakalandı.
-- **Yerel süre** (1 500 prompt): eski 92–127 ms, yeni 38–58 ms. Canlı ölçüm deploy sonrası `docs/durum-ve-acik-isler.md`'de.
+- **Yerel süre** (1 500 prompt): eski 92–127 ms, yeni 38–58 ms.
+  - ⚠ Canlıda tersi çıktı: ılık çağrı 105 → 430 ms, çok beğenili hesapta 6 sn (sonuç aynıydı). Sebep SQL dilindeki işlevin genel planı; 467'de düzeltildi (34 ms).
 - **SQL testleri:**
   - `supabase/tests/for-you-fast.sql` (10 madde): misafir kapalı, engel iki yönlü, gizli/taslak/silinmiş yok, sahte sinyal sızdırmaz, sayfalama.
   - `supabase/tests/discover-editorial-feed.sql` (5 madde): her bölüm aynı argümanlı `feed_page` ile birebir aynı.
