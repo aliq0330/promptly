@@ -315,11 +315,15 @@ export interface TeamAccessOverviewRow {
 
 export const PAGE = 30;
 
-export async function listMyTeams(offset = 0): Promise<{ items: TeamSummary[]; total: null; nextOffset: number | null }> {
+export async function listMyTeams(
+  offset = 0,
+  { preview: withPreview = true }: { preview?: boolean } = {},
+): Promise<{ items: TeamSummary[]; total: null; nextOffset: number | null }> {
   const data = await rows<TeamSummary>("my_teams", { p_limit: PAGE + 1, p_offset: offset });
   const items = data.slice(0, PAGE);
-  // Kart önizlemesi (avatar yığını + son etkinlik) ayrı, ekleyici bir RPC'dir; okunamazsa kart onsuz çizilir.
-  const preview = items.length
+  // Kart önizlemesi (avatar yığını + son etkinlik) ayrı, ekleyici bir RPC'dir; okunamazsa kart onsuz çizilir. Kart çizmeyen yüzeyler (kenar çubuğu,
+  // docs/history/466-*) `preview: false` ile bu ikinci isteği hiç göndermez.
+  const preview = items.length && withPreview
     ? await rows<{ teamId: string; membersPreview: TeamSummary["membersPreview"]; recent: TeamSummary["recent"] }>("my_teams_preview", { p_ids: items.map((team) => team.id) }).catch(() => [])
     : [];
   const byTeam = new Map((Array.isArray(preview) ? preview : []).map((row) => [row.teamId, row]));

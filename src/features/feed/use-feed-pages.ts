@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { fetchFeedPage, type FeedCursor, type FeedEntry, type FeedPageParams } from "@/lib/supabase/feed";
 import { cameFromHistory } from "@/lib/history-navigation";
+import { readSnapshot, writeSnapshot } from "@/lib/feed-snapshot";
+import { useAuth } from "@/features/auth/auth-provider";
 
 export type FeedQuery = Omit<FeedPageParams, "limit" | "cursor">;
 
@@ -16,6 +18,8 @@ interface FeedState {
   cursor: FeedCursor | null;
   failed: boolean;
   loadingMore: boolean;
+  /** Cihazda saklanan son ilk sayfa gösteriliyor, gerçeği yolda (docs/history/466-*); bu sırada sayfalama kapalı. */
+  stale?: boolean;
 }
 
 /**
@@ -48,7 +52,9 @@ function remember(state: FeedState) {
  * current query the hook reports `loading` (no stale list from the previous
  * tab flashes in) and a late response for an old query is ignored.
  */
-export function useFeedPages(query: FeedQuery, enabled: boolean, { watchNew = false }: { watchNew?: boolean } = {}) {
+export function useFeedPages(query: FeedQuery, enabled: boolean, { watchNew = false, snapshot = true }: { watchNew?: boolean; snapshot?: boolean } = {}) {
+  const { user } = useAuth();
+  const owner = user?.id ?? null;
   const [retry, setRetry] = useState(0);
   // "N yeni gönderi" (docs/history/435-*): yeni gelenler okuyucunun listesini kaydırmadan sayılır; `showNew` listeyi yerinde yeniler.
   const [fresh, setFresh] = useState<{ key: string; count: number; plus: boolean }>({ key: "", count: 0, plus: false });
@@ -62,10 +68,12 @@ export function useFeedPages(query: FeedQuery, enabled: boolean, { watchNew = fa
   const restoredKey = useRef(state?.key ?? null);
 
   useEffect(() => {
-    if (state && !state.loadingMore && !state.failed) remember(state);
+    if (state && !state.loadingMore && !state.failed && !state.stale) remember(state);
   }, [state]);
 
   const { scope, order, kind, taxonomy, openOnly, hasMedia, tag, tool, authors, tags, tools } = query;
+  // Önbellek anahtarı = sorgunun kendisi ("Tekrar dene" sayacı hariç); kişiye göre ayrılır (`feed-snapshot`).
+  const cacheKey = `feed|${queryPart(key)}`;
   useEffect(() => {
     if (!enabled) return;
     if (restoredKey.current === key) {
@@ -74,19 +82,30 @@ export function useFeedPages(query: FeedQuery, enabled: boolean, { watchNew = fa
     }
     restoredKey.current = null;
     let cancelled = false;
+    // docs/history/466-*: bu sorgunun listesi ekranda yokken cihazdaki son ilk sayfa anında gösterilir; gerçek sayfa gelince yerini alır.
+    // "Tekrar dene"de (retry) ve başka bir sorgudan geçerken de kullanılır: eski davranış iskeletti, artık son görülen liste.
+    const saved = snapshot ? readSnapshot<FeedEntry[]>(owner, cacheKey) : null;
+    if (saved && saved.data.length > 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- the saved copy must be on screen before the network answers
+      setState((prev) => (prev && prev.key === key && !prev.failed ? prev : { key, items: saved.data, cursor: null, failed: false, loadingMore: false, stale: true }));
+    }
     fetchFeedPage({ scope, order, kind, taxonomy, openOnly, hasMedia, tag, tool, authors, tags, tools })
       .then((page) => {
-        if (!cancelled) setState({ key, items: page.items, cursor: page.nextCursor, failed: false, loadingMore: false });
+        if (cancelled) return;
+        setState({ key, items: page.items, cursor: page.nextCursor, failed: false, loadingMore: false, stale: false });
+        if (snapshot) writeSnapshot(owner, cacheKey, page.items);
       })
       .catch((err) => {
         console.error("fetchFeedPage", err);
-        if (!cancelled) setState({ key, items: [], cursor: null, failed: true, loadingMore: false });
+        if (cancelled) return;
+        // Saklanan liste ekrandaysa kalır (yalnız "yüklenemedi" satırı); yoksa eskisi gibi hata ekranı.
+        setState((prev) => (prev && prev.key === key && prev.stale ? { ...prev, failed: true } : { key, items: [], cursor: null, failed: true, loadingMore: false }));
       });
     return () => {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- `key` already carries the filter sets by value (the arrays are new on every render)
-  }, [enabled, key, scope, order, kind, taxonomy, openOnly, hasMedia, tag, tool]);
+  }, [enabled, key, scope, order, kind, taxonomy, openOnly, hasMedia, tag, tool, owner, cacheKey, snapshot]);
 
   const current = enabled && state && state.key === key ? state : null;
 
@@ -96,7 +115,7 @@ export function useFeedPages(query: FeedQuery, enabled: boolean, { watchNew = fa
   useEffect(() => {
     itemsRef.current = current?.items ?? [];
   }, [current]);
-  const watching = watchNew && order === "newest" && current !== null && !current.failed;
+  const watching = watchNew && order === "newest" && current !== null && !current.failed && !current.stale;
   useEffect(() => {
     if (!watching) return;
     let cancelled = false;
@@ -145,7 +164,7 @@ export function useFeedPages(query: FeedQuery, enabled: boolean, { watchNew = fa
   }, [key, scope, order, kind, taxonomy, openOnly, hasMedia, tag, tool]);
 
   const loadMore = useCallback(async () => {
-    if (!current?.cursor || current.loadingMore) return;
+    if (!current?.cursor || current.loadingMore || current.stale) return;
     const cursor = current.cursor;
     setState((prev) => (prev && prev.key === key ? { ...prev, loadingMore: true, failed: false } : prev));
     try {
@@ -167,7 +186,9 @@ export function useFeedPages(query: FeedQuery, enabled: boolean, { watchNew = fa
     items: current?.items ?? [],
     loading: enabled && current === null,
     failed: current?.failed ?? false,
-    hasMore: Boolean(current?.cursor),
+    /** Saklanan son liste ekranda (gerçeği yükleniyor ya da yüklenemedi). */
+    stale: current?.stale ?? false,
+    hasMore: Boolean(current?.cursor) && !current?.stale,
     loadingMore: current?.loadingMore ?? false,
     loadMore,
     retry: () => setRetry((n) => n + 1),

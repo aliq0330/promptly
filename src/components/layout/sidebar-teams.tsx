@@ -10,26 +10,43 @@ import { listMyTeams, type TeamSummary } from "@/lib/supabase/teams";
 import { teamLink } from "@/lib/teams";
 import { cn } from "@/lib/utils";
 import { CountBadge } from "@/components/ui/badge";
+import { useMediaQuery } from "@/lib/use-media-query";
+import { readSnapshot, writeSnapshot } from "@/lib/feed-snapshot";
 
 /** Kısa ömürlü modül önbelleği: kenar çubuğu her sayfada yeniden kurulur, liste her gezinmede sorulmaz (docs/history/353-*). */
 let cache: { userId: string; at: number; teams: TeamSummary[] } | null = null;
 const TTL_MS = 60_000;
+/** Tam sayfa yüklemesinde liste önce bu cihazdaki kopyayla çizilir (docs/history/466-*); 60 sn'den eskiyse arkadan tazelenir. */
+const SNAPSHOT_KEY = "sidebar-teams";
 
 function MyTeams() {
   const { t } = useTranslation();
   const { user } = useAuth();
   const pathname = usePathname();
   const params = useSearchParams();
-  const [teams, setTeams] = useState<TeamSummary[]>(() => (cache && user && cache.userId === user.id ? cache.teams : []));
+  // Kenar çubuğu yalnız geniş ekranda görünür (`hidden lg:block`): telefonda/tablette liste hiç istenmez (docs/history/466-*).
+  const wide = useMediaQuery("(min-width: 1024px)");
+  const [teams, setTeams] = useState<TeamSummary[]>(() => {
+    if (!user) return [];
+    if (cache && cache.userId === user.id) return cache.teams;
+    return readSnapshot<TeamSummary[]>(user.id, SNAPSHOT_KEY)?.data ?? [];
+  });
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || !wide) return;
     // Önbellek tazeyse (useState başlangıcı onu zaten kullandı) ağa gidilmez.
     if (cache && cache.userId === user.id && Date.now() - cache.at < TTL_MS) return;
+    const saved = readSnapshot<TeamSummary[]>(user.id, SNAPSHOT_KEY, { maxAgeMs: TTL_MS });
+    if (saved) {
+      cache = { userId: user.id, at: saved.savedAt, teams: saved.data };
+      return;
+    }
     let cancelled = false;
-    void listMyTeams(0).then(
+    // Kenar çubuğu yalnız ad/renk/okunmamış sayısı çizer: kart önizlemesi (`my_teams_preview`) istenmez.
+    void listMyTeams(0, { preview: false }).then(
       (page) => {
         cache = { userId: user.id, at: Date.now(), teams: page.items };
+        writeSnapshot(user.id, SNAPSHOT_KEY, page.items);
         if (!cancelled) setTeams(page.items);
       },
       () => undefined,
@@ -37,7 +54,7 @@ function MyTeams() {
     return () => {
       cancelled = true;
     };
-  }, [user]);
+  }, [user, wide]);
 
   if (teams.length === 0) return null;
   const current = pathname.startsWith("/teams/local") ? params.get("id") : null;

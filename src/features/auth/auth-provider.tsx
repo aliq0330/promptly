@@ -7,6 +7,8 @@ import { clearMediaUrlCache } from "@/lib/supabase/media-url";
 import { clearSwitchOrigin } from "@/lib/supabase/account-switch";
 import { useRouter, usePathname } from "next/navigation";
 import { absoluteUrl } from "@/lib/utils";
+import { userSignature } from "@/lib/user-identity";
+import { clearSnapshots } from "@/lib/feed-snapshot";
 
 interface AuthContextValue {
   user: User | null;
@@ -76,6 +78,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       lastUserIdRef.current = nextUserId;
       if (identityChanged) {
         clearMediaUrlCache();
+        // Cihazda saklanan son listeler (docs/history/466-*) kişiye göre ayrıdır; çıkışta yine de hepsi silinir (paylaşılan cihaz).
+        if (nextUserId === null) clearSnapshots();
         if (typeof window !== "undefined") {
           if (nextUserId === null) window.location.replace(absoluteUrl("/"));
           else window.location.reload();
@@ -90,6 +94,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [router]);
 
   async function signOut() {
+    clearSnapshots();
     await supabase.auth.signOut();
     clearSwitchOrigin();
     setIsPasswordRecovery(false);
@@ -99,19 +104,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsPasswordRecovery(false);
   }
 
+  // Aynı kişinin `user` nesnesi SABİT kalır (docs/history/466-*): supabase-js her oturum olayında (getSession, INITIAL_SESSION, SIGNED_IN, saatlik
+  // TOKEN_REFRESHED) yeni bir nesne verir; `[user]`'a bağlı her efekt (hikâye şeridi, bildirim sayaçları, Sana özel, öneriler…) aynı kullanıcı için baştan
+  // çalışır ve canlıda aynı istek 4–7 kez gidiyordu. Kimlik ya da görünen alanlar değişmedikçe önceki nesne yeniden kullanılır.
+  const stableUser = useStableUser(session?.user ?? null);
+
   const value = useMemo(
     () => ({
-      user: session?.user ?? null,
+      user: stableUser,
       session,
       loading,
       isPasswordRecovery,
       clearPasswordRecovery,
       signOut,
     }),
-    [session, loading, isPasswordRecovery],
+    [session, stableUser, loading, isPasswordRecovery],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+}
+
+/** İmza (`userSignature`, `lib/user-identity.ts`) değişmedikçe önceki `user` nesnesini döndürür. */
+function useStableUser(next: User | null): User | null {
+  const signature = userSignature(next);
+  // Bilerek yalnız imzaya bağlı: aynı imzalı yeni nesne gelince eskisi kalır (efektler gereksiz yere yeniden çalışmasın).
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  return useMemo(() => next, [signature]);
 }
 
 export function useAuth() {

@@ -557,6 +557,7 @@ const dictionary: Record<string, string> = {
   "feed.emptyDefault": "Henüz gösterilecek içerik yok.",
   "feed.emptyFollowingHint": "Keşfet'ten yeni yaratıcılar bulup takip edebilirsin.",
   "feed.loadFailed": "Akış şu anda yüklenemedi — lütfen tekrar dene.",
+  "feed.staleNotice": "Bağlantı yavaş — son kaydedilen akış gösteriliyor.",
   "challenge.eyebrow": "Haftalık tema",
   "challenge.endsIn": "{{time}} sona eriyor",
   "challenge.join": "Katıl",

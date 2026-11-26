@@ -50,6 +50,7 @@ import { FollowManageModal } from "@/features/following/follow-manage-modal";
 import { setHomeTab, useFollowFeedState } from "@/features/following/follow-feed-store";
 import { Button } from "@/components/ui/button";
 import { FeaturedPostCard, useFeaturedPosts } from "./featured-post-card";
+import { StaleFeedNotice } from "./stale-feed-notice";
 
 /**
  * Home is the viewer's own feed (docs/history/221-*; Keşfet is where new things are found). Two views, both real server queries
@@ -289,9 +290,11 @@ export function FeedTabs({ layout = "grid" }: { layout?: "grid" | "home" } = {})
         />
       ) : (
         <div
-          aria-busy={isForYou && forYou.refreshing}
+          aria-busy={isForYou && (forYou.refreshing || (forYou.stale && !forYou.failed))}
           className={cn("space-y-4 transition-opacity duration-300 ease-soft", isForYou && forYou.refreshing && "opacity-60")}
         >
+          {/* docs/history/466-*: saklanan liste ekrandayken gerçek liste gelmediyse küçük band (büyük hata ekranı değil). */}
+          {isForYou && forYou.stale && forYou.failed && <StaleFeedNotice onRetry={forYou.refresh} />}
           <FeedGrid
             items={feed.items}
             interest={isForYou ? interest : undefined}
@@ -318,7 +321,7 @@ export function FeedTabs({ layout = "grid" }: { layout?: "grid" | "home" } = {})
             }
             emptyAction={narrowedEmpty ? { label: t("feed.clearFilters"), onClick: clearNarrowing } : { label: t("feed.goToDiscover"), href: "/discover" }}
           />
-          {feed.failed && <p className="text-center text-small text-danger">{t("feed.loadFailed")}</p>}
+          {feed.failed && !(isForYou && forYou.stale) && <p className="text-center text-small text-danger">{t("feed.loadFailed")}</p>}
           {feed.hasMore && (
             <LoadMoreButton onLoadMore={() => void feed.loadMore()} loading={feed.loadingMore} error={feed.failed} />
           )}

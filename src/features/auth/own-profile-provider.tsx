@@ -31,18 +31,24 @@ export function OwnProfileProvider({ children }: { children: React.ReactNode }) 
   const { user } = useAuth();
   const [profile, setProfileState] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  // Profilin hangi kullanıcı için yüklendiği (docs/history/466-*): oturum gelir gelmez — profil isteği daha başlamadan — bir an "yükleme bitti,
+  // profil yok" görünüyordu; ilk giriş kapısı sayfayı çizip hemen kaldırıyor, Ana Sayfa'nın bütün istekleri iki kez gidiyordu.
+  const [loadedFor, setLoadedFor] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     if (!user) {
       setProfileState(null);
+      setLoadedFor(null);
       setLoading(false);
       return;
     }
     setLoading(true);
     const result = await fetchOwnProfile(user.id);
     setProfileState(result);
+    setLoadedFor(user.id);
     setLoading(false);
   }, [user]);
+  const pending = loading || (user !== null && loadedFor !== user.id);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- fetches (or synchronously clears) the real profile whenever the signed-in user changes
@@ -50,8 +56,8 @@ export function OwnProfileProvider({ children }: { children: React.ReactNode }) 
   }, [load]);
 
   const value = useMemo(
-    () => ({ profile, loading, refresh: load, setProfile: setProfileState }),
-    [profile, loading, load],
+    () => ({ profile, loading: pending, refresh: load, setProfile: setProfileState }),
+    [profile, pending, load],
   );
 
   return <OwnProfileContext.Provider value={value}>{children}</OwnProfileContext.Provider>;

@@ -1,4 +1,5 @@
 import { supabase } from "./client";
+import { readSnapshot, writeSnapshot } from "@/lib/feed-snapshot";
 import { translateForRuntime } from "@/lib/i18n/runtime";
 import type { ReportTargetType } from "./reports";
 import type { ReportReasonCode } from "@/lib/report-reasons";
@@ -44,11 +45,21 @@ export async function fetchIsModerator(): Promise<boolean> {
 // calls in pg_stat_statements. One shared promise per user answers all of them (docs/history/325-*). A user switch reloads the page
 // (auth-provider), so this module-level memory is dropped with it; a failed lookup is not remembered.
 const moderatorLookups = new Map<string, Promise<boolean>>();
+const MODERATOR_SNAPSHOT_KEY = "is-moderator";
+const MODERATOR_SNAPSHOT_MS = 10 * 60 * 1000;
 
 /** `fetchIsModerator` shared per user id: concurrent and repeated callers get the same single request. */
 export function fetchIsModeratorShared(userId: string): Promise<boolean> {
   const existing = moderatorLookups.get(userId);
   if (existing) return existing;
+  // docs/history/466-*: cevap bu cihazda kişiye özel 10 dk saklanır — her tam sayfa yüklemesi yeniden sormaz. Yalnız arayüz ipucudur: her
+  // moderatör işlemi sunucuda `is_moderator()` / `_admin_guard()` ile yeniden denetlenir, rol istemciden değiştirilemez.
+  const saved = readSnapshot<boolean>(userId, MODERATOR_SNAPSHOT_KEY, { maxAgeMs: MODERATOR_SNAPSHOT_MS });
+  if (saved) {
+    const known = Promise.resolve(saved.data === true);
+    moderatorLookups.set(userId, known);
+    return known;
+  }
   const lookup = (async () => {
     try {
       const { data, error } = await supabase.rpc("is_moderator");
@@ -56,6 +67,7 @@ export function fetchIsModeratorShared(userId: string): Promise<boolean> {
         moderatorLookups.delete(userId);
         return false;
       }
+      writeSnapshot(userId, MODERATOR_SNAPSHOT_KEY, data === true);
       return data === true;
     } catch {
       moderatorLookups.delete(userId);

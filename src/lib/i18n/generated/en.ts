@@ -557,6 +557,7 @@ const dictionary: Record<string, string> = {
   "feed.emptyDefault": "There's nothing to show yet.",
   "feed.emptyFollowingHint": "Find and follow new creators on Discover.",
   "feed.loadFailed": "Couldn't load the feed right now — please try again.",
+  "feed.staleNotice": "Slow connection — showing the last saved feed.",
   "challenge.eyebrow": "Weekly theme",
   "challenge.endsIn": "Ends {{time}}",
   "challenge.join": "Join in",

@@ -18,6 +18,7 @@ import { SORT_KEYS, type ContentSortKey } from "@/features/content/sort-select";
 import { FeedGrid } from "@/features/feed/feed-grid";
 import { isPostItem } from "@/features/feed/types";
 import { LoadMore } from "@/features/feed/load-more";
+import { StaleFeedNotice } from "@/features/feed/stale-feed-notice";
 import { useFeedPages } from "@/features/feed/use-feed-pages";
 import { ShareButton } from "@/features/prompts/share-button";
 import { fetchFeedCount, fetchFeedPage, type FeedKind } from "@/lib/supabase/feed";
@@ -169,8 +170,9 @@ export function TopicPage({
           <EmptyState scene="feedStalled" icon={icon} title={t("feed.loadFailed")} action={{ label: t("common.retry"), onClick: feed.retry }} />
         ) : (
           <>
+            {feed.stale && feed.failed && <StaleFeedNotice onRetry={feed.retry} />}
             <FeedGrid items={feed.items} emptyScene="shelf" emptyTitle={section === "all" && !taxonomyActiveCount(picked, true) ? t("topic.empty") : t("topic.emptyFilter")} />
-            <LoadMore failed={feed.failed} hasMore={feed.hasMore} loadingMore={feed.loadingMore} onLoadMore={() => void feed.loadMore()} />
+            <LoadMore failed={feed.failed && !feed.stale} hasMore={feed.hasMore} loadingMore={feed.loadingMore} onLoadMore={() => void feed.loadMore()} />
           </>
         )}
       </div>

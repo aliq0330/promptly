@@ -15,6 +15,7 @@ import { FeedGrid } from "./feed-grid";
 import { useFeedPages } from "./use-feed-pages";
 import { useAuth } from "@/features/auth/auth-provider";
 import { FeedTabs } from "./feed-tabs";
+import { StaleFeedNotice } from "./stale-feed-notice";
 
 /** The guest feed asks the same public query as Keşfet's "Tümü · Önerilen": everyone's public posts, ranked by engagement. */
 const GUEST_QUERY = { scope: "all", order: "recommended", kind: "all", taxonomy: EMPTY_TAXONOMY_FILTER } as const;
@@ -57,6 +58,7 @@ function GuestFeed({ layout }: { layout: "grid" | "home" }) {
         <EmptyState scene="feedStalled" icon={Clock} title={t("feed.loadFailed")} action={{ label: t("common.retry"), onClick: feed.retry }} />
       ) : (
         <div className="space-y-4">
+          {feed.stale && feed.failed && <StaleFeedNotice onRetry={feed.retry} />}
           <FeedGrid
             items={feed.items}
             layout={layout}
@@ -65,7 +67,7 @@ function GuestFeed({ layout }: { layout: "grid" | "home" }) {
             emptyDescription={t("home.guestFeedEmptyDescription")}
             emptyAction={{ label: t("feed.goToDiscover"), href: "/discover" }}
           />
-          {feed.failed && <p className="text-center text-small text-danger">{t("feed.loadFailed")}</p>}
+          {feed.failed && !feed.stale && <p className="text-center text-small text-danger">{t("feed.loadFailed")}</p>}
           {feed.hasMore && <LoadMoreButton onLoadMore={() => void feed.loadMore()} loading={feed.loadingMore} error={feed.failed} />}
         </div>
       )}
