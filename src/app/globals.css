@@ -648,22 +648,6 @@
   [data-keyboard-fit="background"] {
     box-shadow: 0 0 0 100vh var(--color-background);
   }
-  /* Gölge yetmez (docs/history/469-*): iOS 26'da Otomatik Doldur çubuğu SAYDAMDIR ve düzen görünümünün DIŞINDA durur; WebKit `fixed`
-   * katmanları (gölgesi dahil) düzen görünümüne kırpar, o şeritte belgenin kendisini (kartlar, görseller) gösterir. Telefonda pencere
-   * klavyeyle birlikte görünür alanın TAMAMINI kapladığı için arkadaki sayfa bu sürede gizlenir ve belge zemini pencereyle aynı renk olur:
-   * iOS hangi şeridi gösterirse göstersin orada sayfa yoktur. `Modal` katmanı `<body>`'nin doğrudan çocuğudur (portal); klavye kapanınca
-   * öznitelik kalkar, sayfa geri gelir. Sohbet paneli (`="background"`) sayfanın kendisidir, gizlenmez. */
-  @media (max-width: 639.98px) {
-    html:has(> body > [data-keyboard-fit]:not([data-keyboard-fit="background"])),
-    html:has(> body > [data-keyboard-fit]:not([data-keyboard-fit="background"])) > body {
-      background-color: var(--color-surface);
-    }
-    /* Pencereden ÖNCE gelen her şey (uygulama ağacı ve daha önce açılmış portal katmanları: hikâye, oluşturma ekranı…) gizlenir; pencereden
-     * SONRA açılanlar (içindeki menü, üstüne açılan pencere, bildirim kartı) görünür kalır. */
-    body > :has(~ [data-keyboard-fit]:not([data-keyboard-fit="background"])) {
-      visibility: hidden;
-    }
-  }
 
   /* Scrolling down hides the header (below `lg`; the desktop sidebar never moves); the bottom nav stays as it is — scrolling up
    * brings the header back (`useChromeAutoHide`); a focused control keeps its bar. */
