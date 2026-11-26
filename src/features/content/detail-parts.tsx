@@ -320,7 +320,7 @@ export function DetailTitle({ children, className }: { children: ReactNode; clas
 /** The description under the title. */
 export function DetailLede({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <p className={cn("whitespace-pre-line break-words [overflow-wrap:anywhere] text-body leading-relaxed text-text-secondary sm:text-h3", className)}>
+    <p className={cn("whitespace-pre-line break-words [overflow-wrap:anywhere] font-serif text-h3 leading-relaxed text-text-secondary", className)}>
       {children}
     </p>
   );
@@ -422,9 +422,9 @@ export function DetailActionBar({
           )}
         >
           <div className={cn(dock.pinned && "mx-auto w-full max-w-6xl px-3 py-1.5 sm:px-6 lg:px-8")}>
-            <div role="toolbar" aria-label={t("detail.actionsAria")} data-detail-actions className="-mx-1.5 flex items-center gap-0.5">
+            <div role="toolbar" aria-label={t("detail.actionsAria")} data-detail-actions className="flex items-center gap-2 [&_.content-action]:h-10 [&_.content-action]:border [&_.content-action]:border-border [&_.content-action]:px-3 [&_.content-action]:text-small">
               {children}
-              {end && <div className="ml-auto flex items-center gap-0.5">{end}</div>}
+              {end && <div className="ml-auto flex items-center gap-2">{end}</div>}
             </div>
           </div>
         </div>

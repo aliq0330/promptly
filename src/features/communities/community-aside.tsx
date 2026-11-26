@@ -11,7 +11,7 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import type { ChatGroup, GroupRole } from "@/types";
 
 const ASIDE_CARD = "rounded-xl bg-surface-soft p-4";
-const ASIDE_TITLE = "font-display text-h3 font-bold tracking-[-0.02em] text-text";
+const ASIDE_TITLE = "font-display text-h3 font-bold text-text";
 const RULES_PREVIEW = 4;
 
 /**

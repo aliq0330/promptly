@@ -119,7 +119,7 @@ export function FeaturedPostCard({ prompt, stats, reason }: { prompt: Prompt; st
             <PostTargetMenu prompt={prompt} />
           </span>
         </div>
-        <Link href={href} className="font-display text-h1 font-extrabold leading-tight tracking-[-0.03em] text-text hover:text-primary-text">
+        <Link href={href} className="font-display text-h1 font-extrabold leading-tight text-text hover:text-primary-text">
           {prompt.title}
         </Link>
         <div className="flex flex-wrap items-center gap-2 text-small">

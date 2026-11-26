@@ -1393,7 +1393,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
               <PresenceAvatar userId={participant.id} src={participant.avatarUrl} alt={participant.displayName} size={34} />
             )}
             <span className="min-w-0 leading-tight">
-              <span className="block truncate font-display text-body font-semibold tracking-[-0.01em] text-text">{group ? group.name : participant.displayName}</span>
+              <span className="block truncate font-display text-body font-semibold text-text">{group ? group.name : participant.displayName}</span>
               {typingText ? (
                 <span data-typing-indicator role="status" className="block truncate text-caption font-medium text-primary-text">
                   {typingText}
@@ -1442,7 +1442,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
               )}
             </span>
             <span className="min-w-0 leading-tight">
-              <span className="block truncate font-display text-h3 font-semibold tracking-[-0.01em] text-text">{teamChannel ? teamChannel.name : group.name}</span>
+              <span className="block truncate font-display text-h3 font-semibold text-text">{teamChannel ? teamChannel.name : group.name}</span>
               {typingText ? (
                 <span data-typing-indicator role="status" className="block truncate text-caption font-medium text-primary-text">
                   {typingText}
@@ -1490,7 +1490,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
           >
             <PresenceAvatar userId={participant.id} src={participant.avatarUrl} alt={participant.displayName} size={42} />
             <span className="min-w-0 leading-tight">
-              <span className="block truncate font-display text-h3 font-semibold tracking-[-0.01em] text-text">{participant.displayName}</span>
+              <span className="block truncate font-display text-h3 font-semibold text-text">{participant.displayName}</span>
               {typingText ? (
                 <span data-typing-indicator role="status" className="block truncate text-caption font-medium text-primary-text">
                   {typingText}

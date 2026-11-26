@@ -54,7 +54,7 @@ export function RoomRow({
     <>
       <RoomIconTile icon={room.icon} size={compact ? 36 : 44} selected={current} />
       <span className="min-w-0 flex-1">
-        <span className={cn("block truncate text-body tracking-[-0.01em]", unread || current ? "font-semibold text-text" : "font-semibold text-text")}>{room.name}</span>
+        <span className={cn("block truncate text-body", unread || current ? "font-semibold text-text" : "font-semibold text-text")}>{room.name}</span>
         {subtitle && <span className={cn("block truncate text-caption", current ? "font-semibold text-primary-text" : "text-text-muted")}>{subtitle}</span>}
       </span>
       {readOnly && <Lock size={16} className="shrink-0 text-text-muted" aria-label={t("rooms.row.readOnly")} />}

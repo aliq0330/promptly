@@ -114,7 +114,7 @@ function SharedCard({
           {badge && <span className="absolute right-2 top-2">{badge}</span>}
         </span>
         <span className="block space-y-0.5 px-1.5">
-          <span className="line-clamp-2 font-display text-h3 font-bold leading-snug tracking-[-0.01em] text-text">{title ?? t("common.loading")}</span>
+          <span className="line-clamp-2 font-display text-h3 font-bold leading-snug text-text">{title ?? t("common.loading")}</span>
           {ownerName && (
             <span className="block truncate text-caption text-text-muted" data-shared-owner>
               {ownerName}

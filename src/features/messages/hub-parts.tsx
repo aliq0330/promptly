@@ -63,7 +63,7 @@ export function HubHeader({
       <div className="flex items-center gap-4 pb-3 pt-1">
         {media}
         <div className="min-w-0">
-          <h1 data-hub-title className="truncate font-display text-h2 font-extrabold leading-[1.15] tracking-[-0.02em] text-text">
+          <h1 data-hub-title className="truncate font-display text-h2 font-extrabold leading-[1.15] text-text">
             {title}
           </h1>
           <p data-hub-meta className="truncate text-small text-text-muted">
@@ -182,7 +182,7 @@ export function HubRow({
       <span className="flex min-h-[68px] min-w-0 flex-1 flex-col justify-center gap-0.5 border-b border-border-soft py-2 pr-4">
         <span className="flex items-baseline justify-between gap-2">
           <span className="flex min-w-0 items-center gap-1.5">
-            <span className={cn("truncate text-body tracking-[-0.01em] text-text", shownUnread > 0 ? "font-semibold" : "font-semibold")}>{title}</span>
+            <span className={cn("truncate text-body text-text", shownUnread > 0 ? "font-semibold" : "font-semibold")}>{title}</span>
             {tags}
             <MuteChip scope={muteScope} />
           </span>

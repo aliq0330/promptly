@@ -67,7 +67,7 @@ export function DeveloperSettings() {
     <SettingsSubpage title={t("settings.groupDeveloper")} description={t("settings.hub.developerDesc")}>
       <section className="space-y-3" aria-labelledby="dev-connect">
         <div className="flex items-baseline justify-between gap-3 px-1">
-          <h2 id="dev-connect" className="font-display text-h3 font-bold tracking-[-0.02em] text-text">{t("devSettings.hub.connectTitle")}</h2>
+          <h2 id="dev-connect" className="font-display text-h3 font-bold text-text">{t("devSettings.hub.connectTitle")}</h2>
           <span className="text-caption text-text-muted">{t("devSettings.hub.connectHint")}</span>
         </div>
         <div className="grid gap-3 sm:grid-cols-2">

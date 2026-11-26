@@ -158,7 +158,7 @@ function Inbox() {
 
       {wide ? (
         <div className="flex items-start gap-5">
-          <div ref={listRef} className="w-[23.75rem] shrink-0 space-y-3 rounded-lg card-flat p-2" data-notification-list="">
+          <div ref={listRef} className="w-[23.75rem] shrink-0 overflow-hidden rounded-md card-flat" data-notification-list="">
             {states}
             {list.status === "ready" &&
               grouped.map(({ group, items }) => (
@@ -180,7 +180,7 @@ function Inbox() {
           </div>
         </div>
       ) : (
-        <div ref={listRef} className="space-y-3" data-notification-list="">
+        <div ref={listRef} className="overflow-hidden rounded-md card-flat" data-notification-list="">
           {states}
           {list.status === "ready" &&
             list.cards.map((card, index) => {

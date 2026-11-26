@@ -36,7 +36,7 @@ export function BrandMark({ size = 32, className }: { size?: number; className?:
  */
 export function BrandWordmark({ className }: { className?: string }) {
   return (
-    <span aria-hidden className={cn("font-display font-extrabold leading-none tracking-[-0.045em] text-text", className)}>
+    <span aria-hidden className={cn("font-display font-extrabold leading-none text-text", className)}>
       promptly
     </span>
   );

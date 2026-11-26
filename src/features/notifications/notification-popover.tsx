@@ -105,7 +105,7 @@ export function NotificationPopover({ anchor, onClose }: { anchor: HTMLElement |
         <span aria-hidden style={{ right: pos.nub }} className="absolute -top-[9px] size-4 rotate-45 rounded-tl border-l border-t border-border-soft bg-surface" />
 
         <div className="flex shrink-0 items-center gap-1 py-4 pl-5 pr-2">
-          <h2 className="flex-1 font-display text-h2 font-bold tracking-[-0.01em] text-text">{t("header.notificationsAriaLabel")}</h2>
+          <h2 className="flex-1 font-display text-h2 font-bold text-text">{t("header.notificationsAriaLabel")}</h2>
           <button type="button" onClick={() => void markAllRead()} disabled={unreadCount === 0} data-action="mark-all-read" className="h-11 rounded-sm px-3 text-small font-semibold text-primary-text hover:bg-primary-soft disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus">
             <span className="max-[520px]:hidden">{t("notifications.markAllRead")}</span>
             <CheckCheck size={20} aria-hidden className="hidden max-[520px]:block" />

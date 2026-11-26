@@ -305,7 +305,7 @@ function StepPanel({
             <p className="flex items-center gap-1.5 text-caption font-semibold text-primary-text">
               {t("workflow.run.stepOf", { n: String(index + 1), total: String(steps.length) })}
             </p>
-            <h3 id={`run-step-${step.id}`} className="break-words font-display text-h2 font-extrabold leading-tight tracking-[-0.02em] text-text">
+            <h3 id={`run-step-${step.id}`} className="break-words font-display text-h2 font-extrabold leading-tight text-text">
               {step.title || t("workflow.untitledStep")}
             </h3>
             {step.description && <p className="break-words text-small text-text-secondary">{step.description}</p>}

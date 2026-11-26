@@ -76,7 +76,7 @@ export function InfoIdentity({
   return (
     <div className="flex shrink-0 flex-col items-center px-7 pt-1 text-center">
       {media}
-      <p className="mt-4 break-words font-display text-h2 font-bold leading-tight tracking-[-0.02em] text-text" {...(nameAttr ? { [nameAttr]: "" } : {})}>
+      <p className="mt-4 break-words font-display text-h2 font-bold leading-tight text-text" {...(nameAttr ? { [nameAttr]: "" } : {})}>
         {name}
       </p>
       {sub && (

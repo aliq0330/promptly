@@ -109,7 +109,7 @@ export function ConversationRow({
       <span className="flex min-h-[76px] min-w-0 flex-1 flex-col justify-center gap-0.5 border-b border-border-soft py-2.5 pr-4">
         <span className="flex items-baseline justify-between gap-2">
           <span className="flex min-w-0 items-center gap-1.5">
-            <span className={cn("truncate text-body tracking-[-0.01em] text-text", unread ? "font-semibold" : "font-semibold")}>{title}</span>
+            <span className={cn("truncate text-body text-text", unread ? "font-semibold" : "font-semibold")}>{title}</span>
             {muted && <BellOff size={12} className="shrink-0 text-text-muted" aria-label={t("groups.about.muteLabel")} />}
             {showKindTag && group && (
               <span

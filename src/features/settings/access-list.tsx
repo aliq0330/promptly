@@ -198,7 +198,7 @@ export function AccessList({ access }: { access: DeveloperAccess }) {
   return (
     <section className="space-y-4" data-access-list="" aria-labelledby="access-title">
       <div className="flex items-baseline justify-between gap-3">
-        <h2 id="access-title" className="font-display text-h3 font-bold tracking-[-0.02em] text-text">{t("devSettings.access.title")}</h2>
+        <h2 id="access-title" className="font-display text-h3 font-bold text-text">{t("devSettings.access.title")}</h2>
         {rows !== null && <span className="text-caption text-text-muted">{t("devSettings.access.count", { count: active })}</span>}
       </div>
       <p className="text-caption leading-relaxed text-text-muted">{t("devSettings.access.hint")}</p>
@@ -227,7 +227,7 @@ export function AccessList({ access }: { access: DeveloperAccess }) {
               {...(row.kind === "telegram" ? { "data-telegram-link": row.id } : {})}
             >
               <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
-                <span className="min-w-0 break-words text-body font-semibold tracking-[-0.01em] text-text [overflow-wrap:anywhere]">{row.title}</span>
+                <span className="min-w-0 break-words text-body font-semibold text-text [overflow-wrap:anywhere]">{row.title}</span>
                 <span className="rounded-xs bg-surface-soft px-2.5 py-0.5 text-caption font-semibold text-text-secondary">
                   {t(KIND_KEY[row.kind])}
                   {row.host ? ` · ${row.host}` : ""}

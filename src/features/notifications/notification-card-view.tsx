@@ -272,7 +272,7 @@ export function NotificationCardView({
       }}
       data-notification-card={card.key}
       data-unread={unread ? "true" : "false"}
-      className={cn("rounded-lg border p-4", isMilestone ? "border-secondary/30 bg-secondary-soft" : unread ? "border-primary/25 bg-primary-soft/60" : "border-border-soft bg-surface")}
+      className={cn("border-b border-border-soft px-5 py-[18px]", isMilestone ? "bg-secondary-soft" : "bg-surface")}
     >
       {variant === "page" ? (
         <button type="button" onClick={onToggle} aria-expanded={open} className="flex w-full items-start gap-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus">

@@ -528,7 +528,7 @@ function FocusScreen() {
               <button type="button" onClick={close} aria-label={t("focusFeed.close")} title={t("focusFeed.close")} className={cn(barButton, "w-11")}>
                 <X size={20} aria-hidden />
               </button>
-              <span className="hidden shrink-0 font-display text-h3 font-bold tracking-[-0.03em] text-on-art sm:inline">{t("nav.focus")}</span>
+              <span className="hidden shrink-0 font-display text-h3 font-bold text-on-art sm:inline">{t("nav.focus")}</span>
               <div className="flex min-w-0 flex-1 justify-center">
                 <FocusFilterMenu
                   channel={channel}

@@ -26,8 +26,8 @@ export function NotificationListRow({ card, list, selected, onSelect }: { card: 
       data-notification-row={card.key}
       data-unread={unread ? "true" : "false"}
       className={cn(
-        "flex w-full items-start gap-3 rounded-lg border p-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus",
-        selected ? "border-primary/40 bg-primary-soft" : "border-transparent hover:bg-surface-soft",
+        "flex w-full items-start gap-3 border-b border-border-soft px-5 py-[18px] text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus",
+        selected ? "bg-primary-soft" : "hover:bg-surface-soft",
       )}
     >
       <CardAvatar card={card} size={40} />

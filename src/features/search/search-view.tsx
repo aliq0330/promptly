@@ -311,7 +311,7 @@ export function SearchView({ idle, scope }: { idle?: ReactNode; scope?: SearchSc
         >
           <Avatar src={user.avatarUrl} alt={user.displayName} size={40} />
           <div className="min-w-0">
-            <p className="truncate text-small font-semibold tracking-[-0.01em] text-text transition-colors group-hover:text-primary-text">{user.displayName}</p>
+            <p className="truncate text-small font-semibold text-text transition-colors group-hover:text-primary-text">{user.displayName}</p>
             <p className="truncate text-caption text-text-muted">
               @{user.username} · {formatCount(user.followerCount)} {t("profile.followersSuffix")}
             </p>

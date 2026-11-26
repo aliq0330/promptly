@@ -16,7 +16,7 @@ export default function DiscoverPage() {
   return (
     <PageContainer>
       <header className="mb-4 pt-2 sm:mb-6 sm:pt-4">
-        <h1 className={cn("font-display text-display font-extrabold tracking-[-0.04em] text-text", duplicate)}>{t("nav.discover")}</h1>
+        <h1 className={cn("font-display text-display font-extrabold text-text", duplicate)}>{t("nav.discover")}</h1>
         <p className="mt-1 min-h-6 text-body text-text-secondary">
           {stats && stats.prompts + stats.workflows + stats.skills > 0
             ? t("discover.hero.stats", { prompts: formatCount(stats.prompts), workflows: formatCount(stats.workflows), skills: formatCount(stats.skills) })

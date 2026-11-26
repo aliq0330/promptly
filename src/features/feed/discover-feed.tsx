@@ -212,7 +212,7 @@ export function DiscoverFeed() {
     <div className="space-y-6">
       {editorial && <DiscoverEditorial onSeeAllCreators={() => setSection("creators")} />}
       <div ref={allRef} className="space-y-4" data-discover-all="">
-        {editorial && <h2 className="pt-6 font-display text-h1 font-bold tracking-[-0.025em] text-text">{t("discover.ed.allPosts")}</h2>}
+        {editorial && <h2 className="pt-6 font-display text-h1 font-bold text-text">{t("discover.ed.allPosts")}</h2>}
         <SectionNav
           variant="menu"
           menuTitle={t("nav.discover")}

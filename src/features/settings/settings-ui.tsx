@@ -19,7 +19,7 @@ export function SettingsSubpage({ title, description, children, backHref = "/set
   const { t } = useTranslation();
   usePageTitle(title);
   return (
-    <div className="mx-auto w-full max-w-2xl animate-rise-in space-y-6 px-3 py-5 sm:px-6 sm:py-7 lg:px-8 lg:py-10">
+    <div className="mx-auto w-full max-w-[37.5rem] animate-rise-in space-y-6 px-3 py-5 sm:px-6 sm:py-7 lg:px-8 lg:py-10">
       <Link href={backHref} className="inline-flex items-center gap-1 text-small text-text-muted hover:text-text" data-settings-back="">
         <ArrowLeft size={16} />
         {backLabel ?? t("settings.backToSettings")}
@@ -37,7 +37,7 @@ export function SettingsSubpage({ title, description, children, backHref = "/set
 export function SettingsGroup({ id, title, children }: { id?: string; title: string; children: ReactNode }) {
   return (
     <section aria-labelledby={id} className="scroll-mt-24 space-y-3">
-      <h2 id={id} className="px-1 font-display text-h3 font-bold tracking-[-0.02em] text-text">
+      <h2 id={id} className="px-1 font-display text-h3 font-bold text-text">
         {title}
       </h2>
       <div className="space-y-3">{children}</div>
@@ -63,7 +63,7 @@ export function SettingsCard({
   return (
     <Tag onSubmit={onSubmit} className="space-y-4 rounded-lg card-flat p-4 shadow-card sm:p-5">
       <div className="space-y-1">
-        <h3 className="text-body font-semibold tracking-[-0.01em] text-text">{title}</h3>
+        <h3 className="text-body font-semibold text-text">{title}</h3>
         {hint && <p className="text-caption leading-relaxed text-text-muted">{hint}</p>}
       </div>
       {children}
@@ -80,7 +80,7 @@ export function SettingsLinkRow({ href, icon, title, hint }: { href: string; ico
     >
       {icon}
       <span className="min-w-0 flex-1">
-        <span className="block text-body font-semibold tracking-[-0.01em] text-text">{title}</span>
+        <span className="block text-body font-semibold text-text">{title}</span>
         {hint && <span className="block text-caption text-text-muted">{hint}</span>}
       </span>
       <ChevronRight size={16} className="shrink-0 text-text-muted transition-transform duration-200 ease-soft group-hover:translate-x-0.5" />

@@ -123,7 +123,7 @@ export function SuggestionStrip({ onToast, onGoInvites }: { onToast: (message: s
                   </span>
                   <div className="min-w-0 flex-1 space-y-0.5">
                     <Eyebrow tone="primary">{t(communityTopicLabelKey(community))}</Eyebrow>
-                    <h3 className="break-words font-display text-h3 font-extrabold leading-tight tracking-[-0.015em] text-text">
+                    <h3 className="break-words font-display text-h3 font-extrabold leading-tight text-text">
                       <Link href={communityHref(community.id)} className="after:absolute after:inset-0 after:rounded-xl focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-primary">
                         {community.name}
                       </Link>

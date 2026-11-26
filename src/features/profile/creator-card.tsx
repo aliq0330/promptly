@@ -23,7 +23,7 @@ export function CreatorCard({ creator }: { creator: UserProfile }) {
             <Avatar src={creator.avatarUrl} alt={creator.displayName} size={56} />
           </span>
           <div className="min-w-0 flex-1 leading-tight">
-            <h3 className="truncate font-display text-h3 font-extrabold tracking-[-0.015em] text-text">
+            <h3 className="truncate font-display text-h3 font-extrabold text-text">
               <Link href={profileHref(creator)} className="relative z-10 hover:text-primary-text">
                 {creator.displayName}
               </Link>

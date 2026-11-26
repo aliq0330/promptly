@@ -188,7 +188,7 @@ function StepCard({ step, steps, index }: { step: WorkflowStep; steps: WorkflowS
               <Icon size={12} className="shrink-0" aria-hidden />
               <span className="truncate">{[t("workflow.stepN", { n: String(index + 1) }), t(meta.labelKey), stepSubtitle(step, language)].filter(Boolean).join(" · ")}</span>
             </span>
-            <span className="block break-words font-display text-h2 font-extrabold leading-tight tracking-[-0.02em] text-text">{step.title || t("workflow.untitledStep")}</span>
+            <span className="block break-words font-display text-h2 font-extrabold leading-tight text-text">{step.title || t("workflow.untitledStep")}</span>
             {step.description && <span className="block break-words text-small text-text-secondary">{step.description}</span>}
             {c ? (
               <span className="flex min-w-0 items-center gap-1.5 text-caption text-text">

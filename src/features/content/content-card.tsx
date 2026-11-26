@@ -296,7 +296,7 @@ export function ContentCardTitle({
   const onArt = useContext(OnArtContext);
   return (
     <div className="space-y-1">
-      <h2 className={cn("font-display text-h2 font-extrabold leading-[1.1] tracking-[-0.02em]", onArt ? "text-on-art" : "text-text")}>
+      <h2 className={cn("font-display text-h2 font-extrabold leading-[1.1]", onArt ? "text-on-art" : "text-text")}>
         <Link
           href={href}
           data-card-link

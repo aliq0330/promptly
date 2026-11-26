@@ -32,7 +32,7 @@ export function WeeklyChallengeBanner() {
         </span>
         <div className="min-w-0 flex-1 basis-40 space-y-1">
           <Eyebrow tone="primary">{t("challenge.eyebrow")}</Eyebrow>
-          <h2 className="break-words font-display text-h2 font-extrabold leading-tight tracking-[-0.02em] text-text">{copy.title}</h2>
+          <h2 className="break-words font-display text-h2 font-extrabold leading-tight text-text">{copy.title}</h2>
           <p className="text-caption text-text-muted">{t("challenge.endsIn", { time: formatRelativeTime(challenge.endsAt, language) })}</p>
         </div>
         {copy.description && <p className="w-full break-words text-small text-text-secondary">{copy.description}</p>}

@@ -172,7 +172,7 @@ export function NotificationDetail({ card, list, variant, onBack }: { card: Noti
         <p className="text-small font-semibold text-primary-text">
           {t(cardKindKey(card))} <span className="font-medium text-text-muted">· {new Date(card.sortAt).toLocaleString(language === "tr" ? "tr-TR" : "en-US", { dateStyle: "medium", timeStyle: "short" })}</span>
         </p>
-        <h2 className="mt-1 font-display text-h2 font-bold leading-snug tracking-[-0.01em] text-text">
+        <h2 className="mt-1 font-display text-h2 font-bold leading-snug text-text">
           <CardHeadline card={card} as="span" plain className="!text-h2 !font-semibold" />
         </h2>
       </div>
@@ -264,7 +264,7 @@ export function NotificationDetail({ card, list, variant, onBack }: { card: Noti
       )}
       {kind === "milestone" && milestone && (
         <div className="flex flex-wrap items-center gap-5 rounded-lg border border-secondary/30 bg-secondary-soft p-5" data-milestone="">
-          <p className="font-display text-display-xl font-extrabold leading-none tracking-[-0.03em] text-secondary">{milestone.count}</p>
+          <p className="font-display text-display-xl font-extrabold leading-none text-secondary">{milestone.count}</p>
           <p className="min-w-0 flex-1 basis-60 text-body leading-relaxed text-text-secondary">{t(milestone.kind === "copies" ? "nc.milestone.copiesBody" : "nc.milestone.reactionsBody", { count: milestone.count, title: milestone.title })}</p>
           <Link href={card.targetHref} className={buttonClassName({ variant: "primary", className: "h-11 !bg-secondary" })}>
             {t("nc.viewStats")}
@@ -361,7 +361,7 @@ export function NotificationDetail({ card, list, variant, onBack }: { card: Noti
         <button type="button" onClick={onBack} aria-label={t("nc.backToList")} className="grid size-11 place-items-center rounded-sm bg-surface-soft text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus" data-action="back">
           <ArrowLeft size={20} aria-hidden />
         </button>
-        <p className="min-w-0 flex-1 truncate font-display text-h2 font-bold tracking-[-0.01em]">{t(cardKindKey(card))}</p>
+        <p className="min-w-0 flex-1 truncate font-display text-h2 font-bold">{t(cardKindKey(card))}</p>
         <span className="grid size-11 place-items-center text-text-muted" aria-hidden>
           <MoreVertical size={20} />
         </span>

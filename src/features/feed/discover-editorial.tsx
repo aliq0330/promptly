@@ -291,7 +291,7 @@ function SectionHead({ title, hint, href, onSeeAll }: { title: string; hint: str
   return (
     <div className="flex flex-wrap items-end gap-x-4 gap-y-1">
       <div className="min-w-0 flex-1">
-        <h2 className="font-display text-h1 font-bold tracking-[-0.025em] text-text">{title}</h2>
+        <h2 className="font-display text-h1 font-bold text-text">{title}</h2>
         <p className="text-small text-text-muted">{hint}</p>
       </div>
       {href ? (
@@ -404,7 +404,7 @@ export function DiscoverEditorial({ onSeeAllCreators }: { onSeeAllCreators: () =
                 <Trophy size={12} aria-hidden />
                 {t("discover.ed.weekPrompt")}
               </span>
-              <span className="font-display text-display font-extrabold leading-none tracking-[-0.035em]">{data.weekPrompt.title}</span>
+              <span className="font-display text-display font-extrabold leading-none">{data.weekPrompt.title}</span>
               <span className="mt-2 flex items-center gap-2 text-small">
                 <Avatar src={data.weekPrompt.author.avatarUrl} alt="" size={28} />
                 <span className="font-semibold">{data.weekPrompt.author.displayName}</span>

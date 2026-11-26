@@ -96,7 +96,7 @@ function DockChannelList({
         onMinimize={dock.minimize}
       >
         <span className="min-w-0 pl-1" data-dock-hub-title="">
-          <span className="block truncate font-display text-h3 font-extrabold leading-tight tracking-[-0.02em] text-text">{title}</span>
+          <span className="block truncate font-display text-h3 font-extrabold leading-tight text-text">{title}</span>
           <span className="block truncate text-caption text-text-muted">{subtitle}</span>
         </span>
       </DockHeader>

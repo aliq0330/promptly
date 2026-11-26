@@ -37,7 +37,7 @@ export function CollectionCard({
           <div className="relative space-y-3">
             <CollectionCover collection={collection} className="aspect-[4/3] w-full overflow-hidden rounded-lg shadow-pop" />
             <div className="min-w-0 space-y-0.5 px-1">
-              <p className="truncate font-display text-h3 font-extrabold leading-tight tracking-[-0.015em] text-text">{collection.name}</p>
+              <p className="truncate font-display text-h3 font-extrabold leading-tight text-text">{collection.name}</p>
             </div>
           </div>
         </div>

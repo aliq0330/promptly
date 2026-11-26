@@ -216,7 +216,7 @@ export function HubCard({
         {coverOverlay && <div className="absolute inset-x-2.5 bottom-2 z-10 flex items-center gap-1.5">{coverOverlay}</div>}
       </div>
       <div className={cn(HUB_CARD_BODY_CLASS, "flex min-w-0 flex-col px-4 py-3")}>
-        <h3 className="min-w-0 truncate font-display text-h3 font-bold leading-tight tracking-[-0.01em] text-text">
+        <h3 className="min-w-0 truncate font-display text-h3 font-bold leading-tight text-text">
           <Link href={href} className="after:absolute after:inset-0 after:rounded-lg focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-primary">
             {title}
           </Link>

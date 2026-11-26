@@ -118,7 +118,7 @@ export function SelectionHeader({ count, onDone, embedded, title }: { count: num
       >
         <Check size={24} aria-hidden />
       </button>
-      <h1 aria-live="polite" className="font-display text-h2 font-bold tracking-[-0.01em] text-text">
+      <h1 aria-live="polite" className="font-display text-h2 font-bold text-text">
         {title ?? (count > 0 ? t("messages.selectionCount", { count }) : t("messages.selectChats"))}
       </h1>
     </div>
