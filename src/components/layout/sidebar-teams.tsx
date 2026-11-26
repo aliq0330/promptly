@@ -16,7 +16,7 @@ import { readSnapshot, writeSnapshot } from "@/lib/feed-snapshot";
 /** Kısa ömürlü modül önbelleği: kenar çubuğu her sayfada yeniden kurulur, liste her gezinmede sorulmaz (docs/history/353-*). */
 let cache: { userId: string; at: number; teams: TeamSummary[] } | null = null;
 const TTL_MS = 60_000;
-/** Tam sayfa yüklemesinde liste önce bu cihazdaki kopyayla çizilir (docs/history/465-*); 60 sn'den eskiyse arkadan tazelenir. */
+/** Tam sayfa yüklemesinde liste önce bu cihazdaki kopyayla çizilir (docs/history/466-*); 60 sn'den eskiyse arkadan tazelenir. */
 const SNAPSHOT_KEY = "sidebar-teams";
 
 function MyTeams() {
@@ -24,7 +24,7 @@ function MyTeams() {
   const { user } = useAuth();
   const pathname = usePathname();
   const params = useSearchParams();
-  // Kenar çubuğu yalnız geniş ekranda görünür (`hidden lg:block`): telefonda/tablette liste hiç istenmez (docs/history/465-*).
+  // Kenar çubuğu yalnız geniş ekranda görünür (`hidden lg:block`): telefonda/tablette liste hiç istenmez (docs/history/466-*).
   const wide = useMediaQuery("(min-width: 1024px)");
   const [teams, setTeams] = useState<TeamSummary[]>(() => {
     if (!user) return [];

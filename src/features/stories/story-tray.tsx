@@ -33,7 +33,7 @@ export function StoryTray({ communityId, canAdd = true, className }: { community
   const { openStories, seenIds, changeVersion } = useStoryViewer();
   const [items, setItems] = useState<StoryTrayItem[] | null>(null);
   const [failed, setFailed] = useState(false);
-  // docs/history/465-*: şerit önce cihazdaki son kopyayla açılır (hikâye 24 saatlik olduğundan kopya en çok 30 dk geçerli); gerçeği gelince yerini alır.
+  // docs/history/466-*: şerit önce cihazdaki son kopyayla açılır (hikâye 24 saatlik olduğundan kopya en çok 30 dk geçerli); gerçeği gelince yerini alır.
   const [fromCache, setFromCache] = useState(false);
   const hasItemsRef = useRef(false);
   useEffect(() => {

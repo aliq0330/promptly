@@ -78,7 +78,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       lastUserIdRef.current = nextUserId;
       if (identityChanged) {
         clearMediaUrlCache();
-        // Cihazda saklanan son listeler (docs/history/465-*) kişiye göre ayrıdır; çıkışta yine de hepsi silinir (paylaşılan cihaz).
+        // Cihazda saklanan son listeler (docs/history/466-*) kişiye göre ayrıdır; çıkışta yine de hepsi silinir (paylaşılan cihaz).
         if (nextUserId === null) clearSnapshots();
         if (typeof window !== "undefined") {
           if (nextUserId === null) window.location.replace(absoluteUrl("/"));
@@ -104,7 +104,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsPasswordRecovery(false);
   }
 
-  // Aynı kişinin `user` nesnesi SABİT kalır (docs/history/465-*): supabase-js her oturum olayında (getSession, INITIAL_SESSION, SIGNED_IN, saatlik
+  // Aynı kişinin `user` nesnesi SABİT kalır (docs/history/466-*): supabase-js her oturum olayında (getSession, INITIAL_SESSION, SIGNED_IN, saatlik
   // TOKEN_REFRESHED) yeni bir nesne verir; `[user]`'a bağlı her efekt (hikâye şeridi, bildirim sayaçları, Sana özel, öneriler…) aynı kullanıcı için baştan
   // çalışır ve canlıda aynı istek 4–7 kez gidiyordu. Kimlik ya da görünen alanlar değişmedikçe önceki nesne yeniden kullanılır.
   const stableUser = useStableUser(session?.user ?? null);

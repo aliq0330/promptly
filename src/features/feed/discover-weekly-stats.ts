@@ -5,7 +5,7 @@ import { supabase } from "@/lib/supabase/client";
 
 type WeeklyStats = { prompts: number; workflows: number; skills: number };
 
-/** 3 dk modül önbelleği + uçuştaki isteği paylaşma (docs/history/465-*): sayfa yeniden bağlandığında ya da Geri'de yeniden sorulmaz. */
+/** 3 dk modül önbelleği + uçuştaki isteği paylaşma (docs/history/466-*): sayfa yeniden bağlandığında ya da Geri'de yeniden sorulmaz. */
 const TTL_MS = 3 * 60 * 1000;
 let cache: { value: WeeklyStats; at: number } | null = null;
 let inflight: Promise<WeeklyStats | null> | null = null;

@@ -1,5 +1,5 @@
 /**
- * Okuma isteklerinin ağ katmanı (docs/history/465-*): Supabase istemcisinin `global.fetch` zincirine giren üç halka.
+ * Okuma isteklerinin ağ katmanı (docs/history/466-*): Supabase istemcisinin `global.fetch` zincirine giren üç halka.
  *
  * Canlı ölçüm: Nano sunucuda (0,5 GB RAM) PostgREST boşta kalan bağlantılarını kapatır; bir istek dalgası gelince yeni (SOĞUK) bağlantılar
  * açılır ve her soğuk bağlantının ilk sorguları katalog/RLS yüklemesi yüzünden 10–100 kat yavaştır (RLS'li bir sayım: soğukta 406 ms, sıcakta

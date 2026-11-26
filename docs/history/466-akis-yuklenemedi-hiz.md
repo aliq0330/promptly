@@ -1,4 +1,4 @@
-# 465 — "Akış yüklenemedi" ve donmalar: sunucuya daha az, daha hafif iş
+# 466 — "Akış yüklenemedi" ve donmalar: sunucuya daha az, daha hafif iş
 
 ## Sorun (canlı ölçüm, 26 Kas 2026)
 

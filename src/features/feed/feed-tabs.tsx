@@ -293,7 +293,7 @@ export function FeedTabs({ layout = "grid" }: { layout?: "grid" | "home" } = {})
           aria-busy={isForYou && (forYou.refreshing || (forYou.stale && !forYou.failed))}
           className={cn("space-y-4 transition-opacity duration-300 ease-soft", isForYou && forYou.refreshing && "opacity-60")}
         >
-          {/* docs/history/465-*: saklanan liste ekrandayken gerçek liste gelmediyse küçük band (büyük hata ekranı değil). */}
+          {/* docs/history/466-*: saklanan liste ekrandayken gerçek liste gelmediyse küçük band (büyük hata ekranı değil). */}
           {isForYou && forYou.stale && forYou.failed && <StaleFeedNotice onRetry={forYou.refresh} />}
           <FeedGrid
             items={feed.items}

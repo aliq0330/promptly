@@ -31,7 +31,7 @@ export function OwnProfileProvider({ children }: { children: React.ReactNode }) 
   const { user } = useAuth();
   const [profile, setProfileState] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  // Profilin hangi kullanıcı için yüklendiği (docs/history/465-*): oturum gelir gelmez — profil isteği daha başlamadan — bir an "yükleme bitti,
+  // Profilin hangi kullanıcı için yüklendiği (docs/history/466-*): oturum gelir gelmez — profil isteği daha başlamadan — bir an "yükleme bitti,
   // profil yok" görünüyordu; ilk giriş kapısı sayfayı çizip hemen kaldırıyor, Ana Sayfa'nın bütün istekleri iki kez gidiyordu.
   const [loadedFor, setLoadedFor] = useState<string | null>(null);
 

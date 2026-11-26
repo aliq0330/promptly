@@ -52,7 +52,7 @@ const MODERATOR_SNAPSHOT_MS = 10 * 60 * 1000;
 export function fetchIsModeratorShared(userId: string): Promise<boolean> {
   const existing = moderatorLookups.get(userId);
   if (existing) return existing;
-  // docs/history/465-*: cevap bu cihazda kişiye özel 10 dk saklanır — her tam sayfa yüklemesi yeniden sormaz. Yalnız arayüz ipucudur: her
+  // docs/history/466-*: cevap bu cihazda kişiye özel 10 dk saklanır — her tam sayfa yüklemesi yeniden sormaz. Yalnız arayüz ipucudur: her
   // moderatör işlemi sunucuda `is_moderator()` / `_admin_guard()` ile yeniden denetlenir, rol istemciden değiştirilemez.
   const saved = readSnapshot<boolean>(userId, MODERATOR_SNAPSHOT_KEY, { maxAgeMs: MODERATOR_SNAPSHOT_MS });
   if (saved) {

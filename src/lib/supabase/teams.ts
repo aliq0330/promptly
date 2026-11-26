@@ -322,7 +322,7 @@ export async function listMyTeams(
   const data = await rows<TeamSummary>("my_teams", { p_limit: PAGE + 1, p_offset: offset });
   const items = data.slice(0, PAGE);
   // Kart önizlemesi (avatar yığını + son etkinlik) ayrı, ekleyici bir RPC'dir; okunamazsa kart onsuz çizilir. Kart çizmeyen yüzeyler (kenar çubuğu,
-  // docs/history/465-*) `preview: false` ile bu ikinci isteği hiç göndermez.
+  // docs/history/466-*) `preview: false` ile bu ikinci isteği hiç göndermez.
   const preview = items.length && withPreview
     ? await rows<{ teamId: string; membersPreview: TeamSummary["membersPreview"]; recent: TeamSummary["recent"] }>("my_teams_preview", { p_ids: items.map((team) => team.id) }).catch(() => [])
     : [];

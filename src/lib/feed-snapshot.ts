@@ -1,5 +1,5 @@
 /**
- * Son görülen listenin cihazda saklanan kopyası (docs/history/465-*, "stale-while-revalidate"): Ana Sayfa (Sana özel, Takip Ettiklerin),
+ * Son görülen listenin cihazda saklanan kopyası (docs/history/466-*, "stale-while-revalidate"): Ana Sayfa (Sana özel, Takip Ettiklerin),
  * Keşfet ve hikâye şeridi açılışta önce bu kopyayı ANINDA gösterir, gerçek liste arkadan gelince yerini alır. Sunucu yavaşken ya da kısa bir
  * donma sırasında ekran boş kalmaz / "yüklenemedi" demez. Yalnız bir kolaylıktır: hiçbir karar buna dayanmaz, kopya yoksa liste eskisi gibi yüklenir.
  *   - Kişiye göre anahtarlı (`owner` = kullanıcı kimliği ya da `guest`): başka hesabın kopyası okunmaz; çıkışta `clearSnapshots` hepsini siler.

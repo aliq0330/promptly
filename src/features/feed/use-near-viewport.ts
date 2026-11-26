@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 
 /**
- * Öğe görünür alana `rootMargin` kadar yaklaştığı ilk andan itibaren `true` (ve öyle kalır) — docs/history/465-* (Keşfet'in tembel bölümleri).
+ * Öğe görünür alana `rootMargin` kadar yaklaştığı ilk andan itibaren `true` (ve öyle kalır) — docs/history/466-* (Keşfet'in tembel bölümleri).
  * `useInViewOnce`'tan farkı: callback ref'tir, öğe SONRADAN bağlansa da (arama kapanınca geri gelen içerik, veriyle çizilen kap) gözlenir.
  * IntersectionObserver yoksa hemen `true`.
  */

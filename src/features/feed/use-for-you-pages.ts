@@ -17,7 +17,7 @@ interface ForYouState {
   cursor: FeedCursor | null;
   failed: boolean;
   loadingMore: boolean;
-  /** Cihazda saklanan son kopya gösteriliyor; gerçek liste yolda (docs/history/465-*). Sayfalama bu sırada kapalıdır. */
+  /** Cihazda saklanan son kopya gösteriliyor; gerçek liste yolda (docs/history/466-*). Sayfalama bu sırada kapalıdır. */
   stale: boolean;
 }
 
@@ -38,7 +38,7 @@ const snapshotKey = (query: ForYouQuery) =>
  * The ranking is frozen at `asOf` for the session (so paging never skips or repeats a post), and a new query — another
  * filter, or `refresh()` after the interests changed — keeps the previous list on screen (`refreshing`) until the new
  * one arrives, so the cards can glide into their new places instead of blinking through a skeleton.
- * docs/history/465-*: the first page also opens from the copy saved on this device (`feed-snapshot`) while the real one loads, and stays on
+ * docs/history/466-*: the first page also opens from the copy saved on this device (`feed-snapshot`) while the real one loads, and stays on
  * screen with a small notice if the real one fails — a slow or stalled server no longer means an empty "could not load" screen.
  */
 export function useForYouPages(query: ForYouQuery, enabled: boolean) {

@@ -53,7 +53,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   },
   // Veritabanı hata kodlarını (hız sınırı, engel…) kullanıcı dilinde cümleye çevirir; henüz canlıda olmayan isteğe bağlı sütunları çıkarıp yeniden dener.
   // Oturum yenileme istekleri `guardAuthRefresh` ile korunur: aynı belirteç tekrar tekrar gönderilmez, hız sınırı (429) oturumu silmez.
-  // Salt-okunur `/rest/v1` istekleri (docs/history/465-*): aynı anda giden aynısı birleşir, geçici hatada (zaman aşımı, 502/503/504) 2/5/15 sn
+  // Salt-okunur `/rest/v1` istekleri (docs/history/466-*): aynı anda giden aynısı birleşir, geçici hatada (zaman aşımı, 502/503/504) 2/5/15 sn
   // aralıkla yeniden denenir ve aynı anda en çok 6'sı ağa çıkar (PostgREST daha az soğuk bağlantı açar). Yeniden deneme sınırlayıcının DIŞINDADIR:
   // beklerken sıra tutulmaz. Yazma istekleri bu üç halkadan hiç etkilenmez (`read-requests.ts`).
   global: {

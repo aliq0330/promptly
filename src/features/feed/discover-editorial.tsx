@@ -32,7 +32,7 @@ import { FeedItemCard } from "./feed-grid";
  * (haftanın promptu büyük kapak), metin/ses/video, workflow'lar ve açık istekler, yaratıcılar, yükselen araçlar (8 haftalık çizgi),
  * Skill'ler. Hepsi gerçek satırlardan; boş bölüm çizilmez (yer tutucu yok).
  *
- * Yükleme (docs/history/465-*; önceden 12 paralel istek + her şerit için ayrı doldurma sorgusu, küçük sunucuda soğuk bağlantı dalgası):
+ * Yükleme (docs/history/466-*; önceden 12 paralel istek + her şerit için ayrı doldurma sorgusu, küçük sunucuda soğuk bağlantı dalgası):
  *   1. dalga (ekranın üstü): gündem (`discover_trending_topics`) + şeritlerin hepsi TEK RPC'de (`discover_editorial_feed`: aynı `feed_page` /
  *      `feed_page_proven` çağrıları, tek bağlantıda) + popüler promptlar (önce son 7 gün; ancak zayıfsa son 30 gün — sonuç eskisiyle aynı).
  *      Şeritlerin satırları ve konu kapakları TEK doldurma turunda okunur (tür başına bir sorgu).
@@ -459,7 +459,7 @@ export function DiscoverEditorial({ onSeeAllCreators }: { onSeeAllCreators: () =
 }
 
 /**
- * 2. dalga (docs/history/465-*): yaratıcılar, yükselen araçlar, Skill'ler — yalnız bu bölüm görünür alana yaklaşınca (800 px önce) yüklenir.
+ * 2. dalga (docs/history/466-*): yaratıcılar, yükselen araçlar, Skill'ler — yalnız bu bölüm görünür alana yaklaşınca (800 px önce) yüklenir.
  * Gözlenen kap bileşenle birlikte bağlanır (gözlemci ilk çizimde öğeyi bulur); veri gelene kadar boş, bölümler yer tutucu çizmez.
  */
 function EditorialExtraSections({ onSeeAllCreators }: { onSeeAllCreators: () => void }) {

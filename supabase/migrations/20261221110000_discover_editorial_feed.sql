@@ -1,4 +1,4 @@
--- Keşfet editoryal açılışı TEK istekte (docs/history/465-*). `DiscoverEditorial` "haftanın promptu" + metin/ses/video + workflow + açık istek
+-- Keşfet editoryal açılışı TEK istekte (docs/history/466-*). `DiscoverEditorial` "haftanın promptu" + metin/ses/video + workflow + açık istek
 -- şeritleri için aynı anda 6 ayrı RPC (5 × `feed_page`, 1 × `feed_page_proven`) gönderiyordu: küçük sunucuda her biri ayrı (çoğu soğuk) bağlantı
 -- açtırıyor, sayfa açılışındaki dalgayı büyütüyordu. Bu işlev AYNI işlevleri AYNI argümanlarla, tek bağlantıda sırayla çağırır; sonuç birebir
 -- aynıdır (`supabase/tests/discover-editorial-feed.sql` karşılaştırır). INVOKER: RLS ve görünürlük kuralları çağıranındır, misafir de çağırır.

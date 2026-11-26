@@ -18,7 +18,7 @@ interface FeedState {
   cursor: FeedCursor | null;
   failed: boolean;
   loadingMore: boolean;
-  /** Cihazda saklanan son ilk sayfa gösteriliyor, gerçeği yolda (docs/history/465-*); bu sırada sayfalama kapalı. */
+  /** Cihazda saklanan son ilk sayfa gösteriliyor, gerçeği yolda (docs/history/466-*); bu sırada sayfalama kapalı. */
   stale?: boolean;
 }
 
@@ -82,7 +82,7 @@ export function useFeedPages(query: FeedQuery, enabled: boolean, { watchNew = fa
     }
     restoredKey.current = null;
     let cancelled = false;
-    // docs/history/465-*: bu sorgunun listesi ekranda yokken cihazdaki son ilk sayfa anında gösterilir; gerçek sayfa gelince yerini alır.
+    // docs/history/466-*: bu sorgunun listesi ekranda yokken cihazdaki son ilk sayfa anında gösterilir; gerçek sayfa gelince yerini alır.
     // "Tekrar dene"de (retry) ve başka bir sorgudan geçerken de kullanılır: eski davranış iskeletti, artık son görülen liste.
     const saved = snapshot ? readSnapshot<FeedEntry[]>(owner, cacheKey) : null;
     if (saved && saved.data.length > 0) {

@@ -1,5 +1,5 @@
 /**
- * Oturumdaki kullanıcının "aynı kişi, aynı görünen bilgi" imzası (docs/history/465-*). supabase-js her oturum olayında (getSession,
+ * Oturumdaki kullanıcının "aynı kişi, aynı görünen bilgi" imzası (docs/history/466-*). supabase-js her oturum olayında (getSession,
  * INITIAL_SESSION, SIGNED_IN, saatlik TOKEN_REFRESHED) yeni bir `user` nesnesi verir; imza aynıysa `AuthProvider` önceki nesneyi kullanır, böylece
  * `[user]`'a bağlı efektler aynı kullanıcı için baştan çalışıp aynı istekleri tekrar göndermez. Kimlik, e-posta/telefon ya da kullanıcı/uygulama
  * meta verisi değişince imza değişir (profil adı, rol gibi bilgileri okuyan ekranlar yine güncellenir). Belirteç alanları imzaya GİRMEZ.

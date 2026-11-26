@@ -249,8 +249,8 @@ const CHECKS = [
   // Keşfet editoryal açılışı (docs/history/451-*): ziyaretçiye açık okuma RPC'leri.
   { name: "rpc discover_weekly_stats (docs/history/451-*)", rpc: "discover_weekly_stats", body: {} },
   { name: "rpc discover_trending_topics (docs/history/451-*)", rpc: "discover_trending_topics", body: { p_limit: 1 } },
-  { name: "rpc discover_editorial_feed (Keşfet editoryali tek istek, ziyaretçiye açık, docs/history/465-*)", rpc: "discover_editorial_feed", body: {} },
-  { name: "rpc _for_you_rank ziyaretçiye KAPALI olmalı (Sana özel iç sıralama, docs/history/465-*)", rpc: "_for_you_rank", body: { p_as_of: null, p_kinds: null, p_content_type: null, p_category: null, p_subcategory: null, p_limit: 1, p_after_rank: null, p_after_created_at: null, p_after_id: null, p_lt_slugs: null, p_lt_n: null, p_dt_slugs: null, p_dt_n: null, p_dis_authors: null }, mustBeDenied: true },
+  { name: "rpc discover_editorial_feed (Keşfet editoryali tek istek, ziyaretçiye açık, docs/history/466-*)", rpc: "discover_editorial_feed", body: {} },
+  { name: "rpc _for_you_rank ziyaretçiye KAPALI olmalı (Sana özel iç sıralama, docs/history/466-*)", rpc: "_for_you_rank", body: { p_as_of: null, p_kinds: null, p_content_type: null, p_category: null, p_subcategory: null, p_limit: 1, p_after_rank: null, p_after_created_at: null, p_after_id: null, p_lt_slugs: null, p_lt_n: null, p_dt_slugs: null, p_dt_n: null, p_dis_authors: null }, mustBeDenied: true },
   { name: "rpc discover_rising_tools (docs/history/451-*)", rpc: "discover_rising_tools", body: { p_limit: 1 } },
   { name: "rpc feed_page_rising (Keşfet → Yükselen, docs/history/451-*)", rpc: "feed_page_rising", body: { p_limit: 1 } },
 ];

@@ -172,7 +172,7 @@ export function DiscoverFeed() {
   // docs/history/451-*: "Tümü" without filters opens on the editorial magazine (topics, popular, text/audio/video, workflows + open requests,
   // creators, rising tools, Spaces, Skills); the section menu and the full post list follow under "Tüm paylaşımlar".
   const editorial = section === "all" && activeCount === 0;
-  // docs/history/465-*: under the editorial the full list ("Tüm paylaşımlar") loads only once it nears the viewport — the page no longer opens with
+  // docs/history/466-*: under the editorial the full list ("Tüm paylaşımlar") loads only once it nears the viewport — the page no longer opens with
   // the editorial AND the list hitting the server at the same moment.
   const [allRef, allNear] = useNearViewportOnce<HTMLDivElement>("600px");
   const listWaiting = editorial && !allNear;

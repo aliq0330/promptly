@@ -1,4 +1,4 @@
--- "Sana özel" hızlandırma (docs/history/465-*): `for_you_page` aynı imza ve AYNI sonuçla, çok daha az işle çalışır.
+-- "Sana özel" hızlandırma (docs/history/466-*): `for_you_page` aynı imza ve AYNI sonuçla, çok daha az işle çalışır.
 --
 -- Ölçüm (canlı, aynı kullanıcı): yeni bağlantıda 898 ms / ~23 700 tampon, aynı bağlantıda 134 ms. Maliyetin çoğu RLS'ten geliyordu: işlev
 -- çağıranın yetkisiyle (INVOKER) çalıştığı için ~3 400 adayın her biri için 5 etiket alt sorgusu çalışıyor, `prompt_tags`'in her satırı RLS'te

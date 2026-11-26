@@ -78,7 +78,7 @@ export function useFollowingActivity(query: ActivityQuery, enabled: boolean, rel
   const [loadingMore, setLoadingMore] = useState(false);
   const [failed, setFailed] = useState(false);
   const [newCount, setNewCount] = useState(0);
-  /** Cihazda saklanan son ilk sayfa gösteriliyor (docs/history/465-*); gerçeği gelince yerini alır, sayfalama bu sırada kapalı. */
+  /** Cihazda saklanan son ilk sayfa gösteriliyor (docs/history/466-*); gerçeği gelince yerini alır, sayfalama bu sırada kapalı. */
   const [stale, setStale] = useState(false);
   const seen = useRef(new Set<string>());
   const generation = useRef(0);

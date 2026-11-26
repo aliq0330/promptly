@@ -4,7 +4,7 @@ import { Banner } from "@/components/ui/banner";
 import { useTranslation } from "@/lib/i18n/language-provider";
 
 /**
- * Cihazda saklanan son liste ekrandayken gerçek liste yüklenemediğinde (docs/history/465-*): büyük "yüklenemedi" ekranı yerine liste kalır,
+ * Cihazda saklanan son liste ekrandayken gerçek liste yüklenemediğinde (docs/history/466-*): büyük "yüklenemedi" ekranı yerine liste kalır,
  * üstünde bu tek satırlık band ve "Tekrar dene". Gerçek liste gelince band kendiliğinden kalkar.
  */
 export function StaleFeedNotice({ onRetry }: { onRetry: () => void }) {

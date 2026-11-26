@@ -1,4 +1,4 @@
--- Keşfet editoryal açılışı tek istek (docs/history/465-*): `discover_editorial_feed()` her bölümde, aynı argümanlı `feed_page` /
+-- Keşfet editoryal açılışı tek istek (docs/history/466-*): `discover_editorial_feed()` her bölümde, aynı argümanlı `feed_page` /
 -- `feed_page_proven` çağrısıyla BİREBİR aynı satırları aynı sırayla döndürür; misafir ve oturumlu çağırabilir, görünürlük çağıranındır.
 -- Çalıştırma: supabase/tests/run-local.sh supabase/tests/discover-editorial-feed.sql  ("FAILED=0" beklenir).
 \pset pager off

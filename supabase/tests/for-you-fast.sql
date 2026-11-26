@@ -1,4 +1,4 @@
--- "Sana özel" hızlandırma (docs/history/465-*): `for_you_page` → `_for_you_rank` (SECURITY DEFINER) ayrımının güvenlik ve davranış testi.
+-- "Sana özel" hızlandırma (docs/history/466-*): `for_you_page` → `_for_you_rank` (SECURITY DEFINER) ayrımının güvenlik ve davranış testi.
 -- Çalıştırma: supabase/tests/run-local.sh supabase/tests/for-you-fast.sql  ("FAILED=0" beklenir).
 -- Eski tanımla birebir aynı sonuç, geliştirme sırasında 40 kullanıcı / 1 500 prompt'luk rastgele veride 600 sayfada karşılaştırıldı (fark 0);
 -- buradaki testler RLS'siz taramanın RLS'in yaptığını açıkça yaptığını sınar.

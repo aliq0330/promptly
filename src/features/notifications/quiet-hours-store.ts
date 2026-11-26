@@ -26,7 +26,7 @@ function set(next: QuietHours, markLoaded = true) {
   for (const fn of listeners) fn();
 }
 
-/** Bu cihazdaki kişiye özel kopya (docs/history/465-*): her tam sayfa yüklemesinde aynı kural yeniden sorulmasın; 10 dk geçerli. */
+/** Bu cihazdaki kişiye özel kopya (docs/history/466-*): her tam sayfa yüklemesinde aynı kural yeniden sorulmasın; 10 dk geçerli. */
 const SNAPSHOT_KEY = "quiet-hours";
 
 /**
