@@ -454,6 +454,11 @@ await scenario("30. Yeni Space penceresi (iOS klavyesi): dokunmatikte başlık k
   const form = page.getByTestId("create-space-form");
   await form.waitFor();
   assert.equal(await page.evaluate(() => document.activeElement?.tagName === "INPUT"), false, "dokunmatikte klavye kendiliğinden açılmaz");
+  const closedGround = await page.evaluate(() => {
+    const overlay = document.querySelector("[role=dialog]");
+    return { bg: getComputedStyle(overlay).backgroundColor, blur: getComputedStyle(overlay).backdropFilter };
+  });
+  assert.notEqual(closedGround.blur, "none", "normalde arka plan hafif bulanık");
   // Klavye açıldı: görünür alan 844 → 380 px.
   await page.evaluate(() => {
     window.visualViewport.height = 380;
@@ -481,6 +486,8 @@ await scenario("30. Yeni Space penceresi (iOS klavyesi): dokunmatikte başlık k
     const below = overlay.nextElementSibling;
     return {
       overlayBg: getComputedStyle(overlay).backgroundColor,
+      overlayBlur: getComputedStyle(overlay).backdropFilter,
+      belowBlur: below ? getComputedStyle(below).backdropFilter : null,
       belowTop: below ? below.getBoundingClientRect().top + window.scrollY : null,
       belowBg: below ? getComputedStyle(below).backgroundColor : null,
       pageVisible: getComputedStyle(document.querySelector("#main-content")).visibility,
@@ -490,6 +497,10 @@ await scenario("30. Yeni Space penceresi (iOS klavyesi): dokunmatikte başlık k
   assert.equal(ground.belowTop, 380, `görünür alanın altından başlayan karartı: ${JSON.stringify(ground)}`);
   assert.equal(ground.belowBg, ground.overlayBg, "şerit aynı karartıyla boyanır");
   assert.equal(ground.pageVisible, "visible", "arkadaki sayfa gizlenmez");
+  // docs/history/471-*: arka plan klavye açıkken de normaldeki gibi (aynı karartı + aynı bulanıklık).
+  assert.equal(ground.overlayBg, closedGround.bg, "klavye açıkken karartı normaldekiyle aynı");
+  assert.equal(ground.overlayBlur, closedGround.blur, "klavye açıkken bulanıklık normaldekiyle aynı");
+  assert.equal(ground.belowBlur, closedGround.blur, "şeritteki karartı da aynı bulanıklıkta");
   if (process.env.SHOTS) await page.screenshot({ path: `${process.env.SHOTS}/space-new-keyboard.png` });
   // Klavye kapandı: katman tam ekrana döner.
   await page.evaluate(() => {

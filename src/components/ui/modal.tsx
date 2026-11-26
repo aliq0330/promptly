@@ -344,12 +344,12 @@ export function Modal({
   const floatCard = "max-sm:*:pointer-events-auto max-sm:*:!w-[calc(100%-1.25rem)] max-sm:*:!rounded-xl ";
   // iOS 26'nın saydam Otomatik Doldur çubuğu düzen görünümünün DIŞINDA durur; WebKit `fixed` katmanları (karartı dahil) oraya çizmez ve
   // o şeritte belgenin kendisi görünür. Görünür alanın altından başlayan, BELGEYE bağlı (`absolute`) bir karartı o şeridi de aynı tonda
-  // boyar; görünür alanla çakışmaz (karartı ikiye katlanmaz).
+  // boyar; görünür alanla çakışmaz (karartı ikiye katlanmaz). Karartı ve bulanıklık klavye açıkken de normaldekiyle AYNIDIR (docs/history/471-*).
   const underlay =
     keyboard && fitKeyboard ? (
       <div
         aria-hidden
-        className={"pointer-events-none absolute inset-x-0 h-dvh animate-fade-in bg-scrim " + (overLayers ? "z-(--z-toast)" : "z-(--z-overlay)")}
+        className={"pointer-events-none absolute inset-x-0 h-dvh animate-fade-in bg-scrim backdrop-blur-[2px] " + (overLayers ? "z-(--z-toast)" : "z-(--z-overlay)")}
         style={{ top: keyboard.pageBottom }}
       />
     ) : null;
@@ -413,7 +413,7 @@ export function Modal({
           ref={overlayRef}
           className={
             "fixed inset-0 flex animate-fade-in bg-scrim " +
-            (keyboard ? "" : "backdrop-blur-[2px] ") +
+            "backdrop-blur-[2px] " +
             (overLayers ? "z-(--z-toast) " : "z-(--z-overlay) ") +
             (isSide ? "justify-end" : "flex-col justify-end")
           }
@@ -442,7 +442,7 @@ export function Modal({
       <Portal>
         <div
           ref={overlayRef}
-          className={"fixed inset-0 flex flex-col overflow-y-auto bg-scrim p-4 animate-fade-in " + (keyboard ? "" : "backdrop-blur-[2px] ") + (overLayers ? "z-(--z-toast)" : "z-(--z-overlay)")}
+          className={"fixed inset-0 flex flex-col overflow-y-auto bg-scrim p-4 animate-fade-in backdrop-blur-[2px] " + (overLayers ? "z-(--z-toast)" : "z-(--z-overlay)")}
           style={overlayStyle}
           role="dialog"
           aria-modal="true"
@@ -462,7 +462,7 @@ export function Modal({
     <Portal>
       <div
         ref={overlayRef}
-        className={"fixed inset-0 flex flex-col overflow-y-auto bg-scrim animate-fade-in sm:p-4 " + (keyboard ? "" : "backdrop-blur-[2px] ") + (overLayers ? "z-(--z-toast)" : "z-(--z-overlay)")}
+        className={"fixed inset-0 flex flex-col overflow-y-auto bg-scrim animate-fade-in sm:p-4 backdrop-blur-[2px] " + (overLayers ? "z-(--z-toast)" : "z-(--z-overlay)")}
         style={overlayStyle}
         role="dialog"
         aria-modal="true"
