@@ -294,7 +294,7 @@ function TodoList({ todos }: { todos: TeamTodo[] }) {
           const tone = todo.kind === "unread" ? "bg-success-soft text-success" : todo.kind === "project_review" ? "bg-primary-soft text-primary-text" : "bg-warning-soft text-warning";
           return (
             <li key={`${todo.teamId}-${todo.kind}-${index}`} className="flex items-center gap-3 rounded-lg card-flat px-4 py-3">
-              <span className={cn("grid h-9 w-9 shrink-0 place-items-center rounded-xl", tone)} aria-hidden>
+              <span className={cn("grid h-9 w-9 shrink-0 place-items-center rounded-md", tone)} aria-hidden>
                 <Icon size={16} />
               </span>
               <span className="min-w-0 flex-1 text-small text-text-secondary">

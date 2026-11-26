@@ -67,7 +67,7 @@ export function AdvancedSearchBox({
       <div
         role="search"
         onClick={() => setOpen(true)}
-        className="relative flex h-[3.25rem] w-full cursor-text items-center rounded-xl border border-transparent bg-surface-soft pl-12 pr-1.5 transition-colors focus-within:border-focus focus-within:bg-surface focus-within:ring-2 focus-within:ring-primary/20"
+        className="relative flex h-[3.25rem] w-full cursor-text items-center rounded-sm border border-transparent bg-surface-soft pl-12 pr-1.5 transition-colors focus-within:border-focus focus-within:bg-surface focus-within:ring-2 focus-within:ring-primary/20"
       >
         <Search size={20} className="pointer-events-none absolute left-4 top-[1.0625rem] text-text-muted" />
         <input

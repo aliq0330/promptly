@@ -132,7 +132,7 @@ export function AdminGroupsSection({ ctx }: { ctx: TeamCtx }) {
             );
           })}
           <li>
-            <button type="button" onClick={() => setEditing("new")} data-group-new className="flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-dashed border-border-strong text-small font-semibold text-text-secondary hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus">
+            <button type="button" onClick={() => setEditing("new")} data-group-new className="flex h-12 w-full items-center justify-center gap-2 rounded-sm border border-dashed border-border-strong text-small font-semibold text-text-secondary hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus">
               <Plus size={16} aria-hidden />
               {t("tm.groups.new")}
             </button>

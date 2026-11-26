@@ -65,7 +65,7 @@ export function CompactContentCard({
   if (state.status === "loading") {
     return (
       <div className={cn(SHELL, "h-[4.5rem]", className)} role="status" aria-label={t("commentExtras.attachmentLoading")} data-comment-attachment-state="loading">
-        <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary-text/60">
+        <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md bg-primary-soft text-primary-text/60">
           <Loader2 size={20} className="animate-spin motion-reduce:animate-none" aria-hidden />
         </span>
         <span className="min-w-0 flex-1 space-y-1.5" aria-hidden>
@@ -79,7 +79,7 @@ export function CompactContentCard({
   if (state.status !== "ready") {
     return (
       <div className={cn(SHELL, "min-h-[4.5rem]", className)} data-comment-attachment-state={state.status}>
-        <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-border-soft text-text-muted">
+        <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md bg-border-soft text-text-muted">
           <Lock size={20} aria-hidden />
         </span>
         <span className="min-w-0 flex-1">
@@ -94,7 +94,7 @@ export function CompactContentCard({
   const { card } = state;
   const body = (
     <>
-      <span className="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-primary-soft text-primary-text">
+      <span className="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-md bg-primary-soft text-primary-text">
         {card.thumbnailUrl ? (
           <StorageImage src={card.thumbnailUrl} alt="" fill sizes="56px" className="object-cover" />
         ) : (

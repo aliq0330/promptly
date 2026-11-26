@@ -66,7 +66,7 @@ export function CreateMenuList({ tag = null, community = null, onPick }: { tag?:
         {ROWS.map((option) => (
           <li key={option.key}>
             <Link href={hrefOf(option)} onClick={onPick} data-create-option={option.key} className="group flex min-h-16 items-center gap-3 px-1 py-3 transition-colors">
-              <span className={cn("grid h-11 w-11 shrink-0 place-items-center rounded-xl transition-colors", option.key === "prompt" ? "bg-primary-soft text-primary-text" : "bg-surface-soft text-text-secondary group-hover:text-primary-text")}>
+              <span className={cn("grid h-11 w-11 shrink-0 place-items-center rounded-md transition-colors", option.key === "prompt" ? "bg-primary-soft text-primary-text" : "bg-surface-soft text-text-secondary group-hover:text-primary-text")}>
                 <option.icon size={20} />
               </span>
               <span className="min-w-0 flex-1">

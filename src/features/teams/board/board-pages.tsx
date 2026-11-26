@@ -494,7 +494,7 @@ export function PagesButton({ buttonRef, team, open, onClick, compact }: { butto
       aria-expanded={open}
       aria-label={t("tb.pages.title")}
       data-board-pages-button=""
-      className={cn("flex h-10 shrink-0 items-center gap-2 rounded-md px-2.5 text-text hover:bg-surface-soft", open && "bg-surface-soft")}
+      className={cn("flex h-10 shrink-0 items-center gap-2 rounded-sm px-2.5 text-text hover:bg-surface-soft", open && "bg-surface-soft")}
     >
       <span className="grid h-[1.375rem] min-w-[1.375rem] place-items-center rounded-sm bg-surface-soft px-1.5 text-caption font-semibold text-text-secondary">{team.pages.length}</span>
       {!compact && <span className="max-w-[11rem] truncate text-small font-semibold" data-board-page-name="">{current?.title ?? team.mainTitle}</span>}

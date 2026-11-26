@@ -96,7 +96,7 @@ export function OverviewTab({ onNavigate }: { onNavigate: (tab: SpaceTab, focus?
                 data-overview-stat={tab}
                 className="flex w-full items-center gap-3 rounded-lg card-flat p-4 text-left shadow-card transition-colors hover:border-border-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
               >
-                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary-soft text-primary-text">
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-md bg-primary-soft text-primary-text">
                   <Icon size={20} aria-hidden />
                 </span>
                 <span className="min-w-0">

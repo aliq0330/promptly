@@ -129,7 +129,7 @@ export function AccessEditor({
           onChange={(event) => setQuery(event.target.value)}
           placeholder={spaceVariant ? t("tm.access.addPlaceholder") : t("tm.access.search")}
           aria-label={t("tm.access.search")}
-          className={cn("h-10 w-full border border-border bg-background px-3 text-small", spaceVariant ? "rounded-xl" : "rounded-lg")}
+          className={cn("h-10 w-full border border-border bg-background px-3 text-small", "rounded-sm")}
         />
         <ul className={cn("mt-2 max-h-56 divide-y divide-border-soft overflow-y-auto rounded-lg border border-border-soft", candidatesPeople.length + candidatesGroups.length === 0 && "hidden")}>
           {candidatesGroups.map((group) => (

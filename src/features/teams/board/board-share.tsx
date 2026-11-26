@@ -85,7 +85,7 @@ export function ShareDialog({
   };
 
   const copyButton = (className?: string) => (
-    <button type="button" onClick={() => void copyLink()} data-board-copy-link="" className={cn("flex h-12 w-full items-center justify-center gap-2 rounded-xl text-body font-semibold", className)}>
+    <button type="button" onClick={() => void copyLink()} data-board-copy-link="" className={cn("flex h-12 w-full items-center justify-center gap-2 rounded-sm text-body font-semibold", className)}>
       {copied === "ok" ? <span>{t("common.copied")}</span> : copied === "failed" ? <span>{t("spaces.share.copyFailed")}</span> : (
         <>
           <Lock size={20} aria-hidden />
@@ -176,7 +176,7 @@ export function ShareDialog({
               <h3 className="text-body font-bold text-text">{t("tb.share.sendTitle")}</h3>
               <p className="text-small leading-relaxed text-text-secondary">{t("tb.share.sendBody")}</p>
               {canInvite && (
-                <button type="button" onClick={onInvite} className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary text-body font-semibold text-primary-foreground">
+                <button type="button" onClick={onInvite} className="flex h-12 w-full items-center justify-center gap-2 rounded-sm bg-primary text-body font-semibold text-primary-foreground">
                   <UserPlus size={20} aria-hidden />
                   {t("tb.share.inviteButton")}
                 </button>

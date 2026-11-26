@@ -755,7 +755,7 @@ function AddMenuDialog({ reviewOn, onClose, onPick, onNewBoard, onNewVariable, o
           return (
             <li key={option.key}>
               <button type="button" onClick={option.run} data-area-add-option={option.key} className="flex h-full w-full flex-col gap-2 rounded-lg card-flat p-4 text-left transition-colors hover:bg-surface-soft">
-                <span aria-hidden className="grid h-10 w-10 place-items-center rounded-xl bg-primary-soft text-primary-text">
+                <span aria-hidden className="grid h-10 w-10 place-items-center rounded-md bg-primary-soft text-primary-text">
                   <Icon size={20} />
                 </span>
                 <span className="text-small font-semibold text-text">{t(option.label)}</span>

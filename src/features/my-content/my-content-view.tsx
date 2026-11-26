@@ -313,7 +313,7 @@ export function MyContentView() {
             placeholder={t("myContent.searchPlaceholder")}
             aria-label={t("myContent.searchPlaceholder")}
             autoFocus
-            className="h-12 w-full rounded-xl border-2 border-primary bg-surface pl-11 pr-4 text-body text-text placeholder:text-text-muted [&::-webkit-search-cancel-button]:hidden"
+            className="h-12 w-full rounded-sm border-2 border-primary bg-surface pl-11 pr-4 text-body text-text placeholder:text-text-muted [&::-webkit-search-cancel-button]:hidden"
           />
         </div>
       )}

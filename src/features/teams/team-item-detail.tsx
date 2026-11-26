@@ -790,7 +790,7 @@ function ImageSection({ ctx, item, title, creator }: { ctx: AreaItemContext; ite
       )}
       {item.note && <p className="break-words rounded-xl bg-surface-soft px-3 py-2 text-small text-text-secondary">{item.note}</p>}
       {ctx.onBoard && (
-        <Link href={ctx.boardHref(item.id)} className="flex min-h-12 items-center justify-center gap-2 rounded-lg card-flat text-small font-semibold text-text hover:bg-surface-soft" data-item-show-on-board-button>
+        <Link href={ctx.boardHref(item.id)} className="flex min-h-12 items-center justify-center gap-2 rounded-sm card-flat text-small font-semibold text-text hover:bg-surface-soft" data-item-show-on-board-button>
           <Presentation size={20} aria-hidden />
           {t("tp.item.showOnBoard")}
         </Link>

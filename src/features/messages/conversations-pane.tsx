@@ -422,7 +422,7 @@ export function ConversationsPane({ embedded = false }: { embedded?: boolean }) 
                   href={kindFilter === "team" ? "/teams" : "/communities/all"}
                   data-kind-cta={kindFilter}
                   className={cn(
-                    "mt-3 flex h-14 items-center justify-center gap-2 rounded-lg border-[1.5px] border-dashed text-small font-semibold transition-colors",
+                    "mt-3 flex h-14 items-center justify-center gap-2 rounded-sm border-[1.5px] border-dashed text-small font-semibold transition-colors",
                     embedded && "mx-4",
                     kindFilter === "team" ? "border-primary/30 text-primary-text hover:bg-primary-soft" : "border-success/40 text-success hover:bg-success-soft",
                   )}

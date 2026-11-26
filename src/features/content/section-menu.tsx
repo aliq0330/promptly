@@ -127,7 +127,7 @@ export function SectionMenu<K extends string>({
                 "-mb-px h-11 gap-1.5 whitespace-nowrap border-b-2 px-3 text-body transition-colors",
                 activeItem ? "border-primary font-semibold text-text" : "border-transparent font-medium text-text-secondary hover:text-text",
               )
-            : "h-11 gap-2 rounded-xl bg-surface-soft pl-4 pr-3 text-body font-semibold text-text transition-colors hover:bg-border-soft",
+            : "h-11 gap-2 rounded-sm bg-surface-soft pl-4 pr-3 text-body font-semibold text-text transition-colors hover:bg-border-soft",
         )}
       >
         {current?.label ?? placeholder}

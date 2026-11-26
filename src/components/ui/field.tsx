@@ -53,7 +53,7 @@ export const fieldLabelClassName = "mb-1.5 block text-label font-medium text-tex
 /** The round icon badge above an auth form's title. */
 export function FormIconBadge({ children }: { children: ReactNode }) {
   return (
-    <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-border-soft bg-primary-soft text-primary-text shadow-xs">
+    <div className="flex h-12 w-12 items-center justify-center rounded-md border border-border-soft bg-primary-soft text-primary-text shadow-xs">
       {children}
     </div>
   );

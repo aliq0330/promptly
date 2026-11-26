@@ -133,7 +133,7 @@ export function TeamInfoModal({
                   aria-current={current ? "true" : undefined}
                   className="flex min-h-14 min-w-0 flex-1 items-center gap-3 px-4 py-2 text-left transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-focus"
                 >
-                  <span className={cn("grid h-9 w-9 shrink-0 place-items-center rounded-xl", channel.mode === "private" ? "bg-warning-soft text-warning" : "bg-primary-soft text-primary-text")} aria-hidden>
+                  <span className={cn("grid h-9 w-9 shrink-0 place-items-center rounded-md", channel.mode === "private" ? "bg-warning-soft text-warning" : "bg-primary-soft text-primary-text")} aria-hidden>
                     {channel.mode === "private" ? <Lock size={16} /> : <Hash size={16} />}
                   </span>
                   <span className="min-w-0 flex-1">

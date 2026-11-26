@@ -141,7 +141,7 @@ export function BoardToolbar(props: BoardToolbarProps) {
               aria-expanded={menu === "add"}
               onClick={() => toggle("add")}
               data-testid="board-add-button"
-              className="flex h-10 shrink-0 items-center gap-1.5 rounded-md bg-primary pl-2.5 pr-3 text-small font-semibold text-primary-foreground hover:bg-primary-hover"
+              className="flex h-10 shrink-0 items-center gap-1.5 rounded-sm bg-primary pl-2.5 pr-3 text-small font-semibold text-primary-foreground hover:bg-primary-hover"
             >
               <Plus size={20} aria-hidden />
               {t("tb.toolbar.add")}

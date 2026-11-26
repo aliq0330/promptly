@@ -152,7 +152,7 @@ export function ZoomMenuBody({ props, onDone }: { props: ZoomMenuProps; onDone: 
               props.onPreset(preset);
               onDone();
             }}
-            className={cn("h-11 rounded-xl border text-body font-semibold", Math.abs(props.zoom - preset) < 0.005 ? "border-primary bg-primary-soft text-primary-text" : "border-border-soft text-text")}
+            className={cn("h-11 rounded-sm border text-body font-semibold", Math.abs(props.zoom - preset) < 0.005 ? "border-primary bg-primary-soft text-primary-text" : "border-border-soft text-text")}
           >
             {Math.round(preset * 100)}%
           </button>

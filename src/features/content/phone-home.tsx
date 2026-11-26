@@ -121,7 +121,7 @@ export function PhoneHomeCard({ children, className }: { children: ReactNode; cl
 export function PhoneHomeRow({ thumb, title, sub, href, action, testId }: { thumb: ReactNode; title: string; sub?: ReactNode; href?: string; action?: ReactNode; testId?: string }) {
   const inner = (
     <>
-      <span className="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-xl bg-primary-soft text-primary-text">{thumb}</span>
+      <span className="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-md bg-primary-soft text-primary-text">{thumb}</span>
       <span className="min-w-0 flex-1 leading-tight">
         <span className="block truncate text-body font-semibold text-text">{title}</span>
         {sub && <span className="mt-0.5 block truncate text-caption text-text-muted">{sub}</span>}

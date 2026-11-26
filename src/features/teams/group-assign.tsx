@@ -144,7 +144,7 @@ export function GroupAssignDialog({ itemIds, onClose, onDone }: { itemIds: strin
             disabled={busy}
             aria-expanded={creating}
             data-group-tile="new"
-            className={cn("flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border-[1.5px] border-dashed p-3 text-small font-semibold text-primary-text transition-colors", creating ? "border-primary bg-primary-soft" : "border-border bg-surface-soft/50 hover:bg-surface-soft")}
+            className={cn("flex min-h-11 w-full items-center justify-center gap-2 rounded-sm border-[1.5px] border-dashed p-3 text-small font-semibold text-primary-text transition-colors", creating ? "border-primary bg-primary-soft" : "border-border bg-surface-soft/50 hover:bg-surface-soft")}
           >
             <FolderPlus size={20} aria-hidden />
             {t("tf.group.newTile")}

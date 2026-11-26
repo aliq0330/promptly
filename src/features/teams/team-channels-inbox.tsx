@@ -63,7 +63,7 @@ export function TeamChannelsInbox() {
             {channels.map((channel) => (
               <li key={channel.id}>
                 <Link href={teamLink(team.id, "chat", { channel: channel.name })} data-team-channel-row={channel.id} className="flex min-h-12 items-center gap-3 px-1 py-2 hover:bg-surface-soft">
-                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-surface-soft text-text-secondary">
+                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-md bg-surface-soft text-text-secondary">
                     {channel.mode === "private" ? <Lock size={16} aria-hidden /> : <Hash size={16} aria-hidden />}
                   </span>
                   <span className="min-w-0 flex-1">
