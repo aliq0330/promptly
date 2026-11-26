@@ -321,7 +321,7 @@ function ThreadCommentNode({ comment, depth, tree }: { comment: PromptComment; d
                 </div>
               ) : (
                 <div className="mt-0.5">
-                  <p className="break-words text-body text-text">
+                  <p className="break-words text-small text-text">
                     {showParentHint && (
                       <span className="mr-1 inline-flex items-center gap-0.5 text-caption font-medium text-primary">
                         <Reply size={12} />@{parent.author.username}

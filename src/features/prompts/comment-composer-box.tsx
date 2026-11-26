@@ -66,7 +66,7 @@ export function CommentComposerBox({
           autoFocus={autoFocus}
           placeholder={placeholder}
           className={cn(
-            "block max-h-60 w-full resize-none bg-transparent px-4 pb-2 pt-3 text-body text-text placeholder:text-text-muted field-sizing-content focus:outline-none",
+            "block max-h-60 w-full resize-none bg-transparent px-4 pb-2 pt-3 text-small text-text placeholder:text-text-muted field-sizing-content focus:outline-none",
             minHeightClass,
           )}
         />
