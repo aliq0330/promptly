@@ -3,17 +3,25 @@
 Durum işareti: `[ ]` yapılacak · `[x]` bitti. Bu dosya ilerleme kaydıdır; devam edilecekse buradan sürdürülür.
 Kaynaklar: `substack-tasarim-dili.md` (ölçümler, Bölüm 10 oluşturma akışları), tuval U1–U7 + G1–G5 (`docs/mockups/referans-tuval/`).
 
-## 0. İlkeler (kullanıcı kararları)
+## 0. İlkeler (kullanıcı kararları — son hâli)
 
-- **Kapsam = tüm site.** Her rota, her ekran, her pencere, her menü; "yapılamaz" yok. Bir şey atlanırsa listede açıkça `[ ]` kalır.
-- **Kenar yarıçapları kullanıcının gönderdiği ekran görüntüsündeki gibi:** kontroller (düğme, alan, seçici, segment, sekme, çip, menü satırı) **10 px**, kartlar/gezinme öğeleri/paneller **12–16 px**, pencere ve alt kart **20 px**. Hap (tam yuvarlak) yalnız avatar, anahtar, sayaç/nokta rozeti, ilerleme çubuğu ve oynatma düğmesinde kalır; düğme/çip/sekme/alan artık hap DEĞİL.
-- Marka kimliği (mavi eylem, turuncu "senin olan", DM Sans + Bricolage + JetBrains Mono, logo) korunur; tuvaldeki U/G panoları (kullanıcının gördüğü) esas alınır.
-- Erişilebilirlik kilidi korunur: alan kenarlığı ≥3:1, metin ≥4.5:1, hedef ≥36 px.
-- Her aşama: `npx tsc --noEmit`, `npm run lint`, `npm test`, `npm run build` temiz; TR+EN çeviri (`node scripts/build-i18n.mjs`).
-- Sık commit + push (dal `claude/affectionate-newton-352zyr`); bitince PR + ana dala merge.
+- **Kapsam = tüm site.** Her rota, ekran, pencere, menü; "yapılamaz" yok. Atlanan madde `[ ]` kalır, açıkça raporlanır.
+- **Karar kuralı:** mockup'ta (tuval U1–U7, G1–G5) olan her yer mockup'taki gibi; mockup'ta olmayan her yer substack.com'daki gibi (sakin kabuk, düz satır listeleri, ince kenarlık, tek vurgu, gölgesiz yüzey, kartsız liste, 40 px kontroller).
+- **Kenar yarıçapları kullanıcının gönderdiği ekran görüntüsündeki gibi** (mockup'taki hap/16 px bunu geçersiz kılar): kontroller (düğme, alan, seçici, segment, sekme, çip, ikon düğmesi) **10 px**, kart/panel/gezinme öğesi **12–16 px**, pencere ve alt kart **20 px**. Tam yuvarlak yalnız avatar, anahtar, sayaç/nokta ve oynat düğmesi.
+- **Renk ve yazı tipi de değişir (substack.com):**
+  - Vurgu `#ff6719` (hover `#ff5600`, metin olarak `#d74d00`); metin `#363737`; ikincil `#757575`; zemin beyaz, yumuşak yüzey `#f5f5f5/#f0f0f0`; kenarlık `rgba(0,0,0,.1)`; odak mavisi `#005dd9` + 3 px halka. «Senin olan» işareti (okunmamış nokta, kendi tepkin) de vurgu rengidir.
+  - Arayüz yazı tipi sistem yığını (`system-ui`, SF Pro Display…; Google/DM Sans/Bricolage kalkar), okuma gövdesi Spectral (serif), prompt metni JetBrains Mono (işlevsel, kalır). Başlıklar sistem sans 700; harf aralığı sıkıştırması kalkar.
+  - Beyaz üstü `#ff6719` yazı oranı 3.0:1 (AA 4.5'in altında): referans da böyle yapıyor; birebir uygulanır, `brand-tokens.test.ts` bu çifti "büyük UI bileşeni 3:1" olarak belgeleyerek günceller, metin olarak vurgu her yerde koyu `#d74d00` kullanır. Bu sapma raporda açıkça yazılır.
+  - Koyu mod: nötr (mavi tonu olmayan) gri zeminler + açık turuncu vurgu `#ff7a38`.
+  - Logo/uygulama ikonları/favicon yeni renklerle yeniden üretilir.
+- Dokunma hedefi ≥ 36 px, alan kenarlığı ≥ 3:1 (silik referans kenarlığı yalnız kart/liste ayırıcıda; alan kenarlığı `#868686` ≥3:1 kalır).
+- Her aşama: `tsc`, `lint`, `npm test`, `npm run build`, TR+EN çeviri (`node scripts/build-i18n.mjs`) temiz; sık commit/push; bitince PR + ana dala merge.
 
 ## 1. Temel katman
-- [ ] `globals.css` radius ölçeği: xs 4 · sm 10 · md 12 · lg 16 · xl 20 (xl 22'den iner); yorum satırları güncellenir
+- [ ] `globals.css` radius ölçeği: xs 4 · sm 10 · md 12 · lg 16 · xl 20; yorum satırları güncellenir
+- [ ] Renk tokenları (açık+koyu), `--color-focus`, `--shadow-focus`; odak halkası `ring-primary` → `ring-focus` (tüm kodda)
+- [ ] Yazı tipleri: `fonts.css`/`layout.tsx` (DM Sans + Bricolage kalkar, sistem yığını, Spectral dosyaları), tip ölçeği (display 44, h1 32/700, h2 24, h3 17/600, gövde 15), `font-display`/`font-serif` kullanımları
+- [ ] Marka varlıkları (`build-brand-assets.mjs`), `BrandMark/BrandWordmark` renkleri, PWA manifest renkleri, `themeInitScript` zemin renkleri
 - [ ] Odak biçimi: alanlarda mavi kenarlık + 3 px yumuşak halka; klavye odağı için çerçeve (outline) korunur (`focus-ring.test.ts`)
 - [ ] Pencere zemini: karartı %45, `shadow-pop` korunur
 - [ ] `design-metrics*.mjs`, `eslint` kuralları ve `brand-tokens.test.ts` yeni ölçeğe göre güncellenir (hap düğme/çip yasağı eklenir: `pillControl`)
