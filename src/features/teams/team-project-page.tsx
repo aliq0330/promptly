@@ -356,7 +356,7 @@ function FileInfoSheet({
             </Button>
           </div>
         )}
-        {copyOpen && file.mainAreaId && <CopyItemsDialog sourceSpaceId={file.mainAreaId} sourceTitle={file.title} defaultDestination="new" onClose={() => setCopyOpen(false)} />}
+        {copyOpen && file.mainAreaId && <CopyItemsDialog sourceSpaceId={file.mainAreaId} sourceTitle={file.title} defaultDestination="newSpace" allowArchive={false} onClose={() => setCopyOpen(false)} />}
         {lead && (
           <div className="flex flex-wrap gap-2 border-t border-border-soft pt-4">
             <Button type="button" size="sm" variant="outline" className="gap-1.5" onClick={onRename} data-file-rename>

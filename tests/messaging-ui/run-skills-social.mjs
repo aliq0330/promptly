@@ -296,7 +296,8 @@ await scenario("4. Yorum yazınca prompt_comments'a skill_id ile yazılır ve li
   await page.locator("#comments").waitFor();
   const input = page.getByPlaceholder("Bir yorum yaz...");
   await input.fill("Çok işime yaradı");
-  await input.press("Enter");
+  // Yorum kutusu çok satırlıdır: Enter satır sonudur, gönderme "Gönder" düğmesiyle olur (docs/history/454-*).
+  await page.locator("#comments").getByRole("button", { name: /^(Gönder|Send)$/ }).first().click();
   const end = Date.now() + 4000;
   while (Date.now() < end && state.commentCalls.length === 0) await new Promise((r) => setTimeout(r, 100));
   assert.equal(state.commentCalls.length, 1);

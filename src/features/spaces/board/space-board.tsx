@@ -2169,7 +2169,7 @@ export function SpaceBoard({ focusId, team, openComment }: { focusId: string | n
         />
       )}
       {dialog?.kind === "palette" && <NewPaletteDialog onClose={() => setDialog(null)} />}
-      {dialog?.kind === "copy" && <CopyItemsDialog sourceSpaceId={space.id} sourceTitle={team?.fileTitle ?? space.title} itemIds={selection} onClose={() => setDialog(null)} />}
+      {dialog?.kind === "copy" && <CopyItemsDialog sourceSpaceId={space.id} sourceTitle={team?.fileTitle ?? space.title} itemIds={selection} allowArchive={false} onClose={() => setDialog(null)} />}
 
       {/* Ekip modu katmanları (docs/history/367-*) */}
       {commentMode && !draftPin && (
