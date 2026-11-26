@@ -20,6 +20,8 @@ import { FeedGrid } from "./feed-grid";
 import { LoadMore } from "./load-more";
 import { useFeedPages } from "./use-feed-pages";
 import { useInterestFeedback } from "./interest-feedback";
+import { useNearViewportOnce } from "./use-near-viewport";
+import { StaleFeedNotice } from "./stale-feed-notice";
 import type { FeedKind } from "@/lib/supabase/feed";
 import { feedOrderForSort } from "@/lib/feed-cursor";
 import { DISCOVER_SORT_KEYS, type ContentSortKey } from "@/features/content/sort-select";
@@ -166,6 +168,14 @@ export function DiscoverFeed() {
   const effectiveTool = postFilters && tool && availableTools.some((entry) => entry.id === tool) ? tool : null;
   const effectiveOpenOnly = section === "requests" && openOnly;
 
+  const activeCount = (postFilters ? taxonomyActiveCount(taxonomy, true) : 0) + (effectiveTool ? 1 : 0) + (effectiveOpenOnly ? 1 : 0);
+  // docs/history/451-*: "Tümü" without filters opens on the editorial magazine (topics, popular, text/audio/video, workflows + open requests,
+  // creators, rising tools, Spaces, Skills); the section menu and the full post list follow under "Tüm paylaşımlar".
+  const editorial = section === "all" && activeCount === 0;
+  // docs/history/465-*: under the editorial the full list ("Tüm paylaşımlar") loads only once it nears the viewport — the page no longer opens with
+  // the editorial AND the list hitting the server at the same moment.
+  const [allRef, allNear] = useNearViewportOnce<HTMLDivElement>("600px");
+  const listWaiting = editorial && !allNear;
   const feed = useFeedPages(
     {
       scope: "all",
@@ -175,13 +185,12 @@ export function DiscoverFeed() {
       openOnly: effectiveOpenOnly,
       tool: effectiveTool,
     },
-    !entity,
+    !entity && !listWaiting,
   );
   // "İlgimi çekiyor / çekmiyor" (docs/history/275-*): answers here only tune Ana Sayfa → Sana özel; Keşfet's ranking and list stay as they are.
   const interest = useInterestFeedback(feed.items, { enabled: !entity, loadExisting: true, hideOnDislike: false });
   const creatorPages = useCreatorPages(section === "creators");
 
-  const activeCount = (postFilters ? taxonomyActiveCount(taxonomy, true) : 0) + (effectiveTool ? 1 : 0) + (effectiveOpenOnly ? 1 : 0);
   const clearFilters = () => {
     setTaxonomy(EMPTY_TAXONOMY_FILTER);
     setOpenOnly(false);
@@ -199,13 +208,10 @@ export function DiscoverFeed() {
     </>
   );
 
-  // docs/history/451-*: "Tümü" without filters opens on the editorial magazine (topics, popular, text/audio/video, workflows + open requests,
-  // creators, rising tools, Spaces, Skills); the section menu and the full post list follow under "Tüm paylaşımlar".
-  const editorial = section === "all" && activeCount === 0;
   const idleContent = (
     <div className="space-y-6">
       {editorial && <DiscoverEditorial onSeeAllCreators={() => setSection("creators")} />}
-      <div className="space-y-4" data-discover-all="">
+      <div ref={allRef} className="space-y-4" data-discover-all="">
         {editorial && <h2 className="pt-6 font-display text-h1 font-bold tracking-[-0.025em] text-text">{t("discover.ed.allPosts")}</h2>}
         <SectionNav
           variant="menu"
@@ -273,12 +279,13 @@ export function DiscoverFeed() {
               <LoadMore failed={creatorPages.failed} hasMore={creatorPages.hasMore} loadingMore={creatorPages.loadingMore} onLoadMore={() => void creatorPages.loadMore()} />
             </>
           )
-        ) : feed.loading ? (
+        ) : feed.loading || listWaiting ? (
           <PromptCardSkeletonGrid count={6} />
         ) : feed.failed && feed.items.length === 0 ? (
           <EmptyState scene="feedStalled" icon={AlertCircle} title={t("feed.loadFailed")} action={{ label: t("common.retry"), onClick: feed.retry }} />
         ) : (
           <>
+            {feed.stale && feed.failed && <StaleFeedNotice onRetry={feed.retry} />}
             <FeedGrid
               items={feed.items}
               interest={interest}
@@ -287,7 +294,7 @@ export function DiscoverFeed() {
               emptyDescription={t("discover.noMatchDescription")}
               emptyAction={activeCount > 0 ? { label: t("feed.clearFilters"), onClick: clearFilters } : undefined}
             />
-            <LoadMore failed={feed.failed} hasMore={feed.hasMore} loadingMore={feed.loadingMore} onLoadMore={() => void feed.loadMore()} />
+            <LoadMore failed={feed.failed && !feed.stale} hasMore={feed.hasMore} loadingMore={feed.loadingMore} onLoadMore={() => void feed.loadMore()} />
           </>
         )}
       </div>

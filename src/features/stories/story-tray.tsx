@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Plus } from "@/components/icons/plus";
 import { Users } from "@/components/icons/users";
@@ -12,6 +12,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useOwnProfile } from "@/features/auth/own-profile-provider";
 import { fetchStoryTray } from "@/lib/supabase/stories";
+import { readSnapshot, writeSnapshot } from "@/lib/feed-snapshot";
+
+const STORY_SNAPSHOT_MAX_AGE_MS = 30 * 60 * 1000;
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
 import type { StoryTrayItem } from "@/types";
@@ -30,6 +33,12 @@ export function StoryTray({ communityId, canAdd = true, className }: { community
   const { openStories, seenIds, changeVersion } = useStoryViewer();
   const [items, setItems] = useState<StoryTrayItem[] | null>(null);
   const [failed, setFailed] = useState(false);
+  // docs/history/465-*: şerit önce cihazdaki son kopyayla açılır (hikâye 24 saatlik olduğundan kopya en çok 30 dk geçerli); gerçeği gelince yerini alır.
+  const [fromCache, setFromCache] = useState(false);
+  const hasItemsRef = useRef(false);
+  useEffect(() => {
+    hasItemsRef.current = items !== null;
+  }, [items]);
   const [offline, setOffline] = useState(() => typeof navigator !== "undefined" && navigator.onLine === false);
   const [reloadSeq, setReloadSeq] = useState(0);
 
@@ -38,11 +47,19 @@ export function StoryTray({ communityId, canAdd = true, className }: { community
   useEffect(() => {
     if (!user) return;
     let alive = true;
+    const cacheKey = `stories|${communityId ?? "home"}`;
+    const saved = readSnapshot<StoryTrayItem[]>(user.id, cacheKey, { maxAgeMs: STORY_SNAPSHOT_MAX_AGE_MS });
+    if (saved && !hasItemsRef.current) {
+      setItems(saved.data);
+      setFromCache(true);
+    }
     fetchStoryTray(communityId)
       .then((result) => {
         if (!alive) return;
         setItems(result);
         setFailed(false);
+        setFromCache(false);
+        writeSnapshot(user.id, cacheKey, result);
       })
       .catch(() => {
         if (!alive) return;
@@ -162,7 +179,7 @@ export function StoryTray({ communityId, canAdd = true, className }: { community
         <p className="flex items-center gap-1.5 text-caption text-text-muted" role="status">
           <WifiOff size={12} aria-hidden /> {t("stories.tray.offline")}
         </p>
-      ) : failed ? (
+      ) : failed && !fromCache ? (
         <p className="flex items-center gap-2 text-caption text-text-muted" role="status">
           {t("stories.tray.failed")}
           <button type="button" onClick={reload} className="inline-flex min-h-9 items-center gap-1 rounded-full px-2 font-semibold text-primary hover:bg-primary-soft">

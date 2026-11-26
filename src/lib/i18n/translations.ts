@@ -685,6 +685,7 @@ export const translations = {
   "feed.emptyDefault": { tr: "Henüz gösterilecek içerik yok.", en: "There's nothing to show yet." },
   "feed.emptyFollowingHint": { tr: "Keşfet'ten yeni yaratıcılar bulup takip edebilirsin.", en: "Find and follow new creators on Discover." },
   "feed.loadFailed": { tr: "Akış şu anda yüklenemedi — lütfen tekrar dene.", en: "Couldn't load the feed right now — please try again." },
+  "feed.staleNotice": { tr: "Bağlantı yavaş — son kaydedilen akış gösteriliyor.", en: "Slow connection — showing the last saved feed." },
   "challenge.eyebrow": { tr: "Haftalık tema", en: "Weekly theme" },
   "challenge.endsIn": { tr: "{{time}} sona eriyor", en: "Ends {{time}}" },
   "challenge.join": { tr: "Katıl", en: "Join in" },

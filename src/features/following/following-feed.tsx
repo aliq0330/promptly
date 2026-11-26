@@ -27,6 +27,7 @@ import { ActivityEventRow } from "./activity-event";
 import { setHomeTab, useFollowFeedSettings } from "./follow-feed-store";
 import { useActivitySummary, useFollowingActivity, useLastVisit } from "./use-following-activity";
 import { useActorProfiles } from "./use-actor-profiles";
+import { StaleFeedNotice } from "@/features/feed/stale-feed-notice";
 
 /**
  * Ana Sayfa → Takip Ettiklerin (docs/history/451-*): takip ettiklerinin ETKİNLİK akışı, zamana göre. Üstte "son ziyaretinden beri" özeti,
@@ -172,10 +173,15 @@ export function FollowingFeed({
           <EmptyState scene="inbox" icon={CircleCheck} title={t("follow.empty.quietTitle")} description={t("follow.empty.quietDescription")} action={{ label: t("follow.goForYou"), onClick: () => setHomeTab("forYou") }} />
         )
       ) : (
-        <div>
+        <div aria-busy={feed.stale && !feed.failed}>
+          {feed.stale && feed.failed && (
+            <div className="mb-3">
+              <StaleFeedNotice onRetry={() => void feed.retry()} />
+            </div>
+          )}
           <Timeline events={feed.events} lastVisit={lastVisit} />
-          <LoadMore failed={feed.failed} hasMore={feed.hasMore} loadingMore={feed.loadingMore} onLoadMore={() => void feed.loadMore()} />
-          {!feed.hasMore && !feed.failed && (
+          <LoadMore failed={feed.failed && !feed.stale} hasMore={feed.hasMore} loadingMore={feed.loadingMore} onLoadMore={() => void feed.loadMore()} />
+          {!feed.hasMore && !feed.failed && !feed.stale && (
             <div className="mt-2 flex flex-col items-center gap-3 rounded-lg border border-dashed border-border px-4 py-6 text-center" data-following-end="">
               <CircleCheck size={24} className="text-success" aria-hidden />
               <p className="font-semibold text-text">{t("follow.end.title")}</p>

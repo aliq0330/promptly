@@ -11,6 +11,8 @@ import {
   type ActivityQuery,
   type ActivitySummary,
 } from "@/lib/supabase/following-activity";
+import { readSnapshot, writeSnapshot } from "@/lib/feed-snapshot";
+import { useAuth } from "@/features/auth/auth-provider";
 
 /** Yeni etkinlik yoklaması (docs/history/435-* ile aynı: Realtime değil, sekme görünürken 45 sn'de bir). */
 const POLL_MS = 45_000;
@@ -67,6 +69,8 @@ export function useLastVisit(enabled: boolean): { lastVisit: string | null; mark
 }
 
 export function useFollowingActivity(query: ActivityQuery, enabled: boolean, reloadKey: number) {
+  const { user } = useAuth();
+  const owner = user?.id ?? null;
   const [events, setEvents] = useState<ActivityEvent[]>([]);
   const [cursor, setCursor] = useState<ActivityCursor | null>(null);
   const [hasMore, setHasMore] = useState(false);
@@ -74,31 +78,51 @@ export function useFollowingActivity(query: ActivityQuery, enabled: boolean, rel
   const [loadingMore, setLoadingMore] = useState(false);
   const [failed, setFailed] = useState(false);
   const [newCount, setNewCount] = useState(0);
+  /** Cihazda saklanan son ilk sayfa gösteriliyor (docs/history/465-*); gerçeği gelince yerini alır, sayfalama bu sırada kapalı. */
+  const [stale, setStale] = useState(false);
   const seen = useRef(new Set<string>());
   const generation = useRef(0);
+  const eventsRef = useRef<ActivityEvent[]>([]);
   const queryKey = JSON.stringify(query);
+  useEffect(() => {
+    eventsRef.current = events;
+  }, [events]);
 
   const loadFirst = useCallback(async () => {
     const run = ++generation.current;
     seen.current = new Set();
-    setLoading(true);
+    const cacheKey = `following|${queryKey}`;
+    // Liste boşken (sayfanın ilk açılışı) cihazdaki son kopya anında gösterilir; liste doluyken eski davranış (iskelet) sürer.
+    const saved = owner && eventsRef.current.length === 0 ? readSnapshot<ActivityEvent[]>(owner, cacheKey) : null;
+    const showSaved = Boolean(saved && saved.data.length > 0);
+    if (saved && showSaved) {
+      setEvents(saved.data);
+      setStale(true);
+      setHasMore(false);
+      setLoading(false);
+    } else {
+      setLoading(true);
+    }
     setFailed(false);
     setNewCount(0);
     try {
       const page = await fetchActivityPage(JSON.parse(queryKey) as ActivityQuery, null, seen.current);
       if (run !== generation.current) return;
       setEvents(page.events);
+      setStale(false);
       setCursor(page.nextCursor);
       setHasMore(page.nextCursor !== null);
+      if (owner) writeSnapshot(owner, cacheKey, page.events);
     } catch {
       if (run !== generation.current) return;
-      setEvents([]);
+      // Saklanan kopya ekrandaysa kalır (küçük "güncellenemedi" bandı); yoksa eskisi gibi hata ekranı.
+      if (!showSaved) setEvents([]);
       setFailed(true);
       setHasMore(false);
     } finally {
       if (run === generation.current) setLoading(false);
     }
-  }, [queryKey]);
+  }, [queryKey, owner]);
 
   useEffect(() => {
     if (!enabled) return;
@@ -107,7 +131,7 @@ export function useFollowingActivity(query: ActivityQuery, enabled: boolean, rel
   }, [enabled, loadFirst, reloadKey]);
 
   const loadMore = useCallback(async () => {
-    if (!cursor || loadingMore) return;
+    if (!cursor || loadingMore || stale) return;
     const run = generation.current;
     setLoadingMore(true);
     setFailed(false);
@@ -122,12 +146,12 @@ export function useFollowingActivity(query: ActivityQuery, enabled: boolean, rel
     } finally {
       if (run === generation.current) setLoadingMore(false);
     }
-  }, [cursor, loadingMore, queryKey]);
+  }, [cursor, loadingMore, queryKey, stale]);
 
   // Yeni etkinlik yoklaması: ilk sayfayı sor, listede olmayan ve en üsttekinden yeni satırları say (liste kaymaz; hap basınca yenilenir).
   const newest = events[0]?.at ?? null;
   useEffect(() => {
-    if (!enabled || loading || !newest) return;
+    if (!enabled || loading || stale || !newest) return;
     let stopped = false;
     const check = async () => {
       if (document.visibilityState !== "visible") return;
@@ -149,14 +173,14 @@ export function useFollowingActivity(query: ActivityQuery, enabled: boolean, rel
       window.clearInterval(timer);
       document.removeEventListener("visibilitychange", onVisible);
     };
-  }, [enabled, loading, newest, queryKey]);
+  }, [enabled, loading, stale, newest, queryKey]);
 
   const showNew = useCallback(async () => {
     await loadFirst();
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [loadFirst]);
 
-  return { events, loading, loadingMore, failed, hasMore, loadMore, retry: loadFirst, newCount, showNew };
+  return { events, loading, loadingMore, failed, stale, hasMore, loadMore, retry: loadFirst, newCount, showNew };
 }
 
 /** Bir andan beri özet (null = ilk ziyaret: son 7 gün). Hata sessizdir: özet kartı çizilmez. */

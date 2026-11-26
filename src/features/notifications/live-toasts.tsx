@@ -73,13 +73,13 @@ export function LiveNotificationToasts() {
   // Sessiz saatler hesap başınadır (veritabanı): etkinken bir kez okunur, sekme yeniden görününce (10 dk'dan eskiyse) tazelenir.
   useEffect(() => {
     if (!active) return;
-    void ensureQuietHours();
+    void ensureQuietHours(false, userId);
     const onVisible = () => {
-      if (document.visibilityState === "visible") void ensureQuietHours();
+      if (document.visibilityState === "visible") void ensureQuietHours(false, userId);
     };
     document.addEventListener("visibilitychange", onVisible);
     return () => document.removeEventListener("visibilitychange", onVisible);
-  }, [active]);
+  }, [active, userId]);
 
   const entriesRef = useRef(entries);
   useEffect(() => {

@@ -105,6 +105,10 @@ await scenario("0. telefon: görünür başlık + haftanın sayıları; editorya
   await page.locator("[data-discover-editorial]").waitFor();
   assert.equal(await page.locator("[data-discover-editorial-loading]").count(), 0, "iskelet gitti");
   assert.equal(await h1.isVisible(), false, "sayfanın kendi başlığı telefonda gizli (üst çubukta var)");
+  // docs/history/465-*: yaratıcılar/araçlar/Skill'ler (2. dalga) ve "Tüm paylaşımlar" listesi görünür alana yaklaşınca yüklenir — oraya inilir.
+  await page.locator("[data-discover-editorial-extra]").scrollIntoViewIfNeeded();
+  await page.getByRole("heading", { level: 2, name: "Takip edebileceğin yaratıcılar", exact: true }).first().waitFor();
+  await page.locator("[data-discover-all]").scrollIntoViewIfNeeded();
   const order = ["Gündemdeki konular", "Popüler promptlar", "Takip edebileceğin yaratıcılar", "Yükselen araçlar", "Tüm paylaşımlar"];
   const ys = [];
   for (const name of order) {
@@ -136,7 +140,10 @@ await scenario("2. konu kartı etiket sayfasını, araç kartı araç sayfasın�
   const topic = page.locator("section[aria-label='Gündemdeki konular'] a[href*='tag=']").first();
   await topic.waitFor();
   assert.match(await topic.getAttribute("href"), /\/tags\/local\/?\?tag=sinematik/);
+  // Yükselen araçlar 2. dalgadadır (docs/history/465-*): bölüme inilince yüklenir.
+  await page.locator("[data-discover-editorial-extra]").scrollIntoViewIfNeeded();
   const tool = page.locator("section[aria-label='Yükselen araçlar'] a[href*='id=']").first();
+  await tool.waitFor();
   assert.match(await tool.getAttribute("href"), /\/tools\/local\/?\?id=midjourney/);
   assert.match(await tool.textContent(), /\+%75/);
 });
