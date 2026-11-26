@@ -55,7 +55,7 @@ export function ConnectionBar({
 
   return (
     <div className="pointer-events-none absolute inset-x-0 bottom-3 z-30 flex justify-center px-3">
-      <div role="toolbar" aria-label={t("spaces.connect.selected")} data-board-connection-bar={connection.id} className="scrollbar-none pointer-events-auto flex max-w-full items-center gap-1 overflow-x-auto rounded-full border border-border-soft bg-surface px-2 py-1 shadow-md">
+      <div role="toolbar" aria-label={t("spaces.connect.selected")} data-board-connection-bar={connection.id} className="scrollbar-none pointer-events-auto flex max-w-full items-center gap-1 overflow-x-auto rounded-sm border border-border-soft bg-surface px-2 py-1 shadow-md">
         {editable ? (
           <>
             <input
@@ -73,7 +73,7 @@ export function ConnectionBar({
               }}
               placeholder={t("spaces.connect.labelPlaceholder")}
               aria-label={t("spaces.connect.labelField")}
-              className="h-9 w-36 shrink-0 rounded-full border border-border bg-surface-soft px-3 text-small text-text placeholder:text-text-muted focus:border-primary focus:outline-none"
+              className="h-9 w-36 shrink-0 rounded-sm border border-border bg-surface-soft px-3 text-small text-text placeholder:text-text-muted focus:border-focus focus:outline-none"
             />
             <PopoverMenu
               label={t("spaces.connect.style")}
@@ -122,7 +122,7 @@ function BarButton({ icon: Icon, label, onClick, danger }: { icon: IconComponent
       onClick={onClick}
       aria-label={label}
       title={label}
-      className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors", danger ? "text-danger hover:bg-danger-soft" : "text-text-secondary hover:bg-surface-soft hover:text-text")}
+      className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-sm transition-colors", danger ? "text-danger hover:bg-danger-soft" : "text-text-secondary hover:bg-surface-soft hover:text-text")}
     >
       <Icon size={16} aria-hidden />
     </button>

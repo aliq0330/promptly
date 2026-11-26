@@ -39,12 +39,12 @@ export function Sidebar() {
           href={item.href}
           aria-current={active ? "page" : undefined}
           className={cn(
-            "flex h-10 items-center gap-3 rounded-xl px-3 text-body transition-colors duration-200",
+            "flex h-10 items-center gap-3 rounded-md px-3 text-body transition-colors duration-200",
             // Meydan: the active entry is a soft brand pill — no edge bar.
-            active ? "bg-primary-soft font-semibold text-primary" : "font-medium text-text-secondary hover:bg-surface-soft hover:text-text",
+            active ? "bg-primary-soft font-semibold text-primary-text" : "font-medium text-text-secondary hover:bg-surface-soft hover:text-text",
           )}
         >
-          <Icon size={20} className={active ? "text-primary" : undefined} />
+          <Icon size={20} className={active ? "text-primary-text" : undefined} />
           <span>{t(item.labelKey)}</span>
         </Link>
       </li>

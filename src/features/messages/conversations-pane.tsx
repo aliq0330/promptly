@@ -30,12 +30,12 @@ import { listMyTeams } from "@/lib/supabase/teams";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn, messageHref } from "@/lib/utils";
 import { Eyebrow } from "@/features/content/detail-parts";
+import { ChoiceGroup } from "@/components/ui/choice-group";
 import { ListControlRow, SadeTitle } from "@/features/content/list-control-row";
 import { CONTROL_ICON_BUTTON, type SectionMenuItem } from "@/features/content/section-menu";
 import type { Conversation } from "@/types";
 import { InlineAlert } from "@/components/ui/inline-alert";
 import { DialogShell } from "@/components/ui/dialog-shell";
-import { ScrollRow } from "@/components/ui/scroll-row";
 
 type KindFilter = "all" | "personal" | "community" | "team";
 
@@ -261,7 +261,7 @@ export function ConversationsPane({ embedded = false }: { embedded?: boolean }) 
           <SelectionHeader count={selectedList.length} onDone={exitSelection} embedded={embedded} />
         ) : (
           <>
-        {embedded ? <h1 className="mb-3 font-display text-h1 font-bold leading-[1.1] tracking-[-0.02em] text-text">{t("header.messagesAriaLabel")}</h1> : <SadeTitle className="mb-4">{t("header.messagesAriaLabel")}</SadeTitle>}
+        {embedded ? <h1 className="mb-3 font-display text-h1 font-bold leading-[1.1] text-text">{t("header.messagesAriaLabel")}</h1> : <SadeTitle className="mb-4">{t("header.messagesAriaLabel")}</SadeTitle>}
         {/* Sade düzen (docs/history/234-*): tek "Sohbetler ▾" menüsü (istekler sayaçlı, arşiv, yıldızlı, topluluk sohbetleri) + arama simgesi + `⋯` (Sohbet seç · Tümü okundu) + yeni sohbet. */}
         <div className="mb-3">
           <ListControlRow
@@ -283,7 +283,7 @@ export function ConversationsPane({ embedded = false }: { embedded?: boolean }) 
                   aria-label={t("messages.newChatAria")}
                   title={t("messages.newChat")}
                   aria-haspopup="dialog"
-                  className={cn(CONTROL_ICON_BUTTON, "bg-surface-soft hover:bg-border-soft")}
+                  className={cn(CONTROL_ICON_BUTTON, "bg-primary text-primary-foreground hover:bg-primary-hover")}
                 >
                   <Plus size={24} aria-hidden />
                 </button>
@@ -294,24 +294,15 @@ export function ConversationsPane({ embedded = false }: { embedded?: boolean }) 
           </>
         )}
         {!selectionActive && view === "inbox" && (
-          <ScrollRow role="group" aria-label={t("rooms.filter.aria")} data-kind-chips className="mb-3 flex gap-2">
-            {(["all", "personal", "community", "team"] as const).map((key) => (
-              <button
-                key={key}
-                type="button"
-                aria-pressed={kindFilter === key}
-                data-kind-chip={key}
-                onClick={() => setKindFilter(key)}
-                className={cn(
-                  "shrink-0 rounded-full text-small transition-colors duration-200 ease-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
-                  embedded ? "h-9 px-4" : "h-10 px-[18px]",
-                  kindFilter === key ? "bg-primary font-semibold text-primary-foreground" : "border border-border-soft bg-surface font-medium text-text hover:border-border-strong",
-                )}
-              >
-                {t(`rooms.filter.${key}` as const)}
-              </button>
-            ))}
-          </ScrollRow>
+          <ChoiceGroup
+            variant="segmented"
+            value={kindFilter}
+            onChange={setKindFilter}
+            ariaLabel={t("rooms.filter.aria")}
+            testId="kind-chips"
+            className="mb-3"
+            options={(["all", "personal", "community", "team"] as const).map((key) => ({ key, label: t(`rooms.filter.${key}` as const), attrs: { "data-kind-chip": key } }))}
+          />
         )}
         {!selectionActive && view === "inbox" && (kindFilter === "team" || kindFilter === "community") && kindCount > 0 && (
           <p data-kind-summary className="mb-2 px-1 text-caption text-text-muted">
@@ -328,7 +319,7 @@ export function ConversationsPane({ embedded = false }: { embedded?: boolean }) 
               onChange={(event) => setQuery(event.target.value)}
               placeholder={t("messages.searchConversations")}
               autoFocus
-              className="h-10 w-full rounded-full border border-border-soft bg-background pl-9 pr-3 text-small text-text shadow-xs transition-colors duration-200 ease-soft placeholder:text-text-muted hover:border-border-strong focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15"
+              className="h-10 w-full rounded-sm border border-border-soft bg-background pl-9 pr-3 text-small text-text shadow-xs transition-colors duration-200 ease-soft placeholder:text-text-muted hover:border-border-strong focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15"
             />
           </label>
         )}
@@ -337,13 +328,13 @@ export function ConversationsPane({ embedded = false }: { embedded?: boolean }) 
             type="button"
             onClick={() => setView("requests")}
             data-message-requests-banner=""
-            className="mb-3 flex w-full items-center gap-3 rounded-lg border border-primary/25 bg-primary-soft/60 px-3 py-2.5 text-left transition-colors hover:bg-primary-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            className="mb-3 flex w-full items-center gap-3 rounded-lg border border-primary/25 bg-primary-soft/60 px-3 py-2.5 text-left transition-colors hover:bg-primary-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
           >
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface text-primary">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface text-primary-text">
               <Inbox size={16} aria-hidden />
             </span>
             <span className="min-w-0 flex-1 truncate text-small font-semibold text-text">{t("messages.requestsBanner", { count: buckets.requests.length })}</span>
-            <span className="shrink-0 text-small font-semibold text-primary">{t("messages.requestsOpen")}</span>
+            <span className="shrink-0 text-small font-semibold text-primary-text">{t("messages.requestsOpen")}</span>
           </button>
         )}
         {bulkError && (
@@ -431,9 +422,9 @@ export function ConversationsPane({ embedded = false }: { embedded?: boolean }) 
                   href={kindFilter === "team" ? "/teams" : "/communities/all"}
                   data-kind-cta={kindFilter}
                   className={cn(
-                    "mt-3 flex h-14 items-center justify-center gap-2 rounded-lg border-[1.5px] border-dashed text-small font-semibold transition-colors",
+                    "mt-3 flex h-14 items-center justify-center gap-2 rounded-sm border-[1.5px] border-dashed text-small font-semibold transition-colors",
                     embedded && "mx-4",
-                    kindFilter === "team" ? "border-primary/30 text-primary hover:bg-primary-soft" : "border-success/40 text-success hover:bg-success-soft",
+                    kindFilter === "team" ? "border-primary/30 text-primary-text hover:bg-primary-soft" : "border-success/40 text-success hover:bg-success-soft",
                   )}
                 >
                   {kindFilter === "team" ? <Plus size={20} aria-hidden /> : <Search size={20} aria-hidden />}

@@ -68,7 +68,7 @@ export function StudioHistory({
                     {t("generate.historyUsePrompt")}
                   </Button>
                 </div>
-                <button type="button" onClick={() => onDelete(entry)} aria-label={t("generate.historyDelete")} className="grid h-9 w-9 shrink-0 place-items-center rounded-md text-text-muted hover:bg-surface-soft hover:text-danger">
+                <button type="button" onClick={() => onDelete(entry)} aria-label={t("generate.historyDelete")} className="grid h-9 w-9 shrink-0 place-items-center rounded-sm text-text-muted hover:bg-surface-soft hover:text-danger">
                   <TrashIcon size={16} />
                 </button>
               </div>

@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
  */
 export function VisibilityTag({ icon: Icon, label, className, ...rest }: { icon: IconComponent; label: string; className?: string; [data: `data-${string}`]: string | undefined }) {
   return (
-    <span className={cn("inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full bg-surface-soft px-2 py-0.5 text-caption font-medium text-text-secondary", className)} {...rest}>
+    <span className={cn("inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-xs bg-surface-soft px-2 py-0.5 text-caption font-medium text-text-secondary", className)} {...rest}>
       <Icon size={12} aria-hidden />
       {label}
     </span>

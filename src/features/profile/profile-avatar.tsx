@@ -25,7 +25,7 @@ export function ProfileAvatar({
           href="/profile/edit"
           aria-label={t("profile.changeProfilePhoto")}
           title={t("profile.changeProfilePhoto")}
-          className="absolute bottom-1 right-1 z-10 flex h-9 w-9 items-center justify-center rounded-full border-2 border-surface bg-primary text-primary-foreground transition-colors hover:bg-primary-dark"
+          className="absolute bottom-1 right-1 z-10 flex h-9 w-9 items-center justify-center rounded-sm border-2 border-surface bg-primary text-primary-foreground transition-colors hover:bg-primary-dark"
         >
           <Pencil size={12} />
         </Link>

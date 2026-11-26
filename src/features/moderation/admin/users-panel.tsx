@@ -139,7 +139,7 @@ export function UsersPanel({ userId, onSelectUser }: { userId: string | null; on
           value={sort}
           onChange={(event) => setSort(event.target.value as AdminUserSort)}
           aria-label={t("admin.users.sortAria")}
-          className="h-10 rounded-lg card-flat px-2 text-small text-text"
+          className="h-10 rounded-sm card-flat px-2 text-small text-text"
         >
           {SORTS.map((s) => (
             <option key={s.id} value={s.id}>
@@ -160,7 +160,7 @@ export function UsersPanel({ userId, onSelectUser }: { userId: string | null; on
               type="button"
               onClick={() => onSelectUser(u.id)}
               data-user-row={u.username}
-              className="flex w-full items-start gap-3 rounded-lg card-flat p-3 text-left shadow-xs transition-colors hover:border-border-strong hover:bg-surface-soft/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              className="flex w-full items-start gap-3 rounded-lg card-flat p-3 text-left shadow-xs transition-colors hover:border-border-strong hover:bg-surface-soft/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
             >
               <Avatar src={u.avatarUrl} alt={u.displayName} size={40} />
               <span className="min-w-0 flex-1">

@@ -140,9 +140,9 @@ export function TeamAdminSection({ ctx }: { ctx: TeamCtx }) {
               aria-current={active === item.key ? "page" : undefined}
               data-admin-nav-item={item.key}
               className={cn(
-                "inline-flex h-11 shrink-0 items-center rounded-full border px-4 text-small font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary md:h-9",
+                "inline-flex h-11 shrink-0 items-center rounded-sm border px-4 text-small font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus md:h-9",
                 active === item.key
-                  ? "border-transparent bg-primary-soft text-primary"
+                  ? "border-transparent bg-primary-soft text-primary-text"
                   : item.key === "danger"
                     ? "border-border-soft bg-surface text-danger hover:bg-danger-soft"
                     : "border-border-soft bg-surface text-text hover:bg-surface-soft",
@@ -194,7 +194,7 @@ function AuditPreview({ ctx }: { ctx: TeamCtx }) {
     };
   }, [team.id]);
   return (
-    <Panel title={t("tm.admin.audit")} action={<Link href={teamLink(team.id, "admin", { section: "audit" })} className="text-small font-semibold text-primary" data-audit-all>{t("tc.admin.auditAll")}</Link>} className="rounded-xl">
+    <Panel title={t("tm.admin.audit")} action={<Link href={teamLink(team.id, "admin", { section: "audit" })} className="text-small font-semibold text-primary-text" data-audit-all>{t("tc.admin.auditAll")}</Link>} className="rounded-xl">
       <div data-testid="admin-audit-preview">
         {entries === null && <Skeleton className="h-20 w-full rounded-lg" />}
         {entries !== null && entries.length === 0 && <p className="py-2 text-small text-text-muted">{t("tm.admin.audit.empty")}</p>}
@@ -256,7 +256,7 @@ function GeneralSection({ ctx }: { ctx: TeamCtx }) {
           <label htmlFor="team-set-desc" className={fieldLabelClassName}>
             {t("tm.create.description")}
           </label>
-          <textarea id="team-set-desc" value={description} onChange={(e) => setDescription(e.target.value)} maxLength={500} rows={3} className="w-full rounded-lg card-inset px-4 py-2.5 text-small" />
+          <textarea id="team-set-desc" value={description} onChange={(e) => setDescription(e.target.value)} maxLength={500} rows={3} className="w-full rounded-sm card-inset px-4 py-2.5 text-small" />
         </div>
         <div>
           <span className={fieldLabelClassName}>{t("tm.create.tone")}</span>
@@ -286,7 +286,7 @@ function PolicyRow({ label, hint, children }: { label: string; hint?: string; ch
 
 function PillSelect<K extends string>({ label, value, options, onChange }: { label: string; value: K; options: { key: K; label: string }[]; onChange: (key: K) => void }) {
   return (
-    <select value={value} onChange={(event) => onChange(event.target.value as K)} aria-label={label} className="h-9 max-w-[11rem] rounded-full border border-border bg-background pl-4 pr-2 text-caption font-semibold text-text">
+    <select value={value} onChange={(event) => onChange(event.target.value as K)} aria-label={label} className="h-9 max-w-[11rem] rounded-sm border border-border bg-background pl-4 pr-2 text-caption font-semibold text-text">
       {options.map((option) => (
         <option key={option.key} value={option.key}>
           {option.label}
@@ -401,9 +401,9 @@ type AuditCategory = (typeof AUDIT_CATEGORIES)[number];
 
 const AUDIT_TAG_TONE: Record<string, string> = {
   approval: "bg-success-soft text-success",
-  role: "bg-primary-soft text-primary",
+  role: "bg-primary-soft text-primary-text",
   access: "bg-warning-soft text-warning",
-  member: "bg-primary-soft text-primary",
+  member: "bg-primary-soft text-primary-text",
   library: "bg-danger-soft text-danger",
   channel: "bg-surface-soft text-text-secondary",
   policy: "bg-surface-soft text-text-secondary",
@@ -524,7 +524,7 @@ function AuditSection({ ctx }: { ctx: TeamCtx }) {
         {entries.map((entry) => {
           const name = entry.actorName || entry.actorUsername || t("tm.admin.audit.system");
           const tag = (
-            <span className={cn("shrink-0 rounded-full px-2.5 py-0.5 text-caption font-semibold", AUDIT_TAG_TONE[entry.category] ?? "bg-surface-soft text-text-secondary")} data-audit-tag={entry.category}>
+            <span className={cn("shrink-0 rounded-xs px-2.5 py-0.5 text-caption font-semibold", AUDIT_TAG_TONE[entry.category] ?? "bg-surface-soft text-text-secondary")} data-audit-tag={entry.category}>
               {t(`tm.audit.tag.${entry.category}` as "tm.audit.tag.member")}
             </span>
           );
@@ -613,7 +613,7 @@ function DangerSection({ ctx }: { ctx: TeamCtx }) {
         </Button>
         {transferOpen && (
           <div className="mt-3 flex flex-wrap gap-2">
-            <select value={target} onChange={(e) => setTarget(e.target.value)} aria-label={t("tm.admin.transferPick")} className="h-10 min-w-0 flex-1 rounded-lg card-inset px-3 text-small">
+            <select value={target} onChange={(e) => setTarget(e.target.value)} aria-label={t("tm.admin.transferPick")} className="h-10 min-w-0 flex-1 rounded-sm card-inset px-3 text-small">
               <option value="">{t("tm.admin.transferPick")}</option>
               {candidates.map((m) => (
                 <option key={m.userId} value={m.userId}>

@@ -29,7 +29,7 @@ import { useRealMessages } from "./real-messages-provider";
 import { InlineAlert } from "@/components/ui/inline-alert";
 
 const channelHref = (channel: { id: string }) => `/messages/local?id=${channel.id}`;
-const TAG_CLASS = "shrink-0 rounded-full bg-surface-soft px-2 py-0.5 text-caption font-semibold text-text-muted";
+const TAG_CLASS = "shrink-0 rounded-xs bg-surface-soft px-2 py-0.5 text-caption font-semibold text-text-muted";
 
 /**
  * Mesajlar'dan açılan EKİP kanal listesi (docs/history/369-*, 381-*): ekibin kanalları ve projeleri sohbet listesinin YERİNE açılır (bilgisayarda sol sütun, telefonda sayfa)
@@ -68,7 +68,7 @@ function SearchBox({ value, onChange, label }: { value: string; onChange: (value
         placeholder={label}
         autoFocus
         data-hub-search
-        className="h-10 w-full rounded-full border border-border-soft bg-background pl-9 pr-3 text-small text-text shadow-xs transition-colors duration-200 ease-soft placeholder:text-text-muted hover:border-border-strong focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15"
+        className="h-10 w-full rounded-sm border border-border-soft bg-background pl-9 pr-3 text-small text-text shadow-xs transition-colors duration-200 ease-soft placeholder:text-text-muted hover:border-border-strong focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15"
       />
     </label>
   );

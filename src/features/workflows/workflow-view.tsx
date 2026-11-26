@@ -214,7 +214,7 @@ export function WorkflowDetailView({ workflowId }: { workflowId?: string } = {})
             steps.length > 0 && (
               <Button
                 size="lg"
-                className="h-14 rounded-full px-7 shadow-md"
+                className="h-14 rounded-sm px-7 shadow-md"
                 onClick={() => {
                   setTab("workflow");
                   setView("run");

@@ -22,19 +22,19 @@ export const SpacesIcon: IconComponent = Shapes;
 /** Tür simgesi (oluşturma formu, "Yeni bir Space başlatın" karoları, kart) + yumuşak renk (hex yok, palet token'ları) — docs/history/231-*. */
 export const SPACE_KIND_ICON: Record<SpaceKind, IconComponent> = { moodboard: LayoutDashboard, character: UserRound, brand: BadgeCheck, game_world: Swords, interior: Sofa, free: Shapes, team_area: Shapes };
 export const SPACE_KIND_TINT: Record<SpaceKind, string> = {
-  moodboard: "bg-primary-soft text-primary",
+  moodboard: "bg-primary-soft text-primary-text",
   character: "bg-secondary-soft text-secondary",
   brand: "bg-warning-soft text-warning",
   game_world: "bg-success-soft text-success",
   interior: "bg-danger-soft text-danger",
   free: "bg-surface-soft text-text-secondary",
-  team_area: "bg-surface-soft text-primary",
+  team_area: "bg-surface-soft text-primary-text",
 };
 
 /** Not / grup rengi → palet token'ları (hex yok: tema ve paletle birlikte değişir). */
 export const SPACE_COLOR_CLASS: Record<SpaceColor, { surface: string; border: string; dot: string; text: string }> = {
   neutral: { surface: "bg-surface", border: "border-border", dot: "bg-text-muted", text: "text-text-secondary" },
-  primary: { surface: "bg-primary-soft", border: "border-primary/40", dot: "bg-primary", text: "text-primary" },
+  primary: { surface: "bg-primary-soft", border: "border-primary/40", dot: "bg-primary", text: "text-primary-text" },
   secondary: { surface: "bg-secondary-soft", border: "border-secondary/40", dot: "bg-secondary", text: "text-secondary" },
   success: { surface: "bg-success-soft", border: "border-success/40", dot: "bg-success", text: "text-success" },
   warning: { surface: "bg-warning-soft", border: "border-warning/40", dot: "bg-warning", text: "text-warning" },
@@ -113,7 +113,7 @@ export function PaletteStrip({ colors, copyable, max = 8, className }: { colors:
           onClick={() => void copy(color)}
           aria-label={t("spaces.palette.copyColor", { hex: color })}
           title={copied === color ? t("common.copied") : color}
-          className="relative h-9 min-w-0 flex-1 rounded-md shadow-xs ring-1 ring-inset ring-text/10 transition-transform duration-200 ease-soft hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          className="relative h-9 min-w-0 flex-1 rounded-md shadow-xs ring-1 ring-inset ring-text/10 transition-transform duration-200 ease-soft hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
           style={{ backgroundColor: color }}
         >
           {copied === color && (
@@ -134,7 +134,7 @@ export function SpaceCoverArt({ urls, className, iconSize = 32 }: { urls: string
   const list = urls.slice(0, 4);
   if (list.length === 0) {
     return (
-      <span aria-hidden className={cn("flex items-center justify-center bg-primary-soft text-primary", className)}>
+      <span aria-hidden className={cn("flex items-center justify-center bg-primary-soft text-primary-text", className)}>
         <SpacesIcon size={iconSize} />
       </span>
     );

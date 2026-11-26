@@ -116,7 +116,7 @@ export function VisibilityPicker({
             <tr className="bg-surface-soft/60">
               <th scope="col" className="w-1/4 px-3 py-2 font-medium text-text-muted" />
               {options.map((option) => (
-                <th key={option} scope="col" className={cn("px-3 py-2 font-semibold", value === option ? "bg-primary-soft/60 text-primary" : "text-text")}>
+                <th key={option} scope="col" className={cn("px-3 py-2 font-semibold", value === option ? "bg-primary-soft/60 text-primary-text" : "text-text")}>
                   {t(VISIBILITY_LABEL_KEYS[option])}
                 </th>
               ))}

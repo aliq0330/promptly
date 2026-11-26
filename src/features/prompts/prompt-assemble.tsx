@@ -18,7 +18,7 @@ function AssembledValue({ text, settled, armed }: { text: string; settled: boole
       key={state.seq}
       data-assembled-value
       className={cn(
-        "rounded-sm px-1 text-primary transition-[background-color,font-weight] duration-300 ease-soft",
+        "rounded-sm px-1 text-primary-text transition-[background-color,font-weight] duration-300 ease-soft",
         settled ? "bg-primary-soft/60 font-medium" : "bg-primary-soft font-semibold",
         (entersLate || state.seq > 0) && "animate-value-swap",
       )}
@@ -64,7 +64,7 @@ export function AssembledPromptText({
           <mark
             key={`${segment.name}-${index}`}
             data-assembled-empty
-            className="rounded-sm border border-dashed border-primary/50 bg-transparent px-1 font-medium text-primary/70"
+            className="rounded-sm border border-dashed border-primary/50 bg-transparent px-1 font-medium text-primary-text/70"
           >
             {segment.text}
           </mark>
@@ -106,7 +106,7 @@ export function AssembleStatus({ filled, total, complete }: { filled: number; to
           style={{ transform: `scaleX(${total === 0 ? 0 : filled / total})` }}
         />
       </div>
-      <p role="status" aria-live="polite" className={cn("inline-flex items-center gap-1 text-caption font-medium tabular-nums", complete ? "text-primary" : "text-text-muted")}>
+      <p role="status" aria-live="polite" className={cn("inline-flex items-center gap-1 text-caption font-medium tabular-nums", complete ? "text-primary-text" : "text-text-muted")}>
         {complete ? (
           <>
             <Check size={12} className="animate-check-pop" aria-hidden />

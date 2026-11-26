@@ -34,7 +34,7 @@ export function ChatHeaderMenu({ children, label }: { children: (close: () => vo
         aria-label={label ?? t("groups.chat.optionsAria")}
         aria-haspopup="menu"
         aria-expanded={open}
-        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-transparent text-text-secondary transition-colors hover:bg-surface-soft hover:text-text"
+        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm bg-transparent text-text-secondary transition-colors hover:bg-surface-soft hover:text-text"
       >
         <MoreVertical size={20} />
       </button>

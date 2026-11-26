@@ -23,6 +23,7 @@ import { CommunityCard } from "./community-card";
 import { HomeInviteNotice } from "./home-shelf";
 import type { JoinState } from "./community-join-button";
 import { CreateCommunityModal } from "./create-community-modal";
+import { useCreateEntry, useOpenCreateFromQuery } from "@/features/content/create-page-shell";
 import { HomeDiscoverTab } from "./home-discover-tab";
 import { HomeInvitesTab } from "./home-invites-tab";
 import { HomePostsTab } from "./home-posts-tab";
@@ -73,6 +74,8 @@ export function CommunitiesPage() {
   const { node: toastNode, show } = useToast();
   const { ready: managedReady, managed } = useManagedCommunities(user?.id ?? null);
   const [createOpen, setCreateOpen] = useState(false);
+  const openCreate = useCreateEntry("/communities/new", () => setCreateOpen(true));
+  useOpenCreateFromQuery(() => setCreateOpen(true));
   const [invitations, setInvitations] = useState<GroupInvitation[] | null>(null);
   const [inviteReload, setInviteReload] = useState(0);
   const [query, setQuery] = useState("");
@@ -141,7 +144,7 @@ export function CommunitiesPage() {
         icon={Users}
         title={t("communities.page.title")}
         description={t("hub.communities.intro")}
-        action={<HubCreateButton label={t("communities.page.create")} shortLabel={t("hub.communities.createShort")} onClick={() => requireAuth("create") && setCreateOpen(true)} attr={{ "data-create-community": true }} />}
+        action={<HubCreateButton label={t("communities.page.create")} shortLabel={t("hub.communities.createShort")} onClick={() => requireAuth("create") && openCreate()} attr={{ "data-create-community": true }} />}
       />
 
       {user && <Tabs items={tabs} active={activeTab} onChange={goTab} ariaLabel={t("communities.page.tabsAria")} />}
@@ -292,7 +295,7 @@ export function DiscoverView({
               onChange={(event) => setQuery(event.target.value)}
               maxLength={100}
               placeholder={t("communities.search.placeholder")}
-              className="h-10 w-full rounded-full border border-border-soft bg-background pl-9 pr-3 text-small text-text shadow-xs transition-colors duration-200 ease-soft placeholder:text-text-muted hover:border-border-strong focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15"
+              className="h-10 w-full rounded-sm border border-border-soft bg-background pl-9 pr-3 text-small text-text shadow-xs transition-colors duration-200 ease-soft placeholder:text-text-muted hover:border-border-strong focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15"
             />
           </label>
         )}
@@ -315,8 +318,8 @@ export function DiscoverView({
             onClick={() => setCategory(value)}
             aria-pressed={category === value}
             className={
-              "shrink-0 rounded-full border px-3 py-1.5 text-caption font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary " +
-              (category === value ? "border-primary/50 bg-primary-soft text-primary" : "border-border-soft bg-surface text-text-secondary hover:border-border-strong")
+              "shrink-0 rounded-sm border px-3 py-1.5 text-caption font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus " +
+              (category === value ? "border-primary/50 bg-primary-soft text-primary-text" : "border-border-soft bg-surface text-text-secondary hover:border-border-strong")
             }
           >
             {value ? t(DOMAIN_LABEL_KEYS[value]) : t("communities.filter.all")}

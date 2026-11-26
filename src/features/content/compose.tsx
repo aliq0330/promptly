@@ -181,7 +181,7 @@ export function ComposeShell({
           onClick={onClose}
           aria-label={t("common.close")}
           data-compose-close=""
-          className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-text transition-colors hover:bg-surface-soft"
+          className="grid h-10 w-10 shrink-0 place-items-center rounded-sm text-text transition-colors hover:bg-surface-soft"
         >
           <X size={24} />
         </button>
@@ -241,9 +241,9 @@ export function ComposeShell({
                     {preview && (
                       <div className="mt-4 space-y-2 px-1 lg:hidden" data-compose-nav-preview="">
                         <p className="px-1 text-caption font-semibold text-text-muted">{t("cs.preview")}</p>
-                        <button type="button" onClick={() => setPreviewOpen(true)} className="block w-full text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-lg">
+                        <button type="button" onClick={() => setPreviewOpen(true)} className="block w-full text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus rounded-lg">
                           <span className="pointer-events-none block max-h-64 select-none overflow-hidden rounded-lg">{preview.card}</span>
-                          <span className="mt-2 block px-1 text-small font-semibold text-primary">{t("cs.openFullPreview")}</span>
+                          <span className="mt-2 block px-1 text-small font-semibold text-primary-text">{t("cs.openFullPreview")}</span>
                         </button>
                       </div>
                     )}
@@ -302,11 +302,11 @@ export function ComposeShell({
 export function PublishPreview({ thumbnail, icon: Icon, typeLabel, title, meta }: { thumbnail?: string | null; icon: IconComponent; typeLabel: string; title: string; meta: string }) {
   return (
     <div data-publish-preview="" className="flex items-center gap-3 rounded-lg card-soft p-3">
-      <span className="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-lg bg-surface-soft text-primary">
+      <span className="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-lg bg-surface-soft text-primary-text">
         {thumbnail ? <StorageImg src={thumbnail} alt="" className="h-full w-full object-cover" /> : <Icon size={24} />}
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-caption font-semibold text-primary">{typeLabel}</span>
+        <span className="block truncate text-caption font-semibold text-primary-text">{typeLabel}</span>
         <span className="block truncate text-body font-semibold text-text">{title}</span>
         <span className="block truncate text-caption text-text-muted">{meta}</span>
       </span>
@@ -377,7 +377,7 @@ export function useComposeLeave({ dirty, saveDraft }: { dirty: boolean; saveDraf
                 leave();
               } else setAsking(false);
             }}
-            className="block w-full border-t border-border px-4 py-4 text-body font-semibold text-primary disabled:opacity-50"
+            className="block w-full border-t border-border px-4 py-4 text-body font-semibold text-primary-text disabled:opacity-50"
           >
             {saving ? t("createActions.savingDraft") : t("createActions.saveDraft")}
           </button>

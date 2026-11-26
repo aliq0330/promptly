@@ -68,7 +68,7 @@ export function OverviewTab({ onNavigate }: { onNavigate: (tab: SpaceTab, focus?
             onClick={() => onNavigate("board", lastTouched.id)}
             className="flex w-full items-center gap-3 rounded-lg border border-border-soft bg-primary-soft/40 p-3 text-left transition-colors hover:bg-primary-soft/70"
           >
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-surface text-primary">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-surface text-primary-text">
               <LayoutDashboard size={20} aria-hidden />
             </span>
             <span className="min-w-0 flex-1">
@@ -94,9 +94,9 @@ export function OverviewTab({ onNavigate }: { onNavigate: (tab: SpaceTab, focus?
                 type="button"
                 onClick={() => onNavigate(tab)}
                 data-overview-stat={tab}
-                className="flex w-full items-center gap-3 rounded-lg card-flat p-4 text-left shadow-card transition-colors hover:border-border-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                className="flex w-full items-center gap-3 rounded-lg card-flat p-4 text-left shadow-card transition-colors hover:border-border-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
               >
-                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary-soft text-primary">
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-md bg-primary-soft text-primary-text">
                   <Icon size={20} aria-hidden />
                 </span>
                 <span className="min-w-0">
@@ -185,7 +185,7 @@ function OverviewSection({ title, onMore, children }: { title: string; onMore: (
     <section className="space-y-3">
       <div className="flex items-center justify-between gap-2">
         <h2 className="text-h3 font-bold text-text">{title}</h2>
-        <button type="button" onClick={onMore} className="inline-flex items-center gap-1 text-label font-medium text-text-secondary hover:text-primary">
+        <button type="button" onClick={onMore} className="inline-flex items-center gap-1 text-label font-medium text-text-secondary hover:text-primary-text">
           {t("common.viewAll")}
           <ArrowRight size={16} aria-hidden />
         </button>
@@ -230,7 +230,7 @@ function OverviewAside({ groupsCount }: { groupsCount?: number }) {
           <h2 className="text-label font-semibold text-text-muted">{t("spaces.groups.title")}</h2>
           <ul className="flex flex-wrap gap-1.5">
             {groups.map((group) => (
-              <li key={group.id} className={cn("inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-caption font-medium", SPACE_COLOR_CLASS[group.color].surface, SPACE_COLOR_CLASS[group.color].text)}>
+              <li key={group.id} className={cn("inline-flex items-center gap-1.5 rounded-sm px-2.5 py-1 text-caption font-medium", SPACE_COLOR_CLASS[group.color].surface, SPACE_COLOR_CLASS[group.color].text)}>
                 {group.name}
                 <span className="opacity-70">{items.filter((item) => item.groupId === group.id).length}</span>
               </li>

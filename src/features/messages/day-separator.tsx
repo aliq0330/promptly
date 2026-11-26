@@ -21,7 +21,7 @@ export function DaySeparator({ iso }: { iso: string }) {
           }).format(date);
   return (
     <div className="flex justify-center py-1" data-day-separator>
-      <span className="rounded-full bg-surface px-3 py-1 text-caption text-text-muted">{label}</span>
+      <span className="rounded-sm bg-surface px-3 py-1 text-caption text-text-muted">{label}</span>
     </div>
   );
 }

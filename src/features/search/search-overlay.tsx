@@ -309,7 +309,7 @@ export function SearchOverlay({
                   onMouseDown={(event) => event.preventDefault()}
                   onClick={() => pick(entry)}
                   className={cn(
-                    "flex min-h-11 w-full items-center gap-3 rounded-md px-2.5 py-2 text-left text-label text-text transition-colors",
+                    "flex min-h-11 w-full items-center gap-3 rounded-sm px-2.5 py-2 text-left text-label text-text transition-colors",
                     index === active ? "bg-surface-soft" : "hover:bg-surface-soft",
                   )}
                 >
@@ -365,7 +365,7 @@ export function SearchOverlay({
             <button type="button" aria-label={t("common.back")} onClick={onClose} className={cn(iconButtonClassName(false, "h-10 w-10 shrink-0"), "md:hidden")}>
               <ArrowLeft size={20} aria-hidden />
             </button>
-            <div role="search" className="relative flex h-11 min-w-0 flex-1 items-center rounded-xl bg-surface-soft pl-3 pr-1 focus-within:ring-2 focus-within:ring-primary/30">
+            <div role="search" className="relative flex h-11 min-w-0 flex-1 items-center rounded-sm bg-surface-soft pl-3 pr-1 focus-within:ring-2 focus-within:ring-primary/30">
               <Search size={20} aria-hidden className="mr-2 hidden shrink-0 text-text-muted md:block" />
               <input
                 ref={inputRef}
@@ -412,7 +412,7 @@ export function SearchOverlay({
                   data-search-overlay-filter
                   aria-label={filterLabel}
                   onClick={() => setView(sections[0].key)}
-                  className={cn(iconButtonClassName(false, "relative h-9 w-9 shrink-0 bg-primary-soft text-primary hover:bg-primary-soft hover:text-primary"), "md:hidden")}
+                  className={cn(iconButtonClassName(false, "relative h-9 w-9 shrink-0 bg-primary-soft text-primary-text hover:bg-primary-soft hover:text-primary-text"), "md:hidden")}
                 >
                   <Filter size={20} aria-hidden />
                   {filters.count > 0 && (
@@ -439,7 +439,7 @@ export function SearchOverlay({
                 type="button"
                 onClick={filters.onClear}
                 disabled={filters.count === 0}
-                className="inline-flex h-10 items-center px-3 text-label font-semibold text-primary hover:text-primary-hover disabled:text-text-muted"
+                className="inline-flex h-10 items-center px-3 text-label font-semibold text-primary-text hover:text-primary-hover disabled:text-text-muted"
               >
                 {t("toolbar.clear")}
               </button>
@@ -534,7 +534,7 @@ function RailButton({ current, onClick, count, children }: { current: boolean; o
       aria-current={current ? "true" : undefined}
       onClick={onClick}
       className={cn(
-        "flex min-h-10 items-center gap-2 rounded-md px-3 text-left text-label transition-colors",
+        "flex min-h-10 items-center gap-2 rounded-sm px-3 text-left text-label transition-colors",
         current ? "bg-primary-soft font-semibold text-text" : "text-text-secondary hover:bg-surface-soft",
       )}
     >

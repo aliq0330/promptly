@@ -145,7 +145,7 @@ export function SharePeople({
       {searching && shown.length === 0 && (
         <p className="py-2 text-center text-small text-text-muted" data-share-people-empty="">
           {t("share.people.noMatch")}{" "}
-          <Link href={moreHref} className="font-semibold text-primary underline">
+          <Link href={moreHref} className="font-semibold text-primary-text underline">
             {t("share.people.more")}
           </Link>
         </p>

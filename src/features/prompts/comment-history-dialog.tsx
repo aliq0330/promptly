@@ -52,7 +52,7 @@ export function CommentHistoryDialog({ comment, onClose }: { comment: PromptComm
             type="button"
             onClick={onClose}
             aria-label={t("common.close")}
-            className="-mr-2 flex h-11 w-11 items-center justify-center rounded-full text-text-secondary hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            className="-mr-2 flex h-11 w-11 items-center justify-center rounded-sm text-text-secondary hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
           >
             <X size={20} aria-hidden />
           </button>

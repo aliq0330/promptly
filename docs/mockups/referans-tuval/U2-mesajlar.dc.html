@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>Promptly mesajlar uyarlama</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&amp;family=Bricolage+Grotesque:wght@700;800&amp;display=swap">
+<style>
+body{margin:0;font-family:'DM Sans',system-ui,sans-serif;color:#121218}
+.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.rl{width:100%;height:60px;border-radius:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:12px;font-weight:500;color:#464854}
+.rl.on{background:#eceffd;color:#3b5be2;font-weight:600}
+.rl svg{width:22px;height:22px}
+.row{display:flex;gap:12px;padding:12px 16px;align-items:center}
+.row.on{background:#eceffd}
+.row .av{width:48px;height:48px;border-radius:50%;background:#cfd0dc;flex:none}
+.row .b{flex:1;min-width:0;font-size:14px}
+.row .b b{font-weight:600;display:block;font-size:15px}
+.row .b span{display:block;color:#62646f;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .m{text-align:right;font-size:12px;color:#62646f;display:flex;flex-direction:column;gap:6px;align-items:flex-end}
+.bd{background:#3b5be2;color:#fff;border-radius:999px;font-size:11px;font-weight:600;padding:2px 7px}
+.lbl{font-size:10px;font-weight:600;color:#62646f;background:#f0f0f5;border-radius:6px;padding:1px 6px;margin-left:6px;vertical-align:1px}
+.mk{position:absolute;width:22px;height:22px;border-radius:50%;background:#3b5be2;color:#fff;font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 3px #fff}
+.msg{max-width:420px;padding:10px 14px;border-radius:18px;font-size:15px;line-height:1.45}
+</style>
+</helmet>
+<div style="width:1440px;height:900px;background:#fff;overflow:hidden;position:relative;display:flex">
+  <div style="width:84px;flex:none;border-right:1px solid #ececf2;padding:12px 6px;box-sizing:border-box;display:flex;flex-direction:column;gap:4px;align-items:center">
+    <i style="width:30px;height:30px;border-radius:9px;background:#3b5be2;display:block;margin:6px 0 10px"></i>
+    <div style="width:52px;height:52px;border-radius:999px;background:#3b5be2;color:#fff;display:flex;align-items:center;justify-content:center;margin-bottom:10px"><svg class="i" viewBox="0 0 24 24" aria-hidden="true" style="width:24px;height:24px"><path d="M12 5v14M5 12h14"/></svg></div>
+    <div class="rl"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-8 9 8v10H3z"/></svg>Ana Sayfa</div>
+    <div class="rl"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M15 9l-2 6-4 0 2-6z"/></svg>Keşfet</div>
+    <div class="rl"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M3 20c0-3.5 3-5.5 6-5.5s6 2 6 5.5"/></svg>Topluluklar</div>
+    <div class="rl on"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg>Mesajlar</div>
+    <div class="rl"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10v16l-5-4-5 4z"/></svg>Kaydedilen</div>
+  </div>
+  <div style="width:400px;flex:none;border-right:1px solid #ececf2;position:relative;display:flex;flex-direction:column">
+    <div style="padding:20px 16px 12px">
+      <div style="display:flex;gap:8px;align-items:center">
+        <div style="flex:1;height:40px;border:1px solid #868899;border-radius:999px;display:flex;align-items:center;gap:10px;padding:0 14px;font-size:14px;color:#62646f;box-sizing:border-box"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>Sohbetlerde ara</div>
+        <div style="width:40px;height:40px;border-radius:999px;background:#3b5be2;color:#fff;display:flex;align-items:center;justify-content:center"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4l11-11-4-4L4 16zM13 7l4 4"/></svg></div>
+      </div>
+      <div style="margin-top:12px;display:flex;background:#f0f0f5;border-radius:16px;padding:2px;height:40px;box-sizing:border-box">
+        <span style="flex:1;border-radius:12px;background:#fff;box-shadow:0 1px 2px rgba(18,18,24,.08);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600">Tümü</span>
+        <span style="flex:1;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:500;color:#62646f">Kişisel</span>
+        <span style="flex:1;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:500;color:#62646f">Topluluk</span>
+        <span style="flex:1;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:500;color:#62646f">Ekip</span>
+      </div>
+    </div>
+    <div style="flex:1;overflow:hidden">
+      <div class="row on"><div class="av"></div><div class="b"><b>Ada Yılmaz</b><span>Prompt'u denedim, sonuç harika</span></div><div class="m">14:20<span class="bd">2</span></div></div>
+      <div class="row"><div class="av" style="background:#d9c9c0"></div><div class="b"><b>Tasarım Ekibi<span class="lbl">EKİP</span></b><span>Mert: yeni pano hazır</span></div><div class="m">12:05</div></div>
+      <div class="row"><div class="av" style="background:#c0cfd9"></div><div class="b"><b>Görsel Prompt Meraklıları<span class="lbl">TOPLULUK</span></b><span>Selin bir sonuç paylaştı</span></div><div class="m">Dün</div></div>
+      <div class="row"><div class="av"></div><div class="b"><b>Can Özer</b><span>Teşekkürler!</span></div><div class="m">Dün</div></div>
+      <div class="row"><div class="av" style="background:#bfc9e0"></div><div class="b"><b>Ece Tan</b><span>Workflow'u kaydettim</span></div><div class="m">Salı</div></div>
+      <div class="row"><div class="av" style="background:#d9d0c0"></div><div class="b"><b>Deniz Aras</b><span>Ayar paketini gönderdim</span></div><div class="m">Pzt</div></div>
+    </div>
+    <div class="mk" style="left:350px;top:16px">2</div>
+    <div class="mk" style="left:366px;top:70px">2</div>
+  </div>
+  <div style="flex:1;display:flex;flex-direction:column;background:#f8f8fb">
+    <div style="height:64px;background:#fff;border-bottom:1px solid #ececf2;display:flex;align-items:center;gap:12px;padding:0 20px"><i style="width:40px;height:40px;border-radius:50%;background:#cfd0dc;display:block"></i><div style="flex:1"><b style="font-size:15px">Ada Yılmaz</b><div style="font-size:12px;color:#62646f">Çevrimiçi</div></div><svg class="i" viewBox="0 0 24 24" aria-hidden="true" style="width:22px;height:22px"><path d="M5 4h4l2 5-2 1a11 11 0 0 0 5 5l1-2 5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"/></svg><svg class="i" viewBox="0 0 24 24" aria-hidden="true" style="width:22px;height:22px"><circle cx="12" cy="5" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="12" cy="19" r="1.3"/></svg></div>
+    <div style="flex:1;padding:24px;display:flex;flex-direction:column;gap:8px;overflow:hidden">
+      <div style="text-align:center;font-size:12px;color:#62646f;margin-bottom:6px">Bugün</div>
+      <div class="msg" style="background:#fff;align-self:flex-start">Merhaba! Yolladığın portre prompt'unu denedim.</div>
+      <div class="msg" style="background:#fff;align-self:flex-start">Sonuç gerçekten çok iyi, ışık tam istediğim gibi.</div>
+      <div class="msg" style="background:#3b5be2;color:#fff;align-self:flex-end">Süper, sevindim! Ayar paketini de ekleyeyim.</div>
+      <div class="msg" style="background:#fff;align-self:flex-start;display:flex;gap:12px;align-items:center;max-width:340px"><i style="width:56px;height:56px;border-radius:12px;background:linear-gradient(160deg,#e08a5b,#8a3a1a);display:block;flex:none"></i><span><b style="font-size:14px">Portre için sıcak ışık paketi</b><br><small style="color:#62646f">Ayar paketi</small></span></div>
+    </div>
+    <div style="height:76px;background:#fff;border-top:1px solid #ececf2;display:flex;align-items:center;gap:10px;padding:0 20px">
+      <div style="width:40px;height:40px;border-radius:50%;background:#f0f0f5;display:flex;align-items:center;justify-content:center"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></div>
+      <div style="flex:1;height:44px;border:1px solid #868899;border-radius:999px;display:flex;align-items:center;padding:0 18px;font-size:15px;color:#62646f;box-sizing:border-box">Mesaj yaz…</div>
+      <div style="width:44px;height:44px;border-radius:50%;background:#3b5be2;color:#fff;display:flex;align-items:center;justify-content:center"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"/></svg></div>
+    </div>
+  </div>
+  <div style="position:absolute;left:96px;bottom:16px;width:380px;background:#fff;border:1px solid #ececf2;border-radius:16px;padding:12px 14px;font-size:12px;line-height:1.5;color:#464854;box-shadow:0 6px 20px -8px rgba(18,18,24,.16)"><b style="color:#121218">Fikir 2.</b> Liste başlığında arama + oluştur tek satır, altında tam genişlik segment (Tümü · Kişisel · Topluluk · Ekip). Çip satırı kalkar; satırlarda EKİP / TOPLULUK etiketi korunur. Ray etiketli ve 84 px kalır.</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

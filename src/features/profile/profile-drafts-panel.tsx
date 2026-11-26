@@ -147,7 +147,7 @@ export function ProfileDraftsPanel({ userId }: { userId: string }) {
                 <div className="flex flex-wrap items-center gap-2">
                   <Link
                     href={row.href}
-                    className="inline-flex min-h-9 items-center rounded-md bg-primary px-3 text-small font-medium text-primary-foreground hover:bg-primary-hover"
+                    className="inline-flex min-h-9 items-center rounded-sm bg-primary px-3 text-small font-medium text-primary-foreground hover:bg-primary-hover"
                   >
                     {t("draft.continue")}
                   </Link>

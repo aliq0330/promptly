@@ -69,7 +69,7 @@ export default function CallSettingsPage() {
 
   if (loading || !user) return null;
   const current = settings ?? DEFAULT_CALL_SETTINGS;
-  const select = "h-11 w-full rounded-md border border-(--p-control-border) bg-surface px-3 text-small text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary";
+  const select = "h-11 w-full rounded-sm border border-(--p-control-border) bg-surface px-3 text-small text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus";
   const labelsKnown = [...mics, ...cameras, ...speakers].some((d) => d.label);
   const picker = (id: string, title: string, list: MediaDeviceInfo[], value: string | null, kind: "mic" | "camera" | "speaker", fallback: string) =>
     list.length > 0 && (

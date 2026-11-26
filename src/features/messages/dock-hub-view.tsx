@@ -29,7 +29,7 @@ import { RoomFormModal } from "./rooms/room-form-modal";
 import { RoomIconTile } from "./rooms/room-icon";
 import { useCommunityRooms } from "./rooms/use-community-rooms";
 
-const TAG_CLASS = "shrink-0 rounded-full bg-surface-soft px-2 py-0.5 text-caption font-semibold text-text-muted";
+const TAG_CLASS = "shrink-0 rounded-xs bg-surface-soft px-2 py-0.5 text-caption font-semibold text-text-muted";
 const mutedScopeOf = (channel: TeamChannel) => channel.muteScope ?? (channel.muted ? "channel" : null);
 
 /** Dock'taki kanal/oda listesinin satırı (arama bunun adına ve önizlemesine bakar). */
@@ -96,7 +96,7 @@ function DockChannelList({
         onMinimize={dock.minimize}
       >
         <span className="min-w-0 pl-1" data-dock-hub-title="">
-          <span className="block truncate font-display text-h3 font-extrabold leading-tight tracking-[-0.02em] text-text">{title}</span>
+          <span className="block truncate font-display text-h3 font-extrabold leading-tight text-text">{title}</span>
           <span className="block truncate text-caption text-text-muted">{subtitle}</span>
         </span>
       </DockHeader>
@@ -109,7 +109,7 @@ function DockChannelList({
           onChange={(event) => setQuery(event.target.value)}
           placeholder={searchLabel}
           data-dock-search=""
-          className="h-10 w-full rounded-full border border-border-soft bg-surface-soft pl-10 pr-3 text-small text-text transition-colors duration-200 ease-soft placeholder:text-text-muted hover:border-border-strong focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15"
+          className="h-10 w-full rounded-sm border border-border-soft bg-surface-soft pl-10 pr-3 text-small text-text transition-colors duration-200 ease-soft placeholder:text-text-muted hover:border-border-strong focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15"
         />
       </label>
       <div className="min-h-0 flex-1 overflow-y-auto pt-2" data-dock-hub="">

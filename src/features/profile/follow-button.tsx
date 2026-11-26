@@ -19,7 +19,7 @@ const SIZE_CLASSES: Record<"sm" | "md", string> = {
  * Deliberately smaller than a normal button, so it is flagged `data-small-target` and grows its touch area with `tap-area`.
  */
 const ART_CLASS =
-  "tap-area inline-flex h-7 items-center justify-center gap-1 rounded-full border border-on-art-faint bg-transparent px-2.5 text-caption font-semibold text-on-art transition-colors duration-200 hover:bg-art-chip focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-on-art disabled:opacity-60";
+  "tap-area inline-flex h-7 items-center justify-center gap-1 rounded-sm border border-on-art-faint bg-transparent px-2.5 text-caption font-semibold text-on-art transition-colors duration-200 hover:bg-art-chip focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-on-art disabled:opacity-60";
 
 interface FollowButtonViewProps {
   isFollowing: boolean;
@@ -61,7 +61,7 @@ export function FollowButtonView({ isFollowing, toggle, canFollow, loading, size
         className={cn(
           tone === "art"
             ? ART_CLASS
-            : cn("inline-flex items-center justify-center rounded-full bg-primary font-semibold text-primary-foreground transition-colors duration-200 hover:bg-primary-hover", SIZE_CLASSES[size]),
+            : cn("inline-flex items-center justify-center rounded-sm bg-primary font-semibold text-primary-foreground transition-colors duration-200 hover:bg-primary-hover", SIZE_CLASSES[size]),
           className,
         )}
       >

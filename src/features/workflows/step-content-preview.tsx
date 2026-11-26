@@ -74,7 +74,7 @@ export function StepPreviewBody({ step }: { step: WorkflowStep }) {
         {image ? (
           <StorageImg src={image} alt="" className="h-16 w-16 shrink-0 rounded-md border border-border-soft object-cover" />
         ) : (
-          <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-md bg-primary-soft text-primary">
+          <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-md bg-primary-soft text-primary-text">
             <Icon size={24} />
           </span>
         )}
@@ -108,7 +108,7 @@ export function StepPreviewBody({ step }: { step: WorkflowStep }) {
       )}
 
       {ref.published && (
-        <Link href={ref.href} className="inline-flex items-center gap-1.5 text-label font-medium text-primary hover:underline">
+        <Link href={ref.href} className="inline-flex items-center gap-1.5 text-label font-medium text-primary-text hover:underline">
           <ArrowUpRight size={16} />
           {t("workflow.flowOpen")}
         </Link>

@@ -37,7 +37,7 @@ export function HomeRail() {
 function RailCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="rounded-xl bg-surface-soft p-4">
-      <h2 className="mb-3 font-display text-h3 font-bold tracking-[-0.02em] text-text">{title}</h2>
+      <h2 className="mb-3 font-display text-h3 font-bold text-text">{title}</h2>
       {children}
     </section>
   );

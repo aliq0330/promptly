@@ -8,7 +8,7 @@ import { buttonClassName } from "@/components/ui/button";
 import type { Prompt } from "@/types";
 
 /** The quiet gray buttons next to the joined pill — same height as the pill, no border. */
-const SOFT = "h-11 flex-1 bg-surface-soft px-4 text-label text-text hover:bg-border-soft sm:flex-none [&_svg]:text-primary";
+const SOFT = "h-11 flex-1 bg-surface-soft px-4 text-label text-text hover:bg-border-soft sm:flex-none [&_svg]:text-primary-text";
 
 /**
  * The actions under a prompt's text (docs/history/229-*): ONE joined primary pill — Kopyala | Çalıştır (both hand the text out of Promptly) —

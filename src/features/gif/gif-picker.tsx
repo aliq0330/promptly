@@ -119,7 +119,7 @@ export function GifPicker({ onPick, onClose }: { onPick: (gif: GifItem) => void;
                 type="button"
                 onClick={() => setInput("")}
                 aria-label={t("gif.clearSearch")}
-                className="absolute right-1.5 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full text-text-muted hover:bg-surface-soft hover:text-text"
+                className="absolute right-1.5 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-sm text-text-muted hover:bg-surface-soft hover:text-text"
               >
                 <X size={16} aria-hidden />
               </button>
@@ -176,7 +176,7 @@ export function GifPicker({ onPick, onClose }: { onPick: (gif: GifItem) => void;
                         aria-label={t("gif.pickAria", { title: gif.title || t("gif.untitled") })}
                         data-gif-id={gif.id}
                         style={{ aspectRatio: `${gif.width} / ${gif.height}` }}
-                        className="relative block w-full overflow-hidden rounded-xl bg-surface-soft transition-transform active:scale-[0.97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                        className="relative block w-full overflow-hidden rounded-xl bg-surface-soft transition-transform active:scale-[0.97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
                       >
                         {/* eslint-disable-next-line @next/next/no-img-element -- GIPHY'nin kendi adresi; dış hareketli görsel */}
                         <img src={reduced ? gif.stillUrl : gif.previewUrl} alt="" loading="lazy" draggable={false} className="h-full w-full object-cover" />

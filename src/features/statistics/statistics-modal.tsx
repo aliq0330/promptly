@@ -110,7 +110,7 @@ export function StatisticsModal({ target, onClose }: { target: StatisticsTarget;
             type="button"
             onClick={onClose}
             aria-label={t("common.close")}
-            className="flex h-11 w-11 items-center justify-center rounded-full bg-surface-soft text-text transition-colors hover:bg-border-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            className="flex h-11 w-11 items-center justify-center rounded-sm bg-surface-soft text-text transition-colors hover:bg-border-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
           >
             <X size={20} />
           </button>
@@ -129,8 +129,8 @@ export function StatisticsModal({ target, onClose }: { target: StatisticsTarget;
                 aria-label={`${t(KIND_META[kind].tab)} ${formatCount(totals[kind])}`}
                 onClick={() => selectTab(kind)}
                 className={cn(
-                  "flex min-w-0 flex-col items-start gap-0.5 rounded-lg border-[1.5px] px-2 pb-2 pt-2.5 text-left transition-colors duration-200 ease-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:px-4 sm:pt-3",
-                  selected ? "border-primary bg-primary-soft text-primary" : "border-transparent bg-surface-soft text-text-secondary hover:bg-border-soft",
+                  "flex min-w-0 flex-col items-start gap-0.5 rounded-lg border-[1.5px] px-2 pb-2 pt-2.5 text-left transition-colors duration-200 ease-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus sm:px-4 sm:pt-3",
+                  selected ? "border-primary bg-primary-soft text-primary-text" : "border-transparent bg-surface-soft text-text-secondary hover:bg-border-soft",
                 )}
               >
                 <Icon size={16} aria-hidden />

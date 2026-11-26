@@ -150,7 +150,7 @@ export function OwnerActivitySheet({ story, initialTab, onClose, onLeave }: { st
               aria-selected={tab === item.key}
               onClick={() => setTab(item.key)}
               className={cn(
-                "min-h-9 rounded-full px-3 text-label font-medium transition-colors",
+                "min-h-9 rounded-sm px-3 text-label font-medium transition-colors",
                 tab === item.key ? "bg-primary text-primary-foreground" : "bg-surface-soft text-text-secondary hover:text-text",
               )}
             >
@@ -193,7 +193,7 @@ export function OwnerActivitySheet({ story, initialTab, onClose, onLeave }: { st
                           onClick={() => void block(row.user)}
                           aria-label={t("stories.viewers.block", { name: row.user.displayName })}
                           title={t("stories.viewers.block", { name: row.user.displayName })}
-                          className="flex h-9 w-9 items-center justify-center rounded-full text-text-muted hover:bg-surface-soft hover:text-danger"
+                          className="flex h-9 w-9 items-center justify-center rounded-sm text-text-muted hover:bg-surface-soft hover:text-danger"
                         >
                           <Ban size={16} aria-hidden />
                         </button>
@@ -273,7 +273,7 @@ export function OwnerActivitySheet({ story, initialTab, onClose, onLeave }: { st
                         onLeave();
                         router.push(`/stories/create?story=${story.id}&answer=${answer.id}`);
                       }}
-                      className="inline-flex min-h-9 items-center gap-1 rounded-full px-2 font-semibold text-primary hover:bg-primary-soft"
+                      className="inline-flex min-h-9 items-center gap-1 rounded-sm px-2 font-semibold text-primary-text hover:bg-primary-soft"
                     >
                       <Share2 size={12} aria-hidden /> {t("stories.question.shareAnswer")}
                     </button>
@@ -443,7 +443,7 @@ export function AddToHighlightSheet({ storyId, onClose, onDone }: { storyId: str
                     type="button"
                     disabled={busy || already}
                     onClick={() => void run(() => addStoryToHighlight(highlight.id, storyId), t("stories.highlight.added", { title: highlight.title }))}
-                    className="flex min-h-11 w-full items-center justify-between gap-2 rounded-md px-3 py-2 text-left text-small hover:bg-surface-soft disabled:opacity-50"
+                    className="flex min-h-11 w-full items-center justify-between gap-2 rounded-sm px-3 py-2 text-left text-small hover:bg-surface-soft disabled:opacity-50"
                   >
                     <span className="truncate font-medium">{highlight.title}</span>
                     <span className="text-caption text-text-muted">{already ? t("stories.highlight.alreadyIn") : t("stories.highlight.count", { count: highlight.storyIds.length })}</span>
@@ -467,7 +467,7 @@ export function AddToHighlightSheet({ storyId, onClose, onDone }: { storyId: str
           maxLength={STORY_LIMITS.highlightTitleMax}
           placeholder={t("stories.highlight.newPlaceholder")}
           aria-label={t("stories.highlight.newPlaceholder")}
-          className="min-h-11 min-w-0 flex-1 rounded-md card-flat px-3 text-small text-text focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15"
+          className="min-h-11 min-w-0 flex-1 rounded-sm card-flat px-3 text-small text-text focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15"
         />
         <Button type="submit" disabled={busy || !title.trim()}>
           <Plus size={16} aria-hidden /> {t("stories.highlight.create")}

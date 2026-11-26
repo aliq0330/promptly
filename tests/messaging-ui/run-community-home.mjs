@@ -478,6 +478,11 @@ const touchDrag = async (context, page, { x = 200, from, to, steps = 8 }) => {
   return { release: () => send("touchEnd", to) };
 };
 await scenario("27. Mobil bottom sheet: kısa sürükleme geri yaylanır, uzun sürükleme animasyonla kapatır", async ({ page, context }) => {
+  // Topluluk oluştur telefonda tam ekran sayfadır (docs/history/473-*); alt kart (Modal sheet) mekaniği, oluşturma-sayfası sorgusu devre dışı bırakılarak sınanır.
+  await page.addInitScript(() => {
+    const original = window.matchMedia.bind(window);
+    window.matchMedia = (q) => (q === "(max-width: 767px)" ? { matches: false, media: q, onchange: null, addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {}, dispatchEvent: () => false } : original(q));
+  });
   await page.goto(`${BASE}/communities?tab=posts`);
   await page.getByRole("button", { name: "Topluluk oluştur" }).first().click();
   const dialog = page.getByRole("dialog");
@@ -505,6 +510,11 @@ await scenario("27. Mobil bottom sheet: kısa sürükleme geri yaylanır, uzun s
   void sheet;
 }, { viewport: { width: 390, height: 800 }, hasTouch: true, setup: world });
 await scenario("27a. Mobil bottom sheet basamakları (docs/history/375-*): %75 → yukarı = %90 → aşağı = %75 → aşağı = kapanır", async ({ page, context }) => {
+  // Topluluk oluştur telefonda tam ekran sayfadır (docs/history/473-*); alt kart (Modal sheet) mekaniği, oluşturma-sayfası sorgusu devre dışı bırakılarak sınanır.
+  await page.addInitScript(() => {
+    const original = window.matchMedia.bind(window);
+    window.matchMedia = (q) => (q === "(max-width: 767px)" ? { matches: false, media: q, onchange: null, addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {}, dispatchEvent: () => false } : original(q));
+  });
   await page.goto(`${BASE}/communities?tab=posts`);
   await page.getByRole("button", { name: "Topluluk oluştur" }).first().click();
   const dialog = page.getByRole("dialog");

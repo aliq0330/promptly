@@ -41,12 +41,11 @@ const TEXT_PAIRS: [string, string][] = [
   ...["text", "text-secondary", "text-muted"].flatMap((fg) =>
     ["bg", "surface", "surface-soft", "surface-elevated"].map((bg) => [fg, bg] as [string, string]),
   ),
-  ["primary", "bg"],
-  ["primary", "surface"],
-  ["primary", "surface-soft"],
-  ["primary", "primary-soft"],
-  ["primary-fg", "primary"],
-  ["primary-fg", "primary-hover"],
+  // Vurgu METİN olarak = `--p-primary-text` (referans tasarım dili, docs/history/473-*); `--p-primary` yalnız dolgu/işarettir.
+  ["primary-text", "bg"],
+  ["primary-text", "surface"],
+  ["primary-text", "surface-soft"],
+  ["primary-text", "primary-soft"],
   ["secondary", "bg"],
   ["secondary", "surface"],
   ["secondary", "surface-soft"],
@@ -59,6 +58,16 @@ const TEXT_PAIRS: [string, string][] = [
 ];
 
 for (const [mode, set] of [["açık", light], ["koyu", dark]] as const) {
+  test(`${mode} modda dolu vurgu düğmesi: açıkta referans birebir (≥ 2.9:1), koyuda AA`, () => {
+    // Referans uygulamanın birincil düğmesi beyaz metin + #ff6719'dur (2.9:1); kullanıcı kararıyla birebir alındı. Küçük metin yazan
+    // başka hiçbir çift bu eşiğe düşemez: aşağıdaki test ≥ 4.5:1 ister.
+    const floor = mode === "açık" ? 2.9 : 4.5;
+    for (const fill of ["primary", "primary-hover"]) {
+      const ratio = contrast(set["primary-fg"], set[fill]);
+      assert.ok(ratio >= floor, `${mode}: --p-primary-fg / --p-${fill} = ${ratio.toFixed(2)}:1`);
+    }
+  });
+
   test(`${mode} modda tüm metin/zemin çiftleri WCAG AA (≥ 4.5:1)`, () => {
     for (const [fg, bg] of TEXT_PAIRS) {
       assert.ok(set[fg] && set[bg], `--p-${fg} / --p-${bg} tanımlı değil`);

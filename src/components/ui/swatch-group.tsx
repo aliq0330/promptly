@@ -61,7 +61,7 @@ export function SwatchGroup<K extends string>({
             data-small-target={size === "sm" ? "" : undefined}
             style={option.style}
             className={cn(
-              "relative inline-flex shrink-0 items-center justify-center transition-shadow duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none",
+              "relative inline-flex shrink-0 items-center justify-center transition-shadow duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-surface disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none",
               SIZE_CLASS[size],
               option.className,
               checked && "ring-2 ring-primary ring-offset-2 ring-offset-surface",

@@ -119,7 +119,7 @@ export function SkillLinksEditor({ skillId, ensureDraft, disabled }: { skillId: 
           {links.map((link) => (
             <li key={link.id} className="flex items-center gap-2 rounded-lg card-flat px-3 py-2" data-skill-link={link.linkedSkillId}>
               <span className="min-w-0 flex-1 truncate text-small font-semibold text-text">{skills.get(link.linkedSkillId)?.title ?? t("skill.links.unavailable")}</span>
-              <button type="button" onClick={() => void remove(link)} aria-label={t("skill.links.remove")} className="rounded-full p-1.5 text-text-muted hover:bg-surface-soft hover:text-text">
+              <button type="button" onClick={() => void remove(link)} aria-label={t("skill.links.remove")} className="rounded-sm p-1.5 text-text-muted hover:bg-surface-soft hover:text-text">
                 <X size={16} aria-hidden />
               </button>
             </li>
@@ -173,7 +173,7 @@ function SkillLinkPicker({ excludeIds, onPick, onClose }: { excludeIds: Set<stri
           ) : (
             items.map((skill) => (
               <li key={skill.id}>
-                <button type="button" onClick={() => onPick(skill)} data-skill-link-pick={skill.id} className="flex w-full flex-col rounded-xl px-3 py-2 text-left hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+                <button type="button" onClick={() => onPick(skill)} data-skill-link-pick={skill.id} className="flex w-full flex-col rounded-xl px-3 py-2 text-left hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus">
                   <span className="truncate text-body font-semibold text-text">{skill.title}</span>
                   <span className="truncate text-small text-text-muted">{skill.summary}</span>
                 </button>

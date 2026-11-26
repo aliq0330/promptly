@@ -90,7 +90,7 @@ export function AccessEditor({
                     aria-label={t("tm.access.level")}
                     value={entry.level}
                     onChange={(event) => (event.target.value === "remove" ? remove(entry) : setLevel(entry, event.target.value as TeamSpaceLevel))}
-                    className="h-9 rounded-full border border-border bg-background px-3 text-caption font-semibold"
+                    className="h-9 rounded-sm border border-border bg-background px-3 text-caption font-semibold"
                   >
                     {levelChoices(entry).map((level) => (
                       <option key={level} value={level}>
@@ -106,7 +106,7 @@ export function AccessEditor({
                         aria-label={t("tm.access.level")}
                         value={entry.level}
                         onChange={(event) => setLevel(entry, event.target.value as TeamSpaceLevel)}
-                        className="h-9 rounded-lg card-inset px-2 text-caption"
+                        className="h-9 rounded-sm card-inset px-2 text-caption"
                       >
                         <option value="edit">{t("tm.access.edit")}</option>
                         <option value="view">{t("tm.access.view")}</option>
@@ -129,7 +129,7 @@ export function AccessEditor({
           onChange={(event) => setQuery(event.target.value)}
           placeholder={spaceVariant ? t("tm.access.addPlaceholder") : t("tm.access.search")}
           aria-label={t("tm.access.search")}
-          className={cn("h-10 w-full border border-border bg-background px-3 text-small", spaceVariant ? "rounded-xl" : "rounded-lg")}
+          className={cn("h-10 w-full border border-border bg-background px-3 text-small", "rounded-sm")}
         />
         <ul className={cn("mt-2 max-h-56 divide-y divide-border-soft overflow-y-auto rounded-lg border border-border-soft", candidatesPeople.length + candidatesGroups.length === 0 && "hidden")}>
           {candidatesGroups.map((group) => (
@@ -141,7 +141,7 @@ export function AccessEditor({
                   <button
                     type="button"
                     onClick={() => add({ type: "group", id: group.id, level: defaultLevel, name: group.name, sub: String(group.memberCount) })}
-                    className="inline-flex h-9 items-center gap-1 rounded-full bg-primary-soft px-3 text-caption font-medium text-primary"
+                    className="inline-flex h-9 items-center gap-1 rounded-sm bg-primary-soft px-3 text-caption font-medium text-primary-text"
                   >
                     <Plus size={12} aria-hidden />
                     {t("tm.access.add")}
@@ -160,7 +160,7 @@ export function AccessEditor({
                   <button
                     type="button"
                     onClick={() => add({ type: "member", id: person.userId, level: roleCanHoldSpaceLevel(person.role as TeamRole, defaultLevel) ? defaultLevel : "edit", name: person.displayName || person.username, username: person.username, sub: person.role })}
-                    className="inline-flex h-9 items-center gap-1 rounded-full bg-primary-soft px-3 text-caption font-medium text-primary"
+                    className="inline-flex h-9 items-center gap-1 rounded-sm bg-primary-soft px-3 text-caption font-medium text-primary-text"
                   >
                     <Plus size={12} aria-hidden />
                     {t("tm.access.add")}

@@ -43,7 +43,7 @@ export function ContributorsPanel({ promptId }: { promptId: string }) {
             <Link href={profileHref(contributor.proposer)} className="group flex items-center gap-3 rounded-md">
               <Avatar src={contributor.proposer.avatarUrl} alt={contributor.proposer.displayName} size={32} />
               <span className="min-w-0 leading-tight">
-                <span className="block truncate text-label font-medium text-text group-hover:text-primary">
+                <span className="block truncate text-label font-medium text-text group-hover:text-primary-text">
                   {contributor.proposer.displayName}
                 </span>
                 <span className="block truncate text-caption text-text-muted">

@@ -113,7 +113,7 @@ export function DeletePromptDialog({
         )}
 
         <div className="flex gap-3 pt-1">
-          <Button type="button" variant="ghost" size="lg" className="h-12 flex-1 rounded-full bg-surface-soft hover:bg-border-soft" onClick={onClose} disabled={deleting}>
+          <Button type="button" variant="ghost" size="lg" className="h-12 flex-1 rounded-sm bg-surface-soft hover:bg-border-soft" onClick={onClose} disabled={deleting}>
             {t("common.cancel")}
           </Button>
           <Button type="button" variant="danger" size="lg" className="h-12 flex-1 rounded-full" onClick={onConfirm} disabled={deleting || impact === undefined} data-delete-prompt-confirm="">

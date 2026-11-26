@@ -550,7 +550,7 @@ export function StoryViewer({ groups, startGroupIndex, startStoryId, onClose }: 
           type="button"
           onClick={goPrev}
           aria-label={t("stories.viewer.previous")}
-          className="absolute left-4 top-1/2 z-10 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-story-white/10 text-story-white hover:bg-story-white/20 sm:flex"
+          className="absolute left-4 top-1/2 z-10 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-sm bg-story-white/10 text-story-white hover:bg-story-white/20 sm:flex"
         >
           <ChevronLeft size={24} aria-hidden />
         </button>
@@ -558,7 +558,7 @@ export function StoryViewer({ groups, startGroupIndex, startStoryId, onClose }: 
           type="button"
           onClick={goNext}
           aria-label={t("stories.viewer.next")}
-          className="absolute right-4 top-1/2 z-10 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-story-white/10 text-story-white hover:bg-story-white/20 sm:flex"
+          className="absolute right-4 top-1/2 z-10 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-sm bg-story-white/10 text-story-white hover:bg-story-white/20 sm:flex"
         >
           <ChevronRight size={24} aria-hidden />
         </button>
@@ -611,7 +611,7 @@ export function StoryViewer({ groups, startGroupIndex, startStoryId, onClose }: 
                           return next;
                         });
                       }}
-                      className="rounded-full bg-story-white/15 px-4 py-2 text-small font-semibold">
+                      className="rounded-sm bg-story-white/15 px-4 py-2 text-small font-semibold">
                       {t("common.retry")}
                     </button>
                   </div>
@@ -629,7 +629,7 @@ export function StoryViewer({ groups, startGroupIndex, startStoryId, onClose }: 
             {story && mediaFailed && (
               <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-story-scrim px-6 text-center" data-story-interactive>
                 <p role="alert" className="text-small">{t("stories.error.media")}</p>
-                <button type="button" onClick={() => setMediaAttempt((n) => n + 1)} className="inline-flex min-h-10 items-center gap-1.5 rounded-full bg-story-white/15 px-4 text-small font-semibold">
+                <button type="button" onClick={() => setMediaAttempt((n) => n + 1)} className="inline-flex min-h-10 items-center gap-1.5 rounded-sm bg-story-white/15 px-4 text-small font-semibold">
                   <RefreshCw size={16} aria-hidden /> {t("common.retry")}
                 </button>
               </div>
@@ -666,7 +666,7 @@ export function StoryViewer({ groups, startGroupIndex, startStoryId, onClose }: 
                   <Link
                     href={communityHref(story.communityId)}
                     onClick={close}
-                    className="inline-flex min-w-0 max-w-[40%] items-center gap-1 rounded-full bg-story-white/15 px-2 py-1 text-caption font-medium"
+                    className="inline-flex min-w-0 max-w-[40%] items-center gap-1 rounded-sm bg-story-white/15 px-2 py-1 text-caption font-medium"
                   >
                     <Users size={12} className="shrink-0" aria-hidden />
                     <span className="truncate">{story.communityName ?? t("stories.viewer.community")}</span>
@@ -754,7 +754,7 @@ export function StoryViewer({ groups, startGroupIndex, startStoryId, onClose }: 
           )}
 
           {notice && (
-            <p role="status" className="pointer-events-none absolute inset-x-0 top-24 z-20 mx-auto w-fit max-w-[85%] rounded-full bg-story-black/80 px-4 py-2 text-center text-small">
+            <p role="status" className="pointer-events-none absolute inset-x-0 top-24 z-20 mx-auto w-fit max-w-[85%] rounded-sm bg-story-black/80 px-4 py-2 text-center text-small">
               {notice}
             </p>
           )}
@@ -844,12 +844,12 @@ export function StoryViewer({ groups, startGroupIndex, startStoryId, onClose }: 
               <button
                 type="button"
                 onClick={() => setSheet({ kind: "activity", tab: "viewers" })}
-                className="inline-flex min-h-11 items-center gap-2 rounded-full px-3 text-small font-semibold hover:bg-story-white/10"
+                className="inline-flex min-h-11 items-center gap-2 rounded-sm px-3 text-small font-semibold hover:bg-story-white/10"
               >
                 <Eye size={20} aria-hidden /> {t("stories.viewers.button", { count: story.viewerCount })}
                 {story.reactionCount > 0 && <span className="text-story-white/70">· {t("stories.viewers.reactions", { count: story.reactionCount })}</span>}
               </button>
-              <button type="button" onClick={() => setSheet({ kind: "highlight" })} className="inline-flex min-h-11 items-center gap-1.5 rounded-full px-3 text-small font-semibold hover:bg-story-white/10">
+              <button type="button" onClick={() => setSheet({ kind: "highlight" })} className="inline-flex min-h-11 items-center gap-1.5 rounded-sm px-3 text-small font-semibold hover:bg-story-white/10">
                 <Highlighter size={16} aria-hidden /> {t("stories.highlight.short")}
               </button>
             </div>
@@ -867,7 +867,7 @@ export function StoryViewer({ groups, startGroupIndex, startStoryId, onClose }: 
                 close();
                 requireAuth("comment");
               }}
-              className="mx-auto flex min-h-11 w-full max-w-md items-center justify-center rounded-full border border-story-white/40 px-4 text-small"
+              className="mx-auto flex min-h-11 w-full max-w-md items-center justify-center rounded-sm border border-story-white/40 px-4 text-small"
             >
               {t("stories.reply.signIn")}
             </button>
@@ -889,7 +889,7 @@ function IconButton({ label, onClick, children, pressed, expanded }: { label: st
       title={label}
       aria-pressed={pressed}
       aria-expanded={expanded}
-      className="flex h-10 w-10 items-center justify-center rounded-full text-story-white hover:bg-story-white/15"
+      className="flex h-10 w-10 items-center justify-center rounded-sm text-story-white hover:bg-story-white/15"
     >
       {children}
     </button>
@@ -981,7 +981,7 @@ function ReplyBar({
             aria-label={reaction === emoji ? t("stories.reactions.remove", { emoji }) : t("stories.reactions.add", { emoji })}
             onClick={() => void react(emoji)}
             className={cn(
-              "flex h-10 w-10 items-center justify-center rounded-full text-xl transition-transform duration-200 ease-soft active:scale-90",
+              "flex h-10 w-10 items-center justify-center rounded-sm text-xl transition-transform duration-200 ease-soft active:scale-90",
               reaction === emoji ? "bg-story-white/25 ring-2 ring-story-white/70" : "hover:bg-story-white/10",
             )}
           >
@@ -1004,13 +1004,13 @@ function ReplyBar({
           onBlur={() => onFocusChange(false)}
           placeholder={t("stories.reply.placeholder", { name: story.author?.displayName ?? "" })}
           aria-label={t("stories.reply.label")}
-          className="min-h-11 min-w-0 flex-1 rounded-full border border-story-white/40 bg-transparent px-4 text-small text-story-white placeholder:text-story-white/60 focus:border-story-white focus:outline-none"
+          className="min-h-11 min-w-0 flex-1 rounded-sm border border-story-white/40 bg-transparent px-4 text-small text-story-white placeholder:text-story-white/60 focus:border-story-white focus:outline-none"
         />
         <button
           type="submit"
           disabled={!text.trim() || sending}
           aria-label={t("stories.reply.send")}
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-story-white text-story-black disabled:opacity-50"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-sm bg-story-white text-story-black disabled:opacity-50"
         >
           {sending ? <Loader2 size={16} className="animate-spin" aria-hidden /> : <Send size={16} aria-hidden />}
         </button>

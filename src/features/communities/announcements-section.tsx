@@ -124,7 +124,7 @@ export function AnnouncementsSection({
               )}
               <div className="flex items-start justify-between gap-3">
                 <h3 className="flex min-w-0 items-center gap-1.5 break-words text-small font-semibold text-text">
-                  {item.pinned && !highlight && <Pin size={12} className="shrink-0 text-primary" aria-label={t("communities.announcements.pinned")} />}
+                  {item.pinned && !highlight && <Pin size={12} className="shrink-0 text-primary-text" aria-label={t("communities.announcements.pinned")} />}
                   <span className="min-w-0">{item.title}</span>
                 </h3>
                 {canManage && (
@@ -132,7 +132,7 @@ export function AnnouncementsSection({
                     <button type="button" onClick={() => setEditing(item)} aria-label={t("common.edit")} className={iconButtonClassName(false, "h-9 w-9 rounded-md")}>
                       <Pencil size={16} />
                     </button>
-                    <button type="button" onClick={() => setDeleting(item)} aria-label={t("common.delete")} className="flex h-9 w-9 items-center justify-center rounded-md text-text-muted hover:bg-danger-soft hover:text-danger">
+                    <button type="button" onClick={() => setDeleting(item)} aria-label={t("common.delete")} className="flex h-9 w-9 items-center justify-center rounded-sm text-text-muted hover:bg-danger-soft hover:text-danger">
                       <TrashIcon size={16} />
                     </button>
                   </div>

@@ -132,7 +132,7 @@ export function TeamApprovalsSection({ ctx }: { ctx: TeamCtx }) {
               onClick={() => setProject(entry.id)}
               aria-pressed={project === entry.id}
               data-board-project={entry.id}
-              className={cn("h-9 rounded-full border px-4 text-small font-semibold", project === entry.id ? "border-transparent bg-primary-soft text-primary" : "border-border-soft bg-surface text-text-secondary hover:bg-surface-soft")}
+              className={cn("h-9 rounded-sm border px-4 text-small font-semibold", project === entry.id ? "border-transparent bg-primary-soft text-primary-text" : "border-border-soft bg-surface text-text-secondary hover:bg-surface-soft")}
             >
               {entry.title}
               {entry.count > 0 && <span className="ml-1.5 tabular-nums opacity-70">{entry.count}</span>}
@@ -164,7 +164,7 @@ export function TeamApprovalsSection({ ctx }: { ctx: TeamCtx }) {
         </div>
       ) : (
         <div className="space-y-3" data-board-layout="segments">
-          <div role="group" aria-label={t("tc.appr.statusAria")} className="flex rounded-full bg-surface-soft p-[3px] text-small font-semibold">
+          <div role="group" aria-label={t("tc.appr.statusAria")} className="flex rounded-sm bg-surface-soft p-[3px] text-small font-semibold">
             {(["pending", "changes", "approved"] as const).map((state) => (
               <button
                 key={state}
@@ -172,7 +172,7 @@ export function TeamApprovalsSection({ ctx }: { ctx: TeamCtx }) {
                 onClick={() => setSegment(state)}
                 aria-pressed={segment === state}
                 data-board-segment={state}
-                className={cn("h-11 flex-1 rounded-full px-2", segment === state ? "bg-surface text-text shadow-xs" : "text-text-muted")}
+                className={cn("h-11 flex-1 rounded-sm px-2", segment === state ? "bg-surface text-text shadow-xs" : "text-text-muted")}
               >
                 {t(COLUMN[state].short)} {cardsOf(state).length}
               </button>
@@ -197,7 +197,7 @@ function BoardCard({ teamId, card, state, busy, onApprove, onChanges }: { teamId
         <span className="block text-caption font-semibold text-text-muted">
           {t("tc.appr.proposal")} · {p.fileTitle ?? p.projectTitle}
         </span>
-        <Link href={p.fileId ? projectLink(teamId, p.projectId, { file: p.fileId, item: p.itemId }) : projectLink(teamId, p.projectId, { board: p.spaceId, item: p.itemId })} className="block text-body font-semibold text-text hover:text-primary">
+        <Link href={p.fileId ? projectLink(teamId, p.projectId, { file: p.fileId, item: p.itemId }) : projectLink(teamId, p.projectId, { board: p.spaceId, item: p.itemId })} className="block text-body font-semibold text-text hover:text-primary-text">
           {p.proposedTitle || p.currentTitle || t(kindKey(p.kind))}
         </Link>
         <p className="text-small text-text-secondary">{t("tp.review.proposedBy", { name: p.proposerName ?? "" })}</p>
@@ -213,7 +213,7 @@ function BoardCard({ teamId, card, state, busy, onApprove, onChanges }: { teamId
       <span className="block text-caption font-semibold text-text-muted">
         {item.unitCount > 1 ? t("tc.appr.package", { count: item.unitCount }) : t(kindKey(item.kind))} · {item.fileTitle ?? t("tp.area.projectWide")}
       </span>
-      <Link href={boardItemHref(teamId, item)} className="block text-body font-semibold text-text hover:text-primary" data-board-open>
+      <Link href={boardItemHref(teamId, item)} className="block text-body font-semibold text-text hover:text-primary-text" data-board-open>
         {item.title || t(kindKey(item.kind))}
       </Link>
       <p className="text-small text-text-secondary">
@@ -282,7 +282,7 @@ function ChangesDialog({ busy, onClose, onSubmit }: { busy: boolean; onClose: ()
       <label className="block text-small font-semibold text-text" htmlFor="board-changes-note">
         {t("tp.review.noteLabel")}
       </label>
-      <textarea id="board-changes-note" value={note} onChange={(event) => setNote(event.target.value)} maxLength={500} rows={4} placeholder={t("tp.review.notePlaceholder")} className="mt-2 w-full rounded-lg card-inset px-3 py-2 text-small" />
+      <textarea id="board-changes-note" value={note} onChange={(event) => setNote(event.target.value)} maxLength={500} rows={4} placeholder={t("tp.review.notePlaceholder")} className="mt-2 w-full rounded-sm card-inset px-3 py-2 text-small" />
       {error && (
         <p role="alert" className="mt-2 text-small text-danger">
           {error}

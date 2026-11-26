@@ -56,7 +56,7 @@ export function PinnedMessagesBar({
           aria-label={`${t("chat.pin.barLabel")}: ${messagePreviewText(current.message, t)}`}
           className="group flex min-h-9 min-w-0 flex-1 items-center gap-2 rounded-xl py-1 pl-2 pr-1 text-left transition-colors hover:bg-surface-soft"
         >
-          <Pin size={16} className="shrink-0 text-primary" aria-hidden />
+          <Pin size={16} className="shrink-0 text-primary-text" aria-hidden />
           <span className="flex min-w-0 items-baseline gap-1.5 text-small">
             <span className="shrink-0 font-semibold text-text">
               {t("chat.pin.barLabel")}
@@ -92,7 +92,7 @@ export function PinnedMessagesBar({
           <DialogShell className="flex max-h-[85dvh] w-full max-w-lg flex-col rounded-lg bg-surface shadow-pop">
             <div className="flex items-center justify-between gap-3 px-5 pb-2 pt-5">
               <h2 id="pinned-list-title" className="flex items-center gap-2 text-body font-semibold text-text">
-                <Pin size={16} className="text-primary" aria-hidden /> {t("chat.pin.listTitle")}
+                <Pin size={16} className="text-primary-text" aria-hidden /> {t("chat.pin.listTitle")}
               </h2>
               <button
                 type="button"

@@ -16,7 +16,7 @@ export function LegalDocumentView({ document }: { document: LegalDocument }) {
       <header className="space-y-3">
         <h1 className="font-display text-h1 text-text">{document.title[language]}</h1>
         <p className="text-caption text-text-muted">{document.updated[language]}</p>
-        <p className="text-body text-text-secondary">{document.intro[language]}</p>
+        <p className="font-serif text-h3 text-text-secondary">{document.intro[language]}</p>
       </header>
 
       {document.sections.map((section, index) => (
@@ -25,9 +25,9 @@ export function LegalDocumentView({ document }: { document: LegalDocument }) {
           {section.blocks.map((block, blockIndex) => (
             <Fragment key={blockIndex}>
               {block.type === "p" ? (
-                <p className="break-words text-body leading-relaxed text-text-secondary">{block.text[language]}</p>
+                <p className="break-words font-serif text-h3 leading-relaxed text-text-secondary">{block.text[language]}</p>
               ) : (
-                <ul className="list-disc space-y-2 pl-5 text-body leading-relaxed text-text-secondary marker:text-text-muted">
+                <ul className="list-disc space-y-2 pl-5 font-serif text-h3 leading-relaxed text-text-secondary marker:text-text-muted">
                   {block.items[language].map((item, itemIndex) => (
                     <li key={itemIndex} className="break-words">
                       {item}
@@ -44,7 +44,7 @@ export function LegalDocumentView({ document }: { document: LegalDocument }) {
         <h2 className="text-h3 text-text">{t("legal.contactTitle")}</h2>
         <p className="text-body text-text-secondary">
           {t("legal.contactBody")}{" "}
-          <a href={`mailto:${LEGAL_CONTACT_EMAIL}`} className="font-medium text-primary underline underline-offset-2 hover:no-underline">
+          <a href={`mailto:${LEGAL_CONTACT_EMAIL}`} className="font-medium text-primary-text underline underline-offset-2 hover:no-underline">
             {LEGAL_CONTACT_EMAIL}
           </a>
         </p>

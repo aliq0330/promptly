@@ -311,7 +311,7 @@ export function NotificationSettings() {
         <div className="flex items-center gap-3">
           <Clock size={20} className="text-text-secondary" aria-hidden />
           <span className="flex-1 text-small text-text" data-snoozed-count="">{t("nc.settings.snoozedCount", { count: snoozedCount })}</span>
-          <Link href="/notifications?view=snoozed" className="text-small font-semibold text-primary hover:underline">
+          <Link href="/notifications?view=snoozed" className="text-small font-semibold text-primary-text hover:underline">
             {t("nc.settings.snoozedOpen")}
           </Link>
         </div>

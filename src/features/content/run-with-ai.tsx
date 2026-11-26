@@ -64,8 +64,8 @@ export function RunButton({
           setOpen(true);
         }}
         className={cn(
-          "relative z-10 inline-flex shrink-0 items-center gap-1.5 rounded-sm border border-primary/30 bg-primary-soft font-medium text-primary transition-colors duration-200 ease-soft hover:border-primary/60",
-          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50",
+          "relative z-10 inline-flex shrink-0 items-center gap-1.5 rounded-sm border border-primary/30 bg-primary-soft font-medium text-primary-text transition-colors duration-200 ease-soft hover:border-primary/60",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50",
           size === "sm" ? "h-9 px-2 text-caption" : "h-9 px-3 text-label",
           segment && "h-11 flex-1 justify-center gap-2 rounded-none border-0 bg-primary-hover px-5 font-semibold text-primary-foreground hover:bg-primary-hover hover:brightness-95 focus-visible:ring-inset focus-visible:ring-offset-0",
           className,
@@ -164,7 +164,7 @@ function RunModal({
                         onClick={() => handleToolClick(tool.id)}
                         className={cn(
                           "flex min-h-11 w-full items-center gap-3 rounded-md border px-3 py-2 text-left transition-colors duration-200 ease-soft disabled:opacity-50",
-                          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+                          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus",
                           selected ? "border-primary bg-primary-soft" : "border-border-soft bg-surface hover:border-border hover:bg-surface-soft",
                         )}
                       >
@@ -177,7 +177,7 @@ function RunModal({
                             </span>
                           )}
                         </span>
-                        {selected ? <Check size={16} className="shrink-0 text-primary" /> : !preview && <ExternalLink size={16} className="shrink-0 text-text-muted" aria-hidden />}
+                        {selected ? <Check size={16} className="shrink-0 text-primary-text" /> : !preview && <ExternalLink size={16} className="shrink-0 text-text-muted" aria-hidden />}
                       </button>
                     </li>
                   );
@@ -188,7 +188,7 @@ function RunModal({
                   type="button"
                   onClick={() => setShowMore((prev) => !prev)}
                   aria-expanded={showMore}
-                  className="mt-2 inline-flex items-center gap-1 text-label font-medium text-primary hover:underline"
+                  className="mt-2 inline-flex items-center gap-1 text-label font-medium text-primary-text hover:underline"
                 >
                   <ChevronDown size={16} className={cn("transition-transform", showMore && "rotate-180")} aria-hidden />
                   {showMore ? t("run.fewerTools") : t("run.moreTools")}
@@ -242,7 +242,7 @@ function RunOutcome({
           value={text}
           aria-label={t("run.manualCopyLabel")}
           onFocus={(event) => event.currentTarget.select()}
-          className="prompt-text w-full resize-none rounded-lg card-soft px-3 py-2 text-text-secondary shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
+          className="prompt-text w-full resize-none rounded-sm card-soft px-3 py-2 text-text-secondary shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
         />
       )}
 
@@ -252,7 +252,7 @@ function RunOutcome({
             href={result.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex h-9 items-center gap-1.5 rounded-sm border border-primary/30 bg-primary-soft px-3 text-label font-medium text-primary hover:border-primary/60"
+            className="inline-flex h-9 items-center gap-1.5 rounded-sm border border-primary/30 bg-primary-soft px-3 text-label font-medium text-primary-text hover:border-primary/60"
           >
             <ExternalLink size={16} aria-hidden />
             {t("run.openManually", { tool: toolName })}

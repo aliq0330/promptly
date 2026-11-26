@@ -249,7 +249,7 @@ export function MessageComposer({
   }
 
   const iconButton =
-    "flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-surface-soft hover:text-text focus-visible:outline-2 focus-visible:outline-primary disabled:pointer-events-none disabled:opacity-50";
+    "flex h-9 w-9 shrink-0 items-center justify-center rounded-sm text-text-muted transition-colors hover:bg-surface-soft hover:text-text focus-visible:outline-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-50";
 
   return (
     <form
@@ -283,7 +283,7 @@ export function MessageComposer({
                 type="button"
                 onClick={() => onRemoveImage(image.key)}
                 aria-label={t("messages.removePhoto")}
-                className="tap-area absolute -right-1.5 -top-1.5 flex h-6 w-6 items-center justify-center rounded-full border border-border bg-surface text-text shadow-sm hover:bg-surface-soft focus-visible:outline-2 focus-visible:outline-primary"
+                className="tap-area absolute -right-1.5 -top-1.5 flex h-6 w-6 items-center justify-center rounded-full border border-border bg-surface text-text shadow-sm hover:bg-surface-soft focus-visible:outline-2 focus-visible:outline-focus"
               >
                 <X size={12} aria-hidden />
               </button>
@@ -308,7 +308,7 @@ export function MessageComposer({
           title={t("messages.attach.title")}
           aria-haspopup={hasSheet ? "dialog" : undefined}
           data-composer-plus
-          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-surface text-text transition-colors hover:bg-surface-soft focus-visible:outline-2 focus-visible:outline-primary disabled:pointer-events-none disabled:opacity-50"
+          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-sm bg-surface text-text transition-colors hover:bg-surface-soft focus-visible:outline-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-50"
         >
           <Plus size={24} aria-hidden />
         </button>
@@ -377,7 +377,7 @@ export function MessageComposer({
           disabled={!canSend || disabled}
           aria-label={t("messages.sendMessageAria")}
           title={t("common.send")}
-          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground transition-[opacity,background-color] duration-200 ease-soft hover:bg-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:pointer-events-none disabled:opacity-50"
+          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-sm bg-primary text-primary-foreground transition-[opacity,background-color] duration-200 ease-soft hover:bg-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-50"
         >
           {isSending ? <Loader2 size={20} className="animate-spin motion-reduce:animate-none" aria-hidden /> : <SendArrowIcon size={24} seq={sendSeq} />}
         </button>

@@ -62,7 +62,7 @@ export function ToolRow({ tool, postCount }: { tool: AiTool; postCount: number |
   const { t } = useTranslation();
   return (
     <li className="flex items-center gap-3 rounded-lg card-flat p-3 shadow-card">
-      <Link href={toolHref(tool.id)} className="flex min-w-0 flex-1 items-center gap-3 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+      <Link href={toolHref(tool.id)} className="flex min-w-0 flex-1 items-center gap-3 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus">
         <ToolLogo toolId={tool.id} name={tool.name} size="lg" />
         <span className="min-w-0 leading-tight">
           <span className="block truncate font-semibold text-text">{tool.name}</span>

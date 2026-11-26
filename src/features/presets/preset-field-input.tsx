@@ -46,7 +46,7 @@ function CreateOptionControl({ fieldName: name, onCreate }: { fieldName: string;
         onClick={() => setOpen(true)}
         aria-label={t("presetField.createOptionAria", { name })}
         data-create-option
-        className="inline-flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-dashed border-border-strong px-3 text-label font-medium text-text-secondary transition-colors hover:border-primary hover:bg-primary-soft hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        className="inline-flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-sm border border-dashed border-border-strong px-3 text-label font-medium text-text-secondary transition-colors hover:border-primary hover:bg-primary-soft hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
       >
         <Plus size={16} aria-hidden />
         {t("presetField.createOption")}
@@ -94,7 +94,7 @@ function CreateOptionControl({ fieldName: name, onCreate }: { fieldName: string;
             setOpen(false);
             setText("");
           }}
-          className="grid h-9 w-9 shrink-0 place-items-center rounded-md text-text-muted hover:bg-surface hover:text-text"
+          className="grid h-9 w-9 shrink-0 place-items-center rounded-sm text-text-muted hover:bg-surface hover:text-text"
         >
           <X size={16} aria-hidden />
         </button>
@@ -275,7 +275,7 @@ export function PresetFieldInput({
             aria-label={label}
             value={hex ?? "#3b5be2"}
             onChange={(event) => onChange(event.target.value)}
-            className="h-10 w-14 cursor-pointer rounded-md card-inset p-1"
+            className="h-10 w-14 cursor-pointer rounded-sm card-inset p-1"
             data-field-input={field.id}
           />
           <span className="text-small tabular-nums text-text-secondary">{hex ?? t("presetField.notSet")}</span>

@@ -57,7 +57,7 @@ export function CommentComposerBox({
 
   return (
     <div className={cn("min-w-0 flex-1", className)} data-comment-composer-box="">
-      <div className="rounded-lg border border-border-strong bg-surface transition-[border-color,box-shadow] duration-200 ease-soft focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20">
+      <div className="rounded-lg border border-border-strong bg-surface transition-[border-color,box-shadow] duration-200 ease-soft focus-within:border-focus focus-within:ring-2 focus-within:ring-primary/20">
         <MentionTextarea
           value={value}
           onChange={onChange}

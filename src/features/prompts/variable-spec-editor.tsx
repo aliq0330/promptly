@@ -313,7 +313,7 @@ export function VariableSpecEditor({
                     type="button"
                     onClick={() => removeOption(index)}
                     aria-label={t("variable.optionRemoveAria", { n: index + 1 })}
-                    className="mt-1.5 grid h-9 w-9 shrink-0 place-items-center rounded-md text-text-muted transition-colors hover:bg-danger-soft hover:text-danger"
+                    className="mt-1.5 grid h-9 w-9 shrink-0 place-items-center rounded-sm text-text-muted transition-colors hover:bg-danger-soft hover:text-danger"
                   >
                     <X size={16} />
                   </button>
@@ -332,7 +332,7 @@ export function VariableSpecEditor({
             type="button"
             disabled={spec.options.length >= MAX_OPTIONS}
             onClick={() => setOptions([...spec.options, { label: "", value: "" }])}
-            className="inline-flex items-center gap-1 text-label font-medium text-primary hover:underline disabled:opacity-50"
+            className="inline-flex items-center gap-1 text-label font-medium text-primary-text hover:underline disabled:opacity-50"
           >
             <Plus size={16} /> {t("variable.addOption")}
           </button>
@@ -436,7 +436,7 @@ function OptionMedia({
   onClear: () => void;
 }) {
   const { t } = useTranslation();
-  const linkButton = "inline-flex items-center gap-1 text-label font-medium text-primary hover:underline disabled:opacity-50";
+  const linkButton = "inline-flex items-center gap-1 text-label font-medium text-primary-text hover:underline disabled:opacity-50";
 
   if (option.image) {
     return (
@@ -461,7 +461,7 @@ function OptionMedia({
           value={option.color}
           onChange={(event) => onColor(event.target.value)}
           aria-label={t("variable.optionColorAria", { n })}
-          className="h-10 w-12 cursor-pointer rounded-md card-inset p-1"
+          className="h-10 w-12 cursor-pointer rounded-sm card-inset p-1"
         />
         <span className="font-mono text-caption text-text-muted">{option.color}</span>
         <button type="button" onClick={onClear} className="text-label font-medium text-text-muted hover:text-danger hover:underline">

@@ -132,7 +132,7 @@ export function QuoteSection({
             busy || feedResult?.ok ? "cursor-not-allowed opacity-70" : "cursor-pointer hover:border-border-strong",
           )}
         >
-          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-surface text-primary">
+          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-surface text-primary-text">
             <Home size={16} aria-hidden />
           </span>
           <span className="min-w-0 flex-1">
@@ -188,7 +188,7 @@ export function QuoteSection({
             disabled={Boolean(blockedReason)}
             className="flex w-full items-center gap-3 p-3 text-left transition-colors hover:bg-accent-surface/50 disabled:cursor-not-allowed disabled:hover:bg-transparent"
           >
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-soft text-primary">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-soft text-primary-text">
               <QuoteIcon size={20} />
             </span>
             <span className="min-w-0 flex-1">

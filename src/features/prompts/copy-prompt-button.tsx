@@ -91,16 +91,16 @@ export function CopyPromptButton({
       title={state === "failed" ? t("prompt.copyFailedRetry") : undefined}
       className={cn(
         "relative z-10 inline-flex shrink-0 items-center gap-1.5 rounded-sm border font-medium transition-[background-color,border-color,color] duration-200 ease-soft",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-        size === "sm" ? "h-9 px-2 text-caption" : size === "md" ? "h-9 px-3 text-label" : "h-14 gap-2 rounded-full px-7 text-body font-semibold shadow-md",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+        size === "sm" ? "h-9 px-2 text-caption" : size === "md" ? "h-9 px-3 text-label" : "h-14 gap-2 rounded-sm px-7 text-body font-semibold shadow-md",
         state === "copied"
-          ? "border-primary/30 bg-primary-soft text-primary"
+          ? "border-primary/30 bg-primary-soft text-primary-text"
           : state === "failed"
             ? "border-danger/40 bg-danger/5 text-danger"
             : variant === "primary" || variant === "segment"
               ? "border-primary bg-primary text-primary-foreground hover:bg-primary-hover"
               : variant === "link"
-                ? "border-transparent bg-transparent font-semibold text-primary hover:text-primary-hover"
+                ? "border-transparent bg-transparent font-semibold text-primary-text hover:text-primary-hover"
                 : "border-border-soft bg-surface text-text-secondary hover:border-border hover:text-text",
         variant === "segment" && "h-11 flex-1 justify-center gap-2 rounded-none border-0 px-5 text-label font-semibold focus-visible:ring-inset focus-visible:ring-offset-0",
         className,

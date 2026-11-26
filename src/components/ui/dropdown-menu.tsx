@@ -59,7 +59,7 @@ export function DropdownMenu({
         aria-label={label}
         aria-haspopup="menu"
         aria-expanded={open}
-        className={triggerClassName ?? "flex h-9 w-9 items-center justify-center rounded-md text-text-muted transition-colors hover:bg-surface-soft hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"}
+        className={triggerClassName ?? "flex h-9 w-9 items-center justify-center rounded-sm text-text-muted transition-colors hover:bg-surface-soft hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"}
       >
         {trigger ?? <MoreVertical size={16} />}
       </button>

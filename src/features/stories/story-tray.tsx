@@ -182,7 +182,7 @@ export function StoryTray({ communityId, canAdd = true, className }: { community
       ) : failed && !fromCache ? (
         <p className="flex items-center gap-2 text-caption text-text-muted" role="status">
           {t("stories.tray.failed")}
-          <button type="button" onClick={reload} className="inline-flex min-h-9 items-center gap-1 rounded-full px-2 font-semibold text-primary hover:bg-primary-soft">
+          <button type="button" onClick={reload} className="inline-flex min-h-9 items-center gap-1 rounded-sm px-2 font-semibold text-primary-text hover:bg-primary-soft">
             <RefreshCw size={12} aria-hidden /> {t("common.retry")}
           </button>
         </p>

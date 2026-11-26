@@ -8,7 +8,7 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
 
 export const DOCK_ICON_BUTTON =
-  "flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-text-secondary transition-colors duration-200 ease-soft hover:bg-surface-soft hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-50";
+  "flex h-9 w-9 shrink-0 items-center justify-center rounded-sm text-text-secondary transition-colors duration-200 ease-soft hover:bg-surface-soft hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:opacity-50";
 
 /**
  * Dock panelinin ortak üst şeridi (docs/history/328-*): [geri] başlık … [ek eylemler] [tam sayfada aç] [küçült]. Liste, istekler, sohbet ve taslak görünümleri

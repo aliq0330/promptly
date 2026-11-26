@@ -36,7 +36,7 @@ export function SourceNotes({ notes }: { notes: string[] }) {
         onClick={() => setOpen((prev) => !prev)}
         aria-expanded={open}
         aria-controls={panelId}
-        className="flex min-h-10 w-full items-center gap-2 py-1.5 text-left text-label font-medium text-text transition-colors hover:text-primary"
+        className="flex min-h-10 w-full items-center gap-2 py-1.5 text-left text-label font-medium text-text transition-colors hover:text-primary-text"
       >
         <PenLine size={16} className="shrink-0 text-text-secondary" aria-hidden />
         <span className="min-w-0 truncate">{t("source.heading")}</span>

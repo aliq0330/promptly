@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>Promptly ana sayfa uyarlama</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&amp;family=Bricolage+Grotesque:wght@700;800&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0;font-family:'DM Sans',system-ui,sans-serif;color:#121218}
+.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.it{height:40px;border-radius:22px;display:flex;align-items:center;gap:12px;padding:0 12px;font-size:15px;color:#464854}
+.it.on{background:#eceffd;color:#3b5be2;font-weight:600}
+.grp{font-size:12px;font-weight:600;color:#62646f;padding:0 12px;margin:16px 0 4px}
+.card .art{border-radius:22px;position:relative;overflow:hidden;color:#fff}
+.mono{font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.55}
+.foot{display:flex;align-items:center;gap:8px;padding:10px 4px 0}
+.foot i{width:24px;height:24px;border-radius:50%;background:#cfd0dc;display:block}
+.foot span{font-size:13px;font-weight:500;flex:1}
+.foot svg{color:#62646f}
+.tag{position:absolute;left:14px;bottom:14px;right:14px}
+.tag small{font-size:10px;font-weight:600;letter-spacing:.03em;opacity:.85;display:block}
+.tag b{font-size:15px;line-height:1.25}
+</style>
+</helmet>
+<div style="width:1440px;height:900px;background:#f8f8fb;overflow:hidden;position:relative;display:flex">
+  <div style="width:248px;flex:none;background:#fff;border-right:1px solid #ececf2;padding:0 14px;box-sizing:border-box;display:flex;flex-direction:column">
+    <div style="height:64px;display:flex;align-items:center;gap:10px;padding:0 4px"><i style="width:26px;height:26px;border-radius:8px;background:#3b5be2;display:block"></i><b style="font-family:'Bricolage Grotesque',sans-serif;font-size:20px;font-weight:800;letter-spacing:-.03em">promptly</b></div>
+    <div style="height:44px;border-radius:999px;background:#3b5be2;color:#fff;font-weight:600;font-size:15px;display:flex;align-items:center;justify-content:center;gap:8px;margin:4px 0 12px"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Oluştur</div>
+    <div class="it on"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-8 9 8v10H3z"/></svg>Ana Sayfa</div>
+    <div class="it"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M15 9l-2 6-4 0 2-6z"/></svg>Keşfet</div>
+    <div class="it"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M3 20c0-3.5 3-5.5 6-5.5s6 2 6 5.5M16 5a3.5 3.5 0 0 1 0 7M18 15c2 .5 3 2.2 3 5"/></svg>Topluluklar</div>
+    <p class="grp">Çalışma</p>
+    <div class="it"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="13" width="8" height="8" rx="2"/></svg>Spaces</div>
+    <div class="it"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="9" r="3.5"/><path d="M5 20c0-3.5 3.5-5.5 7-5.5s7 2 7 5.5"/></svg>Ekipler</div>
+    <p class="grp">Kütüphane</p>
+    <div class="it"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10v16l-5-4-5 4z"/></svg>Kaydedilenler</div>
+    <div class="it"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></svg>Yaratıcı paneli</div>
+    <div style="margin-top:auto;padding:12px 0 16px"><div style="border:1px solid #ececf2;border-radius:16px;padding:10px;display:flex;align-items:center;gap:10px"><i style="width:32px;height:32px;border-radius:50%;background:#cfd0dc;display:block"></i><div style="font-size:13px;font-weight:600;flex:1">Sen<div style="font-weight:400;color:#62646f;font-size:12px">@kullanici</div></div><svg class="i" viewBox="0 0 24 24" aria-hidden="true" style="color:#62646f"><path d="M6 15l6-6 6 6"/></svg></div></div>
+  </div>
+  <div style="flex:1;min-width:0;position:relative">
+    <div style="height:64px;display:flex;align-items:center;gap:12px;padding:0 28px;border-bottom:1px solid #ececf2;background:#fff">
+      <div style="flex:1;max-width:460px;height:40px;border:1px solid #868899;border-radius:999px;display:flex;align-items:center;gap:10px;padding:0 16px;color:#62646f;font-size:14px;background:#f8f8fb"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>Prompt, kişi veya araç ara</div>
+      <span style="flex:1"></span>
+      <svg class="i" viewBox="0 0 24 24" aria-hidden="true" style="width:24px;height:24px"><path d="M13 3L4 14h7l-1 7 9-11h-7z"/></svg>
+      <svg class="i" viewBox="0 0 24 24" aria-hidden="true" style="width:24px;height:24px"><path d="M6 16v-5a6 6 0 0 1 12 0v5l2 2H4zM10 21h4"/></svg>
+      <svg class="i" viewBox="0 0 24 24" aria-hidden="true" style="width:24px;height:24px"><path d="M4 5h16v11H9l-5 4z"/></svg>
+    </div>
+    <div style="padding:20px 28px 0;display:flex;gap:28px;align-items:flex-start">
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:6px;border-bottom:1px solid #ececf2;height:44px">
+          <span style="height:44px;display:flex;align-items:center;padding:0 12px;font-size:14px;font-weight:600;border-bottom:2px solid #3b5be2;margin-bottom:-1px">Sana özel</span>
+          <span style="height:44px;display:flex;align-items:center;padding:0 12px;font-size:14px;font-weight:500;color:#62646f">Takip Ettiklerin</span>
+          <span style="margin-left:auto;width:40px;height:40px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#464854"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"/></svg></span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px 16px;margin-top:16px">
+          <div class="card"><div class="art" style="height:300px;background:linear-gradient(160deg,#4b5fd0,#1b2158)"><div class="tag"><small>GÖRSEL PROMPT · GPT Image 1</small><b>Gece yarısı bir şehirde yağmur sonrası yansımalar</b></div></div><div class="foot"><i></i><span>Ada Yılmaz</span><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-8-5-8-11a4.5 4.5 0 0 1 8-2.5A4.5 4.5 0 0 1 20 9c0 6-8 11-8 11z"/></svg><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10v16l-5-4-5 4z"/></svg></div></div>
+          <div class="card"><div class="art" style="height:300px;background:#16151c"><div class="mono" style="padding:18px 18px 70px;color:#c8c8d3">Bir {ürün} için üç farklı kampanya sloganı yaz. Ton: {ton}. Her biri en çok 8 kelime olsun ve eylem çağrısı içersin.</div><div class="tag"><small>METİN PROMPT · Claude</small><b>Kampanya slogan üretici</b></div></div><div class="foot"><i></i><span>Mert Kaya</span><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-8-5-8-11a4.5 4.5 0 0 1 8-2.5A4.5 4.5 0 0 1 20 9c0 6-8 11-8 11z"/></svg><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10v16l-5-4-5 4z"/></svg></div></div>
+          <div class="card"><div class="art" style="height:240px;background:linear-gradient(160deg,#e08a5b,#8a3a1a)"><div class="tag"><small>VİDEO PROMPT · Sora</small><b>Altın saatte sahilde bir drone çekimi</b></div></div><div class="foot"><i></i><span>Selin Er</span><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-8-5-8-11a4.5 4.5 0 0 1 8-2.5A4.5 4.5 0 0 1 20 9c0 6-8 11-8 11z"/></svg><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10v16l-5-4-5 4z"/></svg></div></div>
+          <div class="card"><div class="art" style="height:240px;background:#eceffd;color:#121218"><div style="padding:18px"><div style="display:flex;flex-wrap:wrap;gap:6px"><span style="background:#fff;border-radius:999px;padding:4px 10px;font-size:12px">Işık: yumuşak</span><span style="background:#fff;border-radius:999px;padding:4px 10px;font-size:12px">Lens: 35mm</span><span style="background:#fff;border-radius:999px;padding:4px 10px;font-size:12px">En-boy: 4:5</span></div></div><div class="tag" style="color:#121218"><small>AYAR PAKETİ</small><b>Portre için sıcak ışık paketi</b></div></div><div class="foot"><i></i><span>Can Özer</span><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-8-5-8-11a4.5 4.5 0 0 1 8-2.5A4.5 4.5 0 0 1 20 9c0 6-8 11-8 11z"/></svg><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10v16l-5-4-5 4z"/></svg></div></div>
+        </div>
+      </div>
+      <div style="width:300px;flex:none;display:flex;flex-direction:column;gap:14px">
+        <div style="background:#fff;border:1px solid #ececf2;border-radius:16px;padding:16px"><b style="font-family:'Bricolage Grotesque',sans-serif;font-size:17px">Bu haftanın teması</b><p style="margin:6px 0 12px;font-size:13px;color:#464854;line-height:1.5">Gün batımı portreleri. Prompt paylaş, topluluğa katıl.</p><span style="height:36px;padding:0 16px;border-radius:999px;background:#eceffd;color:#3b5be2;font-weight:600;font-size:13px;display:inline-flex;align-items:center">Katıl</span></div>
+        <div style="background:#fff;border:1px solid #ececf2;border-radius:16px;padding:16px"><b style="font-size:14px">Takip edilecek kişiler</b>
+          <div style="display:flex;align-items:center;gap:10px;margin-top:12px"><i style="width:36px;height:36px;border-radius:50%;background:#cfd0dc;display:block"></i><span style="flex:1;font-size:13px;font-weight:500">Deniz Aras<br><small style="color:#62646f;font-weight:400">128 prompt</small></span><span style="height:32px;padding:0 14px;border-radius:999px;border:1px solid #cfd0dc;font-size:13px;font-weight:600;display:flex;align-items:center">Takip</span></div>
+          <div style="display:flex;align-items:center;gap:10px;margin-top:12px"><i style="width:36px;height:36px;border-radius:50%;background:#cfd0dc;display:block"></i><span style="flex:1;font-size:13px;font-weight:500">Ece Tan<br><small style="color:#62646f;font-weight:400">64 prompt</small></span><span style="height:32px;padding:0 14px;border-radius:999px;border:1px solid #cfd0dc;font-size:13px;font-weight:600;display:flex;align-items:center">Takip</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div style="position:absolute;right:20px;bottom:20px;width:330px;background:#fff;border:1px solid #ececf2;border-radius:16px;padding:12px 14px;font-size:12px;line-height:1.5;color:#464854;box-shadow:0 6px 20px -8px rgba(18,18,24,.16)"><b style="color:#121218">Uyarlama notu.</b> Ana Sayfa referansla zaten uyumlu: tek vurgu, sakin kabuk, kutusuz görsel kart. Bu ekranda yalnız arama alanının odak durumu (fikir 5) ve genel yoğunluk kontrol edildi; yeni bir değişiklik önerilmiyor.</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

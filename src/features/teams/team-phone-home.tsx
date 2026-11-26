@@ -130,7 +130,7 @@ export function TeamPhoneHome({ team, tabs, canInvite, onInvite }: { team: TeamS
           <Link href={teamLink(team.id, "chat")} className={buttonClassName({ variant: "primary", className: "h-11 min-w-0 flex-1 gap-2" })} data-team-open-chat>
             <MessageCircle size={20} aria-hidden />
             <span className="truncate">{t("tm.header.openChat")}</span>
-            {team.unreadCount > 0 && <span className="grid h-6 min-w-6 place-items-center rounded-full bg-white px-1.5 text-caption font-semibold text-primary">{formatUnread(team.unreadCount)}</span>}
+            {team.unreadCount > 0 && <span className="grid h-6 min-w-6 place-items-center rounded-full bg-white px-1.5 text-caption font-semibold text-primary-text">{formatUnread(team.unreadCount)}</span>}
           </Link>
         }
         secondary={
@@ -182,8 +182,8 @@ export function TeamPhoneHome({ team, tabs, canInvite, onInvite }: { team: TeamS
 export function ProjectMini({ teamId, project, sub }: { teamId: string; project: ProjectSummary; sub: string }) {
   return (
     <li>
-      <Link href={projectLink(teamId, project.id)} className="block overflow-hidden rounded-lg card-flat transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary" data-phone-project={project.id}>
-        <span aria-hidden className="grid h-14 place-items-center bg-primary-soft text-primary">
+      <Link href={projectLink(teamId, project.id)} className="block overflow-hidden rounded-lg card-flat transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus" data-phone-project={project.id}>
+        <span aria-hidden className="grid h-14 place-items-center bg-primary-soft text-primary-text">
           <FolderOpen size={24} />
         </span>
         <span className="block px-2.5 py-2 leading-tight">

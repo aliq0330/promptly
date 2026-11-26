@@ -44,7 +44,7 @@ export function AuthShowcase() {
             className="prompt-text flex max-w-sm items-center gap-2 rounded-lg card-soft px-3 py-2 text-text-muted shadow-xs"
             style={{ opacity: 1 - index * 0.25 }}
           >
-            <span className="text-primary">›</span>
+            <span className="text-primary-text">›</span>
             {line}
           </div>
         ))}

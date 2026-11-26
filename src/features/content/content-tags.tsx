@@ -13,7 +13,7 @@ export function ContentTags({ tags, max = 3 }: { tags: Tag[]; max?: number }) {
         <Link
           key={tag.slug}
           href={tagHref(tag)}
-          className="relative z-10 -my-1 inline-flex items-center rounded-xs py-1.5 text-caption font-medium text-text-muted transition-colors hover:text-primary"
+          className="relative z-10 -my-1 inline-flex items-center rounded-xs py-1.5 text-caption font-medium text-text-muted transition-colors hover:text-primary-text"
         >
           #{tag.label}
         </Link>

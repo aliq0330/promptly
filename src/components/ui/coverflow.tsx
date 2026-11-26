@@ -148,7 +148,7 @@ export function Coverflow<T>({
       onFocus={() => setPaused(true)}
       onBlur={() => setPaused(false)}
       data-testid="coverflow"
-      className={cn("relative w-full select-none overflow-hidden outline-none [touch-action:pan-y] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary", className)}
+      className={cn("relative w-full select-none overflow-hidden outline-none [touch-action:pan-y] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-focus", className)}
       style={card ? { perspective: `${Math.round(card.width * 4.2)}px` } : undefined}
     >
       {card && (
@@ -199,7 +199,7 @@ export function Coverflow<T>({
 /** Previous / next buttons for a coverflow, for people who do not swipe or use arrow keys. */
 export function CoverflowArrows({ onPrev, onNext, className }: { onPrev: () => void; onNext: () => void; className?: string }) {
   const { t } = useTranslation();
-  const button = "flex h-9 w-9 items-center justify-center rounded-full border border-border bg-surface text-text transition-colors hover:border-primary hover:text-primary";
+  const button = "flex h-9 w-9 items-center justify-center rounded-sm border border-border bg-surface text-text transition-colors hover:border-primary hover:text-primary-text";
   return (
     <div className={cn("flex shrink-0 gap-1.5", className)}>
       <button type="button" onClick={onPrev} aria-label={t("coverflow.prev")} className={button}>

@@ -137,7 +137,7 @@ export function TeamReviewInbox({ ctx, detail, onChanged }: { ctx: TeamCtx; deta
               type="button"
               onClick={() => setFileFilter(file.id)}
               aria-pressed={fileFilter === file.id}
-              className={cn("h-9 rounded-full border px-3 text-small", fileFilter === file.id ? "border-primary bg-primary-soft font-semibold text-primary" : "border-border-soft bg-surface text-text-secondary")}
+              className={cn("h-9 rounded-sm border px-3 text-small", fileFilter === file.id ? "border-primary bg-primary-soft font-semibold text-primary-text" : "border-border-soft bg-surface text-text-secondary")}
             >
               {file.title}
             </button>
@@ -171,7 +171,7 @@ export function TeamReviewInbox({ ctx, detail, onChanged }: { ctx: TeamCtx; deta
                       {[item.authorName, item.fileTitle ?? t("tp.area.projectWide"), item.submittedAt ? formatRelativeTime(item.submittedAt, language) : null].filter(Boolean).join(" · ")}
                     </span>
                   </span>
-                  {item.unitCount > 1 && <span className="inline-flex h-6 shrink-0 items-center rounded-full bg-surface-soft px-2.5 text-caption font-semibold text-text-secondary">{t("tp.review.packageOf", { count: item.unitCount })}</span>}
+                  {item.unitCount > 1 && <span className="inline-flex h-6 shrink-0 items-center rounded-xs bg-surface-soft px-2.5 text-caption font-semibold text-text-secondary">{t("tp.review.packageOf", { count: item.unitCount })}</span>}
                 </button>
               </li>
             ))}
@@ -199,7 +199,7 @@ export function TeamReviewInbox({ ctx, detail, onChanged }: { ctx: TeamCtx; deta
                   maxLength={500}
                   rows={3}
                   placeholder={t("tp.review.notePlaceholder")}
-                  className="w-full rounded-lg card-inset px-3 py-2 text-small"
+                  className="w-full rounded-sm card-inset px-3 py-2 text-small"
                 />
               </div>
               {error && (
@@ -272,7 +272,7 @@ function ProposalCard({ proposal, busy, onDecide }: { proposal: ReviewQueuePropo
       </div>
       {open && (
         <div className="flex items-center gap-2">
-          <input value={note} onChange={(event) => setNote(event.target.value)} maxLength={500} aria-label={t("tp.review.noteLabel")} placeholder={t("tp.review.notePlaceholder")} className="h-10 min-w-0 flex-1 rounded-lg card-inset px-3 text-small" />
+          <input value={note} onChange={(event) => setNote(event.target.value)} maxLength={500} aria-label={t("tp.review.noteLabel")} placeholder={t("tp.review.notePlaceholder")} className="h-10 min-w-0 flex-1 rounded-sm card-inset px-3 text-small" />
           <Button type="button" size="sm" disabled={busy || !note.trim()} onClick={() => onDecide("changes", note.trim())}>
             {t("tp.review.send")}
           </Button>

@@ -72,7 +72,7 @@ export function SkillInstallSection({ skill, zipFileName }: { skill: Skill; zipF
               <CodeBlock text={step.command} label={skillLabelText(SKILL_COMPAT_LABEL[adapter.id], t)} />
             </div>
             {adapter.docsUrl && (
-              <a href={adapter.docsUrl} target="_blank" rel="noreferrer noopener" className="inline-block text-small font-semibold text-primary hover:underline">
+              <a href={adapter.docsUrl} target="_blank" rel="noreferrer noopener" className="inline-block text-small font-semibold text-primary-text hover:underline">
                 {t(DOCS[adapter.id] ?? "skill.install.docs")} ↗
               </a>
             )}

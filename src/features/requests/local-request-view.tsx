@@ -68,7 +68,7 @@ export function LocalRequestView() {
         </p>
         <Link
           href={DISCOVER_SECTION_HREF.requests}
-          className="inline-flex h-9 items-center rounded-md border border-border px-4 text-small font-medium text-text hover:bg-accent-surface"
+          className="inline-flex h-9 items-center rounded-sm border border-border px-4 text-small font-medium text-text hover:bg-accent-surface"
         >
           {t("request.backToRequests")}
         </Link>
@@ -85,7 +85,7 @@ export function LocalRequestView() {
         </p>
         <Link
           href={DISCOVER_SECTION_HREF.requests}
-          className="inline-flex h-9 items-center rounded-md border border-border px-4 text-small font-medium text-text hover:bg-accent-surface"
+          className="inline-flex h-9 items-center rounded-sm border border-border px-4 text-small font-medium text-text hover:bg-accent-surface"
         >
           {t("request.backToRequests")}
         </Link>

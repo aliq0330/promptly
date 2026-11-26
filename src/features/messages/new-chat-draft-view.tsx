@@ -152,7 +152,7 @@ export function NewChatDraftView({ userId, dock }: { userId: string; dock?: Dock
   }
 
   if (state === "unavailable" || !target) {
-    const backClass = "inline-flex h-9 items-center rounded-lg card-flat px-4 text-small font-medium text-text shadow-xs transition-colors hover:border-border-strong";
+    const backClass = "inline-flex h-9 items-center rounded-sm card-flat px-4 text-small font-medium text-text shadow-xs transition-colors hover:border-border-strong";
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
         <p role="alert" className="mb-4 text-small text-text-secondary">
@@ -186,7 +186,7 @@ export function NewChatDraftView({ userId, dock }: { userId: string; dock?: Dock
           <span className="flex min-w-0 items-center gap-3" data-dock-chat-title="">
             <PresenceAvatar userId={target.id} src={target.avatarUrl} alt={target.displayName} size={34} />
             <span className="min-w-0 leading-tight">
-              <span className="block truncate font-display text-body font-semibold tracking-[-0.01em] text-text">{target.displayName}</span>
+              <span className="block truncate font-display text-body font-semibold text-text">{target.displayName}</span>
               <PresenceStatusText userId={target.id} fallback={`@${target.username}`} showDot={false} className="flex max-w-full text-caption text-text-muted" />
             </span>
           </span>
@@ -197,7 +197,7 @@ export function NewChatDraftView({ userId, dock }: { userId: string; dock?: Dock
           type="button"
           onClick={handleBack}
           aria-label={t("messages.backToListAriaLabel")}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-surface-soft hover:text-text md:hidden"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm text-text-muted transition-colors hover:bg-surface-soft hover:text-text md:hidden"
         >
           <ArrowLeft size={20} />
         </button>
@@ -207,7 +207,7 @@ export function NewChatDraftView({ userId, dock }: { userId: string; dock?: Dock
         >
           <PresenceAvatar userId={target.id} src={target.avatarUrl} alt={target.displayName} size={40} />
           <span className="min-w-0 leading-tight">
-            <span className="block truncate text-small font-semibold tracking-[-0.01em] text-text">{target.displayName}</span>
+            <span className="block truncate text-small font-semibold text-text">{target.displayName}</span>
             <PresenceStatusText userId={target.id} fallback={`@${target.username}`} showDot={false} className="flex max-w-full text-caption text-text-muted" />
           </span>
         </Link>

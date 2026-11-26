@@ -62,7 +62,7 @@ export function DrillHeader({
   onInfo?: () => void;
 }) {
   const { t } = useTranslation();
-  const iconButton = "grid h-11 w-11 shrink-0 place-items-center rounded-full text-text hover:bg-surface/60";
+  const iconButton = "grid h-11 w-11 shrink-0 place-items-center rounded-sm text-text hover:bg-surface/60";
   return (
     <header className={cn("-mx-3 px-2 pb-3 pt-1.5 sm:-mx-5 md:hidden", BAND_TONE[tone ?? "primary"] ?? BAND_TONE.primary)} data-drill-header>
       <div className="flex items-center">
@@ -88,7 +88,7 @@ export function DrillHeader({
             <h1 className="truncate font-display text-h2 font-extrabold leading-tight text-text" data-drill-title>
               {title}
             </h1>
-            {sub && <div className="text-caption font-semibold text-primary">{sub}</div>}
+            {sub && <div className="text-caption font-semibold text-primary-text">{sub}</div>}
           </div>
         </div>
       ) : (

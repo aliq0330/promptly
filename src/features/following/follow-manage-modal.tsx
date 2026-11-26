@@ -75,7 +75,7 @@ export function FollowManageModal({ onClose }: { onClose: () => void }) {
               <ul className="divide-y divide-border-soft">
                 {tags.tags.map((tag) => (
                   <li key={tag.slug} className="flex items-center gap-3 py-3">
-                    <Link href={tagHref({ slug: tag.slug })} className="min-w-0 flex-1 truncate font-semibold text-text hover:text-primary">
+                    <Link href={tagHref({ slug: tag.slug })} className="min-w-0 flex-1 truncate font-semibold text-text hover:text-primary-text">
                       #{tag.label}
                     </Link>
                     <Button variant="outline" size="sm" onClick={() => void tags.toggle(tag).then(() => reloadFollowFeed())}>

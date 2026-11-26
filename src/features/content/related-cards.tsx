@@ -33,13 +33,13 @@ export function RelatedCards({ items }: { items: RelatedCardItem[] }) {
               {item.image ? (
                 <StorageImage src={item.image.url} alt={item.image.alt} fill sizes="(min-width: 1024px) 140px, 45vw" className="object-cover" />
               ) : (
-                <span className="flex h-9 w-9 items-center justify-center rounded-md bg-primary-soft text-primary">
+                <span className="flex h-9 w-9 items-center justify-center rounded-md bg-primary-soft text-primary-text">
                   <item.icon size={20} />
                 </span>
               )}
             </span>
             <span className="block space-y-0.5 px-2.5 py-2 leading-tight">
-              <span className="line-clamp-2 break-words text-label font-semibold text-text transition-colors group-hover:text-primary">{item.title}</span>
+              <span className="line-clamp-2 break-words text-label font-semibold text-text transition-colors group-hover:text-primary-text">{item.title}</span>
               <span className="block truncate text-caption text-text-muted">{item.meta}</span>
             </span>
           </Link>

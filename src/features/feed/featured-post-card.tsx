@@ -104,7 +104,7 @@ export function FeaturedPostCard({ prompt, stats, reason }: { prompt: Prompt; st
           </span>
         )}
         {tool && (
-          <span className="absolute left-3 top-3 inline-flex h-7 items-center gap-1.5 rounded-full bg-art-chip px-3 text-caption font-semibold text-on-art">
+          <span className="absolute left-3 top-3 inline-flex h-7 items-center gap-1.5 rounded-sm bg-art-chip px-3 text-caption font-semibold text-on-art">
             <meta.icon size={12} aria-hidden />
             {tool}
           </span>
@@ -119,11 +119,11 @@ export function FeaturedPostCard({ prompt, stats, reason }: { prompt: Prompt; st
             <PostTargetMenu prompt={prompt} />
           </span>
         </div>
-        <Link href={href} className="font-display text-h1 font-extrabold leading-tight tracking-[-0.03em] text-text hover:text-primary">
+        <Link href={href} className="font-display text-h1 font-extrabold leading-tight text-text hover:text-primary-text">
           {prompt.title}
         </Link>
         <div className="flex flex-wrap items-center gap-2 text-small">
-          <Link href={profileHref(prompt.author)} className="flex items-center gap-2 font-semibold text-text hover:text-primary">
+          <Link href={profileHref(prompt.author)} className="flex items-center gap-2 font-semibold text-text hover:text-primary-text">
             <Avatar src={prompt.author.avatarUrl} alt="" size={28} />
             {prompt.author.displayName}
           </Link>
@@ -131,7 +131,7 @@ export function FeaturedPostCard({ prompt, stats, reason }: { prompt: Prompt; st
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {total > 0 && (
-            <span className="inline-flex h-7 items-center gap-1.5 rounded-full bg-success-soft px-3 text-caption font-semibold text-success">
+            <span className="inline-flex h-7 items-center gap-1.5 rounded-sm bg-success-soft px-3 text-caption font-semibold text-success">
               <CircleCheck size={16} aria-hidden />
               {t("featured.worked", { percent, votes: total })}
             </span>
@@ -150,7 +150,7 @@ export function FeaturedPostCard({ prompt, stats, reason }: { prompt: Prompt; st
         {prompt.tags.length > 0 && (
           <div className="flex flex-wrap gap-x-3 gap-y-1">
             {prompt.tags.slice(0, 6).map((tag) => (
-              <Link key={tag.slug} href={tagHref(tag)} className="text-small font-medium text-text-secondary hover:text-primary">
+              <Link key={tag.slug} href={tagHref(tag)} className="text-small font-medium text-text-secondary hover:text-primary-text">
                 #{tag.label}
               </Link>
             ))}

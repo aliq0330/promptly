@@ -165,7 +165,7 @@ export default function ResetPasswordPage() {
         <p className="text-small text-text-muted">
           <strong className="text-text">{email}</strong> {t("auth.resetLinkSentBodySuffix")}
         </p>
-        <Link href="/login" className="text-small font-medium text-primary underline underline-offset-2 hover:no-underline">
+        <Link href="/login" className="text-small font-medium text-primary-text underline underline-offset-2 hover:no-underline">
           {t("auth.backToLogin")}
         </Link>
       </div>
@@ -201,7 +201,7 @@ export default function ResetPasswordPage() {
       <Button type="submit" className="w-full" disabled={isSubmitting}>
         {isSubmitting ? t("messages.sendingEllipsis") : t("auth.sendResetLink")}
       </Button>
-      <Link href="/login" className="text-caption text-primary underline underline-offset-2 hover:no-underline">
+      <Link href="/login" className="text-caption text-primary-text underline underline-offset-2 hover:no-underline">
         {t("auth.backToLogin")}
       </Link>
     </form>

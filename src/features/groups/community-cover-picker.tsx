@@ -81,7 +81,7 @@ export function CommunityCoverPicker({
             // The swatch IS the colour the community can choose (user content), not a design token.
             options={COMMUNITY_COVER_COLORS.map((swatch) => ({ key: swatch, label: t("groups.cover.swatchAria", { color: swatch }), style: { backgroundColor: swatch }, attrs: { "data-cover-swatch": swatch } }))}
           />
-          <label className="ml-1 inline-flex h-9 cursor-pointer items-center gap-2 rounded-full border border-border-soft px-3 text-label font-medium text-text-secondary hover:border-border">
+          <label className="ml-1 inline-flex h-9 cursor-pointer items-center gap-2 rounded-sm border border-border-soft px-3 text-label font-medium text-text-secondary hover:border-border">
             <input
               type="color"
               value={normalized}
@@ -103,7 +103,7 @@ export function CommunityCoverPicker({
             onClick={() => fileRef.current?.click()}
             disabled={disabled}
             data-cover-pick
-            className="inline-flex h-9 items-center gap-2 rounded-full border border-border bg-surface px-4 text-label font-semibold text-text hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-50"
+            className="inline-flex h-9 items-center gap-2 rounded-sm border border-border bg-surface px-4 text-label font-semibold text-text hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:opacity-50"
           >
             <Camera size={16} aria-hidden /> {shownPhoto ? t("groups.cover.photoChange") : t("groups.cover.photoPick")}
           </button>

@@ -214,7 +214,7 @@ function Timeline({ events, lastVisit }: { events: ActivityEvent[]; lastVisit: s
         return (
           <Fragment key={event.key}>
             {showMarker && (
-              <div className="mb-6 flex items-center gap-3 text-caption font-semibold text-primary" data-last-visit-marker="">
+              <div className="mb-6 flex items-center gap-3 text-caption font-semibold text-primary-text" data-last-visit-marker="">
                 <span aria-hidden className="h-0.5 flex-1 rounded-full bg-primary" />
                 {t("follow.lastVisit", { when: formatVisit(lastVisit as string, language) })}
                 <span aria-hidden className="h-0.5 flex-1 rounded-full bg-primary" />

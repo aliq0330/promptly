@@ -215,8 +215,8 @@ export const PublishPanel = forwardRef<
                       data-announce-community={item.id}
                       title={item.closed ? t("communities.detail.closedNotice") : undefined}
                       className={cn(
-                        "flex shrink-0 items-center gap-2 rounded-full border py-1 pl-1 pr-3 text-small font-semibold transition-colors disabled:opacity-50",
-                        on ? "border-primary/50 bg-primary-soft text-primary" : "border-border bg-background text-text-secondary hover:border-border-strong",
+                        "flex shrink-0 items-center gap-2 rounded-sm border py-1 pl-1 pr-3 text-small font-semibold transition-colors disabled:opacity-50",
+                        on ? "border-primary/50 bg-primary-soft text-primary-text" : "border-border bg-background text-text-secondary hover:border-border-strong",
                       )}
                     >
                       <GroupAvatar name={item.name} avatarUrl={item.avatarUrl} size={24} />
@@ -236,7 +236,7 @@ export const PublishPanel = forwardRef<
                   placeholder={t("share.announce.notePlaceholder")}
                   aria-label={t("communities.feed.noteLabel")}
                   data-announce-note=""
-                  className="w-full resize-none rounded-lg card-inset px-3 py-2 text-small text-text placeholder:text-text-muted focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15"
+                  className="w-full resize-none rounded-sm card-inset px-3 py-2 text-small text-text placeholder:text-text-muted focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15"
                 />
               )}
             </>

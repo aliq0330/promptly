@@ -244,7 +244,7 @@ function FocusMenu({ mediaOnly, onToggleMedia, muted, onToggleMuted }: { mediaOn
   }, [open]);
 
   const item =
-    "flex h-11 w-full items-center gap-3 rounded-lg px-3 text-left text-label font-medium text-text transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary";
+    "flex h-11 w-full items-center gap-3 rounded-sm px-3 text-left text-label font-medium text-text transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus";
   return (
     <div ref={wrapRef} className="relative shrink-0">
       <button
@@ -254,7 +254,7 @@ function FocusMenu({ mediaOnly, onToggleMedia, muted, onToggleMuted }: { mediaOn
         aria-expanded={open}
         aria-label={t("focusFeed.menu")}
         title={t("focusFeed.menu")}
-        className="relative inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-white/10 text-on-art backdrop-blur-md transition-colors hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        className="relative inline-flex h-11 w-11 items-center justify-center rounded-sm border border-white/15 bg-white/10 text-on-art backdrop-blur-md transition-colors hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
       >
         <MoreVertical size={20} aria-hidden />
         {!muted && <span aria-hidden className="absolute right-2 top-2 h-2 w-2 rounded-full bg-primary" />}
@@ -509,7 +509,7 @@ function FocusScreen() {
   const backdropUrl = activeItem && !loading ? (focusFeedCover(activeItem)?.url ?? null) : null;
   // Albüm (docs/history/203-*): one roomy row — round 44px buttons on the ends, the feed filter between.
   const barButton =
-    "inline-flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-full border border-white/15 bg-white/10 text-on-art backdrop-blur-md transition-colors hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary";
+    "inline-flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-full border border-white/15 bg-white/10 text-on-art backdrop-blur-md transition-colors hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus";
   const phoneSheetOpen = !isDesktop && sheet !== null;
   const locked = phoneSheetOpen || (!isDesktop && fillEdit !== null);
   const stageSheet = !isDesktop ? (sheet ? sheet.state : fillEdit ? "fill" : undefined) : undefined;
@@ -528,7 +528,7 @@ function FocusScreen() {
               <button type="button" onClick={close} aria-label={t("focusFeed.close")} title={t("focusFeed.close")} className={cn(barButton, "w-11")}>
                 <X size={20} aria-hidden />
               </button>
-              <span className="hidden shrink-0 font-display text-h3 font-bold tracking-[-0.03em] text-on-art sm:inline">{t("nav.focus")}</span>
+              <span className="hidden shrink-0 font-display text-h3 font-bold text-on-art sm:inline">{t("nav.focus")}</span>
               <div className="flex min-w-0 flex-1 justify-center">
                 <FocusFilterMenu
                   channel={channel}
@@ -549,7 +549,7 @@ function FocusScreen() {
               </div>
               {total > 0 && !loading && (
                 <span
-                  className="hidden shrink-0 rounded-full border border-white/15 bg-art-chip px-2.5 py-1 text-caption font-semibold tabular-nums text-on-art backdrop-blur-md md:inline"
+                  className="hidden shrink-0 rounded-sm border border-white/15 bg-art-chip px-2.5 py-1 text-caption font-semibold tabular-nums text-on-art backdrop-blur-md md:inline"
                   aria-label={t("focusFeed.position", { current: Math.min(active + 1, total), total })}
                 >
                   {String(Math.min(active + 1, total)).padStart(2, "0")}
@@ -646,7 +646,7 @@ function FocusScreen() {
                   <p id="focus-feed-hint" className="sr-only">
                     {t("focusFeed.keyboardHint")}
                   </p>
-                  <p aria-hidden className="pointer-events-none absolute bottom-5 left-5 hidden h-9 items-center gap-4 rounded-full bg-art-chip px-4 text-caption font-medium text-on-art-muted md:flex" data-focus-keys="">
+                  <p aria-hidden className="pointer-events-none absolute bottom-5 left-5 hidden h-9 items-center gap-4 rounded-sm bg-art-chip px-4 text-caption font-medium text-on-art-muted md:flex" data-focus-keys="">
                     <span>{t("focusFeed.keysPosts")}</span>
                     <span>{t("focusFeed.keysResults")}</span>
                     <span>{t("focusFeed.keysCopy")}</span>
@@ -679,7 +679,7 @@ function FocusScreen() {
                 onClick={() => setPanelOpen(true)}
                 aria-label={t("focusSheet.showPanel")}
                 title={t("focusSheet.showPanel")}
-                className="absolute right-4 top-24 z-30 inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-white/10 text-on-art backdrop-blur-md transition-colors hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                className="absolute right-4 top-24 z-30 inline-flex h-11 w-11 items-center justify-center rounded-sm border border-white/15 bg-white/10 text-on-art backdrop-blur-md transition-colors hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
               >
                 <ChevronLeft size={20} aria-hidden />
               </button>
@@ -708,7 +708,7 @@ function StepButton({ label, disabled = false, onClick, children }: { label: str
       title={label}
       disabled={disabled}
       onClick={onClick}
-      className="pointer-events-auto inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-white/10 text-on-art backdrop-blur-md transition-colors hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-50"
+      className="pointer-events-auto inline-flex h-11 w-11 items-center justify-center rounded-sm border border-white/15 bg-white/10 text-on-art backdrop-blur-md transition-colors hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:opacity-50"
     >
       {children}
     </button>

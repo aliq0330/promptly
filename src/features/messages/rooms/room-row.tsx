@@ -46,7 +46,7 @@ export function RoomRow({
   const showDot = unread && readOnly;
   const compact = density === "compact";
   const rowClass = cn(
-    "flex w-full items-center gap-3 rounded-lg text-left transition-colors duration-200 ease-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+    "flex w-full items-center gap-3 rounded-lg text-left transition-colors duration-200 ease-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus",
     compact ? "px-2.5 py-1.5" : "px-2.5 py-2",
     current ? "bg-primary-soft" : "hover:bg-surface-soft",
   );
@@ -54,8 +54,8 @@ export function RoomRow({
     <>
       <RoomIconTile icon={room.icon} size={compact ? 36 : 44} selected={current} />
       <span className="min-w-0 flex-1">
-        <span className={cn("block truncate text-body tracking-[-0.01em]", unread || current ? "font-semibold text-text" : "font-semibold text-text")}>{room.name}</span>
-        {subtitle && <span className={cn("block truncate text-caption", current ? "font-semibold text-primary" : "text-text-muted")}>{subtitle}</span>}
+        <span className={cn("block truncate text-body", unread || current ? "font-semibold text-text" : "font-semibold text-text")}>{room.name}</span>
+        {subtitle && <span className={cn("block truncate text-caption", current ? "font-semibold text-primary-text" : "text-text-muted")}>{subtitle}</span>}
       </span>
       {readOnly && <Lock size={16} className="shrink-0 text-text-muted" aria-label={t("rooms.row.readOnly")} />}
       {room.readPolicy === "staff" && !readOnly && <Lock size={16} className="shrink-0 text-text-muted" aria-label={t("rooms.row.private")} />}
@@ -66,7 +66,7 @@ export function RoomRow({
           {formatUnread(room.unreadCount)}
         </span>
       )}
-      {current && <Check size={20} className="shrink-0 text-primary" aria-hidden />}
+      {current && <Check size={20} className="shrink-0 text-primary-text" aria-hidden />}
       {trailing}
     </>
   );

@@ -98,7 +98,7 @@ export function StepList({
                     <span
                       className={cn(
                         "mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-caption font-semibold",
-                        selected ? "bg-primary text-primary-foreground" : "bg-primary-soft text-primary",
+                        selected ? "bg-primary text-primary-foreground" : "bg-primary-soft text-primary-text",
                       )}
                     >
                       {index + 1}
@@ -112,7 +112,7 @@ export function StepList({
                         <span className="truncate">{[t(meta.labelKey), subtitle].filter(Boolean).join(" · ")}</span>
                       </span>
                       {incoming > 0 && (
-                        <span className="mt-0.5 block truncate text-caption text-primary">
+                        <span className="mt-0.5 block truncate text-caption text-primary-text">
                           {t("workflow.inputCount", { count: String(incoming) })}
                         </span>
                       )}
@@ -152,7 +152,7 @@ export function StepList({
                         {carried.map((input) => {
                           const output = step.outputs.find((o) => o.id === input.source!.outputId);
                           return (
-                            <span key={input.id} className="max-w-[10rem] truncate rounded-full bg-primary-soft px-2 py-0.5 text-caption text-primary">
+                            <span key={input.id} className="max-w-[10rem] truncate rounded-xs bg-primary-soft px-2 py-0.5 text-caption text-primary-text">
                               {output?.label}
                             </span>
                           );

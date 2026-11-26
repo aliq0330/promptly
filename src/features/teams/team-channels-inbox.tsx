@@ -55,7 +55,7 @@ export function TeamChannelsInbox() {
         <section key={team.id} aria-label={team.name}>
           <h2 className="mb-1 flex items-center gap-2 text-label font-semibold">
             <TeamMark name={team.name} tone={team.tone} size={22} />
-            <Link href={teamLink(team.id)} className="truncate hover:text-primary">
+            <Link href={teamLink(team.id)} className="truncate hover:text-primary-text">
               {team.name}
             </Link>
           </h2>
@@ -63,7 +63,7 @@ export function TeamChannelsInbox() {
             {channels.map((channel) => (
               <li key={channel.id}>
                 <Link href={teamLink(team.id, "chat", { channel: channel.name })} data-team-channel-row={channel.id} className="flex min-h-12 items-center gap-3 px-1 py-2 hover:bg-surface-soft">
-                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-surface-soft text-text-secondary">
+                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-md bg-surface-soft text-text-secondary">
                     {channel.mode === "private" ? <Lock size={16} aria-hidden /> : <Hash size={16} aria-hidden />}
                   </span>
                   <span className="min-w-0 flex-1">
@@ -72,7 +72,7 @@ export function TeamChannelsInbox() {
                       {channel.lastMessageAt ? formatRelativeTime(channel.lastMessageAt, language) : t("tm.chat.noMessages")}
                     </span>
                   </span>
-                  {channel.unreadCount > 0 && !channel.muted && <span className="rounded-full bg-primary px-1.5 text-caption text-primary-foreground">{channel.unreadCount}</span>}
+                  {channel.unreadCount > 0 && !channel.muted && <span className="rounded-sm bg-primary px-1.5 text-caption text-primary-foreground">{channel.unreadCount}</span>}
                 </Link>
               </li>
             ))}

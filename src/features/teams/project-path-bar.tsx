@@ -28,7 +28,7 @@ export function ProjectPathBar({ crumbs, backHref, onInfo, onMore, right }: { cr
   return (
     <div className="-mx-3 sm:-mx-5 md:mx-0" data-project-crumbs>
       <div className="flex h-14 items-center gap-1 border-b border-border-soft bg-surface px-2">
-        <Link href={backHref} aria-label={t("tp.page.up")} className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-text hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary" data-path-back>
+        <Link href={backHref} aria-label={t("tp.page.up")} className="grid h-10 w-10 shrink-0 place-items-center rounded-sm text-text hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus" data-path-back>
           <ArrowLeft size={20} aria-hidden />
         </Link>
         <nav aria-label={t("tp.page.crumbs")} className="min-w-0 flex-1 leading-tight">
@@ -54,12 +54,12 @@ export function ProjectPathBar({ crumbs, backHref, onInfo, onMore, right }: { cr
         </nav>
         {right}
         {onMore ? (
-          <button type="button" onClick={onMore} aria-label={t("tp.item.moreAria")} className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-text-secondary hover:bg-surface-soft" data-path-more>
+          <button type="button" onClick={onMore} aria-label={t("tp.item.moreAria")} className="grid h-10 w-10 shrink-0 place-items-center rounded-sm text-text-secondary hover:bg-surface-soft" data-path-more>
             <MoreVertical size={24} aria-hidden />
           </button>
         ) : (
           onInfo && (
-            <button type="button" onClick={onInfo} aria-label={t("tp.info.open")} className={cn("grid h-10 w-10 shrink-0 place-items-center rounded-full text-primary hover:bg-primary-soft")} data-path-info>
+            <button type="button" onClick={onInfo} aria-label={t("tp.info.open")} className={cn("grid h-10 w-10 shrink-0 place-items-center rounded-sm text-primary-text hover:bg-primary-soft")} data-path-info>
               <Info size={20} aria-hidden />
             </button>
           )

@@ -28,7 +28,7 @@ export function SectionLabel({
         "flex min-w-0 items-center gap-1.5 text-caption font-semibold",
         tone === "muted" && "text-text-muted",
         tone === "secondary" && "text-text-secondary",
-        tone === "primary" && "text-primary",
+        tone === "primary" && "text-primary-text",
         tone === "overlay" && "text-on-art-muted",
         className,
       )}

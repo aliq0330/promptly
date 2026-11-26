@@ -63,11 +63,11 @@ function StructureShell({
         <div className="space-y-2">
           <div className="flex items-center gap-2">
             {/* Icon tile on roomier cards; on a two-column phone layout the icon sits inline so the label has the room. */}
-            <span className="hidden h-7 w-7 shrink-0 items-center justify-center rounded-md bg-primary-soft text-primary sm:flex">
+            <span className="hidden h-7 w-7 shrink-0 items-center justify-center rounded-md bg-primary-soft text-primary-text sm:flex">
               <Icon size={16} aria-hidden />
             </span>
             <span className="flex min-w-0 items-center gap-1 text-caption font-semibold text-text-muted">
-              <Icon size={12} aria-hidden className="shrink-0 text-primary sm:hidden" />
+              <Icon size={12} aria-hidden className="shrink-0 text-primary-text sm:hidden" />
               <span className="truncate">{badge}</span>
               {detail && (
                 <>
@@ -170,7 +170,7 @@ export function FocusWorkflowCard({ workflow }: { workflow: Workflow }) {
             {workflow.contentTypes.map((type) => {
               const TypeIcon = CONTENT_TYPE_META[type].icon;
               return (
-                <span key={type} className="inline-flex h-5 items-center gap-1 rounded-full bg-surface-soft px-2 text-caption font-medium text-text-secondary">
+                <span key={type} className="inline-flex h-5 items-center gap-1 rounded-xs bg-surface-soft px-2 text-caption font-medium text-text-secondary">
                   <TypeIcon size={12} aria-hidden />
                   {t(CONTENT_TYPE_META[type].labelKey)}
                 </span>

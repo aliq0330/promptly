@@ -63,11 +63,11 @@ export function PresetFieldList({
               aria-expanded={isOpen}
               aria-controls={panelId}
               onClick={() => toggle(field.id)}
-              className="flex min-h-12 w-full items-center gap-3 px-3 py-2 text-left transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
+              className="flex min-h-12 w-full items-center gap-3 px-3 py-2 text-left transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-focus"
             >
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-label font-semibold text-text">{fieldName(field, language)}</span>
-                <span className={cn("block truncate text-caption", summary ? "text-primary" : "text-text-muted")}>{summary || t("presetField.notSet")}</span>
+                <span className={cn("block truncate text-caption", summary ? "text-primary-text" : "text-text-muted")}>{summary || t("presetField.notSet")}</span>
               </span>
               <ChevronDown size={20} className={cn("shrink-0 text-text-muted transition-transform duration-200", isOpen && "rotate-180")} aria-hidden />
             </button>

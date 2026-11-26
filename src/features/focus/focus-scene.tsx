@@ -231,13 +231,13 @@ function PeekAction({ item, fill }: { item: PostFeedItem; fill: PromptFill | nul
   const { t } = useTranslation();
   const { user } = useAuth();
   const action = focusFeedPrimaryAction(item, user?.id ?? null);
-  const pill = "inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-full bg-primary px-5 text-label font-semibold text-primary-foreground transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary";
+  const pill = "inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-sm bg-primary px-5 text-label font-semibold text-primary-foreground transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus";
   const attr = { "data-focus-peek-action": action };
   switch (action) {
     case "copy":
       return item.kind === "prompt" ? (
         <span {...attr}>
-          <CopyPromptButton text={fill?.text ?? item.data.promptText} promptId={item.data.id} variant="primary" size="md" className="h-11 gap-2 whitespace-nowrap rounded-full px-5 text-label font-semibold" />
+          <CopyPromptButton text={fill?.text ?? item.data.promptText} promptId={item.data.id} variant="primary" size="md" className="h-11 gap-2 whitespace-nowrap rounded-sm px-5 text-label font-semibold" />
         </span>
       ) : null;
     case "reply":
@@ -279,7 +279,7 @@ function PeekAction({ item, fill }: { item: PostFeedItem; fill: PromptFill | nul
 /** A value chip of the strip: "ton: teknik" / "ton: boş" — the variable and what it is set to right now. */
 function ValueChip({ name, value, empty }: { name: string; value: string; empty: string }) {
   return (
-    <span className="inline-flex h-7 max-w-full min-w-0 shrink-0 items-center rounded-full bg-secondary-soft px-3 text-caption font-semibold text-secondary">
+    <span className="inline-flex h-7 max-w-full min-w-0 shrink-0 items-center rounded-sm bg-secondary-soft px-3 text-caption font-semibold text-secondary">
       <span className="truncate">
         {name}: {value || empty}
       </span>
@@ -375,7 +375,7 @@ function FocusPeek({ item, model, fill, textScene }: { item: PostFeedItem; model
           aria-haspopup="dialog"
           aria-label={t("focusFeed.openCard")}
           data-focus-peek-open=""
-          className="flex min-h-11 min-w-0 flex-1 flex-col items-stretch justify-center gap-1 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          className="flex min-h-11 min-w-0 flex-1 flex-col items-stretch justify-center gap-1 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
         >
           {label}
           {line}
@@ -465,7 +465,7 @@ export const FocusFeedSlide = memo(function FocusFeedSlide({
         {images.length > 1 && (
           <div
             data-results-chip=""
-            className="pointer-events-none absolute left-3 top-[calc(4.5rem+env(safe-area-inset-top))] z-10 flex h-9 items-center gap-3 rounded-full bg-art-chip px-4 text-caption font-semibold text-on-art md:top-auto md:bottom-4 md:left-auto md:right-4"
+            className="pointer-events-none absolute left-3 top-[calc(4.5rem+env(safe-area-inset-top))] z-10 flex h-9 items-center gap-3 rounded-sm bg-art-chip px-4 text-caption font-semibold text-on-art md:top-auto md:bottom-4 md:left-auto md:right-4"
           >
             <span aria-hidden className="flex items-center gap-1">
               {images.map((_, i) => (
@@ -481,7 +481,7 @@ export const FocusFeedSlide = memo(function FocusFeedSlide({
           href={profileHref(model.author)}
           tabIndex={-1}
           aria-hidden
-          className={cn("absolute bottom-4 left-4 z-10 hidden h-10 items-center gap-2 rounded-full bg-art-chip py-1 pl-1 pr-4 text-label font-semibold text-on-art md:flex", tone && "md:hidden")}
+          className={cn("absolute bottom-4 left-4 z-10 hidden h-10 items-center gap-2 rounded-sm bg-art-chip py-1 pl-1 pr-4 text-label font-semibold text-on-art md:flex", tone && "md:hidden")}
         >
           <Avatar src={model.author.avatarUrl} alt="" size={32} />
           <span className="max-w-48 truncate">{model.author.displayName}</span>

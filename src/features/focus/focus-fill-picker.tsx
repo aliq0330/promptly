@@ -54,7 +54,7 @@ export function FocusFillPicker({ fill, name, onClose, onPick }: { fill: PromptF
           type="button"
           onClick={onClose}
           data-focus-picker-done=""
-          className="inline-flex h-11 shrink-0 items-center justify-center rounded-full bg-primary px-5 text-label font-semibold text-primary-foreground transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          className="inline-flex h-11 shrink-0 items-center justify-center rounded-sm bg-primary px-5 text-label font-semibold text-primary-foreground transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
         >
           {t("focusFeed.fillDone")}
         </button>
@@ -66,7 +66,7 @@ export function FocusFillPicker({ fill, name, onClose, onPick }: { fill: PromptF
         <button
           type="button"
           onClick={() => onPick(next.name)}
-          className="mt-3 inline-flex min-h-11 items-center text-caption font-semibold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          className="mt-3 inline-flex min-h-11 items-center text-caption font-semibold text-primary-text hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
         >
           {t("focusFeed.fillNext", { name: next.name })}
         </button>

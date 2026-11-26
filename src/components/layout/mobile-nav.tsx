@@ -48,7 +48,7 @@ function CreateHub({ open, onOpen }: { open: boolean; onOpen: () => void }) {
       data-app-chrome
       data-keyboard-hide
       data-create-hub=""
-      className="fixed right-4 bottom-[calc(4rem+env(safe-area-inset-bottom)+1rem)] z-(--z-nav) flex h-14 w-14 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-md transition-transform active:scale-95 md:hidden"
+      className="fixed right-4 bottom-[calc(4rem+env(safe-area-inset-bottom)+1rem)] z-(--z-nav) flex h-14 w-14 items-center justify-center rounded-md bg-primary text-primary-foreground shadow-md transition-transform active:scale-95 md:hidden"
     >
       <PlusIcon open={open} size={24} />
     </button>
@@ -114,7 +114,7 @@ export function MobileNav() {
           const label = t(item.labelKey);
           const itemClassName = cn(
             "relative flex flex-1 flex-col items-center justify-center gap-1 text-caption font-medium transition-colors",
-            active ? "text-primary" : "text-text-muted",
+            active ? "text-primary-text" : "text-text-muted",
           );
           const inner = (
             <>

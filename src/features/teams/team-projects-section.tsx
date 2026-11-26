@@ -174,9 +174,9 @@ function WaitingStrip({ ctx }: { ctx: TeamCtx }) {
             {heading}
           </span>
           <span className="font-semibold text-text md:hidden">{t("tc.over.waitingPhone", { count })}</span>
-          <span className="mt-2 hidden text-small font-semibold text-primary md:block">{t("tc.over.waitingOpen", { count })}</span>
+          <span className="mt-2 hidden text-small font-semibold text-primary-text md:block">{t("tc.over.waitingOpen", { count })}</span>
         </span>
-        <span className="text-small font-semibold text-primary md:hidden">{t("tc.over.open")}</span>
+        <span className="text-small font-semibold text-primary-text md:hidden">{t("tc.over.open")}</span>
       </Link>
       <ul className="hidden min-w-0 flex-1 gap-3 md:grid md:grid-cols-3">
         {rows.slice(0, 3).map((item) => (
@@ -254,7 +254,7 @@ function ChannelsCard({ ctx }: { ctx: TeamCtx }) {
       <ul>
         {shown.map((channel) => (
           <li key={channel.id}>
-            <Link href={teamLink(team.id, "chat", { channel: channel.name })} className="flex items-center py-1.5 text-small text-text hover:text-primary" data-overview-channel={channel.name}>
+            <Link href={teamLink(team.id, "chat", { channel: channel.name })} className="flex items-center py-1.5 text-small text-text hover:text-primary-text" data-overview-channel={channel.name}>
               <span className="min-w-0 flex-1 truncate"># {channel.name}</span>
               {channel.unreadCount > 0 && !channel.muted && <span className="text-caption font-semibold text-secondary">{t("tc.over.unread", { count: channel.unreadCount })}</span>}
             </Link>
@@ -288,13 +288,13 @@ function ProjectCard({ team, project, changes }: { team: string; project: Projec
           <span className="block truncate text-small text-text-secondary">{t("tp.card.counts", { files: project.files.length, boards: project.boardCount, people: project.memberCount })}</span>
         </span>
         <span className="flex flex-wrap items-center gap-1.5">
-          {project.archivedAt && <span className="inline-flex h-6 items-center rounded-full bg-surface-soft px-2.5 text-caption font-semibold text-text-muted">{t("tp.card.archived")}</span>}
+          {project.archivedAt && <span className="inline-flex h-6 items-center rounded-xs bg-surface-soft px-2.5 text-caption font-semibold text-text-muted">{t("tp.card.archived")}</span>}
           {pending > 0 && (
-            <span className="inline-flex h-6 items-center rounded-full bg-warning-soft px-2.5 text-caption font-semibold text-warning" data-project-pending={pending}>
+            <span className="inline-flex h-6 items-center rounded-xs bg-warning-soft px-2.5 text-caption font-semibold text-warning" data-project-pending={pending}>
               {t("tp.card.pending", { count: pending })}
             </span>
           )}
-          {changes > 0 && <span className="inline-flex h-6 items-center rounded-full bg-danger-soft px-2.5 text-caption font-semibold text-danger">{t("tc.over.changesChip", { count: changes })}</span>}
+          {changes > 0 && <span className="inline-flex h-6 items-center rounded-xs bg-danger-soft px-2.5 text-caption font-semibold text-danger">{t("tc.over.changesChip", { count: changes })}</span>}
           {project.myRole && <ProjectRoleChip role={project.myRole} />}
         </span>
       </span>

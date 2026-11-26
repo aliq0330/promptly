@@ -39,9 +39,9 @@ export function MessageReactionPicker({
       style={style}
       className={cn(
         isBar
-          ? "rounded-full bg-surface-elevated/90 px-2 py-1 shadow-md backdrop-blur-xl animate-pop-in origin-bottom"
+          ? "rounded-sm bg-surface-elevated/90 px-2 py-1 shadow-md backdrop-blur-xl animate-pop-in origin-bottom"
           : // `w-max`: a fixed-position box with `width: auto` would stretch or wrap the row (a real bug once reported from a live screenshot).
-            "z-50 w-max rounded-full border border-border-soft bg-surface px-1.5 py-1 shadow-md animate-pop-in",
+            "z-50 w-max rounded-sm border border-border-soft bg-surface px-1.5 py-1 shadow-md animate-pop-in",
       )}
     >
       <ReactionGrid current={myReaction} compact={isBar ? 40 : 30} onChoose={(key) => key && onSelect(key)} />

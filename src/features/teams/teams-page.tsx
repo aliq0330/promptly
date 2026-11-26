@@ -26,6 +26,7 @@ import { PagedListState } from "@/features/feed/paged-list-state";
 import { useToast } from "@/features/groups/use-toast";
 import { PHONE_HOME_BOTTOM_PAD, PhoneHomeSection } from "@/features/content/phone-home";
 import { SpaceDialog } from "@/features/spaces/space-modals";
+import { useCreateEntry, useOpenCreateFromQuery } from "@/features/content/create-page-shell";
 import { useMediaQuery } from "@/lib/use-media-query";
 import { LanguageTermScope, useTranslation } from "@/lib/i18n/language-provider";
 import { rewriteAreaTerms } from "@/lib/team-area-terms";
@@ -58,6 +59,8 @@ function TeamsPageInner() {
   const { user } = useAuth();
   const { node: toastNode, show } = useToast();
   const [createOpen, setCreateOpen] = useState(false);
+  const openCreate = useCreateEntry("/teams/new", () => setCreateOpen(true));
+  useOpenCreateFromQuery(() => setCreateOpen(true));
   const [filter, setFilter] = useState<"all" | "managed">("all");
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -135,7 +138,7 @@ function TeamsPageInner() {
         tone="neutral"
         title={t("tm.title")}
         description={t("hub.teams.intro")}
-        action={<HubCreateButton label={t("tm.create")} shortLabel={t("hub.teams.createShort")} onClick={() => setCreateOpen(true)} attr={{ "data-team-create": true, "data-team-create-phone": true }} />}
+        action={<HubCreateButton label={t("tm.create")} shortLabel={t("hub.teams.createShort")} onClick={openCreate} attr={{ "data-team-create": true, "data-team-create-phone": true }} />}
       />
 
       {tabItems.length > 1 && <Tabs items={tabItems} active={activeTab} onChange={setTab} ariaLabel={t("tm.filter.aria")} />}
@@ -220,7 +223,7 @@ function TeamsPageInner() {
           }
         >
           {list.items.length === 0 && !list.failed ? (
-            <EmptyState icon={Briefcase} scene="team" title={t("tm.empty.title")} description={t("tm.empty.body")} action={{ label: t("tm.create"), onClick: () => setCreateOpen(true) }} />
+            <EmptyState icon={Briefcase} scene="team" title={t("tm.empty.title")} description={t("tm.empty.body")} action={{ label: t("tm.create"), onClick: openCreate }} />
           ) : (
             <HubGrid data-testid="teams-list">
               {visibleTeams.map((team) => (
@@ -229,12 +232,12 @@ function TeamsPageInner() {
               <li className="max-md:hidden">
                 <button
                   type="button"
-                  onClick={() => setCreateOpen(true)}
+                  onClick={openCreate}
                   data-team-new-card
-                  className="flex h-full w-full flex-col rounded-lg border-2 border-dashed border-border text-center transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                  className="flex h-full w-full flex-col rounded-lg border-2 border-dashed border-border text-center transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
                 >
                   <span className="grid aspect-video w-full place-items-center">
-                    <span className="grid h-11 w-11 place-items-center rounded-full bg-primary-soft text-primary">
+                    <span className="grid h-11 w-11 place-items-center rounded-full bg-primary-soft text-primary-text">
                       <Plus size={20} aria-hidden />
                     </span>
                   </span>
@@ -288,10 +291,10 @@ function TodoList({ todos }: { todos: TeamTodo[] }) {
       <ul className="space-y-3">
         {todos.map((todo, index) => {
           const Icon = todo.kind === "unread" ? MessageCircle : todo.kind === "project_review" ? Eye : Check;
-          const tone = todo.kind === "unread" ? "bg-success-soft text-success" : todo.kind === "project_review" ? "bg-primary-soft text-primary" : "bg-warning-soft text-warning";
+          const tone = todo.kind === "unread" ? "bg-success-soft text-success" : todo.kind === "project_review" ? "bg-primary-soft text-primary-text" : "bg-warning-soft text-warning";
           return (
             <li key={`${todo.teamId}-${todo.kind}-${index}`} className="flex items-center gap-3 rounded-lg card-flat px-4 py-3">
-              <span className={cn("grid h-9 w-9 shrink-0 place-items-center rounded-xl", tone)} aria-hidden>
+              <span className={cn("grid h-9 w-9 shrink-0 place-items-center rounded-md", tone)} aria-hidden>
                 <Icon size={16} />
               </span>
               <span className="min-w-0 flex-1 text-small text-text-secondary">
@@ -358,7 +361,7 @@ function TeamCard({ team, approvals }: { team: TeamSummary; approvals: number })
       coverOverlay={
         <>
           <VisibilityTag icon={Lock} label={t("tm.header.inviteOnly")} data-team-visibility="" />
-          {team.recent && <span className="min-w-0 truncate rounded-full bg-surface/90 px-2.5 py-0.5 text-caption text-text-secondary shadow-xs">{recentLine(t, language, team.recent)}</span>}
+          {team.recent && <span className="min-w-0 truncate rounded-xs bg-surface/90 px-2.5 py-0.5 text-caption text-text-secondary shadow-xs">{recentLine(t, language, team.recent)}</span>}
         </>
       }
       footerStart={
@@ -384,7 +387,7 @@ function TeamCard({ team, approvals }: { team: TeamSummary; approvals: number })
             data-team-open-chat
             data-team-chip={team.unreadCount > 0 ? "unread" : undefined}
             aria-label={t("tm.card.openChat")}
-            className="tap-area inline-flex items-center gap-1.5 rounded-full p-1.5 text-text-secondary hover:bg-surface-soft"
+            className="tap-area inline-flex items-center gap-1.5 rounded-sm p-1.5 text-text-secondary hover:bg-surface-soft"
           >
             <MessageCircle size={16} aria-hidden />
             {team.unreadCount > 0 && <CountBadge>{team.unreadCount}</CountBadge>}
@@ -422,7 +425,7 @@ export function CreateTeamModal({ onClose, onCreated }: { onClose: () => void; o
   };
 
   return (
-    <SpaceDialog
+    <SpaceDialog page
       title={t("tm.create")}
       onClose={onClose}
       busy={busy}
@@ -450,7 +453,7 @@ export function CreateTeamModal({ onClose, onCreated }: { onClose: () => void; o
           <label htmlFor="team-desc" className={fieldLabelClassName}>
             {t("tm.create.description")}
           </label>
-          <textarea id="team-desc" value={description} onChange={(e) => setDescription(e.target.value)} maxLength={500} rows={3} className="w-full rounded-lg card-inset px-4 py-2.5 text-small" />
+          <textarea id="team-desc" value={description} onChange={(e) => setDescription(e.target.value)} maxLength={500} rows={3} className="w-full rounded-sm card-inset px-4 py-2.5 text-small" />
         </div>
         <div>
           <span className={fieldLabelClassName}>{t("tm.create.tone")}</span>

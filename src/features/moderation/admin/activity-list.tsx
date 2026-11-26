@@ -63,7 +63,7 @@ function ActivityRow({ item, kind }: { item: AdminActivityItem; kind: AdminActiv
         </p>
       )}
       {item.href && (
-        <Link href={item.href} className="inline-flex items-center gap-1 text-caption font-medium text-primary hover:underline">
+        <Link href={item.href} className="inline-flex items-center gap-1 text-caption font-medium text-primary-text hover:underline">
           <ArrowUpRight size={12} aria-hidden /> {t("moderation.open")}
         </Link>
       )}

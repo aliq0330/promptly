@@ -106,7 +106,7 @@ export function TeamInfoModal({
             {t("tm.info.channels")}
           </h3>
           {canManageChannels && (
-            <Link href={teamLink(team.slug, "chat", { new: "1" })} data-info-add-channel className="text-small font-semibold text-primary hover:underline">
+            <Link href={teamLink(team.slug, "chat", { new: "1" })} data-info-add-channel className="text-small font-semibold text-primary-text hover:underline">
               {t("tm.info.addChannel")}
             </Link>
           )}
@@ -131,9 +131,9 @@ export function TeamInfoModal({
                   onClick={() => onSelectChannel(channel.id)}
                   data-info-channel={channel.name}
                   aria-current={current ? "true" : undefined}
-                  className="flex min-h-14 min-w-0 flex-1 items-center gap-3 px-4 py-2 text-left transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
+                  className="flex min-h-14 min-w-0 flex-1 items-center gap-3 px-4 py-2 text-left transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-focus"
                 >
-                  <span className={cn("grid h-9 w-9 shrink-0 place-items-center rounded-xl", channel.mode === "private" ? "bg-warning-soft text-warning" : "bg-primary-soft text-primary")} aria-hidden>
+                  <span className={cn("grid h-9 w-9 shrink-0 place-items-center rounded-md", channel.mode === "private" ? "bg-warning-soft text-warning" : "bg-primary-soft text-primary-text")} aria-hidden>
                     {channel.mode === "private" ? <Lock size={16} /> : <Hash size={16} />}
                   </span>
                   <span className="min-w-0 flex-1">
@@ -141,7 +141,7 @@ export function TeamInfoModal({
                       <span className="truncate">{channelLabel(channel)}</span>
                       <MuteChip scope={channel.muteScope ?? (channel.muted ? "channel" : null)} />
                     </span>
-                    {sub && <span className={cn("block truncate text-caption", current ? "font-semibold text-primary" : "text-text-muted")}>{sub}</span>}
+                    {sub && <span className={cn("block truncate text-caption", current ? "font-semibold text-primary-text" : "text-text-muted")}>{sub}</span>}
                   </span>
                   {unread && <CountBadge>{formatUnread(channel.unreadCount)}</CountBadge>}
                 </button>
@@ -150,7 +150,7 @@ export function TeamInfoModal({
                   onClick={() => onOpenChannelInfo(channel.id)}
                   aria-label={`${t("tm.info.channelInfo")}: #${channel.name}`}
                   data-info-channel-info={channel.name}
-                  className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-text-muted transition-colors hover:bg-surface hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                  className="grid h-9 w-9 shrink-0 place-items-center rounded-sm text-text-muted transition-colors hover:bg-surface hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
                 >
                   <Info size={16} aria-hidden />
                 </button>
@@ -189,13 +189,13 @@ export function TeamInfoModal({
       <Link
         href={teamLink(team.slug, "spaces")}
         data-info-open-team
-        className="mx-4 mt-3 flex shrink-0 items-center gap-3 rounded-xl bg-primary-soft px-4 py-3 transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        className="mx-4 mt-3 flex shrink-0 items-center gap-3 rounded-xl bg-primary-soft px-4 py-3 transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
       >
         <span className="min-w-0 flex-1">
-          <span className="block text-body font-semibold text-primary">{t("tm.info.openTeam")}</span>
+          <span className="block text-body font-semibold text-primary-text">{t("tm.info.openTeam")}</span>
           <span className="block text-caption text-text-secondary">{t("tm.info.openTeamHint")}</span>
         </span>
-        <ArrowUpRight size={20} className="shrink-0 text-primary" aria-hidden />
+        <ArrowUpRight size={20} className="shrink-0 text-primary-text" aria-hidden />
       </Link>
     </InfoPanelShell>
   );

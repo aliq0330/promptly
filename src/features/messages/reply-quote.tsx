@@ -137,7 +137,7 @@ export function ComposerReplyBar({
         type="button"
         onClick={onCancel}
         aria-label={t("messages.cancelReplyAriaLabel")}
-        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-surface hover:text-text"
+        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm text-text-muted transition-colors hover:bg-surface hover:text-text"
       >
         <X size={16} />
       </button>

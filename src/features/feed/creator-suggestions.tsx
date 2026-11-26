@@ -183,7 +183,7 @@ export function CreatorStripSlot({ strips, ordinal }: { strips: CreatorStrips; o
             data-creator-strip-pause
             aria-label={t("creators.strip.hide")}
             title={t("creators.strip.hide")}
-            className="flex h-9 w-9 items-center justify-center rounded-full text-text-muted transition-colors duration-200 hover:bg-surface-soft hover:text-text"
+            className="flex h-9 w-9 items-center justify-center rounded-sm text-text-muted transition-colors duration-200 hover:bg-surface-soft hover:text-text"
           >
             <X size={16} aria-hidden />
           </button>
@@ -227,11 +227,11 @@ function CreatorCard({ candidate, onDismiss }: { candidate: SuggestedCreator; on
         data-creator-dismiss
         aria-label={t("creators.dismissPerson", { name: profile.displayName })}
         title={t("creators.dismissPerson", { name: profile.displayName })}
-        className="absolute right-1 top-1 z-10 flex h-9 w-9 items-center justify-center rounded-full text-text-muted transition-colors duration-200 hover:bg-surface-soft hover:text-text"
+        className="absolute right-1 top-1 z-10 flex h-9 w-9 items-center justify-center rounded-sm text-text-muted transition-colors duration-200 hover:bg-surface-soft hover:text-text"
       >
         <X size={16} aria-hidden />
       </button>
-      <Link href={profileHref(profile)} className="flex min-w-0 flex-col items-center gap-2 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+      <Link href={profileHref(profile)} className="flex min-w-0 flex-col items-center gap-2 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus">
         <Avatar src={profile.avatarUrl} alt="" size={80} />
         <span className="w-full min-w-0 space-y-0.5">
           <span className="block truncate text-label font-semibold text-text">{profile.displayName}</span>

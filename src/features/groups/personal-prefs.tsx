@@ -118,7 +118,7 @@ export function LeaveCommunitySection({
             type="button"
             onClick={() => setConfirm(true)}
             data-leave-community
-            className="flex h-14 w-full items-center gap-4 px-4 text-left text-body text-danger transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
+            className="flex h-14 w-full items-center gap-4 px-4 text-left text-body text-danger transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-focus"
           >
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface-soft" aria-hidden>
               <LogOut size={20} />

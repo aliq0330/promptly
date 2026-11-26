@@ -179,16 +179,16 @@ function StepCard({ step, steps, index }: { step: WorkflowStep; steps: WorkflowS
               <span className="absolute bottom-1 left-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-caption font-semibold text-primary-foreground">{index + 1}</span>
             </span>
           ) : (
-            <span aria-hidden className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-surface font-display text-h2 font-extrabold text-primary shadow-card">
+            <span aria-hidden className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-surface font-display text-h2 font-extrabold text-primary-text shadow-card">
               {index + 1}
             </span>
           )}
           <span className="min-w-0 flex-1 space-y-1">
-            <span className="flex min-w-0 items-center gap-1.5 text-caption font-semibold text-primary">
+            <span className="flex min-w-0 items-center gap-1.5 text-caption font-semibold text-primary-text">
               <Icon size={12} className="shrink-0" aria-hidden />
               <span className="truncate">{[t("workflow.stepN", { n: String(index + 1) }), t(meta.labelKey), stepSubtitle(step, language)].filter(Boolean).join(" · ")}</span>
             </span>
-            <span className="block break-words font-display text-h2 font-extrabold leading-tight tracking-[-0.02em] text-text">{step.title || t("workflow.untitledStep")}</span>
+            <span className="block break-words font-display text-h2 font-extrabold leading-tight text-text">{step.title || t("workflow.untitledStep")}</span>
             {step.description && <span className="block break-words text-small text-text-secondary">{step.description}</span>}
             {c ? (
               <span className="flex min-w-0 items-center gap-1.5 text-caption text-text">
@@ -213,7 +213,7 @@ function StepCard({ step, steps, index }: { step: WorkflowStep; steps: WorkflowS
                   {step.inputs.map((input) => {
                     const link = links.find((l) => l.input.id === input.id);
                     return link ? (
-                      <span key={input.id} className="flex min-w-0 items-center gap-1.5 rounded-md bg-primary-soft px-2 py-1 text-caption font-medium text-primary">
+                      <span key={input.id} className="flex min-w-0 items-center gap-1.5 rounded-md bg-primary-soft px-2 py-1 text-caption font-medium text-primary-text">
                         <ArrowLeft size={12} className="shrink-0" aria-hidden />
                         <span className="min-w-0 break-words">{t("workflow.flowInputFrom", { n: String(link.fromIndex + 1), label: link.output.label || t("workflow.outputLabel") })}</span>
                       </span>
@@ -277,7 +277,7 @@ function StepCard({ step, steps, index }: { step: WorkflowStep; steps: WorkflowS
               href={studioHref}
               aria-label={t("studio.openInStudio")}
               title={t("studio.openInStudio")}
-              className="flex h-9 w-9 items-center justify-center rounded-md text-text-muted transition-colors hover:bg-surface-soft hover:text-primary"
+              className="flex h-9 w-9 items-center justify-center rounded-sm text-text-muted transition-colors hover:bg-surface-soft hover:text-primary-text"
             >
               <WandSparkles size={16} />
             </Link>
@@ -286,7 +286,7 @@ function StepCard({ step, steps, index }: { step: WorkflowStep; steps: WorkflowS
             href={c.href}
             aria-label={t("workflow.flowOpen")}
             title={t("workflow.flowOpen")}
-            className="flex h-9 w-9 items-center justify-center rounded-md text-text-muted transition-colors hover:bg-surface-soft hover:text-primary"
+            className="flex h-9 w-9 items-center justify-center rounded-sm text-text-muted transition-colors hover:bg-surface-soft hover:text-primary-text"
           >
             <ArrowUpRight size={16} />
           </Link>
@@ -340,8 +340,8 @@ function Connector({ from, to }: { from: WorkflowStep; to: WorkflowStep }) {
       <span className={cn("h-3 w-px", linked ? "bg-primary/50" : "bg-border-strong")} />
       <span
         className={cn(
-          "flex max-w-full items-center gap-1.5 rounded-full px-3 py-1 text-caption font-semibold",
-          linked ? "bg-primary-soft text-primary" : "text-text-muted",
+          "flex max-w-full items-center gap-1.5 rounded-sm px-3 py-1 text-caption font-semibold",
+          linked ? "bg-primary-soft text-primary-text" : "text-text-muted",
         )}
       >
         <ArrowDown size={12} className="shrink-0" />

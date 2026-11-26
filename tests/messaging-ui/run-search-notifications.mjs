@@ -144,12 +144,12 @@ await scenario("7a. Arama düzeni: Filtre penceresinden Görsel + Metin seçilir
   await dialog.getByRole("radio", { name: "Popüler" }).click();
   await dialog.getByRole("button", { name: "Filtreleri Uygula" }).click();
   await chipStrip(page).waitFor();
-  const boxes = await chipStrip(page).locator("span.rounded-full").evaluateAll((els) => els.map((el) => Math.round(el.getBoundingClientRect().top)));
+  const boxes = await chipStrip(page).locator("span.rounded-sm").evaluateAll((els) => els.map((el) => Math.round(el.getBoundingClientRect().top)));
   assert.equal(boxes.length, 2, "iki çip");
   assert.equal(new Set(boxes).size, 1, "çipler tek satırda");
   assert.match(await page.locator("[data-list-filter]").getAttribute("aria-label"), /2/, "Filtre simgesi etkin sayıyı taşır");
   await page.getByRole("button", { name: "Filtreyi kaldır: Görsel" }).click();
-  assert.equal(await chipStrip(page).locator("span.rounded-full").count(), 1);
+  assert.equal(await chipStrip(page).locator("span.rounded-sm").count(), 1);
   await chipStrip(page).getByRole("button", { name: "Temizle" }).click();
   assert.equal(await chipStrip(page).count(), 0, "Temizle şeridi kaldırır");
 });

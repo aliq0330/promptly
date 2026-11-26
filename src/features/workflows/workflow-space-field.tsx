@@ -173,7 +173,7 @@ export function WorkflowSpaceField({
 
             {note && (
               <p role="status" className={cn("flex items-start gap-2 rounded-xl px-3 py-2 text-small text-text-secondary", note.warn ? "bg-warning-soft" : "bg-primary-soft")}>
-                <Lock size={16} className={cn("mt-0.5 shrink-0", note.warn ? "text-warning" : "text-primary")} aria-hidden />
+                <Lock size={16} className={cn("mt-0.5 shrink-0", note.warn ? "text-warning" : "text-primary-text")} aria-hidden />
                 {note.text}
               </p>
             )}

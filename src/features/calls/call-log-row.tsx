@@ -44,7 +44,7 @@ export function CallLogRow({ call, userId, onCallBack }: { call: CallRow; userId
   const actionLabel = missed ? t("calls.log.callBack") : t("calls.log.callAgain");
   return (
     <div className="flex justify-center py-1" data-call-log data-call-outcome={summary.outcome} data-call-direction={summary.direction}>
-      <div className="inline-flex max-w-full flex-wrap items-center justify-center gap-x-2 gap-y-1 rounded-full bg-surface px-3 py-1.5 text-caption text-text-secondary shadow-xs">
+      <div className="inline-flex max-w-full flex-wrap items-center justify-center gap-x-2 gap-y-1 rounded-sm bg-surface px-3 py-1.5 text-caption text-text-secondary shadow-xs">
         <span className={cn("inline-flex items-center gap-1 font-semibold", missed ? "text-danger" : "text-text")}>
           <TypeIcon size={16} aria-hidden />
           <DirIcon size={12} aria-hidden />
@@ -53,7 +53,7 @@ export function CallLogRow({ call, userId, onCallBack }: { call: CallRow; userId
         {summary.outcome === "completed" && <span>{t("calls.log.duration", { time: formatCallDuration(summary.durationSec) })}</span>}
         <span className="text-text-muted">{formatClockTime(summary.at, language)}</span>
         {canCall && summary.outcome !== "completed" && (
-          <button type="button" onClick={() => onCallBack?.(summary.type)} data-call-callback className="rounded-full px-2 py-0.5 font-semibold text-primary hover:bg-primary-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+          <button type="button" onClick={() => onCallBack?.(summary.type)} data-call-callback className="rounded-sm px-2 py-0.5 font-semibold text-primary-text hover:bg-primary-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus">
             {actionLabel}
           </button>
         )}

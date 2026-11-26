@@ -140,7 +140,7 @@ export function StoryHighlightsRow({ ownerId, isOwnProfile }: { ownerId: string;
       })}
       {isOwnProfile && (
         <button type="button" onClick={() => setEditing("new")} className="group flex w-[68px] shrink-0 flex-col items-center gap-1.5 rounded-md text-center">
-          <span className="flex h-[66px] w-[66px] items-center justify-center rounded-full border-[1.5px] border-dashed border-border-strong text-text-muted transition-colors group-hover:border-primary group-hover:text-primary">
+          <span className="flex h-[66px] w-[66px] items-center justify-center rounded-full border-[1.5px] border-dashed border-border-strong text-text-muted transition-colors group-hover:border-primary group-hover:text-primary-text">
             <Plus size={24} aria-hidden />
           </span>
           <span className="w-full truncate text-caption text-text-secondary">{t("stories.highlight.new")}</span>
@@ -259,7 +259,7 @@ export function HighlightEditor({
               value={title}
               maxLength={STORY_LIMITS.highlightTitleMax}
               onChange={(event) => setTitle(event.target.value)}
-              className="min-h-11 w-full rounded-md card-flat px-3 text-small text-text focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15"
+              className="min-h-11 w-full rounded-sm card-flat px-3 text-small text-text focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15"
             />
           </label>
           <p className="text-caption text-text-muted">{t("stories.highlight.privacyNote")}</p>
@@ -286,7 +286,7 @@ export function HighlightEditor({
                       )}
                     </button>
                     {order >= 0 && (
-                      <button type="button" onClick={() => setCover(story.id)} aria-pressed={isCover} className={cn("flex min-h-9 w-full items-center justify-center gap-1 rounded-full text-caption", isCover ? "font-semibold text-primary" : "text-text-muted hover:text-text")}>
+                      <button type="button" onClick={() => setCover(story.id)} aria-pressed={isCover} className={cn("flex min-h-9 w-full items-center justify-center gap-1 rounded-sm text-caption", isCover ? "font-semibold text-primary-text" : "text-text-muted hover:text-text")}>
                         {isCover && <Check size={12} aria-hidden />} {isCover ? t("stories.highlight.cover") : t("stories.highlight.makeCover")}
                       </button>
                     )}

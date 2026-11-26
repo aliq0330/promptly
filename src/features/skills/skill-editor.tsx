@@ -296,10 +296,10 @@ export function SkillEditor({ editId }: { editId: string | null }) {
         <h1 className="mb-2 text-h2 font-bold text-text">{t("auth.loginRequiredTitle")}</h1>
         <p className="mb-4 text-small text-text-muted">{t("skill.loginRequiredBody")}</p>
         <div className="flex justify-center gap-2">
-          <Link href="/login" className="inline-flex h-9 items-center rounded-md bg-primary px-4 text-small font-medium text-primary-foreground hover:bg-primary-hover">
+          <Link href="/login" className="inline-flex h-9 items-center rounded-sm bg-primary px-4 text-small font-medium text-primary-foreground hover:bg-primary-hover">
             {t("header.login")}
           </Link>
-          <Link href="/signup" className="inline-flex h-9 items-center rounded-md border border-border px-4 text-small font-medium text-text hover:bg-accent-surface">
+          <Link href="/signup" className="inline-flex h-9 items-center rounded-sm border border-border px-4 text-small font-medium text-text hover:bg-accent-surface">
             {t("auth.createAccount")}
           </Link>
         </div>
@@ -311,7 +311,7 @@ export function SkillEditor({ editId }: { editId: string | null }) {
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
         <h1 className="mb-2 text-h2 font-bold text-text">{loadState === "forbidden" ? t("skill.noEditPermissionTitle") : t("skill.notFoundTitle")}</h1>
         <p className="mb-4 text-small text-text-muted">{loadState === "forbidden" ? t("skill.noEditPermissionBody") : t("skill.notFoundBody")}</p>
-        <Link href={SKILLS_LIST_HREF} className="inline-flex h-9 items-center rounded-md border border-border px-4 text-small font-medium text-text hover:bg-accent-surface">
+        <Link href={SKILLS_LIST_HREF} className="inline-flex h-9 items-center rounded-sm border border-border px-4 text-small font-medium text-text hover:bg-accent-surface">
           {t("skill.backToSkills")}
         </Link>
       </div>

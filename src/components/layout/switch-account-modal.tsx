@@ -45,7 +45,7 @@ export function SwitchAccountModal({ currentUserId, onClose }: { currentUserId: 
             <h2 id="switch-account-title" className="text-h3 font-bold text-text">{t("accountSwitch.title")}</h2>
             <p className="text-caption text-text-muted">{t("accountSwitch.help")}</p>
           </div>
-          <button type="button" onClick={onClose} aria-label={t("common.close")} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-text-secondary hover:bg-surface-soft">
+          <button type="button" onClick={onClose} aria-label={t("common.close")} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm text-text-secondary hover:bg-surface-soft">
             <X size={20} aria-hidden />
           </button>
         </div>
@@ -68,7 +68,7 @@ export function SwitchAccountModal({ currentUserId, onClose }: { currentUserId: 
                       <span className="block truncate text-small font-medium text-text">{account.displayName}</span>
                       <span className="block truncate text-caption text-text-muted">@{account.username}</span>
                     </span>
-                    {isCurrent && <span className="text-caption text-primary">{t("accountSwitch.current")}</span>}
+                    {isCurrent && <span className="text-caption text-primary-text">{t("accountSwitch.current")}</span>}
                   </button>
                 </li>
               );

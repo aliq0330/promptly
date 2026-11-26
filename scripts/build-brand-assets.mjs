@@ -32,11 +32,11 @@ const BRACE_RIGHT = "M39 13c6 0 7.5 3 7.5 8v5.5c0 3.5 2 5.5 5.5 5.5-3.5 0-5.5 2-
 const HEART = "M32 41.5c-1-.8-9-6.4-9-12.2a4.6 4.6 0 0 1 9-1.5a4.6 4.6 0 0 1 9 1.5c0 5.8-8 11.4-9 12.2z";
 
 // Fixed brand colours (the light-mode tokens of globals.css; icons do not follow the viewer's mode).
-const BLUE = "#3b5be2";
-const HEART_ON_BLUE = "#f29051"; // the lighter heart reads better on the blue tile
-const HEART_ON_PAPER = "#d86934";
-const PAPER = "#f8f8fb";
-const INK = "#121218";
+const BLUE = "#ff6719";
+const HEART_ON_BLUE = "#ffffff"; // turuncu karoda kalp beyaz (referans: tek vurgu)
+const HEART_ON_PAPER = "#ff6719";
+const PAPER = "#ffffff";
+const INK = "#363737";
 
 /** The mark (braces + heart) inside a 64-unit box, scaled by `scale` around the centre. Thicker strokes for tiny sizes. */
 function mark({ brace, heart, scale = 1, stroke = 6.5 }) {
@@ -78,9 +78,9 @@ const OG_HTML = `<!doctype html><html lang="tr"><head><meta charset="utf-8">
   .lockup{display:flex;align-items:center;gap:18px}
   .word{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:92px;letter-spacing:-0.045em;line-height:1}
   h1{margin:0;font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:54px;letter-spacing:-0.025em;line-height:1.08;max-width:820px}
-  .sub{margin-top:14px;font-size:26px;color:#62646f}
-  .prompt{font-family:"JetBrains Mono",monospace;font-size:24px;line-height:1.6;color:#464854;background:#fff;border:1px solid #e4e4ec;border-radius:22px;padding:18px 24px;align-self:flex-start}
-  .v{color:#b04e1c;background:#fceee6;border-radius:8px;padding:1px 8px}
+  .sub{margin-top:14px;font-size:26px;color:#6b6b6b}
+  .prompt{font-family:"JetBrains Mono",monospace;font-size:24px;line-height:1.6;color:#555656;background:#fff;border:1px solid #e6e6e6;border-radius:20px;padding:18px 24px;align-self:flex-start}
+  .v{color:#b23b00;background:#fff0e8;border-radius:8px;padding:1px 8px}
 </style></head><body>
   <div class="lockup">
     <svg width="104" height="104" viewBox="8 8 48 48">${mark({ brace: BLUE, heart: HEART_ON_PAPER })}</svg>

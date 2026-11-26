@@ -12,7 +12,7 @@ export const MENU_PANEL_CLASS = `overflow-hidden ${FLOATING_PANEL_CLASS} py-1 an
 
 /** A menu row. The focus state is real (inset ring), not only a background tint. */
 export const MENU_ITEM_CLASS =
-  "flex w-full items-center gap-2 px-3 py-2 text-left text-small text-text transition-colors hover:bg-surface-soft focus-visible:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-50";
+  "flex w-full items-center gap-2 px-3 py-2 text-left text-small text-text transition-colors hover:bg-surface-soft focus-visible:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-focus disabled:cursor-not-allowed disabled:opacity-50";
 
 /** Destructive row: same geometry, danger ink. */
 export const MENU_ITEM_DANGER_CLASS = "text-danger hover:bg-danger-soft focus-visible:bg-danger-soft";

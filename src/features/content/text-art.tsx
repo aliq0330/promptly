@@ -28,7 +28,7 @@ export function TextArt({ seed, className, children }: { seed: string; className
 /** A title set big inside a text surface (the real title link stays in the card's hidden hover layer, so this is decoration for assistive tech). */
 export function TextArtTitle({ children }: { children: React.ReactNode }) {
   return (
-    <p aria-hidden className="line-clamp-2 break-words font-display text-h3 font-extrabold leading-[1.1] tracking-[-0.02em]">
+    <p aria-hidden className="line-clamp-2 break-words font-display text-h3 font-extrabold leading-[1.1]">
       {children}
     </p>
   );

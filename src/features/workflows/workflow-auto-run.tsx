@@ -224,9 +224,9 @@ export function WorkflowAutoRun({
         onClick={() => setOpen((value) => !value)}
         aria-expanded={open}
         aria-controls="workflow-auto-run-body"
-        className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
       >
-        <span aria-hidden className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary-soft text-primary">
+        <span aria-hidden className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary-soft text-primary-text">
           <WandSparkles size={20} />
         </span>
         <span className="min-w-0 flex-1">
@@ -358,7 +358,7 @@ export function WorkflowAutoRun({
           )}
 
           {outcome?.stop === "completed" && (
-            <div role="status" className="flex flex-wrap items-center gap-2 rounded-lg bg-primary-soft px-3 py-2.5 text-small text-primary">
+            <div role="status" className="flex flex-wrap items-center gap-2 rounded-lg bg-primary-soft px-3 py-2.5 text-small text-primary-text">
               <span className="flex-1">{t("workflow.auto.finished")}</span>
               <Button size="sm" variant="outline" onClick={onShowSummary}>
                 {t("workflow.auto.finishedSummary")}

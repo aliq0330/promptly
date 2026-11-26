@@ -146,7 +146,7 @@ export function FocusCommentsBody({ item }: { item: PostFeedItem }) {
                 type="button"
                 onClick={() => addEmoji(emoji)}
                 aria-label={t("focusComments.addEmoji", { emoji })}
-                className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-h2 leading-none transition-[background-color,transform] duration-150 ease-soft hover:bg-surface-soft active:scale-95"
+                className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-sm text-h2 leading-none transition-[background-color,transform] duration-150 ease-soft hover:bg-surface-soft active:scale-95"
               >
                 {emoji}
               </button>
@@ -156,7 +156,7 @@ export function FocusCommentsBody({ item }: { item: PostFeedItem }) {
           {replyTarget && (
             <div className="mx-3 mb-2 flex items-center justify-between gap-2 rounded-lg bg-surface-soft px-3 py-1.5 text-caption text-text-secondary">
               <span className="truncate">{t("focusComments.replyingTo", { name: replyTarget.author.username })}</span>
-              <button type="button" onClick={baseTree.onCancelReply} aria-label={t("focusComments.cancelReply")} className="shrink-0 rounded-full p-1 text-text-muted hover:text-text">
+              <button type="button" onClick={baseTree.onCancelReply} aria-label={t("focusComments.cancelReply")} className="shrink-0 rounded-sm p-1 text-text-muted hover:text-text">
                 <X size={16} aria-hidden />
               </button>
             </div>
@@ -172,7 +172,7 @@ export function FocusCommentsBody({ item }: { item: PostFeedItem }) {
           {user ? (
             <form onSubmit={submit} className="flex items-center gap-3 px-3">
               <Avatar src={ownProfile?.avatarUrl ?? null} alt={ownProfile?.displayName ?? ""} size={40} />
-              <div className="relative flex min-w-0 flex-1 items-center rounded-full border border-border bg-surface-soft pl-4 pr-1.5 focus-within:border-primary/60">
+              <div className="relative flex min-w-0 flex-1 items-center rounded-sm border border-border bg-surface-soft pl-4 pr-1.5 focus-within:border-primary/60">
                 <MentionInput
                   ref={inputRef}
                   value={value}
@@ -190,7 +190,7 @@ export function FocusCommentsBody({ item }: { item: PostFeedItem }) {
                   aria-label={t("common.send")}
                   title={t("common.send")}
                   className={cn(
-                    "ml-1 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground transition-[opacity,transform] duration-200 ease-soft disabled:opacity-0",
+                    "ml-1 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-primary text-primary-foreground transition-[opacity,transform] duration-200 ease-soft disabled:opacity-0",
                     posting && "opacity-60",
                   )}
                 >
@@ -204,7 +204,7 @@ export function FocusCommentsBody({ item }: { item: PostFeedItem }) {
                 type="button"
                 onClick={() => requireAuth("comment")}
                 aria-haspopup="dialog"
-                className="flex h-11 w-full items-center justify-center rounded-full border border-border bg-surface-soft text-label font-semibold text-text hover:bg-surface-elevated"
+                className="flex h-11 w-full items-center justify-center rounded-sm border border-border bg-surface-soft text-label font-semibold text-text hover:bg-surface-elevated"
               >
                 {t("focusComments.loginToComment")}
               </button>

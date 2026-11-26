@@ -34,7 +34,7 @@ export function ResultCard({ result, label = "creator", worksVote }: { result: P
     <div className="group relative overflow-hidden rounded-xl bg-surface-soft">
       <ResultTypePreview result={result} size="card" />
       {label === "prompt" && !result.promptId && (
-        <span className="absolute left-2 top-2 z-10 inline-flex h-[26px] items-center gap-1.5 rounded-full bg-art-chip px-2.5 text-caption font-semibold text-on-art">
+        <span className="absolute left-2 top-2 z-10 inline-flex h-[26px] items-center gap-1.5 rounded-sm bg-art-chip px-2.5 text-caption font-semibold text-on-art">
           <Lock size={12} aria-hidden />
           {t("result.onlyYou")}
         </span>

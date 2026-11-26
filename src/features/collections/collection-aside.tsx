@@ -41,7 +41,7 @@ export function CollectionAside({ collection, members, role }: { collection: Col
     {
       label: t("collection.aside.owner"),
       value: (
-        <Link href={profileHref(collection.owner)} className="font-semibold text-text hover:text-primary">
+        <Link href={profileHref(collection.owner)} className="font-semibold text-text hover:text-primary-text">
           {collection.owner.displayName}
         </Link>
       ),
@@ -82,7 +82,7 @@ export function CollectionAside({ collection, members, role }: { collection: Col
                 <Link href={collectionHref(item)} className="group flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-surface-soft">
                   <CollectionCover collection={item} className="h-11 w-11 shrink-0 overflow-hidden rounded-md [&>span]:h-8 [&>span]:w-8" />
                   <span className="min-w-0 leading-tight">
-                    <span className="block truncate text-label font-semibold text-text transition-colors group-hover:text-primary">{item.name}</span>
+                    <span className="block truncate text-label font-semibold text-text transition-colors group-hover:text-primary-text">{item.name}</span>
                     <span className="mt-0.5 block text-caption text-text-muted">{t("collection.itemCount", { count: item.itemCount })}</span>
                   </span>
                 </Link>

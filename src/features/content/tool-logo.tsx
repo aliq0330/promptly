@@ -26,7 +26,7 @@ export function ToolLogo({ toolId, name, size = "md", tile = true, className }: 
       <img src={url} alt="" width={px} height={px} draggable={false} className="shrink-0 select-none" />
     )
   ) : (
-    <span aria-hidden className="text-label font-semibold text-primary">
+    <span aria-hidden className="text-label font-semibold text-primary-text">
       {name.charAt(0)}
     </span>
   );

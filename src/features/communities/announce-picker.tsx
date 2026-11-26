@@ -272,7 +272,7 @@ export function AnnounceReportNotice() {
       className="fixed inset-x-3 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-50 mx-auto max-w-md animate-pop-in rounded-lg border border-border-soft bg-surface-elevated p-4 shadow-pop md:bottom-6"
     >
       <div className="flex items-start gap-3">
-        <span className={cn("mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-full", failed.length > 0 ? "bg-warning-soft text-warning" : "bg-primary-soft text-primary")}>
+        <span className={cn("mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-full", failed.length > 0 ? "bg-warning-soft text-warning" : "bg-primary-soft text-primary-text")}>
           {failed.length > 0 ? <AlertCircle size={16} aria-hidden /> : <Megaphone size={16} aria-hidden />}
         </span>
         <div className="min-w-0 flex-1 space-y-1 text-small">

@@ -121,7 +121,7 @@ export default function LoginPage() {
             <label htmlFor="login-password" className="block text-label font-medium text-text">
               {t("auth.passwordLabel")}
             </label>
-            <Link href="/reset-password" className="text-caption text-primary hover:underline">
+            <Link href="/reset-password" className="text-caption text-primary-text hover:underline">
               {t("auth.forgotPassword")}
             </Link>
           </div>
@@ -146,7 +146,7 @@ export default function LoginPage() {
       <LegalNotice />
       <p className="text-caption text-text-muted">
         {t("auth.noAccountYet")}{" "}
-        <Link href="/signup" className="text-primary underline underline-offset-2 hover:no-underline">
+        <Link href="/signup" className="text-primary-text underline underline-offset-2 hover:no-underline">
           {t("auth.signUp")}
         </Link>
       </p>

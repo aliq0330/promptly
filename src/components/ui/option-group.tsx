@@ -24,13 +24,13 @@ export interface OptionItem<K extends string> {
 }
 
 const CARD_CLASS = "flex items-stretch rounded-lg card-inset transition-colors duration-200 ease-soft motion-reduce:transition-none";
-const BUTTON_CLASS = "flex min-h-11 min-w-0 flex-1 items-start gap-3 rounded-lg px-4 py-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed";
+const BUTTON_CLASS = "flex min-h-11 min-w-0 flex-1 items-start gap-3 rounded-lg px-4 py-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:cursor-not-allowed";
 
 function Body({ label, description, badge, icon: Icon, leading, checked }: Pick<OptionItem<string>, "label" | "description" | "badge" | "icon" | "leading"> & { checked: boolean }) {
   return (
     <>
       {leading}
-      {Icon && <Icon size={20} aria-hidden className={cn("mt-0.5 shrink-0", checked ? "text-primary" : "text-text-secondary")} />}
+      {Icon && <Icon size={20} aria-hidden className={cn("mt-0.5 shrink-0", checked ? "text-primary-text" : "text-text-secondary")} />}
       <span className="min-w-0 flex-1">
         <span className="flex flex-wrap items-center gap-2 text-small font-medium text-text">
           {label}
@@ -187,13 +187,13 @@ export function OptionRowGroup<K extends string>({
             onClick={() => !checked && onChange(option.key)}
             {...option.attrs}
             className={cn(
-              "flex min-h-14 w-full min-w-0 items-center gap-3 rounded-md px-2 py-2 text-left transition-colors duration-200 ease-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary motion-reduce:transition-none",
+              "flex min-h-14 w-full min-w-0 items-center gap-3 rounded-md px-2 py-2 text-left transition-colors duration-200 ease-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus motion-reduce:transition-none",
               checked ? "bg-primary-soft" : "hover:bg-surface-soft",
             )}
           >
             {option.leading}
             <span className="min-w-0 flex-1">
-              <span className={cn("block truncate text-body font-semibold", checked ? "text-primary" : "text-text")}>{option.label}</span>
+              <span className={cn("block truncate text-body font-semibold", checked ? "text-primary-text" : "text-text")}>{option.label}</span>
               {option.description && <span className="block truncate text-caption text-text-muted">{option.description}</span>}
             </span>
             {checked && (

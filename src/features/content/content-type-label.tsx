@@ -21,7 +21,7 @@ export function ContentTypeLabel({
 }) {
   return (
     <SectionLabel tone="secondary" className={className}>
-      <Icon size={12} aria-hidden className="shrink-0 text-primary" />
+      <Icon size={12} aria-hidden className="shrink-0 text-primary-text" />
       <span className="shrink-0">{label}</span>
       {detail && (
         <>

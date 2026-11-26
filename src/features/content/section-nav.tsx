@@ -209,11 +209,11 @@ export function SectionNav<K extends string>({
 
 const FILTER_BUTTON =
   "inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border-soft bg-surface text-text-secondary " +
-  "transition-colors hover:bg-surface-soft hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1";
+  "transition-colors hover:bg-surface-soft hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-1";
 /** The chip row stays calm next to the tiles: no borders, the chosen chip tinted instead of filled. */
 const QUIET_CHIPS =
   "[&>button]:border-transparent [&>button]:bg-transparent [&>button]:text-text-muted [&>button]:shadow-none [&>button:hover]:bg-surface-soft " +
-  "[&>button[aria-pressed=true]]:border-transparent [&>button[aria-pressed=true]]:bg-primary-soft [&>button[aria-pressed=true]]:text-primary";
+  "[&>button[aria-pressed=true]]:border-transparent [&>button[aria-pressed=true]]:bg-primary-soft [&>button[aria-pressed=true]]:text-primary-text";
 
 function SectionTile<K extends string>({
   item,
@@ -235,14 +235,14 @@ function SectionTile<K extends string>({
       aria-selected={selected}
       onClick={onSelect}
       className={cn(
-        "group relative flex flex-col items-center gap-1.5 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+        "group relative flex flex-col items-center gap-1.5 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-background",
         fluid ? "min-w-0 max-w-[4.75rem] flex-1 sm:w-[4.75rem] sm:flex-none" : "w-[4.75rem] shrink-0",
       )}
     >
       <span
         className={cn(
           "relative grid aspect-square w-full max-w-[3.75rem] place-items-center rounded-xl transition-[background-color,color,box-shadow,transform] duration-200 ease-soft group-active:scale-[0.95]",
-          selected ? "bg-primary-soft text-primary" : "bg-surface-soft text-text-secondary group-hover:bg-border-soft group-hover:text-text",
+          selected ? "bg-primary-soft text-primary-text" : "bg-surface-soft text-text-secondary group-hover:bg-border-soft group-hover:text-text",
         )}
       >
         <Icon size={24} aria-hidden />
@@ -288,7 +288,7 @@ function SectionTabs<K extends string>({
               onClick={() => onChange(item.key)}
               className={cn(
                 "inline-flex h-11 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap border-b-2 px-4 text-body transition-colors duration-200 ease-soft",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-focus",
                 selected ? "border-primary font-semibold text-text" : "border-transparent font-medium text-text-muted hover:text-text",
               )}
             >

@@ -88,7 +88,7 @@ export function OutputFilePicker({
       {file ? (
         <div className="space-y-3 rounded-lg card-soft p-3">
           <div className="flex items-center gap-3">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-primary-soft text-primary">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-primary-soft text-primary-text">
               <Icon size={20} />
             </span>
             <div className="min-w-0 flex-1">
@@ -100,7 +100,7 @@ export function OutputFilePicker({
               onClick={() => onChange(null)}
               disabled={disabled}
               aria-label={t("output.remove")}
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-text-muted transition-colors hover:bg-surface hover:text-text"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm text-text-muted transition-colors hover:bg-surface hover:text-text"
             >
               <X size={20} />
             </button>

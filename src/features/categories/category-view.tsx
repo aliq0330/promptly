@@ -10,7 +10,7 @@ import { categoryHref, cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 
 const SUB_CHIP =
-  "inline-flex h-9 shrink-0 items-center rounded-full border px-4 text-label font-medium whitespace-nowrap transition-colors duration-200 ease-soft";
+  "inline-flex h-9 shrink-0 items-center rounded-sm border px-4 text-label font-medium whitespace-nowrap transition-colors duration-200 ease-soft";
 
 /**
  * A category's page (`/categories/local?type=&category=&sub=`, docs/history/211-*): the topic-page template for one taxonomy
@@ -74,7 +74,7 @@ export function CategoryView() {
             <Link
               href={categoryHref(type, category.id)}
               aria-current={!sub ? "page" : undefined}
-              className={cn(SUB_CHIP, !sub ? "border-transparent bg-primary-soft text-primary" : "border-border bg-surface text-text-secondary hover:border-border-strong hover:text-text")}
+              className={cn(SUB_CHIP, !sub ? "border-transparent bg-primary-soft text-primary-text" : "border-border bg-surface text-text-secondary hover:border-border-strong hover:text-text")}
             >
               {t("common.all")}
             </Link>
@@ -85,7 +85,7 @@ export function CategoryView() {
                   key={entry.id}
                   href={categoryHref(type, category.id, entry.id)}
                   aria-current={active ? "page" : undefined}
-                  className={cn(SUB_CHIP, active ? "border-transparent bg-primary-soft text-primary" : "border-border bg-surface text-text-secondary hover:border-border-strong hover:text-text")}
+                  className={cn(SUB_CHIP, active ? "border-transparent bg-primary-soft text-primary-text" : "border-border bg-surface text-text-secondary hover:border-border-strong hover:text-text")}
                 >
                   {taxonomyLabel(entry.labelKey, language)}
                 </Link>

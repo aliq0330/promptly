@@ -28,8 +28,8 @@ export function FocusCreator({ user, onImage = false }: { user: UserProfile; onI
     <Link
       href={profileHref(user)}
       className={cn(
-        "relative z-10 inline-flex min-w-0 max-w-full items-center gap-1.5 rounded-full py-0.5 pr-2.5 outline-none focus-visible:ring-2 focus-visible:ring-primary",
-        onImage ? "bg-art-chip pl-0.5 text-on-art hover:bg-art-chip" : "-ml-0.5 pl-0.5 text-text-secondary hover:text-primary",
+        "relative z-10 inline-flex min-w-0 max-w-full items-center gap-1.5 rounded-sm py-0.5 pr-2.5 outline-none focus-visible:ring-2 focus-visible:ring-focus",
+        onImage ? "bg-art-chip pl-0.5 text-on-art hover:bg-art-chip" : "-ml-0.5 pl-0.5 text-text-secondary hover:text-primary-text",
       )}
     >
       <Avatar src={user.avatarUrl} alt="" size={24} />
@@ -54,7 +54,7 @@ export function FocusTitle({ href, title, onImage = false, className }: { href: 
       <Link
         href={href}
         data-card-link
-        className="relative z-10 line-clamp-2 rounded-xs outline-none decoration-primary/40 underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-primary"
+        className="relative z-10 line-clamp-2 rounded-xs outline-none decoration-primary/40 underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-focus"
       >
         {title}
       </Link>

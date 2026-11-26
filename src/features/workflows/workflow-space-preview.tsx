@@ -110,7 +110,7 @@ function MiniBoard({ spaceId, workflowId }: { spaceId: string; workflowId: strin
               const colors = SPACE_COLOR_CLASS[group.color];
               return (
                 <div key={frame.groupId} className={cn("absolute rounded-xl border-2 border-dashed", colors.border)} style={{ left: frame.rect.x - view.x, top: frame.rect.y - view.y, width: frame.rect.w, height: frame.rect.h, zIndex: 0 }}>
-                  <span className={cn("absolute left-2 top-1.5 inline-flex max-w-[calc(100%-1rem)] items-center truncate rounded-full px-2.5 py-1 text-caption font-semibold", colors.surface, colors.text)}>{group.name}</span>
+                  <span className={cn("absolute left-2 top-1.5 inline-flex max-w-[calc(100%-1rem)] items-center truncate rounded-sm px-2.5 py-1 text-caption font-semibold", colors.surface, colors.text)}>{group.name}</span>
                 </div>
               );
             })}
@@ -184,7 +184,7 @@ export function WorkflowSpacePreview({ workflowId }: { workflowId: string }) {
               setLoaded(null);
               setAttempt((n) => n + 1);
             }}
-            className="inline-flex h-9 items-center rounded-full border border-border bg-surface px-3 font-semibold text-text hover:bg-surface-soft"
+            className="inline-flex h-9 items-center rounded-sm border border-border bg-surface px-3 font-semibold text-text hover:bg-surface-soft"
           >
             {t("wfSpace.preview.retry")}
           </button>
@@ -209,8 +209,8 @@ export function WorkflowSpacePreview({ workflowId }: { workflowId: string }) {
                   aria-pressed={link.spaceId === current.spaceId}
                   onClick={() => setPickedId(link.spaceId)}
                   className={cn(
-                    "inline-flex h-9 max-w-full items-center gap-1.5 rounded-full border px-3 text-small font-semibold transition-colors",
-                    link.spaceId === current.spaceId ? "border-primary bg-primary-soft text-primary" : "border-border bg-surface text-text-secondary hover:bg-surface-soft",
+                    "inline-flex h-9 max-w-full items-center gap-1.5 rounded-sm border px-3 text-small font-semibold transition-colors",
+                    link.spaceId === current.spaceId ? "border-primary bg-primary-soft text-primary-text" : "border-border bg-surface text-text-secondary hover:bg-surface-soft",
                   )}
                 >
                   <Lock size={12} aria-hidden />
@@ -221,17 +221,17 @@ export function WorkflowSpacePreview({ workflowId }: { workflowId: string }) {
           )}
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
             <p className="flex min-w-0 items-center gap-1.5 text-small font-semibold text-text">
-              <Shapes size={16} className="shrink-0 text-primary" aria-hidden />
+              <Shapes size={16} className="shrink-0 text-primary-text" aria-hidden />
               <span className="truncate">{current.spaceTitle}</span>
             </p>
-            <span className="inline-flex items-center gap-1 rounded-full bg-surface px-2 py-0.5 text-caption font-semibold text-text-secondary">
+            <span className="inline-flex items-center gap-1 rounded-xs bg-surface px-2 py-0.5 text-caption font-semibold text-text-secondary">
               <Lock size={12} aria-hidden />
               {t("wfSpace.preview.private")}
             </span>
             <span className="text-caption text-text-muted">{t("wfSpace.preview.readOnly")}</span>
             <Link
               href={`${spaceHref(current.spaceId, "board")}&focus=${encodeURIComponent(current.itemId)}`}
-              className="ml-auto inline-flex h-9 items-center gap-1.5 rounded-full border border-border bg-surface px-3 text-small font-semibold text-text hover:bg-surface-soft"
+              className="ml-auto inline-flex h-9 items-center gap-1.5 rounded-sm border border-border bg-surface px-3 text-small font-semibold text-text hover:bg-surface-soft"
             >
               {t("wfSpace.preview.open")}
               <ArrowUpRight size={12} aria-hidden />

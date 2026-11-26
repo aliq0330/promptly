@@ -184,7 +184,7 @@ export function BulkTaxonomyCard() {
 
           <div className="flex flex-wrap gap-2">
             {TYPES.map((type) => (
-              <span key={type} className="rounded-full border border-border-soft bg-surface-soft px-3 py-1 text-caption text-text-secondary" data-testid={`taxonomy-type-${type}`}>
+              <span key={type} className="rounded-sm border border-border-soft bg-surface-soft px-3 py-1 text-caption text-text-secondary" data-testid={`taxonomy-type-${type}`}>
                 {typeName(type)}: <strong className="text-text">{plan.byType[type]}</strong>
               </span>
             ))}

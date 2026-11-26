@@ -264,7 +264,7 @@ function EventCard({
             </p>
           )}
           {event.onlineUrl && (
-            <a href={event.onlineUrl} target="_blank" rel="noopener noreferrer nofollow" className="inline-flex items-center gap-1.5 break-all text-small text-primary hover:underline">
+            <a href={event.onlineUrl} target="_blank" rel="noopener noreferrer nofollow" className="inline-flex items-center gap-1.5 break-all text-small text-primary-text hover:underline">
               <ExternalLink size={16} aria-hidden /> {t("communities.events.joinOnline")}
             </a>
           )}
@@ -281,7 +281,7 @@ function EventCard({
                 <CalendarX size={16} />
               </button>
             )}
-            <button type="button" onClick={onDelete} aria-label={t("common.delete")} className="flex h-9 w-9 items-center justify-center rounded-md text-text-muted hover:bg-danger-soft hover:text-danger">
+            <button type="button" onClick={onDelete} aria-label={t("common.delete")} className="flex h-9 w-9 items-center justify-center rounded-sm text-text-muted hover:bg-danger-soft hover:text-danger">
               <TrashIcon size={16} />
             </button>
           </div>
@@ -327,8 +327,8 @@ function EventCard({
                 aria-pressed={event.myRsvp === option.status}
                 onClick={() => onRsvp(option.status)}
                 className={cn(
-                  "inline-flex h-9 items-center gap-1.5 rounded-md border px-2.5 text-label font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-50",
-                  event.myRsvp === option.status ? "border-primary/50 bg-primary-soft text-primary" : "border-border bg-surface text-text-secondary hover:border-border-strong",
+                  "inline-flex h-9 items-center gap-1.5 rounded-sm border px-2.5 text-label font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:opacity-50",
+                  event.myRsvp === option.status ? "border-primary/50 bg-primary-soft text-primary-text" : "border-border bg-surface text-text-secondary hover:border-border-strong",
                 )}
               >
                 {option.icon} {option.label}

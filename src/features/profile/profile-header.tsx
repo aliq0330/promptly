@@ -75,7 +75,7 @@ export function ProfileHeader({
                 type="button"
                 onClick={stories.open}
                 aria-label={t("stories.profile.open", { name: user.displayName })}
-                className="absolute inset-1 rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                className="absolute inset-1 rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
               />
             )}
           </span>
@@ -97,7 +97,7 @@ export function ProfileHeader({
           <p className="max-w-2xl break-words text-body leading-relaxed text-text-secondary">
             {visibleBio}{" "}
             {bioIsLong && (
-              <button type="button" onClick={() => setBioExpanded((prev) => !prev)} className="font-medium text-primary hover:underline">
+              <button type="button" onClick={() => setBioExpanded((prev) => !prev)} className="font-medium text-primary-text hover:underline">
                 {t(bioExpanded ? "common.showLess" : "common.readMore")}
               </button>
             )}
@@ -116,7 +116,7 @@ export function ProfileHeader({
               href={website.startsWith("http") ? website : `https://${website}`}
               target="_blank"
               rel="noreferrer noopener"
-              className="inline-flex min-w-0 items-center gap-1.5 text-primary hover:underline"
+              className="inline-flex min-w-0 items-center gap-1.5 text-primary-text hover:underline"
             >
               <Link2 size={16} className="shrink-0" aria-hidden />
               <span className="truncate">{website}</span>

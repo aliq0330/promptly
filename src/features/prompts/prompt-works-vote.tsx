@@ -145,7 +145,7 @@ export function PromptWorksVote({ promptId, isOwn, contentType }: { promptId: st
         </h3>
         <p className="flex flex-wrap items-center gap-2 text-caption text-text-secondary" data-works-summary>
           {summary.tier === "proven" && (
-            <span key={provenSeq} title={t("prompt.works.provenHint")} className={cn("inline-flex items-center gap-1 rounded-full bg-primary-soft px-2 py-0.5 font-semibold text-primary", provenSeq > 0 && "mi-badge-in mi-shine")}>
+            <span key={provenSeq} title={t("prompt.works.provenHint")} className={cn("inline-flex items-center gap-1 rounded-sm bg-primary-soft px-2 py-0.5 font-semibold text-primary-text", provenSeq > 0 && "mi-badge-in mi-shine")}>
               <BadgeCheck size={12} aria-hidden />
               {t("prompt.works.proven")}
             </span>
@@ -204,7 +204,7 @@ export function PromptWorksVote({ promptId, isOwn, contentType }: { promptId: st
                 onChange={(event) => setDraft(event.target.value)}
                 placeholder={t(state.myVote === false ? "prompt.works.inviteNoPlaceholder" : "prompt.works.inviteYesPlaceholder")}
                 aria-label={t("prompt.works.inviteTextAria")}
-                className="w-full resize-none rounded-lg card-inset px-3 py-2 text-small text-text shadow-xs transition-colors duration-200 ease-soft placeholder:text-text-muted hover:border-border-strong focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15"
+                className="w-full resize-none rounded-sm card-inset px-3 py-2 text-small text-text shadow-xs transition-colors duration-200 ease-soft placeholder:text-text-muted hover:border-border-strong focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15"
               />
               <div className="flex items-center justify-end gap-2">
                 <Button type="button" variant="ghost" size="sm" onClick={dismissInvite} disabled={sending}>

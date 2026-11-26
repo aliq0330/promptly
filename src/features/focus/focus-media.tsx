@@ -126,7 +126,7 @@ export function PlayableMedia({ prompt, cover, active, near }: { prompt: Prompt;
         <>
           {!cover && (
             <div aria-hidden className="absolute inset-0 flex items-center justify-center bg-primary-soft">
-              <Music size={72} className="text-primary/60" />
+              <Music size={72} className="text-primary-text/60" />
             </div>
           )}
           <StorageAudio ref={audioRef} src={output.mediaUrl} loop preload={active ? "auto" : "metadata"} {...events} />

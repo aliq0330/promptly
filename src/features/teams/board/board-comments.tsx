@@ -169,7 +169,7 @@ export function CommentText({ body }: { body: string }) {
     <>
       {parts.map((part, index) =>
         /^@[A-Za-z0-9_]{2,30}$/.test(part) ? (
-          <span key={index} className="font-semibold text-primary">
+          <span key={index} className="font-semibold text-primary-text">
             {part}
           </span>
         ) : (
@@ -299,16 +299,16 @@ export function CommentInput({
         </p>
       )}
       <div className="flex items-center gap-2">
-        <button type="button" onClick={startMention} aria-label={t("tb.comments.mention")} className="grid h-10 w-10 place-items-center rounded-full border border-border-soft text-text-secondary hover:bg-surface-soft">
+        <button type="button" onClick={startMention} aria-label={t("tb.comments.mention")} className="grid h-10 w-10 place-items-center rounded-sm border border-border-soft text-text-secondary hover:bg-surface-soft">
           <AtSign size={20} aria-hidden />
         </button>
         <span className="flex-1" />
         {onCancel && (
-          <Button type="button" variant="ghost" onClick={onCancel} disabled={busy} className="h-10 rounded-full px-4">
+          <Button type="button" variant="ghost" onClick={onCancel} disabled={busy} className="h-10 rounded-sm px-4">
             {t("common.cancel")}
           </Button>
         )}
-        <Button type="button" onClick={() => void send()} disabled={busy || !value.trim()} className="h-10 gap-1.5 rounded-full px-4" data-comment-send="">
+        <Button type="button" onClick={() => void send()} disabled={busy || !value.trim()} className="h-10 gap-1.5 rounded-sm px-4" data-comment-send="">
           <Send size={16} aria-hidden />
           {submitLabel}
         </Button>
@@ -407,13 +407,13 @@ export function CommentsPanel({
     <section aria-label={t("tb.comments.title")} data-testid="board-comments-panel" className={cn("flex min-h-0 flex-col bg-surface", className)}>
       <header className="flex shrink-0 items-center gap-2 px-4 py-3">
         <h2 className="font-display text-h3 font-extrabold text-text">{t("tb.comments.title")}</h2>
-        <span className="rounded-full bg-surface-soft px-2 py-0.5 text-caption font-semibold text-text-secondary">{threads.length}</span>
+        <span className="rounded-xs bg-surface-soft px-2 py-0.5 text-caption font-semibold text-text-secondary">{threads.length}</span>
         <span className="flex-1" />
-        <button type="button" onClick={onNew} data-comment-new="" className="inline-flex h-10 items-center gap-1.5 rounded-full bg-primary-soft px-4 text-small font-semibold text-primary">
+        <button type="button" onClick={onNew} data-comment-new="" className="inline-flex h-10 items-center gap-1.5 rounded-sm bg-primary-soft px-4 text-small font-semibold text-primary-text">
           <MessageCircle size={16} aria-hidden />
           {t("tb.comments.new")}
         </button>
-        <button type="button" onClick={onClose} aria-label={t("common.close")} className="grid h-10 w-10 place-items-center rounded-full text-text-secondary hover:bg-surface-soft">
+        <button type="button" onClick={onClose} aria-label={t("common.close")} className="grid h-10 w-10 place-items-center rounded-sm text-text-secondary hover:bg-surface-soft">
           <X size={20} aria-hidden />
         </button>
       </header>
@@ -443,7 +443,7 @@ export function CommentsPanel({
             checked={Boolean(pinsHidden)}
             onChange={(next) => onTogglePins(next)}
             data-comment-hide-pins=""
-            className="min-h-11 rounded-xl border border-border-soft px-3 text-small font-semibold text-text hover:bg-surface-soft"
+            className="min-h-11 rounded-sm border border-border-soft px-3 text-small font-semibold text-text hover:bg-surface-soft"
           >
             {pinsHidden ? <EyeOff size={20} className="shrink-0 text-text-secondary" aria-hidden /> : <Eye size={20} className="shrink-0 text-text-secondary" aria-hidden />}
             <span className="min-w-0 flex-1">{t("tb.comments.hidePins")}</span>
@@ -489,7 +489,7 @@ export function CommentsPanel({
                   aria-label={t("tb.comments.locate")}
                   title={t("tb.comments.locate")}
                   data-comment-locate={root.id}
-                  className={cn("grid h-9 w-9 shrink-0 place-items-center rounded-full", active ? "bg-primary text-primary-foreground" : "bg-surface-soft text-text-secondary hover:text-primary")}
+                  className={cn("grid h-9 w-9 shrink-0 place-items-center rounded-full", active ? "bg-primary text-primary-foreground" : "bg-surface-soft text-text-secondary hover:text-primary-text")}
                 >
                   <MapPin size={20} aria-hidden />
                 </button>
@@ -500,7 +500,7 @@ export function CommentsPanel({
                     aria-label={t(root.resolvedAt ? "tb.comments.reopen" : "tb.comments.resolve")}
                     title={t(root.resolvedAt ? "tb.comments.reopen" : "tb.comments.resolve")}
                     data-comment-resolve={root.id}
-                    className={cn("grid h-9 w-9 shrink-0 place-items-center rounded-full hover:bg-surface-soft", root.resolvedAt ? "text-success" : "text-text-secondary")}
+                    className={cn("grid h-9 w-9 shrink-0 place-items-center rounded-sm hover:bg-surface-soft", root.resolvedAt ? "text-success" : "text-text-secondary")}
                   >
                     <CircleCheck size={20} aria-hidden />
                   </button>
@@ -515,7 +515,7 @@ export function CommentsPanel({
                   />
                 )}
               </div>
-              {thread.boardTitle && <p className="text-caption font-semibold text-primary">{thread.boardTitle}</p>}
+              {thread.boardTitle && <p className="text-caption font-semibold text-primary-text">{thread.boardTitle}</p>}
               <CommentTargetChip item={target ?? null} itemTitle={itemTitle} />
               {editing === root.id ? (
                 <CommentInput
@@ -577,7 +577,7 @@ export function CommentsPanel({
               ) : (
                 <div className="flex items-center gap-3 text-small font-semibold">
                   <span className="text-text-secondary">{thread.replies.length > 0 ? t("tb.comments.replies", { count: thread.replies.length }) : t("tb.comments.noReplies")}</span>
-                  <button type="button" onClick={() => setReplyTo(root.id)} className="text-primary" data-comment-reply-open={root.id}>
+                  <button type="button" onClick={() => setReplyTo(root.id)} className="text-primary-text" data-comment-reply-open={root.id}>
                     {t("tb.comments.reply")}
                   </button>
                 </div>
@@ -630,17 +630,17 @@ export function CommentPeek({
         <CommentText body={root.body} />
       </p>
       <div className="flex items-center gap-1.5">
-        <button type="button" onClick={onPrev} aria-label={t("tb.comments.prev")} disabled={total < 2} className="grid h-11 w-11 place-items-center rounded-full border border-border-soft disabled:opacity-50">
+        <button type="button" onClick={onPrev} aria-label={t("tb.comments.prev")} disabled={total < 2} className="grid h-11 w-11 place-items-center rounded-sm border border-border-soft disabled:opacity-50">
           <span aria-hidden className="text-h3">‹</span>
         </button>
         <span className="px-1.5 text-small font-semibold tabular-nums text-text-secondary">
           {index + 1} / {total}
         </span>
-        <button type="button" onClick={onNext} aria-label={t("tb.comments.next")} disabled={total < 2} className="grid h-11 w-11 place-items-center rounded-full border border-border-soft disabled:opacity-50">
+        <button type="button" onClick={onNext} aria-label={t("tb.comments.next")} disabled={total < 2} className="grid h-11 w-11 place-items-center rounded-sm border border-border-soft disabled:opacity-50">
           <span aria-hidden className="text-h3">›</span>
         </button>
         <span className="flex-1" />
-        <button type="button" onClick={onList} className="h-11 rounded-full bg-primary-soft px-4 text-small font-semibold text-primary">
+        <button type="button" onClick={onList} className="h-11 rounded-sm bg-primary-soft px-4 text-small font-semibold text-primary-text">
           {t("tb.comments.backToList")}
         </button>
       </div>

@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>Referans ana sayfa</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Spectral:ital,wght@0,400;0,600;1,400&amp;display=swap">
+<style>
+body{margin:0;font-family:Inter,system-ui,sans-serif;color:#363737}
+.i{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.pill{height:42px;padding:0 16px;border-radius:999px;border:1px solid rgba(0,0,0,.1);display:inline-flex;align-items:center;font:600 14px Inter,sans-serif;color:#777;flex:none}
+.note{background:#f5f5f5;border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:10px;box-sizing:border-box}
+.note b{font:600 13px Inter,sans-serif}
+.note p{margin:0;font:400 17px/24.5px Inter,sans-serif}
+.note div{margin-top:auto;display:flex;gap:12px;justify-content:flex-end;font:400 12px Inter,sans-serif;color:#9a9a9a;padding-top:6px}
+.col{display:flex;flex-direction:column;gap:16px}
+</style>
+</helmet>
+<div style="width:1440px;height:900px;background:#fff;overflow:hidden;position:relative">
+  <div style="height:64px;padding:0 128px;display:flex;align-items:center;justify-content:space-between">
+    <div style="display:flex;align-items:center;gap:8px"><i style="width:22px;height:22px;background:#ff6719;border-radius:4px;display:block"></i><b style="font-size:24px;letter-spacing:-.02em">marka</b></div>
+    <div style="display:flex;align-items:center;gap:8px"><span style="height:40px;padding:0 16px;display:flex;align-items:center;font:600 15px Inter,sans-serif">Giriş yap</span><span style="height:40px;padding:0 16px;border-radius:8px;background:#ff6719;color:#fff;display:flex;align-items:center;font:600 15px Inter,sans-serif;box-shadow:inset 0 1px 0 rgba(255,255,255,.2)">Yayına başla</span></div>
+  </div>
+  <div style="margin:12px 128px 0;height:400px;border-radius:12px;background:linear-gradient(135deg,#ff7a38,#e5601d);position:relative;overflow:hidden;box-sizing:border-box;padding:40px">
+    <div style="display:flex;align-items:center;gap:12px;color:#fff;font:400 14px Inter,sans-serif"><span style="display:flex"><i style="width:36px;height:36px;border-radius:50%;background:#9b4a22;border:2px solid #f26b2c;display:block"></i><i style="width:36px;height:36px;border-radius:50%;background:#a85a2e;border:2px solid #f26b2c;display:block;margin-left:-10px"></i><i style="width:36px;height:36px;border-radius:50%;background:#7e3a18;border:2px solid #f26b2c;display:block;margin-left:-10px"></i></span>Bağımsız yaratıcıların yayın yeri</div>
+    <div style="position:absolute;left:40px;bottom:40px;color:#fff">
+      <div style="font:700 44px/1.02 Inter,sans-serif;letter-spacing:-.01em">Değer verilen bir<br><span style="font:italic 400 48px Spectral,serif">bülten</span> kur.</div>
+      <div style="margin-top:28px;height:48px;padding:0 16px;border-radius:12px;background:#fff;color:#111;display:inline-flex;align-items:center;gap:10px;font:600 15px Inter,sans-serif;box-shadow:0 1px 2px rgba(0,0,0,.12),0 8px 16px -6px rgba(0,0,0,.4)">Yayına başla<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>
+    </div>
+    <div style="position:absolute;right:240px;top:40px;display:flex">
+      <div style="width:172px;height:188px;border-radius:12px;background:#0e0e10;margin-top:44px;margin-right:-60px;box-shadow:0 2px 6px rgba(0,0,0,.4)"></div>
+      <div style="width:232px;height:306px;border-radius:12px;background:#fff;padding:14px;box-sizing:border-box;box-shadow:0 1px 2px rgba(0,0,0,.2),0 24px 40px -12px rgba(0,0,0,.6);position:relative;z-index:2;color:#1a1a1a">
+        <div style="font:600 11px Inter,sans-serif">Yayın adı<div style="font-weight:400;color:#888;font-size:10px">Yazar</div></div>
+        <div style="height:92px;background:#efede6;border-radius:6px;margin:10px 0 8px;border:1px solid #d9d6cd"></div>
+        <div style="font:600 14px/1.2 Spectral,serif">Örnek yazı başlığı iki satır</div>
+        <div style="font:400 9px/1.4 Spectral,serif;color:#666;margin-top:6px">Kısa özet metni burada üç satıra kadar sürer…</div>
+        <span style="display:inline-block;margin-top:12px;background:#ff6719;color:#fff;font:600 11px Inter,sans-serif;padding:6px 12px;border-radius:999px">Abone ol</span>
+      </div>
+      <div style="width:172px;height:173px;border-radius:12px;background:#17171a;margin-top:52px;margin-left:-60px;box-shadow:0 2px 6px rgba(0,0,0,.4)"></div>
+    </div>
+  </div>
+  <div style="margin:20px 128px 0;display:flex;gap:8px;overflow:hidden;align-items:center">
+    <span class="pill" style="background:#363737;color:#fff;border-color:#363737">Tümü</span><span class="pill">Kültür</span><span class="pill">Teknoloji</span><span class="pill">İş dünyası</span><span class="pill">Siyaset</span><span class="pill">Finans</span><span class="pill">Yemek</span><span class="pill">Spor</span><span class="pill">Sanat</span><span class="pill">Dünya</span><span class="pill">Sağlık</span>
+    <span style="width:32px;height:32px;border-radius:50%;border:1px solid rgba(0,0,0,.2);display:flex;align-items:center;justify-content:center;flex:none;margin-left:auto;background:#fff"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></span>
+  </div>
+  <div style="margin:16px 128px 0;display:grid;grid-template-columns:repeat(4,1fr);gap:16px">
+    <div class="col">
+      <div class="note" style="height:296px"><b>Ayşe Kaya</b><p>Bu hafta tüm akışımı dolduran konuşmayı gördüm. Teşekkür etmek istiyorum, hepinize ve bu yere…</p><div>866 &nbsp; 54</div></div>
+      <div class="note" style="height:120px"><b>Deniz Aras</b><p>Kısa bir not.</p></div>
+    </div>
+    <div class="col">
+      <div class="note" style="height:192px"><b>Mert Yıldız</b><p>İlişkiler için bir yer.</p><div>75 &nbsp; 11</div></div>
+      <div class="note" style="height:160px"><b>Selin Er</b><p>Hafta sonu için bir öneri listesi hazırladım.</p></div>
+    </div>
+    <div class="col"><div class="note" style="height:300px"><b>Ece Tan</b><p>Hepinize güzel bir hafta sonu dilerim.</p></div></div>
+    <div class="col"><div class="note" style="height:300px"><b>Can Özer</b><p>Uzun bir görüşü iki cümleye sığdırmaya çalışırken en çok bunu fark ettim: kısa yazmak zordur.</p></div></div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

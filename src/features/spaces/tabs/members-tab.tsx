@@ -168,17 +168,17 @@ export function MembersTab() {
                           value={member.role}
                           onChange={(event) => void changeRole(member, event.target.value as "editor" | "viewer")}
                           aria-label={t("spaces.members.roleOf", { name })}
-                          className="h-9 rounded-full border border-border bg-surface px-3 text-caption font-medium text-text"
+                          className="h-9 rounded-sm border border-border bg-surface px-3 text-caption font-medium text-text"
                         >
                           <option value="viewer">{t(SPACE_ROLE_LABEL.viewer)}</option>
                           <option value="editor">{t(SPACE_ROLE_LABEL.editor)}</option>
                         </select>
-                        <button type="button" onClick={() => setConfirm({ kind: "remove", member })} aria-label={t("spaces.members.remove", { name })} className="rounded-full p-2 text-text-muted hover:bg-danger-soft hover:text-danger">
+                        <button type="button" onClick={() => setConfirm({ kind: "remove", member })} aria-label={t("spaces.members.remove", { name })} className="rounded-sm p-2 text-text-muted hover:bg-danger-soft hover:text-danger">
                           <UserMinus size={16} />
                         </button>
                       </>
                     ) : (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-surface-soft px-2.5 py-1 text-caption font-medium text-text-secondary">
+                      <span className="inline-flex items-center gap-1 rounded-sm bg-surface-soft px-2.5 py-1 text-caption font-medium text-text-secondary">
                         <Icon size={12} aria-hidden />
                         {t(SPACE_ROLE_LABEL[member.role])}
                       </span>

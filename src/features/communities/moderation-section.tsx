@@ -121,7 +121,7 @@ export function ModerationSection({ groupId, onChanged }: { groupId: string; onC
               {report.status === "open" ? (
                 <div className="flex flex-wrap justify-end gap-2">
                   {report.kind === "message" && report.messageId && (
-                    <Link href={`${communityChatHref(groupId)}&hl=message:${report.messageId}`} className="mr-auto self-center text-label font-medium text-primary hover:underline">
+                    <Link href={`${communityChatHref(groupId)}&hl=message:${report.messageId}`} className="mr-auto self-center text-label font-medium text-primary-text hover:underline">
                       {t("communities.moderation.viewInChat")}
                     </Link>
                   )}

@@ -85,9 +85,9 @@ export function SavedItemsView() {
             </h2>
             <ScrollRow className="gap-3">
               {collections.map((collection) => (
-                <Link key={collection.id} href={collectionHref(collection)} className="group w-[8.75rem] shrink-0 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+                <Link key={collection.id} href={collectionHref(collection)} className="group w-[8.75rem] shrink-0 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus">
                   <CollectionCover collection={collection} className="aspect-[7/5] w-full overflow-hidden rounded-lg" />
-                  <p className="mt-2 truncate text-small font-medium text-text group-hover:text-primary">{collection.name}</p>
+                  <p className="mt-2 truncate text-small font-medium text-text group-hover:text-primary-text">{collection.name}</p>
                   <p className="text-caption tabular-nums text-text-muted">{t("collection.itemCount", { count: collection.itemCount })}</p>
                   {collection.isShared && (
                     <p className="flex items-center gap-1 truncate text-caption font-medium text-secondary" data-collection-shared-chip="">

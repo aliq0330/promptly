@@ -210,7 +210,7 @@ export function NewChatModal({
                 setPickError(null);
               }}
               placeholder={t("messages.newChatSearchPlaceholder")}
-              className="h-10 w-full rounded-full border border-border-soft bg-background pl-9 pr-3 text-small text-text shadow-xs transition-colors duration-200 ease-soft placeholder:text-text-muted hover:border-border-strong focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15"
+              className="h-10 w-full rounded-sm border border-border-soft bg-background pl-9 pr-3 text-small text-text shadow-xs transition-colors duration-200 ease-soft placeholder:text-text-muted hover:border-border-strong focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15"
             />
           </label>
           {pickError && (
@@ -224,7 +224,7 @@ export function NewChatModal({
               onClick={onClose}
               className="mt-3 flex items-center gap-2 rounded-lg card-flat px-3 py-2.5 text-left text-small font-medium text-text transition-colors hover:border-border-strong hover:bg-surface-soft"
             >
-              <Users size={16} className="shrink-0 text-primary" aria-hidden />
+              <Users size={16} className="shrink-0 text-primary-text" aria-hidden />
               {t("communities.messages.link")}
             </Link>
           )}
@@ -250,7 +250,7 @@ export function NewChatModal({
                   setLoaded(null);
                   setReloadKey((k) => k + 1);
                 }}
-                className="text-label font-medium text-primary hover:underline">
+                className="text-label font-medium text-primary-text hover:underline">
                 {t("common.retry")}
               </button>
             </div>

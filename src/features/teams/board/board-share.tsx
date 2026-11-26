@@ -85,7 +85,7 @@ export function ShareDialog({
   };
 
   const copyButton = (className?: string) => (
-    <button type="button" onClick={() => void copyLink()} data-board-copy-link="" className={cn("flex h-12 w-full items-center justify-center gap-2 rounded-xl text-body font-semibold", className)}>
+    <button type="button" onClick={() => void copyLink()} data-board-copy-link="" className={cn("flex h-12 w-full items-center justify-center gap-2 rounded-sm text-body font-semibold", className)}>
       {copied === "ok" ? <span>{t("common.copied")}</span> : copied === "failed" ? <span>{t("spaces.share.copyFailed")}</span> : (
         <>
           <Lock size={20} aria-hidden />
@@ -108,7 +108,7 @@ export function ShareDialog({
           <h2 id={titleId} className="min-w-0 flex-1 truncate font-display text-h3 font-extrabold text-text">
             {t("tb.share.title", { name: team.fileTitle ?? team.projectTitle })}
           </h2>
-          <button type="button" onClick={onClose} aria-label={t("common.close")} className="grid h-10 w-10 place-items-center rounded-full hover:bg-surface-soft">
+          <button type="button" onClick={onClose} aria-label={t("common.close")} className="grid h-10 w-10 place-items-center rounded-sm hover:bg-surface-soft">
             <X size={20} aria-hidden />
           </button>
         </header>
@@ -126,7 +126,7 @@ export function ShareDialog({
           <>
             <div className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain px-5 pb-3">
               {canInvite && (
-                <button type="button" onClick={onInvite} data-board-invite="" className="flex h-12 w-full items-center gap-3 rounded-xl border border-border px-4 text-left text-body text-text-secondary hover:bg-surface-soft">
+                <button type="button" onClick={onInvite} data-board-invite="" className="flex h-12 w-full items-center gap-3 rounded-sm border border-border px-4 text-left text-body text-text-secondary hover:bg-surface-soft">
                   <UserPlus size={20} aria-hidden />
                   {t("tb.share.invite")}
                 </button>
@@ -134,7 +134,7 @@ export function ShareDialog({
               <div className="flex items-center gap-2 pt-1">
                 <p className="flex-1 text-caption font-semibold text-text-muted">{t("tb.share.people")}</p>
                 {canEditAccess && (
-                  <button type="button" onClick={onEditAccess} data-board-edit-access="" className="text-small font-semibold text-primary">
+                  <button type="button" onClick={onEditAccess} data-board-edit-access="" className="text-small font-semibold text-primary-text">
                     {t("tb.share.editRoles")}
                   </button>
                 )}
@@ -176,7 +176,7 @@ export function ShareDialog({
               <h3 className="text-body font-bold text-text">{t("tb.share.sendTitle")}</h3>
               <p className="text-small leading-relaxed text-text-secondary">{t("tb.share.sendBody")}</p>
               {canInvite && (
-                <button type="button" onClick={onInvite} className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary text-body font-semibold text-primary-foreground">
+                <button type="button" onClick={onInvite} className="flex h-12 w-full items-center justify-center gap-2 rounded-sm bg-primary text-body font-semibold text-primary-foreground">
                   <UserPlus size={20} aria-hidden />
                   {t("tb.share.inviteButton")}
                 </button>
@@ -193,7 +193,7 @@ export function ShareDialog({
                 return (
                   <li key={row.kind}>
                     <button type="button" disabled={!canExport || busy !== null} onClick={() => void runExport(row.kind)} data-board-export={row.kind} className="flex min-h-16 w-full items-center gap-3 rounded-xl px-1 text-left disabled:opacity-50">
-                      <span className="grid h-11 w-11 shrink-0 place-items-center rounded-lg card-flat text-primary">
+                      <span className="grid h-11 w-11 shrink-0 place-items-center rounded-lg card-flat text-primary-text">
                         <Icon size={24} aria-hidden />
                       </span>
                       <span className="min-w-0 flex-1 leading-tight">

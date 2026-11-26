@@ -441,18 +441,18 @@ export function SkillFilesWorkspace({
                 <code className="min-w-0 flex-1 truncate font-mono text-caption text-text">{task.path}</code>
                 <span className="shrink-0 text-caption text-text-muted">{formatBytes(task.size)}</span>
                 {task.status === "uploading" && (
-                  <button type="button" onClick={() => uploads.cancel(task.id)} aria-label={t("skill.pkg.cancelUpload")} className="rounded-full p-1 text-text-muted hover:bg-surface hover:text-text">
+                  <button type="button" onClick={() => uploads.cancel(task.id)} aria-label={t("skill.pkg.cancelUpload")} className="rounded-sm p-1 text-text-muted hover:bg-surface hover:text-text">
                     <X size={16} />
                   </button>
                 )}
                 {task.status === "error" && (
                   <>
                     {task.issues.length === 0 && (
-                      <button type="button" onClick={() => uploads.retry(task.id)} className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-caption font-semibold text-primary hover:bg-primary-soft">
+                      <button type="button" onClick={() => uploads.retry(task.id)} className="inline-flex items-center gap-1 rounded-sm px-2 py-1 text-caption font-semibold text-primary-text hover:bg-primary-soft">
                         <RefreshCw size={12} aria-hidden /> {t("common.retry")}
                       </button>
                     )}
-                    <button type="button" onClick={() => uploads.dismiss(task.id)} aria-label={t("common.close")} className="rounded-full p-1 text-text-muted hover:bg-surface hover:text-text">
+                    <button type="button" onClick={() => uploads.dismiss(task.id)} aria-label={t("common.close")} className="rounded-sm p-1 text-text-muted hover:bg-surface hover:text-text">
                       <X size={16} />
                     </button>
                   </>
@@ -597,7 +597,7 @@ function AddFileDialog({
                 setPicked(Array.from(event.target.files ?? []));
                 setError(null);
               }}
-              className="block w-full text-small text-text-secondary file:mr-3 file:rounded-full file:border-0 file:bg-primary-soft file:px-4 file:py-2 file:text-small file:font-semibold file:text-primary"
+              className="block w-full text-small text-text-secondary file:mr-3 file:rounded-sm file:border-0 file:bg-primary-soft file:px-4 file:py-2 file:text-small file:font-semibold file:text-primary-text"
             />
           </FormField>
         )}

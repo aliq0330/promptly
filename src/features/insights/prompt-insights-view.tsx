@@ -67,7 +67,7 @@ export function PromptInsightsView() {
 
   return (
     <PageContainer className="flex flex-col gap-6 lg:max-w-6xl">
-      <Link href="/insights" className="inline-flex min-h-9 w-fit items-center gap-1 rounded-md text-small font-medium text-text-secondary hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+      <Link href="/insights" className="inline-flex min-h-9 w-fit items-center gap-1 rounded-md text-small font-medium text-text-secondary hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus">
         <ChevronLeft size={20} aria-hidden />
         {t("insights.detail.back")}
       </Link>

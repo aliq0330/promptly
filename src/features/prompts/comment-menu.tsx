@@ -84,7 +84,7 @@ export function CommentMenu({ comment, depth, tree, isOwn, isPinned }: { comment
       items={items}
       label={t("comments.menu")}
       trigger={<MoreVertical size={16} aria-hidden />}
-      triggerClassName="flex h-9 w-9 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-surface-soft hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+      triggerClassName="flex h-9 w-9 items-center justify-center rounded-sm text-text-muted transition-colors hover:bg-surface-soft hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
       className="-my-1.5 -mr-2"
     />
   );

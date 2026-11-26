@@ -71,7 +71,7 @@ const PANEL_UP_CLASS = "bottom-full left-0 right-0 mb-2 origin-bottom";
 const PANEL_SIDE_CLASS = "bottom-0 left-full ml-2 w-72 origin-bottom-left";
 
 const ITEM_CLASS =
-  "flex min-h-9 w-full items-center gap-3 rounded-lg px-2.5 text-left md:min-h-11 md:gap-3 md:px-3 text-small font-medium text-text transition-colors duration-200 hover:bg-surface-soft focus-visible:bg-surface-soft";
+  "flex min-h-9 w-full items-center gap-3 rounded-sm px-2.5 text-left md:min-h-11 md:gap-3 md:px-3 text-small font-medium text-text transition-colors duration-200 hover:bg-surface-soft focus-visible:bg-surface-soft";
 
 function MenuGroup({ label, children }: { label: string; children: ReactNode }) {
   return (
@@ -196,7 +196,7 @@ function ShortcutGrid({ items, onNavigate }: { items: NavItem[]; onNavigate: () 
                 onClick={onNavigate}
                 className="flex min-h-21 flex-col items-center justify-center gap-1 rounded-lg card-inset px-1 text-center text-label font-semibold text-text transition-colors duration-200 hover:bg-surface-soft"
               >
-                <Icon size={24} className="text-primary" />
+                <Icon size={24} className="text-primary-text" />
                 <span className="max-w-full truncate">{t(item.tileLabelKey ?? item.labelKey)}</span>
               </Link>
             </li>
@@ -348,7 +348,7 @@ export function PhoneAccountButton() {
         aria-haspopup="dialog"
         aria-expanded={open}
         data-header-you=""
-        className="relative ml-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary md:hidden"
+        className="relative ml-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus md:hidden"
       >
         <Avatar src={profile?.avatarUrl} alt={profile?.displayName ?? ""} size={32} className={open ? "ring-2 ring-primary" : undefined} />
         <span aria-hidden className="absolute -bottom-0.5 -right-0.5 grid h-4.5 w-4.5 place-items-center rounded-full border border-border bg-surface text-text">
@@ -396,7 +396,7 @@ export function RailAccount() {
         aria-haspopup="menu"
         aria-expanded={open}
         data-nav-you=""
-        className={cn("flex h-16 w-full flex-col items-center justify-center gap-1 rounded-lg text-caption font-medium transition-colors duration-200 hover:bg-surface-soft", open ? "text-primary" : "text-text-secondary")}
+        className={cn("flex h-16 w-full flex-col items-center justify-center gap-1 rounded-lg text-caption font-medium transition-colors duration-200 hover:bg-surface-soft", open ? "text-primary-text" : "text-text-secondary")}
       >
         <Avatar src={profile.avatarUrl} alt={profile.displayName} size={32} className={open ? "ring-2 ring-primary" : undefined} badge={<OwnPresenceDot avatarSize={32} />} />
         <span>{t("nav.you")}</span>
@@ -460,14 +460,14 @@ export function GuestAuthMenu() {
       <div className="ml-1.5 hidden shrink-0 items-center gap-1.5 sm:flex">
         <Link
           href="/login"
-          className="flex h-9 items-center gap-1.5 rounded-md card-flat px-3 text-label font-semibold text-text transition-colors duration-200 hover:bg-surface-soft"
+          className="flex h-9 items-center gap-1.5 rounded-sm card-flat px-3 text-label font-semibold text-text transition-colors duration-200 hover:bg-surface-soft"
         >
           <LogIn size={16} />
           {t("header.login")}
         </Link>
         <Link
           href="/signup"
-          className="flex h-9 items-center gap-1.5 rounded-md bg-text px-3 text-label font-semibold text-background transition-opacity duration-200 hover:opacity-90"
+          className="flex h-9 items-center gap-1.5 rounded-sm bg-text px-3 text-label font-semibold text-background transition-opacity duration-200 hover:opacity-90"
         >
           <UserPlus size={16} />
           {t("auth.signUp")}

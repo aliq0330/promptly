@@ -292,7 +292,7 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
       <div className="mx-auto max-w-md px-4 py-16 text-center">
         <h1 className="mb-2 text-h2 font-bold text-text">{t("auth.loginRequiredTitle")}</h1>
         <p className="mb-4 text-small text-text-muted">{t("workflow.loginRequired")}</p>
-        <Link href="/login" className="inline-flex h-9 items-center rounded-md bg-primary px-4 text-small font-medium text-primary-foreground hover:bg-primary-hover">
+        <Link href="/login" className="inline-flex h-9 items-center rounded-sm bg-primary px-4 text-small font-medium text-primary-foreground hover:bg-primary-hover">
           {t("header.login")}
         </Link>
       </div>
@@ -300,7 +300,7 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
       <div className="mx-auto max-w-md px-4 py-16 text-center">
         <h1 className="mb-2 text-h2 font-bold text-text">{t("workflow.notFoundTitle")}</h1>
         <p className="mb-4 text-small text-text-muted">{loadState === "forbidden" ? t("workflow.notYours") : t("workflow.notFoundBody")}</p>
-        <Link href={DISCOVER_SECTION_HREF.workflows} className="text-small font-medium text-primary hover:underline">
+        <Link href={DISCOVER_SECTION_HREF.workflows} className="text-small font-medium text-primary-text hover:underline">
           {t("workflow.pageTitle")}
         </Link>
       </div>
@@ -418,7 +418,7 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
     >
     <div ref={rootRef} className="w-full min-w-0 space-y-6">
       {notice && (
-        <p className="flex items-start justify-between gap-2 rounded-md bg-primary-soft p-2.5 text-caption text-primary">
+        <p className="flex items-start justify-between gap-2 rounded-md bg-primary-soft p-2.5 text-caption text-primary-text">
           {notice}
           <button type="button" onClick={() => setNotice(null)} aria-label={t("common.close")}>
             <X size={16} />

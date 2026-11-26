@@ -52,7 +52,7 @@ export function ConversationsMoreMenu({
   }, [open]);
 
   const itemClass =
-    "flex min-h-12 w-full items-center gap-3 rounded-lg px-3 text-left text-body text-text transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-50";
+    "flex min-h-12 w-full items-center gap-3 rounded-sm px-3 text-left text-body text-text transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:opacity-50";
 
   return (
     <div ref={rootRef} className="relative">
@@ -114,11 +114,11 @@ export function SelectionHeader({ count, onDone, embedded, title }: { count: num
         onClick={onDone}
         aria-label={t("messages.selectionDone")}
         title={t("messages.selectionDone")}
-        className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-surface text-text shadow-card transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        className="grid h-11 w-11 shrink-0 place-items-center rounded-sm bg-surface text-text shadow-card transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
       >
         <Check size={24} aria-hidden />
       </button>
-      <h1 aria-live="polite" className="font-display text-h2 font-bold tracking-[-0.01em] text-text">
+      <h1 aria-live="polite" className="font-display text-h2 font-bold text-text">
         {title ?? (count > 0 ? t("messages.selectionCount", { count }) : t("messages.selectChats"))}
       </h1>
     </div>
@@ -165,7 +165,7 @@ export function SelectionActionBar({
 }) {
   const { t } = useTranslation();
   const pill = cn(
-    "pointer-events-auto h-12 rounded-full border border-border-soft bg-surface/95 font-semibold text-text shadow-md backdrop-blur-xl transition-[opacity,background-color] duration-200 ease-soft hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:pointer-events-none disabled:opacity-50",
+    "pointer-events-auto h-12 rounded-sm border border-border-soft bg-surface/95 font-semibold text-text shadow-md backdrop-blur-xl transition-[opacity,background-color] duration-200 ease-soft hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:pointer-events-none disabled:opacity-50",
     compact ? "h-11 min-w-0 flex-1 truncate whitespace-nowrap px-2 text-label" : "px-4 text-body sm:px-6",
   );
   return (

@@ -1249,7 +1249,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
 
   // Hata/boş ekranlardaki "Mesajlara dön": sayfada bağlantı, dock'ta paneli listeye döndüren düğme.
   const backToMessagesClass =
-    "inline-flex h-9 items-center rounded-lg card-flat px-4 text-small font-medium text-text shadow-xs transition-colors hover:border-border-strong";
+    "inline-flex h-9 items-center rounded-sm card-flat px-4 text-small font-medium text-text shadow-xs transition-colors hover:border-border-strong";
   const backToMessages = dock ? (
     <button type="button" onClick={dock.onBack} className={backToMessagesClass}>
       {t("messages.backToMessages")}
@@ -1269,7 +1269,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
         </p>
         <Link
           href="/login"
-          className="inline-flex h-9 items-center rounded-lg card-flat px-4 text-small font-medium text-text shadow-xs transition-colors hover:border-border-strong"
+          className="inline-flex h-9 items-center rounded-sm card-flat px-4 text-small font-medium text-text shadow-xs transition-colors hover:border-border-strong"
         >
           {t("common.login")}
         </Link>
@@ -1379,7 +1379,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
                 title={t("chat.search.open")}
                 aria-pressed={searchOpen}
                 data-chat-search-toggle
-                className={cn(DOCK_ICON_BUTTON, searchOpen && "bg-primary-soft text-primary")}
+                className={cn(DOCK_ICON_BUTTON, searchOpen && "bg-primary-soft text-primary-text")}
               >
                 <Search size={20} aria-hidden />
               </button>
@@ -1393,9 +1393,9 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
               <PresenceAvatar userId={participant.id} src={participant.avatarUrl} alt={participant.displayName} size={34} />
             )}
             <span className="min-w-0 leading-tight">
-              <span className="block truncate font-display text-body font-semibold tracking-[-0.01em] text-text">{group ? group.name : participant.displayName}</span>
+              <span className="block truncate font-display text-body font-semibold text-text">{group ? group.name : participant.displayName}</span>
               {typingText ? (
-                <span data-typing-indicator role="status" className="block truncate text-caption font-medium text-primary">
+                <span data-typing-indicator role="status" className="block truncate text-caption font-medium text-primary-text">
                   {typingText}
                 </span>
               ) : group ? (
@@ -1415,7 +1415,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
           type="button"
           onClick={handleBack}
           aria-label={t("messages.backToListAriaLabel")}
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-text-secondary transition-colors hover:bg-surface-soft hover:text-text md:hidden"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-sm text-text-secondary transition-colors hover:bg-surface-soft hover:text-text md:hidden"
         >
           <ArrowLeft size={20} />
         </button>
@@ -1442,9 +1442,9 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
               )}
             </span>
             <span className="min-w-0 leading-tight">
-              <span className="block truncate font-display text-h3 font-semibold tracking-[-0.01em] text-text">{teamChannel ? teamChannel.name : group.name}</span>
+              <span className="block truncate font-display text-h3 font-semibold text-text">{teamChannel ? teamChannel.name : group.name}</span>
               {typingText ? (
-                <span data-typing-indicator role="status" className="block truncate text-caption font-medium text-primary">
+                <span data-typing-indicator role="status" className="block truncate text-caption font-medium text-primary-text">
                   {typingText}
                 </span>
               ) : teamChannel ? (
@@ -1490,9 +1490,9 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
           >
             <PresenceAvatar userId={participant.id} src={participant.avatarUrl} alt={participant.displayName} size={42} />
             <span className="min-w-0 leading-tight">
-              <span className="block truncate font-display text-h3 font-semibold tracking-[-0.01em] text-text">{participant.displayName}</span>
+              <span className="block truncate font-display text-h3 font-semibold text-text">{participant.displayName}</span>
               {typingText ? (
-                <span data-typing-indicator role="status" className="block truncate text-caption font-medium text-primary">
+                <span data-typing-indicator role="status" className="block truncate text-caption font-medium text-primary-text">
                   {typingText}
                 </span>
               ) : (
@@ -1510,12 +1510,12 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
             title={t("rooms.panel.toggle")}
             aria-pressed={roomPanel === "open" || roomPanel === "auto"}
             data-room-panel-toggle
-            className="hidden h-9 shrink-0 items-center gap-1.5 rounded-full bg-surface-soft px-3 text-small font-semibold text-text-secondary transition-colors hover:bg-border-soft hover:text-text lg:flex"
+            className="hidden h-9 shrink-0 items-center gap-1.5 rounded-sm bg-surface-soft px-3 text-small font-semibold text-text-secondary transition-colors hover:bg-border-soft hover:text-text lg:flex"
           >
             <Users size={16} aria-hidden /> {group.memberCount.toLocaleString()}
           </button>
         )}
-        {renderCallButtons("flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-transparent text-text-muted transition-colors hover:bg-surface-soft hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary")}
+        {renderCallButtons("flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-transparent text-text-muted transition-colors hover:bg-surface-soft hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus")}
         <button
           type="button"
           onClick={() => setSearchOpen((open) => !open)}
@@ -1524,8 +1524,8 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
           aria-pressed={searchOpen}
           data-chat-search-toggle
           className={cn(
-            "flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-transparent text-text-muted transition-colors hover:bg-surface-soft hover:text-text",
-            searchOpen && "bg-primary-soft text-primary",
+            "flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-transparent text-text-muted transition-colors hover:bg-surface-soft hover:text-text",
+            searchOpen && "bg-primary-soft text-primary-text",
           )}
         >
           <Search size={20} />
@@ -1678,7 +1678,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
             {t("messages.pendingRequestNotice", { name: participant?.displayName ?? "" })}
           </p>
           <div className="flex shrink-0 items-center gap-3 text-caption font-medium">
-            <button type="button" onClick={handleAcceptRequest} className="text-primary hover:underline">
+            <button type="button" onClick={handleAcceptRequest} className="text-primary-text hover:underline">
               {t("messages.acceptAction")}
             </button>
             <button
@@ -1719,7 +1719,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
           />
         )}
         {messageHighlightNotFound && (
-          <p className="mx-auto w-fit max-w-full rounded-full border border-border-soft bg-surface px-4 py-1.5 text-center text-caption text-text-muted shadow-xs">
+          <p className="mx-auto w-fit max-w-full rounded-sm border border-border-soft bg-surface px-4 py-1.5 text-center text-caption text-text-muted shadow-xs">
             {t("messages.messageNotViewable")}
           </p>
         )}
@@ -1798,7 +1798,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
             <button
               type="button"
               onClick={() => void returnToLatest()}
-              className="rounded-full border border-border-soft bg-surface px-4 py-1.5 text-caption font-medium text-primary shadow-xs transition-colors hover:border-border-strong"
+              className="rounded-sm border border-border-soft bg-surface px-4 py-1.5 text-caption font-medium text-primary-text shadow-xs transition-colors hover:border-border-strong"
             >
               {t("chat.jump.latest")}
             </button>
@@ -1813,7 +1813,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
           onClick={() => void returnToLatest()}
           aria-label={t("chat.jump.latest")}
           title={t("chat.jump.latest")}
-          className="absolute bottom-24 right-4 z-20 flex h-10 w-10 items-center justify-center rounded-full border border-border-soft bg-surface text-primary shadow-card transition-colors hover:border-border-strong"
+          className="absolute bottom-24 right-4 z-20 flex h-10 w-10 items-center justify-center rounded-sm border border-border-soft bg-surface text-primary-text shadow-card transition-colors hover:border-border-strong"
         >
           <ChevronsDown size={20} />
         </button>

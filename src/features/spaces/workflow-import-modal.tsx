@@ -117,10 +117,10 @@ export function WorkflowImportModal({
         <PagedListState list={list}>
           {list.items.length === 0 ? (
             <div className="rounded-xl border border-dashed border-border-strong px-4 py-6 text-center">
-              <WorkflowIcon size={24} className="mx-auto text-primary" aria-hidden />
+              <WorkflowIcon size={24} className="mx-auto text-primary-text" aria-hidden />
               <p className="mt-2 text-body font-semibold text-text">{t("wfSpace.import.emptyTitle")}</p>
               <p className="mt-1 text-small text-text-muted">{t("wfSpace.import.emptyHint")}</p>
-              <Link href="/workflows/create" className="mt-3 inline-flex h-9 items-center rounded-full bg-primary px-4 text-small font-semibold text-primary-foreground hover:bg-primary-hover">
+              <Link href="/workflows/create" className="mt-3 inline-flex h-9 items-center rounded-sm bg-primary px-4 text-small font-semibold text-primary-foreground hover:bg-primary-hover">
                 {t("wfSpace.import.create")}
               </Link>
             </div>
@@ -140,7 +140,7 @@ export function WorkflowImportModal({
                     </span>
                   ),
                   badge: on ? (
-                    <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-primary-soft px-2 py-0.5 text-caption font-semibold text-primary">
+                    <span className="inline-flex shrink-0 items-center gap-1 rounded-xs bg-primary-soft px-2 py-0.5 text-caption font-semibold text-primary-text">
                       <Check size={12} aria-hidden /> {t("wfSpace.import.onBoard")}
                     </span>
                   ) : undefined,

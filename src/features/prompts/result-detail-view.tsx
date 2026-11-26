@@ -166,12 +166,12 @@ export function ResultDetailView() {
           <DetailAside>
             <AsideSection id="result-origin-title" title={t("result.madeWithWhichPrompt")}>
               <Link href={promptHref(result.originalPrompt)} className="group block space-y-1 p-4 transition-colors hover:bg-surface-soft" data-result-origin>
-                <span className="flex items-center gap-1.5 text-label font-semibold text-text group-hover:text-primary">
-                  <SquareTerminal size={16} className="shrink-0 text-primary" aria-hidden />
+                <span className="flex items-center gap-1.5 text-label font-semibold text-text group-hover:text-primary-text">
+                  <SquareTerminal size={16} className="shrink-0 text-primary-text" aria-hidden />
                   <span className="truncate">{result.originalPrompt.title}</span>
                 </span>
                 {result.originalPrompt.description && <span className="line-clamp-2 block text-caption text-text-muted">{result.originalPrompt.description}</span>}
-                <span className="block text-caption font-medium text-primary">{t("result.viewPrompt")}</span>
+                <span className="block text-caption font-medium text-primary-text">{t("result.viewPrompt")}</span>
               </Link>
             </AsideSection>
           </DetailAside>

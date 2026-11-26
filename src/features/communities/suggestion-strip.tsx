@@ -92,15 +92,15 @@ export function SuggestionStrip({ onToast, onGoInvites }: { onToast: (message: s
       <div className="flex items-start justify-between gap-3">
         <div>
           <h2 id="suggestion-strip-title" className="flex items-center gap-1.5 text-label font-semibold text-text">
-            <Sparkle size={16} className="text-primary" aria-hidden /> {t("communities.strip.title")}
+            <Sparkle size={16} className="text-primary-text" aria-hidden /> {t("communities.strip.title")}
           </h2>
           <p className="text-caption text-text-muted">{t("communities.strip.help")}</p>
         </div>
         <div className="hidden shrink-0 gap-1 md:flex">
-          <button type="button" onClick={() => scrollBy(-1)} aria-label={t("communities.strip.prev")} className="flex h-9 w-9 items-center justify-center rounded-full border border-border-soft bg-surface text-text-secondary hover:border-border-strong">
+          <button type="button" onClick={() => scrollBy(-1)} aria-label={t("communities.strip.prev")} className="flex h-9 w-9 items-center justify-center rounded-sm border border-border-soft bg-surface text-text-secondary hover:border-border-strong">
             <ChevronLeft size={16} aria-hidden />
           </button>
-          <button type="button" onClick={() => scrollBy(1)} aria-label={t("communities.strip.next")} className="flex h-9 w-9 items-center justify-center rounded-full border border-border-soft bg-surface text-text-secondary hover:border-border-strong">
+          <button type="button" onClick={() => scrollBy(1)} aria-label={t("communities.strip.next")} className="flex h-9 w-9 items-center justify-center rounded-sm border border-border-soft bg-surface text-text-secondary hover:border-border-strong">
             <ChevronRight size={16} aria-hidden />
           </button>
         </div>
@@ -123,7 +123,7 @@ export function SuggestionStrip({ onToast, onGoInvites }: { onToast: (message: s
                   </span>
                   <div className="min-w-0 flex-1 space-y-0.5">
                     <Eyebrow tone="primary">{t(communityTopicLabelKey(community))}</Eyebrow>
-                    <h3 className="break-words font-display text-h3 font-extrabold leading-tight tracking-[-0.015em] text-text">
+                    <h3 className="break-words font-display text-h3 font-extrabold leading-tight text-text">
                       <Link href={communityHref(community.id)} className="after:absolute after:inset-0 after:rounded-xl focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-primary">
                         {community.name}
                       </Link>
@@ -161,9 +161,9 @@ export function SuggestionStrip({ onToast, onGoInvites }: { onToast: (message: s
         <li className="flex shrink-0 snap-start items-stretch" data-testid="suggestion-view-all">
           <Link
             href="/communities/all"
-            className="flex w-28 flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border-strong bg-surface-soft p-3 text-center text-small font-medium text-text transition-colors duration-200 ease-soft hover:border-primary hover:text-primary"
+            className="flex w-28 flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border-strong bg-surface-soft p-3 text-center text-small font-medium text-text transition-colors duration-200 ease-soft hover:border-primary hover:text-primary-text"
           >
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary-soft text-primary">
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary-soft text-primary-text">
               <ArrowRight size={16} aria-hidden />
             </span>
             {t("common.viewAll")}

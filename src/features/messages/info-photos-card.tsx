@@ -64,7 +64,7 @@ export function InfoPhotosCard({ conversationId, onJumpToMessage }: { conversati
                   onClick={() => onJumpToMessage(photo.messageId)}
                   aria-label={t("messages.contact.openPhotoAria", { index: index + 1 })}
                   data-contact-photo
-                  className="relative block aspect-square w-full overflow-hidden rounded-xl bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                  className="relative block aspect-square w-full overflow-hidden rounded-xl bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
                 >
                   {url && (
                     // eslint-disable-next-line @next/next/no-img-element -- imzalı (signed) özel bucket adresi

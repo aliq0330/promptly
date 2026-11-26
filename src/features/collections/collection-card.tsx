@@ -37,7 +37,7 @@ export function CollectionCard({
           <div className="relative space-y-3">
             <CollectionCover collection={collection} className="aspect-[4/3] w-full overflow-hidden rounded-lg shadow-pop" />
             <div className="min-w-0 space-y-0.5 px-1">
-              <p className="truncate font-display text-h3 font-extrabold leading-tight tracking-[-0.015em] text-text">{collection.name}</p>
+              <p className="truncate font-display text-h3 font-extrabold leading-tight text-text">{collection.name}</p>
             </div>
           </div>
         </div>
@@ -78,7 +78,7 @@ export function CollectionCover({ collection, className }: { collection: Collect
     return <StorageBackground url={collection.coverImage.url} className={cn("bg-surface-soft bg-cover bg-center", className)} />;
   }
   return (
-    <div className={cn("flex items-center justify-center bg-surface-soft text-primary", className)}>
+    <div className={cn("flex items-center justify-center bg-surface-soft text-primary-text", className)}>
       <span className="flex h-12 w-12 items-center justify-center rounded-md bg-primary-soft">
         <FolderOpen size={24} />
       </span>

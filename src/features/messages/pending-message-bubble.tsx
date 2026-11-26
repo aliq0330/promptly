@@ -76,7 +76,7 @@ export function PendingMessageBubble({
             <button
               type="button"
               onClick={() => onRetry(pending.id)}
-              className="inline-flex items-center gap-1 font-medium text-primary hover:underline focus-visible:outline-2 focus-visible:outline-primary"
+              className="inline-flex items-center gap-1 font-medium text-primary-text hover:underline focus-visible:outline-2 focus-visible:outline-focus"
             >
               <RefreshCw size={12} aria-hidden />
               {t("common.retry")}
@@ -85,7 +85,7 @@ export function PendingMessageBubble({
               type="button"
               onClick={() => onDiscard(pending.id)}
               aria-label={t("messages.discardUnsent")}
-              className="inline-flex items-center gap-1 hover:text-text focus-visible:outline-2 focus-visible:outline-primary"
+              className="inline-flex items-center gap-1 hover:text-text focus-visible:outline-2 focus-visible:outline-focus"
             >
               <X size={12} aria-hidden />
               {t("common.delete")}

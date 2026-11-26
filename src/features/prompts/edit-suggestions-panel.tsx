@@ -125,7 +125,7 @@ export function EditSuggestionsPanel({
   return (
     <section className="space-y-3 rounded-lg card-flat p-4 sm:p-5">
       <h2 className="text-label font-semibold text-text">
-        {t("editSuggestion.title")} {pending.length > 0 && <span className="text-primary">({pending.length})</span>}
+        {t("editSuggestion.title")} {pending.length > 0 && <span className="text-primary-text">({pending.length})</span>}
       </h2>
 
       <ul className="space-y-3">
@@ -158,7 +158,7 @@ export function EditSuggestionsPanel({
               <button
                 type="button"
                 onClick={() => setExpandedId(isExpanded ? null : suggestion.id)}
-                className="mt-2 inline-flex items-center gap-1 text-caption font-medium text-primary hover:underline"
+                className="mt-2 inline-flex items-center gap-1 text-caption font-medium text-primary-text hover:underline"
               >
                 {isExpanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
                 {isExpanded ? t("editSuggestion.hidePreview") : t("editSuggestion.preview")}
@@ -190,7 +190,7 @@ export function EditSuggestionsPanel({
                         rows={4}
                         value={draftText}
                         onChange={(event) => setDraftText(event.target.value)}
-                        className="w-full resize-none rounded-lg card-inset px-3 py-2 font-mono text-caption text-text shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
+                        className="w-full resize-none rounded-sm card-inset px-3 py-2 font-mono text-caption text-text shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
                       />
                       <div className="flex flex-wrap items-center gap-2">
                         <Button type="button" size="sm" onClick={() => confirmAccept(suggestion)} disabled={isBusy || !draftText.trim()}>

@@ -17,7 +17,7 @@ import { usePhoneDuplicateClass } from "@/components/layout/phone-title";
 export function SadeTitle({ children, className }: { children: ReactNode; className?: string }) {
   // Üst çubuk (telefon) aynı adı zaten yazıyorsa sayfa başlığı telefonda gizlenir (docs/history/463-*).
   const duplicate = usePhoneDuplicateClass(children);
-  return <h1 className={cn("font-display text-display font-bold leading-[1.1] tracking-[-0.02em] text-text", className, duplicate)}>{children}</h1>;
+  return <h1 className={cn("font-display text-display font-bold leading-[1.1] text-text", className, duplicate)}>{children}</h1>;
 }
 
 export interface ListFilterConfig {

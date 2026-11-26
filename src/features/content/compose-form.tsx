@@ -15,7 +15,7 @@ import type { UserProfile } from "@/types";
  */
 
 export const formInputClassName =
-  "w-full rounded-xl border border-border-strong bg-surface px-4 text-body text-text placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20";
+  "w-full rounded-xl border border-border-strong bg-surface px-4 text-body text-text placeholder:text-text-muted focus:border-focus focus:outline-none focus:ring-2 focus:ring-primary/20";
 export const formTextInputClassName = cn(formInputClassName, "h-12");
 export const formTextareaClassName = cn(formInputClassName, "resize-none py-3");
 
@@ -138,14 +138,14 @@ export function FormDisclosure({
         onClick={() => setOpen((prev) => !prev)}
         aria-expanded={open}
         aria-controls={panelId}
-        className="flex min-h-14 w-full items-center gap-3 px-4 py-2.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        className="flex min-h-14 w-full items-center gap-3 px-4 py-2.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
       >
         <span className="min-w-0 flex-1">
           <span className="block truncate text-body font-semibold text-text">{label}</span>
           {hint && <span className="block truncate text-caption text-text-muted">{hint}</span>}
         </span>
         {badge ? (
-          <span aria-hidden className="shrink-0 rounded-full bg-secondary px-1.5 text-caption font-semibold leading-4 text-background">
+          <span aria-hidden className="shrink-0 rounded-sm bg-secondary px-1.5 text-caption font-semibold leading-4 text-background">
             {badge}
           </span>
         ) : null}

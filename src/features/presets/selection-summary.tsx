@@ -29,7 +29,7 @@ export function SelectionSummary({
         <h3 className="text-caption font-semibold text-text-muted">
           {t("presetField.selected")} <span className="tabular-nums">({entries.length})</span>
         </h3>
-        <button type="button" onClick={() => onChange({})} className="rounded px-1.5 py-0.5 text-caption font-medium text-text-muted underline hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+        <button type="button" onClick={() => onChange({})} className="rounded px-1.5 py-0.5 text-caption font-medium text-text-muted underline hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus">
           {t("extra.clear")}
         </button>
       </div>
@@ -38,7 +38,7 @@ export function SelectionSummary({
           <li
             key={`${entry.fieldId}:${entry.optionValue ?? ""}`}
             data-extra-chip={entry.fieldId}
-            className="inline-flex max-w-full items-center gap-1 rounded-full bg-primary-soft py-1 pl-2.5 pr-1 text-caption font-medium text-text"
+            className="inline-flex max-w-full items-center gap-1 rounded-sm bg-primary-soft py-1 pl-2.5 pr-1 text-caption font-medium text-text"
           >
             <span className="shrink-0 text-text-muted">{entry.fieldName}:</span>
             <span className="truncate">{entry.label}</span>

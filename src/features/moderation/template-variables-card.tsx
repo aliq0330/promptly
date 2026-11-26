@@ -179,7 +179,7 @@ export function TemplateVariablesCard() {
                           {item.variables.slice(0, CHIPS_SHOWN).map((variable) => (
                             <span
                               key={variable.name}
-                              className={`max-w-full truncate rounded-md px-1.5 py-0.5 font-mono text-caption ${variable.existing ? "bg-surface-soft text-text-muted" : "bg-primary-soft text-primary"}`}
+                              className={`max-w-full truncate rounded-md px-1.5 py-0.5 font-mono text-caption ${variable.existing ? "bg-surface-soft text-text-muted" : "bg-primary-soft text-primary-text"}`}
                               title={variable.existing ? t("exchange.template.existingVariable") : undefined}
                             >
                               {`{${variable.name}}`}

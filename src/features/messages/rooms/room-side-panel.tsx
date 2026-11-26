@@ -36,7 +36,7 @@ export function RoomSidePanel({
   const { enabled, members } = useCommunityOnlineMembers(group.id, { limit: 6 });
   const firstPin = pinned[0];
   const pageHref = communityHref(group.id);
-  const link = "flex min-h-11 items-center justify-between gap-2 rounded-lg border border-border-soft px-3 text-small font-semibold text-text transition-colors hover:border-border-strong hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary";
+  const link = "flex min-h-11 items-center justify-between gap-2 rounded-sm border border-border-soft px-3 text-small font-semibold text-text transition-colors hover:border-border-strong hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus";
   void language;
   return (
     <aside data-room-panel aria-label={t("rooms.panel.title")} className={cn("w-[300px] shrink-0 flex-col gap-5 overflow-y-auto border-l border-border-soft bg-surface px-4 py-5", className)}>
@@ -48,7 +48,7 @@ export function RoomSidePanel({
           <button
             type="button"
             onClick={() => onJump(firstPin.message)}
-            className="w-full rounded-xl bg-surface-soft px-3 py-3 text-left text-small leading-relaxed text-text transition-colors hover:bg-border-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            className="w-full rounded-xl bg-surface-soft px-3 py-3 text-left text-small leading-relaxed text-text transition-colors hover:bg-border-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
           >
             {messagePreviewText(firstPin.message, (key, params) => t(key as never, params as never))}
             <span className="text-text-muted"> · {senderLabel(firstPin.message.senderId)}</span>
@@ -62,7 +62,7 @@ export function RoomSidePanel({
         <section aria-label={t("rooms.panel.online", { count: members.length })} data-room-panel-online>
           <h3 className="mb-2 flex items-center justify-between text-caption font-semibold text-text-muted">
             <span>{t("rooms.panel.online", { count: members.length })}</span>
-            <Link href={communityHref(group.id, "members")} className="text-small font-semibold text-primary hover:underline">{t("rooms.panel.all")}</Link>
+            <Link href={communityHref(group.id, "members")} className="text-small font-semibold text-primary-text hover:underline">{t("rooms.panel.all")}</Link>
           </h3>
           {members.length === 0 ? (
             <p className="text-small text-text-muted">{t("rooms.panel.onlineNone")}</p>
@@ -70,7 +70,7 @@ export function RoomSidePanel({
             <ul className="space-y-1">
               {members.map((member) => (
                 <li key={member.userId}>
-                  <Link href={profileHref({ username: member.username })} className="flex items-center gap-3 rounded-lg px-1 py-1.5 transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+                  <Link href={profileHref({ username: member.username })} className="flex items-center gap-3 rounded-lg px-1 py-1.5 transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus">
                     <PresenceAvatar userId={member.userId} src={member.avatarUrl} alt={member.displayName} size={40} />
                     <span className="min-w-0 flex-1 truncate text-small font-semibold text-text">{member.displayName}</span>
                     {member.role !== "member" && <RoleBadge role={member.role} />}

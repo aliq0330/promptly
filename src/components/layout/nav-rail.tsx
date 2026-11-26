@@ -38,8 +38,8 @@ export function NavRail({ desktop = false }: { desktop?: boolean }) {
           href={item.href}
           aria-current={active ? "page" : undefined}
           className={cn(
-            "flex h-15 w-full flex-col items-center justify-center gap-1 rounded-lg text-caption transition-colors duration-200",
-            active ? "bg-primary-soft font-semibold text-primary" : "font-medium text-text-secondary hover:bg-surface-soft hover:text-text",
+            "flex h-15 w-full flex-col items-center justify-center gap-1 rounded-md text-caption transition-colors duration-200",
+            active ? "bg-primary-soft font-semibold text-primary-text" : "font-medium text-text-secondary hover:bg-surface-soft hover:text-text",
           )}
         >
           <Icon size={24} />
@@ -64,7 +64,7 @@ export function NavRail({ desktop = false }: { desktop?: boolean }) {
         aria-label={t("nav.createShort")}
         title={t("nav.createShort")}
         data-nav-create=""
-        className="mb-4 flex h-13 w-13 items-center justify-center rounded-full bg-primary text-primary-foreground transition-[background-color,transform] duration-200 hover:bg-primary-hover active:scale-95"
+        className="mb-4 flex h-13 w-13 items-center justify-center rounded-md bg-primary text-primary-foreground transition-[background-color,transform] duration-200 hover:bg-primary-hover active:scale-95"
       >
         <Plus size={24} />
       </button>

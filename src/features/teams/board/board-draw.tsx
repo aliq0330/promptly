@@ -164,7 +164,7 @@ export function TextItemDialog({ item, onClose, onSave }: { item: SpaceItem | nu
       <div className="space-y-4">
         <label className="block space-y-1.5">
           <span className="text-small font-semibold text-text">{t("tb.text.label")}</span>
-          <textarea value={body} onChange={(event) => setBody(event.target.value)} maxLength={SPACE_ITEM_BODY_MAX} rows={4} className="w-full rounded-lg card-inset px-3 py-2 text-body" />
+          <textarea value={body} onChange={(event) => setBody(event.target.value)} maxLength={SPACE_ITEM_BODY_MAX} rows={4} className="w-full rounded-sm card-inset px-3 py-2 text-body" />
         </label>
         <div className="space-y-1.5">
           <span className="text-small font-semibold text-text">{t("tb.text.size")}</span>
@@ -175,7 +175,7 @@ export function TextItemDialog({ item, onClose, onSave }: { item: SpaceItem | nu
               onChange={setSize}
               options={TEXT_SIZES.map((option) => ({ key: option, label: t(`tb.text.size.${option}` as const) }))}
             />
-            <button type="button" aria-pressed={bold} onClick={() => setBold((value) => !value)} className={cn("h-10 rounded-full border px-4 font-semibold", bold ? "border-transparent bg-primary-soft text-primary" : "border-border bg-surface text-text-secondary")}>
+            <button type="button" aria-pressed={bold} onClick={() => setBold((value) => !value)} className={cn("h-10 rounded-sm border px-4 font-semibold", bold ? "border-transparent bg-primary-soft text-primary-text" : "border-border bg-surface text-text-secondary")}>
               B
             </button>
           </div>
@@ -233,7 +233,7 @@ export function FrameDialog({ item, onClose, onSave }: { item: SpaceItem; onClos
       <div className="space-y-4">
         <label className="block space-y-1.5">
           <span className="text-small font-semibold text-text">{t("tb.frame.name")}</span>
-          <input value={title} onChange={(event) => setTitle(event.target.value)} maxLength={SPACE_ITEM_TITLE_MAX} className="h-11 w-full rounded-lg card-inset px-3 text-body" />
+          <input value={title} onChange={(event) => setTitle(event.target.value)} maxLength={SPACE_ITEM_TITLE_MAX} className="h-11 w-full rounded-sm card-inset px-3 text-body" />
         </label>
         <div className="space-y-1.5">
           <span className="text-small font-semibold text-text">{t("tb.style.color")}</span>
@@ -281,7 +281,7 @@ export function StyleControls({ items, onPatch }: { items: SpaceItem[]; onPatch:
               aria-label={t("tb.style.stroke", { width })}
               aria-pressed={shapeData.sw === width}
               onClick={() => onPatch((item) => (item.kind === "shape" ? { data: { ...parseShape(item.data), sw: width } } : {}))}
-              className={cn("flex h-9 w-9 items-center justify-center rounded-full", shapeData.sw === width ? "bg-primary-soft text-primary" : "text-text-secondary hover:bg-surface-soft")}
+              className={cn("flex h-9 w-9 items-center justify-center rounded-full", shapeData.sw === width ? "bg-primary-soft text-primary-text" : "text-text-secondary hover:bg-surface-soft")}
             >
               <span className="block w-4 rounded-full bg-current" style={{ height: width }} />
             </button>
@@ -292,7 +292,7 @@ export function StyleControls({ items, onPatch }: { items: SpaceItem[]; onPatch:
               aria-label={t("tb.style.fill")}
               aria-pressed={shapeData.fill}
               onClick={() => onPatch((item) => (item.kind === "shape" ? { data: { ...parseShape(item.data), fill: !shapeData.fill } } : {}))}
-              className={cn("flex h-9 items-center rounded-full px-2.5 text-caption font-semibold", shapeData.fill ? "bg-primary-soft text-primary" : "text-text-secondary hover:bg-surface-soft")}
+              className={cn("flex h-9 items-center rounded-sm px-2.5 text-caption font-semibold", shapeData.fill ? "bg-primary-soft text-primary-text" : "text-text-secondary hover:bg-surface-soft")}
             >
               {t("tb.style.fill")}
             </button>
@@ -308,7 +308,7 @@ export function StyleControls({ items, onPatch }: { items: SpaceItem[]; onPatch:
               type="button"
               aria-pressed={textData.size === size}
               onClick={() => onPatch((item) => (item.kind === "text" ? { data: { ...parseText(item.data), size } } : {}))}
-              className={cn("h-9 min-w-8 rounded-full px-2 text-caption font-semibold", textData.size === size ? "bg-primary-soft text-primary" : "text-text-secondary hover:bg-surface-soft")}
+              className={cn("h-9 min-w-8 rounded-sm px-2 text-caption font-semibold", textData.size === size ? "bg-primary-soft text-primary-text" : "text-text-secondary hover:bg-surface-soft")}
             >
               {t(`tb.text.size.${size}` as const)}
             </button>
@@ -318,7 +318,7 @@ export function StyleControls({ items, onPatch }: { items: SpaceItem[]; onPatch:
             aria-label={t("tb.text.bold")}
             aria-pressed={textData.bold}
             onClick={() => onPatch((item) => (item.kind === "text" ? { data: { ...parseText(item.data), bold: !textData.bold } } : {}))}
-            className={cn("h-9 w-9 rounded-full text-caption font-semibold", textData.bold ? "bg-primary-soft text-primary" : "text-text-secondary hover:bg-surface-soft")}
+            className={cn("h-9 w-9 rounded-full text-caption font-semibold", textData.bold ? "bg-primary-soft text-primary-text" : "text-text-secondary hover:bg-surface-soft")}
           >
             B
           </button>

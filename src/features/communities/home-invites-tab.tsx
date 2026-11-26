@@ -97,7 +97,7 @@ export function HomeInvitesTab({
             }}
             placeholder={t("groups.page.linkPlaceholder")}
             aria-invalid={linkError}
-            className="h-10 min-w-0 flex-1 rounded-lg card-inset px-3 text-small text-text placeholder:text-text-muted hover:border-border-strong focus:border-primary/60"
+            className="h-10 min-w-0 flex-1 rounded-sm card-inset px-3 text-small text-text placeholder:text-text-muted hover:border-border-strong focus:border-primary/60"
           />
           <Button type="submit" size="sm" variant="outline" disabled={!linkInput.trim()}>
             {t("groups.page.openLink")}

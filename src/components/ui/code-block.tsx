@@ -26,7 +26,7 @@ export function CodeBlock({ text, label }: { text: string; label: string }) {
         onClick={copy}
         aria-label={`${t("dev.copy")}: ${label}`}
         data-dev-copy=""
-        className="absolute right-1.5 top-1.5 flex h-9 w-9 items-center justify-center rounded-md text-text-secondary transition-colors hover:bg-surface hover:text-text"
+        className="absolute right-1.5 top-1.5 flex h-9 w-9 items-center justify-center rounded-sm text-text-secondary transition-colors hover:bg-surface hover:text-text"
       >
         {copied ? <Check size={16} className="text-success" /> : <Copy size={16} />}
         <span className="sr-only" aria-live="polite">

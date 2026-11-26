@@ -67,7 +67,7 @@ export function RealProfileView() {
         </p>
         <Link
           href="/"
-          className="inline-flex h-9 items-center rounded-md border border-border px-4 text-small font-medium text-text hover:bg-accent-surface"
+          className="inline-flex h-9 items-center rounded-sm border border-border px-4 text-small font-medium text-text hover:bg-accent-surface"
         >
           {t("common.backToHome")}
         </Link>

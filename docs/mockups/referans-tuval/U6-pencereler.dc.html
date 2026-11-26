@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>Promptly pencereleri uyarlama</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&amp;family=Bricolage+Grotesque:wght@700;800&amp;display=swap">
+<style>
+body{margin:0;font-family:'DM Sans',system-ui,sans-serif;color:#121218}
+.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.h{font-size:12px;font-weight:600;color:#62646f;margin:0 0 10px}
+.cap{font-size:12px;color:#62646f;line-height:1.45;margin:10px 0 0}
+.scrim{background:rgba(18,18,24,.45);border-radius:16px;position:relative;overflow:hidden;background-color:#8a8a93}
+.modal{background:#fff;border:1px solid #ececf2;border-radius:20px;box-shadow:0 24px 56px -18px rgba(18,18,24,.28),0 3px 10px -2px rgba(18,18,24,.08);position:absolute;box-sizing:border-box}
+.x{position:absolute;right:14px;top:14px;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#62646f}
+.btn{height:44px;border-radius:999px;display:flex;align-items:center;justify-content:center;font:600 15px 'DM Sans',sans-serif}
+.fld{height:44px;border:1px solid #3b5be2;border-radius:16px;box-shadow:0 0 0 3px rgba(59,91,226,.22);background:#fff;padding:0 16px;display:flex;align-items:center;font-size:14px;color:#62646f;box-sizing:border-box}
+.pr{display:flex;align-items:center;gap:12px;padding:6px 0;font-size:14px;font-weight:500}
+.pr i{width:40px;height:40px;border-radius:50%;background:#cfd0dc;display:block}
+.ta{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:11px;font-weight:500;color:#464854}
+.ta u{width:52px;height:52px;border-radius:50%;background:#f0f0f5;display:flex;align-items:center;justify-content:center;text-decoration:none;color:#121218}
+.mk{position:absolute;width:22px;height:22px;border-radius:50%;background:#3b5be2;color:#fff;font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 3px #fff}
+</style>
+</helmet>
+<div style="width:1240px;height:800px;box-sizing:border-box;padding:44px 48px;background:#fff;display:flex;flex-direction:column;gap:20px">
+  <h1 style="margin:0;font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:32px;letter-spacing:-.02em">Promptly pencereleri</h1>
+  <div style="display:flex;gap:36px;align-items:flex-start">
+    <div style="width:380px">
+      <p class="h">GİRİŞ PENCERESİ · köşe 20 · tek karartı</p>
+      <div class="scrim" style="height:540px">
+        <div class="modal" style="left:20px;right:20px;top:60px;padding:24px 22px">
+          <div class="x"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></div>
+          <i style="display:block;width:48px;height:48px;border-radius:14px;background:#eceffd;margin:0 auto 12px"></i>
+          <div style="text-align:center;font:700 22px 'Bricolage Grotesque',sans-serif;letter-spacing:-.02em">Promptly'ye giriş yap</div>
+          <div style="text-align:center;font-size:14px;color:#62646f;margin:4px 0 20px">Beğenmek ve kaydetmek için oturum aç.</div>
+          <div class="fld">E-posta veya kullanıcı adı</div>
+          <div class="btn" style="background:#3b5be2;color:#fff;margin-top:10px">Devam et</div>
+          <div style="display:flex;align-items:center;gap:12px;margin:14px 0;font-size:12px;color:#62646f"><i style="flex:1;height:1px;background:#e4e4ec"></i>ya da<i style="flex:1;height:1px;background:#e4e4ec"></i></div>
+          <div class="btn" style="border:1px solid #cfd0dc">Google ile devam et</div>
+          <div style="text-align:center;font-size:13px;color:#62646f;margin-top:14px">Hesabın yok mu? <span style="color:#3b5be2;font-weight:600">Kayıt ol</span></div>
+        </div>
+        <div class="mk" style="left:340px;top:50px">4</div>
+      </div>
+      <p class="cap">Köşe 16 → 20, başlık Bricolage, alan odak halkalı. Karartı düz %45; mevcut hafif bulanıklık korunabilir.</p>
+    </div>
+    <div style="width:420px">
+      <p class="h">PAYLAŞ · kişiler önce · köşe 20</p>
+      <div class="scrim" style="height:540px">
+        <div class="modal" style="left:20px;right:20px;top:24px;padding:20px 22px 22px">
+          <div style="font:700 20px 'Bricolage Grotesque',sans-serif;letter-spacing:-.02em">Paylaş</div>
+          <div class="x" style="top:12px"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></div>
+          <div style="margin-top:12px;display:flex;align-items:center;gap:10px;background:#f8f8fb;border:1px solid #ececf2;border-radius:16px;padding:8px 12px"><i style="width:36px;height:36px;border-radius:10px;background:linear-gradient(160deg,#4b5fd0,#1b2158);display:block"></i><span style="font-size:13px;font-weight:500">Gece şehri yansımaları</span></div>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px 6px;margin-top:16px">
+            <div class="ta"><i style="width:52px;height:52px;border-radius:50%;background:#cfd0dc;display:block"></i>Ada</div>
+            <div class="ta"><i style="width:52px;height:52px;border-radius:50%;background:#d9c9c0;display:block"></i>Mert</div>
+            <div class="ta"><i style="width:52px;height:52px;border-radius:50%;background:#c0cfd9;display:block"></i>Tasarım Ekibi</div>
+            <div class="ta"><i style="width:52px;height:52px;border-radius:50%;background:#bfc9e0;display:block"></i>Ece</div>
+          </div>
+          <div style="height:1px;background:#ececf2;margin:18px 0 14px"></div>
+          <div style="display:flex;justify-content:space-between">
+            <div class="ta"><u><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg></u>Bağlantı</div>
+            <div class="ta"><u><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg></u>Alıntıla</div>
+            <div class="ta"><u><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg></u>Hikâye</div>
+            <div class="ta"><u><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="13" width="8" height="8" rx="2"/></svg></u>Space</div>
+            <div class="ta"><u><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10v16l-5-4-5 4z"/></svg></u>Koleksiyon</div>
+          </div>
+        </div>
+        <div class="mk" style="left:380px;top:14px">4</div>
+      </div>
+      <p class="cap">Mevcut «kişiler önce» akışı korunur; referanstaki tek satır eylem sırası zaten altta var. Yalnız köşe ve başlık ritmi uyarlanır.</p>
+    </div>
+    <div style="width:340px">
+      <p class="h">TELEFON · alt kart · yerden kopuk (değişmedi)</p>
+      <div class="scrim" style="height:540px">
+        <div class="modal" style="left:10px;right:10px;bottom:22px;top:160px;padding:14px 18px;border-radius:22px">
+          <div style="width:40px;height:4px;border-radius:2px;background:#cfd0dc;margin:0 auto 14px"></div>
+          <div style="font:700 20px 'Bricolage Grotesque',sans-serif;letter-spacing:-.02em;text-align:center">Koleksiyona ekle</div>
+          <div class="pr" style="margin-top:12px"><i style="border-radius:12px;background:#eceffd"></i>Referanslar<svg class="i" viewBox="0 0 24 24" aria-hidden="true" style="margin-left:auto;color:#3b5be2"><path d="M5 12l5 5 9-10"/></svg></div>
+          <div class="pr"><i style="border-radius:12px;background:#f0f0f5"></i>Portre fikirleri</div>
+          <div class="pr"><i style="border-radius:12px;background:#f0f0f5"></i>Sonra bak</div>
+          <div class="btn" style="background:#3b5be2;color:#fff;margin-top:12px">Bitti</div>
+        </div>
+      </div>
+      <p class="cap">Telefon davranışı (yerden kopuk, sürükleyerek kapanır) olduğu gibi kalır; referansın kenara yapışık kartı alınmadı.</p>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1240,"height":800}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

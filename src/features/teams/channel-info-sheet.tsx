@@ -87,7 +87,7 @@ export function ChannelInfoSheet({
   const rows: { key: string; label: string; hint?: string; icon: React.ReactNode; onClick?: () => void; href?: string; disabled?: boolean; tone?: string }[] = [
     { key: "pinned", label: t("tm.chan.pinned"), hint: String(pinnedCount), icon: <Pin size={20} />, onClick: pinnedCount > 0 ? onShowPinned : undefined, disabled: pinnedCount === 0 },
     { key: "search", label: t("tm.chan.search"), icon: <Search size={20} />, onClick: onSearch },
-    { key: "team", label: t("tm.chan.openTeam"), icon: <ArrowUpRight size={20} />, href: teamLink(team.slug, "chat", { channel: channelParam(channel) }), tone: "text-primary" },
+    { key: "team", label: t("tm.chan.openTeam"), icon: <ArrowUpRight size={20} />, href: teamLink(team.slug, "chat", { channel: channelParam(channel) }), tone: "text-primary-text" },
   ];
 
   return (
@@ -95,7 +95,7 @@ export function ChannelInfoSheet({
       <Modal onClose={busy ? () => undefined : onClose} labelledBy="channel-info-title">
         <DialogShell data-channel-info className="flex max-h-[85dvh] w-full max-w-md flex-col rounded-t-xl border border-border-soft bg-surface shadow-pop sm:rounded-lg">
           <div className="flex shrink-0 items-center gap-3 px-5 pb-2 pt-5">
-            <span className={cn("grid h-11 w-11 shrink-0 place-items-center rounded-lg", channel.mode === "private" ? "bg-warning-soft text-warning" : "bg-primary-soft text-primary")} aria-hidden>
+            <span className={cn("grid h-11 w-11 shrink-0 place-items-center rounded-lg", channel.mode === "private" ? "bg-warning-soft text-warning" : "bg-primary-soft text-primary-text")} aria-hidden>
               {channel.mode === "private" ? <Lock size={20} /> : <Hash size={20} />}
             </span>
             <div className="min-w-0 flex-1 leading-tight">
@@ -104,7 +104,7 @@ export function ChannelInfoSheet({
               </h2>
               <p className="truncate text-small text-text-muted">{t("tm.chan.title", { team: team.name })}</p>
             </div>
-            <button type="button" onClick={onClose} aria-label={t("common.close")} className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-surface-soft text-text-secondary hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+            <button type="button" onClick={onClose} aria-label={t("common.close")} className="grid h-9 w-9 shrink-0 place-items-center rounded-sm bg-surface-soft text-text-secondary hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus">
               <X size={20} aria-hidden />
             </button>
           </div>
@@ -132,7 +132,7 @@ export function ChannelInfoSheet({
                     data-channel-unmute-parent
                     disabled={busy}
                     onClick={() => void run(() => setTeamMute(team.id, inherited === "project" ? (channel.projectId ?? null) : null, false), onChanged)}
-                    className="text-small font-semibold text-primary hover:underline disabled:opacity-50"
+                    className="text-small font-semibold text-primary-text hover:underline disabled:opacity-50"
                   >
                     {t(inherited === "team" ? "th.inherit.unmuteTeam" : "th.inherit.unmuteProject")}
                   </button>
@@ -166,7 +166,7 @@ export function ChannelInfoSheet({
                     {row.hint && <span className="text-small text-text-muted">{row.hint}</span>}
                   </>
                 );
-                const cls = "flex min-h-12 w-full items-center gap-3 border-b border-border-soft px-4 text-left last:border-b-0 hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary disabled:opacity-50";
+                const cls = "flex min-h-12 w-full items-center gap-3 border-b border-border-soft px-4 text-left last:border-b-0 hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-focus disabled:opacity-50";
                 return row.href ? (
                   <Link key={row.key} href={row.href} data-channel-info-row={row.key} className={cls}>
                     {inner}
@@ -183,16 +183,16 @@ export function ChannelInfoSheet({
               <div className="space-y-2" data-channel-admin>
                 <p className="text-caption font-semibold text-text-muted">{t("tm.chan.adminHeading")}</p>
                 <div className="flex gap-2">
-                  <Link href={teamLink(team.slug, "chat", { channel: channel.name, settings: "1" })} data-channel-edit className="flex h-11 flex-1 items-center justify-center rounded-full border border-border text-small font-semibold text-text hover:bg-surface-soft">
+                  <Link href={teamLink(team.slug, "chat", { channel: channel.name, settings: "1" })} data-channel-edit className="flex h-11 flex-1 items-center justify-center rounded-sm border border-border text-small font-semibold text-text hover:bg-surface-soft">
                     {t("tm.chan.edit")}
                   </Link>
                   {!locked && (
-                    <button type="button" data-channel-archive onClick={() => setConfirm("archive")} className="flex h-11 flex-1 items-center justify-center rounded-full border border-border text-small font-semibold text-text hover:bg-surface-soft">
+                    <button type="button" data-channel-archive onClick={() => setConfirm("archive")} className="flex h-11 flex-1 items-center justify-center rounded-sm border border-border text-small font-semibold text-text hover:bg-surface-soft">
                       {t("tm.chan.archive")}
                     </button>
                   )}
                   {!locked && (
-                    <button type="button" data-channel-delete onClick={() => setConfirm("delete")} className="flex h-11 flex-1 items-center justify-center rounded-full border border-danger/40 text-small font-semibold text-danger hover:bg-danger-soft">
+                    <button type="button" data-channel-delete onClick={() => setConfirm("delete")} className="flex h-11 flex-1 items-center justify-center rounded-sm border border-danger/40 text-small font-semibold text-danger hover:bg-danger-soft">
                       {t("tm.chan.delete")}
                     </button>
                   )}

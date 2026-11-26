@@ -94,19 +94,19 @@ function SharedCard({
   }
   return (
     <div className={CARD_CLASS} data-shared-card={state} data-shared-post-card={testId === "post" ? "ready" : undefined}>
-      <Link href={href} className="block space-y-2 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+      <Link href={href} className="block space-y-2 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus">
         <span className="relative block h-32 w-full overflow-hidden rounded-xl bg-primary-soft">
           {cover ??
             (thumbnail ? (
               <StorageImage src={thumbnail.url} alt={thumbnail.alt} fill sizes="288px" className="object-cover" />
             ) : (
-              <span aria-hidden className="flex h-full w-full items-center justify-center text-primary/60">
+              <span aria-hidden className="flex h-full w-full items-center justify-center text-primary-text/60">
                 <Icon size={36} />
               </span>
             ))}
           <span
             data-shared-type
-            className="absolute left-2 top-2 inline-flex h-6 items-center gap-1 rounded-full bg-background/85 px-2 text-caption font-semibold text-text shadow-xs backdrop-blur"
+            className="absolute left-2 top-2 inline-flex h-6 items-center gap-1 rounded-xs bg-background/85 px-2 text-caption font-semibold text-text shadow-xs backdrop-blur"
           >
             <Icon size={12} className="shrink-0" aria-hidden />
             {typeLabel}
@@ -114,7 +114,7 @@ function SharedCard({
           {badge && <span className="absolute right-2 top-2">{badge}</span>}
         </span>
         <span className="block space-y-0.5 px-1.5">
-          <span className="line-clamp-2 font-display text-h3 font-bold leading-snug tracking-[-0.01em] text-text">{title ?? t("common.loading")}</span>
+          <span className="line-clamp-2 font-display text-h3 font-bold leading-snug text-text">{title ?? t("common.loading")}</span>
           {ownerName && (
             <span className="block truncate text-caption text-text-muted" data-shared-owner>
               {ownerName}

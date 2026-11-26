@@ -105,12 +105,12 @@ export function ExtraSettingsSection({
         aria-haspopup="dialog"
         className="flex w-full items-center gap-3 rounded-md border border-dashed border-border-strong bg-surface-soft px-3 py-2.5 text-left transition-colors hover:border-primary hover:bg-primary-soft"
       >
-        <Settings size={20} className="shrink-0 text-primary" aria-hidden />
+        <Settings size={20} className="shrink-0 text-primary-text" aria-hidden />
         <span className="min-w-0 flex-1">
           <span className="block text-label font-semibold text-text">{t("extra.title")}</span>
           <span className="block text-caption text-text-secondary">{t("extra.hint")}</span>
         </span>
-        {count > 0 && <span className="shrink-0 rounded-full bg-primary px-2 py-0.5 text-caption font-semibold text-primary-foreground">{t("extra.count", { count })}</span>}
+        {count > 0 && <span className="shrink-0 rounded-xs bg-primary px-2 py-0.5 text-caption font-semibold text-primary-foreground">{t("extra.count", { count })}</span>}
         <ChevronRight size={16} className="shrink-0 text-text-muted" aria-hidden />
       </button>
 
@@ -243,7 +243,7 @@ function ExtraSettingsPanel({
           className="flex max-h-[92dvh] w-full max-w-2xl flex-col rounded-lg card-flat shadow-pop"
         >
           <div className="flex items-start gap-3 border-b border-border-soft px-4 py-3">
-            <Settings size={20} className="mt-0.5 shrink-0 text-primary" aria-hidden />
+            <Settings size={20} className="mt-0.5 shrink-0 text-primary-text" aria-hidden />
             <div className="min-w-0 flex-1">
               <h2 id="extra-settings-title" className="text-h3 font-bold text-text">
                 {t("extra.title")}

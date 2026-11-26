@@ -55,7 +55,7 @@ export function GeneralPane({ step, onChange }: Pick<PaneProps, "step" | "onChan
           value={step.description}
           onChange={(event) => onChange({ description: event.target.value })}
           placeholder={t("workflow.stepDescriptionPlaceholder")}
-          className="w-full resize-none rounded-lg card-inset px-3 py-2 text-small text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
+          className="w-full resize-none rounded-sm card-inset px-3 py-2 text-small text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
         />
       </div>
       <div>
@@ -68,7 +68,7 @@ export function GeneralPane({ step, onChange }: Pick<PaneProps, "step" | "onChan
           value={step.instructions}
           onChange={(event) => onChange({ instructions: event.target.value })}
           placeholder={t("workflow.instructionsPlaceholder")}
-          className="w-full resize-none rounded-lg card-inset px-3 py-2 text-small text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
+          className="w-full resize-none rounded-sm card-inset px-3 py-2 text-small text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
         />
       </div>
     </div>
@@ -98,7 +98,7 @@ export function ContentPane({
           {c.thumbnailUrl ? (
             <StorageImg src={c.thumbnailUrl} alt="" className="h-12 w-12 shrink-0 rounded-md object-cover" />
           ) : (
-            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-primary-soft text-primary">
+            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-primary-soft text-primary-text">
               <Icon size={20} />
             </span>
           )}
@@ -121,7 +121,7 @@ export function ContentPane({
       )}
       <div className="flex flex-wrap gap-2">
         {c && (
-          <Link href={c.href} target="_blank" className="inline-flex h-9 items-center gap-1.5 rounded-md border border-border px-3 text-label font-medium text-text hover:bg-surface-soft">
+          <Link href={c.href} target="_blank" className="inline-flex h-9 items-center gap-1.5 rounded-sm border border-border px-3 text-label font-medium text-text hover:bg-surface-soft">
             <ArrowUpRight size={16} />
             {t("workflow.viewContent")}
           </Link>
@@ -191,7 +191,7 @@ export function IOPane({ step, steps, index, onChange }: PaneProps) {
                 type="button"
                 aria-label={t("workflow.removeItem")}
                 onClick={() => onChange({ inputs: step.inputs.filter((i) => i.id !== input.id) })}
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md text-text-muted hover:bg-surface-soft hover:text-danger"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm text-text-muted hover:bg-surface-soft hover:text-danger"
               >
                 <X size={16} />
               </button>
@@ -201,7 +201,7 @@ export function IOPane({ step, steps, index, onChange }: PaneProps) {
                 aria-label={t("workflow.useFromPrevious")}
                 value={input.source ? `${input.source.stepId}::${input.source.outputId}` : ""}
                 onChange={(event) => setInput(input.id, { source: event.target.value })}
-                className="h-10 w-full rounded-md card-inset px-2 text-small text-text"
+                className="h-10 w-full rounded-sm card-inset px-2 text-small text-text"
               >
                 <option value="">{sources.length ? t("workflow.noLink") : t("workflow.noSourcesBefore")}</option>
                 {sources.map(({ step: from, stepIndex, output }) => (
@@ -238,7 +238,7 @@ export function IOPane({ step, steps, index, onChange }: PaneProps) {
               type="button"
               aria-label={t("workflow.removeItem")}
               onClick={() => onChange({ outputs: step.outputs.filter((o) => o.id !== output.id) })}
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md text-text-muted hover:bg-surface-soft hover:text-danger"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm text-text-muted hover:bg-surface-soft hover:text-danger"
             >
               <X size={16} />
             </button>
@@ -378,7 +378,7 @@ export function StepPreview({ step, steps, index }: Omit<PaneProps, "onChange">)
               {step.inputs.map((input) => (
                 <li key={input.id} className="truncate text-text">
                   • {input.label || "…"}
-                  {input.source && <ArrowRight size={12} className="ml-1 inline text-primary" aria-hidden />}
+                  {input.source && <ArrowRight size={12} className="ml-1 inline text-primary-text" aria-hidden />}
                 </li>
               ))}
             </ul>

@@ -99,8 +99,8 @@ function RolesMatrix({ ctx }: { ctx: TeamCtx }) {
 }
 
 const ROLE_CHIP_TONE: Record<TeamRole, string> = {
-  owner: "bg-primary-soft text-primary",
-  admin: "bg-primary-soft text-primary",
+  owner: "bg-primary-soft text-primary-text",
+  admin: "bg-primary-soft text-primary-text",
   editor: "bg-success-soft text-success",
   member: "bg-surface-soft text-text-secondary",
   guest: "bg-warning-soft text-warning",
@@ -170,11 +170,11 @@ export function TeamMembersSection({ ctx }: { ctx: TeamCtx }) {
   return (
     <section className="space-y-4" data-testid="team-members">
       <div className="flex items-center gap-2">
-        <button type="button" onClick={() => setSearchOpen((o) => !o)} aria-label={t("tm.members.search")} aria-pressed={searchOpen} data-members-search className="ml-auto grid h-11 w-11 place-items-center rounded-full bg-surface-soft text-text-secondary md:ml-0 md:order-last">
+        <button type="button" onClick={() => setSearchOpen((o) => !o)} aria-label={t("tm.members.search")} aria-pressed={searchOpen} data-members-search className="ml-auto grid h-11 w-11 place-items-center rounded-sm bg-surface-soft text-text-secondary md:ml-0 md:order-last">
           <Search size={20} aria-hidden />
         </button>
       </div>
-      {searchOpen && <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder={t("tm.members.search")} aria-label={t("tm.members.search")} autoFocus className="h-11 w-full rounded-full border border-border bg-surface px-4 text-small" />}
+      {searchOpen && <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder={t("tm.members.search")} aria-label={t("tm.members.search")} autoFocus className="h-11 w-full rounded-sm border border-border bg-surface px-4 text-small" />}
       <ScrollRow className="-mt-1 flex gap-2 pb-1 md:flex-wrap md:overflow-visible" role="tablist" aria-label={t("tm.members.filter")}>
         {views
           .filter((v) => v.show)
@@ -186,7 +186,7 @@ export function TeamMembersSection({ ctx }: { ctx: TeamCtx }) {
               aria-selected={view === v.key}
               onClick={() => setView(v.key)}
               data-members-view={v.key}
-              className={cn("inline-flex h-10 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-4 text-small transition-colors", view === v.key ? "border-primary bg-primary-soft font-semibold text-primary" : "border-border-soft bg-surface text-text-secondary hover:bg-surface-soft")}
+              className={cn("inline-flex h-10 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-sm border px-4 text-small transition-colors", view === v.key ? "border-primary bg-primary-soft font-semibold text-primary-text" : "border-border-soft bg-surface text-text-secondary hover:bg-surface-soft")}
             >
               {v.label}
               {v.count !== null && <span className="tabular-nums">{v.count}</span>}
@@ -223,7 +223,7 @@ export function TeamMembersSection({ ctx }: { ctx: TeamCtx }) {
                             aria-label={t("tm.members.changeRole")}
                             value={member.role}
                             onChange={(event) => void changeRole(member, event.target.value as TeamRole)}
-                            className={cn("h-9 appearance-none rounded-full border-0 px-3 text-caption font-semibold", ROLE_CHIP_TONE[member.role])}
+                            className={cn("h-9 appearance-none rounded-sm border-0 px-3 text-caption font-semibold", ROLE_CHIP_TONE[member.role])}
                           >
                             {(["admin", "editor", "member", "guest"] as TeamRole[])
                               .filter((role) => teamRank(role) < myRank)
@@ -234,19 +234,19 @@ export function TeamMembersSection({ ctx }: { ctx: TeamCtx }) {
                               ))}
                           </select>
                         ) : (
-                          <span className={cn("inline-flex h-8 items-center rounded-full px-3 text-caption font-semibold max-lg:text-body", ROLE_CHIP_TONE[member.role])}>{t(roleLabelKey(member.role))}</span>
+                          <span className={cn("inline-flex h-8 items-center rounded-sm px-3 text-caption font-semibold max-lg:text-body", ROLE_CHIP_TONE[member.role])}>{t(roleLabelKey(member.role))}</span>
                         )}
                       </span>
                       <span className="hidden w-full border-t border-border-soft pt-2 text-caption text-text-secondary md:block" data-member-projects>
                         {summary.length > 0 ? summary.map((entry) => t(`tc.members.in.${entry.role}` as "tc.members.in.lead", { count: entry.count })).join(" · ") : member.groupNames?.join(", ") || t("tc.members.noProject")}
                       </span>
                       {manageable && (
-                        <button type="button" onClick={() => setRemoving(member)} data-member-remove className="hidden h-9 items-center rounded-full border border-border px-3 text-caption font-semibold text-text-secondary hover:border-danger/40 hover:bg-danger-soft hover:text-danger md:inline-flex">
+                        <button type="button" onClick={() => setRemoving(member)} data-member-remove className="hidden h-9 items-center rounded-sm border border-border px-3 text-caption font-semibold text-text-secondary hover:border-danger/40 hover:bg-danger-soft hover:text-danger md:inline-flex">
                           {t("tm.members.remove")}
                         </button>
                       )}
                       {manageable && (
-                        <button type="button" onClick={() => setRemoving(member)} data-member-remove-phone aria-label={t("tm.members.remove")} className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-text-secondary hover:bg-danger-soft hover:text-danger md:hidden">
+                        <button type="button" onClick={() => setRemoving(member)} data-member-remove-phone aria-label={t("tm.members.remove")} className="grid h-11 w-11 shrink-0 place-items-center rounded-sm text-text-secondary hover:bg-danger-soft hover:text-danger md:hidden">
                           <UserMinus size={20} aria-hidden />
                         </button>
                       )}
@@ -330,7 +330,7 @@ export function TeamMembersSection({ ctx }: { ctx: TeamCtx }) {
               <h2 className="mb-3 font-display text-body font-bold">{t("tm.members.viewGroups")}</h2>
               <div className="flex flex-wrap gap-2">
                 {groups.map((g) => (
-                  <span key={g.id} className="inline-flex h-7 items-center gap-1.5 rounded-full bg-surface-soft px-3 text-caption font-semibold text-text">
+                  <span key={g.id} className="inline-flex h-7 items-center gap-1.5 rounded-sm bg-surface-soft px-3 text-caption font-semibold text-text">
                     {g.name}
                     <span className="font-medium text-text-muted">{g.memberCount}</span>
                   </span>
@@ -463,7 +463,7 @@ function RemoveMemberDialog({ ctx, member, onClose, onDone }: { ctx: TeamCtx; me
               key: m.key,
               label: t(m.title),
               description: m.hint,
-              badge: m.badge ? <span className="rounded-full bg-success-soft px-2 py-0.5 text-caption font-semibold text-success">{t("tm.members.recommended")}</span> : undefined,
+              badge: m.badge ? <span className="rounded-xs bg-success-soft px-2 py-0.5 text-caption font-semibold text-success">{t("tm.members.recommended")}</span> : undefined,
               attrs: { "data-remove-mode": m.key },
               after:
                 m.key === "member" ? (
@@ -475,7 +475,7 @@ function RemoveMemberDialog({ ctx, member, onClose, onDone }: { ctx: TeamCtx; me
                     }}
                     aria-label={t("tm.members.pickOwner")}
                     data-remove-owner
-                    className="h-9 max-w-[9.5rem] shrink-0 rounded-full border border-border bg-background px-3 text-caption font-semibold text-text"
+                    className="h-9 max-w-[9.5rem] shrink-0 rounded-sm border border-border bg-background px-3 text-caption font-semibold text-text"
                   >
                     <option value="">{t("tm.members.pickShort")}</option>
                     {candidates.map((c) => (
@@ -488,7 +488,7 @@ function RemoveMemberDialog({ ctx, member, onClose, onDone }: { ctx: TeamCtx; me
             }))}
           />
         </div>
-        <p className="rounded-lg bg-primary-soft px-4 py-2.5 text-caption text-primary">{t("tm.members.alwaysStays")}</p>
+        <p className="rounded-lg bg-primary-soft px-4 py-2.5 text-caption text-primary-text">{t("tm.members.alwaysStays")}</p>
         <label className="flex items-center gap-3 text-small text-text">
           <input type="checkbox" checked={notify} onChange={(event) => setNotify(event.target.checked)} className="h-5 w-5 accent-primary" />
           {t("tm.members.notifyName", { name })}

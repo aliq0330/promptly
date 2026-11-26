@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 const ARROW =
   "absolute top-1/2 z-10 hidden h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-border-soft bg-surface text-text-secondary shadow-card " +
   "pointer-events-none opacity-0 transition-[opacity,color] duration-200 ease-soft pointer-fine:flex hover:text-text " +
-  "group-hover/scroll-row:pointer-events-auto group-hover/scroll-row:opacity-100 focus-visible:pointer-events-auto focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary";
+  "group-hover/scroll-row:pointer-events-auto group-hover/scroll-row:opacity-100 focus-visible:pointer-events-auto focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus";
 
 interface ScrollRowProps extends HTMLAttributes<HTMLElement> {
   /** The scrolling element: a plain row, or the list/nav a strip already was. */

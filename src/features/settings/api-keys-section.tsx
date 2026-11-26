@@ -108,7 +108,7 @@ export function ApiKeysSection() {
               type="button"
               onClick={handleCopy}
               aria-label={`${t("apiKeys.copy")}: ${t("apiKeys.revealLabel")}`}
-              className="absolute right-1.5 top-1.5 flex h-9 w-9 items-center justify-center rounded-md text-text-secondary transition-colors hover:bg-surface-soft hover:text-text"
+              className="absolute right-1.5 top-1.5 flex h-9 w-9 items-center justify-center rounded-sm text-text-secondary transition-colors hover:bg-surface-soft hover:text-text"
             >
               {copied ? <Check size={16} className="text-success" /> : <Copy size={16} />}
               <span className="sr-only" aria-live="polite">{copied ? t("apiKeys.copied") : ""}</span>
@@ -178,7 +178,7 @@ export function ApiKeysSection() {
 
       <p className="text-caption leading-relaxed text-text-muted" data-api-keys-count="">
         {rows !== null && <>{t("apiKeys.activeCount", { count: activeCount, max: API_TOKEN_ACTIVE_LIMIT })} · </>}
-        <Link href="/settings/developer/" className="font-medium text-primary hover:underline">{t("devSettings.access.title")}</Link>
+        <Link href="/settings/developer/" className="font-medium text-primary-text hover:underline">{t("devSettings.access.title")}</Link>
       </p>
       {loadFailed && (
         <div className="flex flex-wrap items-center gap-3">

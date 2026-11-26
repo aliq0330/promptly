@@ -39,7 +39,7 @@ export function EmptyState({
       {scene ? (
         <LineArtScene kind={scene} className={cn("w-full rounded-xl border border-border-soft", compact ? "max-w-[16rem]" : "max-w-sm")} />
       ) : (
-      <div className="mi-empty-tile flex h-11 w-11 items-center justify-center rounded-md bg-primary-soft text-primary">
+      <div className="mi-empty-tile flex h-11 w-11 items-center justify-center rounded-md bg-primary-soft text-primary-text">
         <Icon size={20} />
       </div>
       )}

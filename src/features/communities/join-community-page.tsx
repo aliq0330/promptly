@@ -228,7 +228,7 @@ export function JoinCommunityPage() {
             ) : (
               <div className="space-y-1.5">
                 <h3 className="text-label font-semibold text-text">{t("communities.rules.title")}</h3>
-                <div className="max-h-40 overflow-y-auto whitespace-pre-wrap break-words rounded-lg card-inset px-4 py-3 text-small text-text-secondary">{preview.rules}</div>
+                <div className="max-h-40 overflow-y-auto whitespace-pre-wrap break-words rounded-sm card-inset px-4 py-3 text-small text-text-secondary">{preview.rules}</div>
               </div>
             )
           )}

@@ -124,7 +124,7 @@ export function TelegramSection() {
   if (loadFailed && rows === null) {
     return (
       <section className="space-y-2" data-telegram="">
-        <h3 className="px-1 font-display text-h3 font-bold tracking-[-0.02em] text-text">{t("tg.title")}</h3>
+        <h3 className="px-1 font-display text-h3 font-bold text-text">{t("tg.title")}</h3>
         <p role="alert" className="px-1 text-small text-danger">{t("tg.loadFailed")}</p>
         <Button type="button" size="sm" variant="outline" onClick={() => setReloadKey((key) => key + 1)}>{t("common.retry")}</Button>
       </section>
@@ -139,7 +139,7 @@ export function TelegramSection() {
   return (
     <section className="space-y-3" data-telegram="">
       <div className="space-y-1 px-1">
-        <h3 className="font-display text-h3 font-bold tracking-[-0.02em] text-text">{t("tg.title")}</h3>
+        <h3 className="font-display text-h3 font-bold text-text">{t("tg.title")}</h3>
         <p className="text-caption leading-relaxed text-text-muted">{t("tg.hint")}</p>
       </div>
       {error && <p role="alert" className="px-1 text-small text-danger">{error}</p>}
@@ -153,16 +153,16 @@ export function TelegramSection() {
             <li key={row.id} className="space-y-3 rounded-lg card-flat p-4 shadow-card" data-telegram-link={row.id}>
               <div className="flex items-start justify-between gap-3">
                 <div className="flex min-w-0 items-center gap-3">
-                  <span aria-hidden className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary-soft text-primary">
+                  <span aria-hidden className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary-soft text-primary-text">
                     <Send size={16} />
                   </span>
-                  <p className="break-words text-body font-semibold tracking-[-0.01em] text-text [overflow-wrap:anywhere]">{telegramLinkLabel(row)}</p>
+                  <p className="break-words text-body font-semibold text-text [overflow-wrap:anywhere]">{telegramLinkLabel(row)}</p>
                 </div>
-                <span className="shrink-0 rounded-full bg-success-soft px-2.5 py-0.5 text-caption font-semibold text-success">{t("tg.linkedBadge")}</span>
+                <span className="shrink-0 rounded-xs bg-success-soft px-2.5 py-0.5 text-caption font-semibold text-success">{t("tg.linkedBadge")}</span>
               </div>
               <div className="flex flex-wrap gap-1.5">
                 {row.scopes.map((scope) => (
-                  <span key={scope} className={cn("rounded-full px-2.5 py-0.5 text-caption font-semibold", scope === "write" ? "bg-secondary-soft text-secondary" : "bg-primary-soft text-primary")}>
+                  <span key={scope} className={cn("rounded-xs px-2.5 py-0.5 text-caption font-semibold", scope === "write" ? "bg-secondary-soft text-secondary" : "bg-primary-soft text-primary-text")}>
                     {scope === "write" ? t("apps.scope.write") : t("apps.scope.read")}
                   </span>
                 ))}
@@ -194,7 +194,7 @@ export function TelegramSection() {
 
       {handle && (
         <div className="space-y-3 rounded-lg card-flat p-4 shadow-card" data-telegram-connect="">
-          <p className="text-body font-semibold tracking-[-0.01em] text-text">{t("tg.connectTitle")}</p>
+          <p className="text-body font-semibold text-text">{t("tg.connectTitle")}</p>
           {atLimit ? (
             <p className="text-small text-text-muted">{t("tg.limit")}</p>
           ) : code ? (
@@ -225,7 +225,7 @@ export function TelegramSection() {
                   {deepLink && (
                     <>
                       {" "}
-                      <a href={deepLink} target="_blank" rel="noopener noreferrer" className="font-medium text-primary hover:underline">{t("tg.openBot")}</a>
+                      <a href={deepLink} target="_blank" rel="noopener noreferrer" className="font-medium text-primary-text hover:underline">{t("tg.openBot")}</a>
                     </>
                   )}
                 </li>
@@ -250,7 +250,7 @@ export function TelegramSection() {
 
       <p className="px-1 text-caption leading-relaxed text-text-muted">
         {t("tg.privacy")}{" "}
-        <Link href="/privacy" className="font-medium text-primary hover:underline">{t("tg.privacyLink")}</Link>
+        <Link href="/privacy" className="font-medium text-primary-text hover:underline">{t("tg.privacyLink")}</Link>
       </p>
     </section>
   );

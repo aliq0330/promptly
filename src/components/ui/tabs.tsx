@@ -101,7 +101,7 @@ export function Tabs<K extends string>({
           ? "gap-1 border-b border-border-soft"
           : variant === "pill"
             ? "gap-2 py-0.5"
-            : "w-fit max-w-full gap-0.5 rounded-lg card-soft p-0.5",
+            : "w-fit max-w-full gap-0.5 rounded-sm card-soft p-0.5",
       )}
     >
       {indicator && variant !== "pill" && (
@@ -112,7 +112,7 @@ export function Tabs<K extends string>({
             "pointer-events-none absolute transition-[transform,width] duration-[var(--motion-normal)] ease-soft",
             variant === "underline"
               ? "bottom-0 left-0 h-0.5 rounded-full bg-primary"
-              : "bottom-0.5 left-0 top-0.5 rounded-md bg-surface shadow-sm ring-1 ring-border-soft",
+              : "bottom-0.5 left-0 top-0.5 rounded-sm bg-surface shadow-sm ring-1 ring-border-soft",
           )}
           style={{ width: indicator.width, transform: `translateX(${indicator.left}px)` }}
         />
@@ -122,7 +122,7 @@ export function Tabs<K extends string>({
         const tabStop = selected || (activeIndex < 0 && index === 0);
         const Icon = item.icon;
         const tabClassName = cn(
-              "relative inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap text-label font-medium transition-[color,background-color,border-color,box-shadow] duration-200 ease-soft",
+              "relative inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap text-label font-semibold transition-[color,background-color,border-color,box-shadow] duration-200 ease-soft",
               variant === "underline"
                 ? cn(
                     "-mb-px border-b-2 px-3 py-3",
@@ -131,11 +131,11 @@ export function Tabs<K extends string>({
                   )
                 : variant === "pill"
                   ? cn(
-                      "h-9 rounded-full px-4 font-semibold",
-                      selected ? "bg-primary-soft text-primary" : "bg-surface-soft text-text-secondary hover:bg-border-soft hover:text-text",
+                      "h-9 rounded-sm px-4 font-semibold",
+                      selected ? "bg-primary-soft text-primary-text" : "bg-surface-soft text-text-secondary hover:bg-border-soft hover:text-text",
                     )
                   : cn(
-                    "h-9 rounded-md px-3",
+                    "h-9 rounded-sm px-3",
                     selected
                       ? cn("text-text", !indicator && "bg-surface shadow-sm ring-1 ring-border-soft")
                       : "text-text-muted hover:text-text",
@@ -143,7 +143,7 @@ export function Tabs<K extends string>({
         );
         const content = (
           <>
-            {Icon && <Icon size={16} className={selected ? "text-primary" : undefined} />}
+            {Icon && <Icon size={16} className={selected ? "text-primary-text" : undefined} />}
             {item.label}
             {item.count !== undefined && (
               <span
@@ -154,7 +154,7 @@ export function Tabs<K extends string>({
                       ? "bg-background/20 text-background"
                       : "bg-surface text-text-muted"
                     : selected
-                      ? "bg-primary-soft text-primary"
+                      ? "bg-primary-soft text-primary-text"
                       : "bg-surface-soft text-text-muted",
                 )}
               >

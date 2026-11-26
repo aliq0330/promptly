@@ -91,7 +91,7 @@ export function InsertPicker({
   }
 
   const pillClass =
-    tone === "field" ? "bg-secondary-soft text-secondary" : tone === "unknown" ? "bg-warning-soft text-warning" : "bg-primary-soft text-primary";
+    tone === "field" ? "bg-secondary-soft text-secondary" : tone === "unknown" ? "bg-warning-soft text-warning" : "bg-primary-soft text-primary-text";
 
   return (
     <div className={cn("flex min-h-0 flex-1 flex-col", className)}>
@@ -131,7 +131,7 @@ export function InsertPicker({
                 onPick(visible[0]);
               }
             }}
-            className="h-10 w-full rounded-lg card-inset pl-9 pr-3 text-small text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
+            className="h-10 w-full rounded-sm card-inset pl-9 pr-3 text-small text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
           />
         </div>
       </div>
@@ -188,7 +188,7 @@ export function InsertPicker({
                 {item.description && <span className="mt-0.5 block truncate text-caption text-text-muted">{item.description}</span>}
               </span>
               {item.usage > 0 && (
-                <span className="shrink-0 rounded-full bg-surface-soft px-2 py-0.5 text-caption text-text-secondary">
+                <span className="shrink-0 rounded-xs bg-surface-soft px-2 py-0.5 text-caption text-text-secondary">
                   {t("composer.usedTimes", { count: item.usage })}
                 </span>
               )}
@@ -203,7 +203,7 @@ export function InsertPicker({
           <button
             type="button"
             onClick={onCreate}
-            className="flex min-h-[44px] w-full items-center gap-2 rounded-lg px-2.5 py-2 text-small font-medium text-primary transition-colors hover:bg-primary-soft"
+            className="flex min-h-[44px] w-full items-center gap-2 rounded-lg px-2.5 py-2 text-small font-medium text-primary-text transition-colors hover:bg-primary-soft"
           >
             <Plus size={16} /> {createLabel}
           </button>

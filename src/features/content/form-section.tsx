@@ -30,7 +30,7 @@ export function FormSection({
       {(title || action) && (
         <div className="mb-4 flex items-start justify-between gap-3">
           <div className="min-w-0">
-            {title && <h2 className="text-body font-semibold tracking-[-0.01em] text-text">{title}</h2>}
+            {title && <h2 className="text-body font-semibold text-text">{title}</h2>}
             {description && <p className="mt-0.5 text-caption text-text-secondary">{description}</p>}
           </div>
           {action}

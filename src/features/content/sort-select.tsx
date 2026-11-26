@@ -46,8 +46,8 @@ export function SortSelect({
       aria-label={t("profile.sortAriaLabel")}
       className={
         quiet
-          ? "h-10 min-w-0 max-w-full shrink cursor-pointer rounded-full bg-transparent pl-1 pr-2 text-body font-semibold text-text hover:bg-surface-soft"
-          : "h-9 shrink-0 rounded-md card-flat px-2 text-label font-medium text-text max-md:h-11 max-md:min-w-0 max-md:max-w-40 max-md:shrink max-md:flex-1 max-md:rounded-lg max-md:px-3"
+          ? "h-10 min-w-0 max-w-full shrink cursor-pointer rounded-sm bg-transparent pl-1 pr-2 text-body font-semibold text-text hover:bg-surface-soft"
+          : "h-9 shrink-0 rounded-sm card-flat px-2 text-label font-medium text-text max-md:h-11 max-md:min-w-0 max-md:max-w-40 max-md:shrink max-md:flex-1 max-md:rounded-sm max-md:px-3"
       }
     >
       {keys.map((key) => (

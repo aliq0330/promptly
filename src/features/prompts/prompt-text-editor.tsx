@@ -250,7 +250,7 @@ export function PromptTextEditor({
   const tabClass = (active: boolean) =>
     cn(
       "-mb-px flex h-10 items-center gap-1.5 border-b-2 px-3 text-label font-semibold transition-colors disabled:opacity-50",
-      active ? "border-primary text-primary" : "border-transparent text-text-muted hover:text-text",
+      active ? "border-primary text-primary-text" : "border-transparent text-text-muted hover:text-text",
     );
   const tabSwitcher = (
     <div className="flex" role="tablist">
@@ -322,7 +322,7 @@ export function PromptTextEditor({
             ))}
           </div>
           {Object.keys(previewValues).length > 0 && (
-            <button type="button" onClick={() => setPreviewValues({})} className="text-caption font-medium text-primary hover:underline">
+            <button type="button" onClick={() => setPreviewValues({})} className="text-caption font-medium text-primary-text hover:underline">
               {t("variable.resetToDefaults")}
             </button>
           )}

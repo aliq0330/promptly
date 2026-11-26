@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
  * flex-col`, sticky header/footer with `SpaceDialog`'s `DIALOG_FOOTER_CLASS`), the width (`max-w-md`) and the padding are the caller's.
  * Click-through to the backdrop is stopped here, so callers do not write `onClick={e => e.stopPropagation()}`.
  */
-export const DIALOG_SHELL_CLASS = "w-full rounded-lg card-flat shadow-pop";
+export const DIALOG_SHELL_CLASS = "w-full rounded-xl card-flat shadow-pop";
 
 export const DialogShell = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(({ className, onClick, ...props }, ref) => (
   <div

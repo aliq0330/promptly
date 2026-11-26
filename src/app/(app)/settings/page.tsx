@@ -50,7 +50,7 @@ export default function SettingsPage() {
         <h1 className={cn("text-h1 text-text", duplicate)}>{t("nav.settings")}</h1>
         <p className="text-small text-text-secondary">
           {t("settings.profileHintBefore")}{" "}
-          <Link href="/profile/edit" className="font-medium text-primary hover:underline">
+          <Link href="/profile/edit" className="font-medium text-primary-text hover:underline">
             {t("settings.profileHintLink")}
           </Link>{" "}
           {t("settings.profileHintAfter")}
@@ -58,7 +58,7 @@ export default function SettingsPage() {
       </header>
 
       <nav aria-label={t("settings.sectionsNav")} className="space-y-3" data-settings-hub="">
-        {isModerator && <SettingsLinkRow href="/moderation" icon={<ShieldCheck size={20} className="text-primary" />} title={t("nav.moderation")} hint={t("settings.hub.moderationDesc")} />}
+        {isModerator && <SettingsLinkRow href="/moderation" icon={<ShieldCheck size={20} className="text-primary-text" />} title={t("nav.moderation")} hint={t("settings.hub.moderationDesc")} />}
         <SettingsLinkRow href="/settings/account" icon={<UserRound size={20} className={iconClass} />} title={t("settings.groupAccount")} hint={t("settings.hub.accountDesc")} />
         <SettingsLinkRow href="/settings/privacy" icon={<Lock size={20} className={iconClass} />} title={t("settings.privacyTitle")} hint={t("settings.hub.privacyDesc")} />
         <SettingsLinkRow href="/settings/notifications" icon={<Bell size={20} className={iconClass} />} title={t("nc.settings.title")} hint={t("nc.settings.hubDesc")} />

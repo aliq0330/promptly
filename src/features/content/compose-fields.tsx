@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 import type { PromptContentType } from "@/types";
 
 const chipClassName =
-  "inline-flex min-h-8 max-w-full items-center gap-1.5 rounded-full border px-3 text-small transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary";
+  "inline-flex min-h-8 max-w-full items-center gap-1.5 rounded-sm border px-3 text-small transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus";
 
 /**
  * "Ne üretiyorsun?" (docs/history/244-*): Görsel · Metin · Ses · Video, satır içi seçenek düğmeleri (eskiden hap + alt sayfaydı).
@@ -51,7 +51,7 @@ export function SuggestedTagsRow({ picker, max = 4 }: { picker: UseTagPickerResu
           disabled={picker.acceptingSlug === tag.slug}
           onClick={() => void picker.acceptSuggested(tag)}
           data-compose-suggestion={tag.slug}
-          className={cn(chipClassName, "border-dashed border-border-strong text-text-secondary hover:border-primary/50 hover:text-primary disabled:opacity-50")}
+          className={cn(chipClassName, "border-dashed border-border-strong text-text-secondary hover:border-primary/50 hover:text-primary-text disabled:opacity-50")}
         >
           <Plus size={12} aria-hidden />#{tag.label}
         </button>

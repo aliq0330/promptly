@@ -264,7 +264,7 @@ export function PromptFullscreenEditor({
               onClick={onClose}
               aria-label={t("fullscreen.close")}
               data-testid="fullscreen-close"
-              className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-text-secondary transition-colors hover:bg-surface-soft hover:text-text"
+              className="grid h-10 w-10 shrink-0 place-items-center rounded-sm text-text-secondary transition-colors hover:bg-surface-soft hover:text-text"
             >
               <X size={20} aria-hidden />
             </button>
@@ -279,7 +279,7 @@ export function PromptFullscreenEditor({
               onMouseDown={keep}
               onClick={() => history("undo")}
               aria-label={t("fullscreen.undo")}
-              className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-text-secondary transition-colors hover:bg-surface-soft hover:text-text"
+              className="grid h-10 w-10 shrink-0 place-items-center rounded-sm text-text-secondary transition-colors hover:bg-surface-soft hover:text-text"
             >
               <Undo2 size={20} aria-hidden />
             </button>
@@ -288,7 +288,7 @@ export function PromptFullscreenEditor({
               onMouseDown={keep}
               onClick={() => history("redo")}
               aria-label={t("fullscreen.redo")}
-              className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-text-secondary transition-colors hover:bg-surface-soft hover:text-text"
+              className="grid h-10 w-10 shrink-0 place-items-center rounded-sm text-text-secondary transition-colors hover:bg-surface-soft hover:text-text"
             >
               <Redo2 size={20} aria-hidden />
             </button>
@@ -307,9 +307,9 @@ export function PromptFullscreenEditor({
               data-testid="fullscreen-convert"
               data-mode={tone === "idle" ? target.kind : tone}
               className={cn(
-                "inline-flex h-11 min-w-0 max-w-[62%] items-center gap-3 rounded-full border px-4 text-left transition-colors",
+                "inline-flex h-11 min-w-0 max-w-[62%] items-center gap-3 rounded-sm border px-4 text-left transition-colors",
                 tone === "active" && "border-primary bg-primary text-primary-foreground hover:bg-primary-hover",
-                tone === "token" && "border-primary bg-surface text-primary hover:bg-primary-soft",
+                tone === "token" && "border-primary bg-surface text-primary-text hover:bg-primary-soft",
                 tone === "done" && "border-success bg-success-soft text-success",
                 tone === "idle" && "cursor-default border-border bg-surface-soft text-text-muted",
               )}
@@ -333,7 +333,7 @@ export function PromptFullscreenEditor({
                   <Button type="button" size="sm" variant="outline" onClick={onOpenPresets} aria-haspopup="dialog" data-testid="fullscreen-presets">
                     <SlidersHorizontal size={16} aria-hidden /> {t("fullscreen.presets")}
                     {presetCount > 0 && (
-                      <span className="rounded-full bg-primary px-1.5 text-caption font-semibold tabular-nums text-primary-foreground">{presetCount}</span>
+                      <span className="rounded-sm bg-primary px-1.5 text-caption font-semibold tabular-nums text-primary-foreground">{presetCount}</span>
                     )}
                   </Button>
                 )

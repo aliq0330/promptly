@@ -37,7 +37,7 @@ export function CollectionRings({ collections }: { collections: Collection[] }) 
             {collection.coverImage?.url ? (
               <CollectionCover collection={collection} className="h-[54px] w-[54px] overflow-hidden rounded-full" />
             ) : (
-              <span className="flex h-[54px] w-[54px] items-center justify-center rounded-full bg-primary-soft text-primary">
+              <span className="flex h-[54px] w-[54px] items-center justify-center rounded-full bg-primary-soft text-primary-text">
                 <FolderOpen size={24} aria-hidden />
               </span>
             )}

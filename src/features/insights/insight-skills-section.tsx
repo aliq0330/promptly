@@ -20,7 +20,7 @@ export function InsightSkillsSection({ period }: { period: number }) {
     return (
       <section className="rounded-lg card-flat p-4" data-insights-skills="">
         <p role="alert" className="text-small text-danger">{state.message}</p>
-        <button type="button" onClick={retry} className="mt-2 text-small font-semibold text-primary">{t("common.retry")}</button>
+        <button type="button" onClick={retry} className="mt-2 text-small font-semibold text-primary-text">{t("common.retry")}</button>
       </section>
     );
   }

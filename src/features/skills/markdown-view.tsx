@@ -22,7 +22,7 @@ function renderInline(nodes: Inline[]): ReactNode[] {
         return <em key={index}>{renderInline(node.c)}</em>;
       default:
         return (
-          <a key={index} href={node.href} target="_blank" rel="noopener noreferrer nofollow ugc" className="text-primary underline underline-offset-2 hover:text-primary-hover">
+          <a key={index} href={node.href} target="_blank" rel="noopener noreferrer nofollow ugc" className="text-primary-text underline underline-offset-2 hover:text-primary-hover">
             {renderInline(node.c)}
           </a>
         );
@@ -51,7 +51,7 @@ function renderBlock(block: Block, index: number): ReactNode {
     }
     case "p":
       return (
-        <p key={index} className="text-body leading-relaxed text-text">
+        <p key={index} className="font-serif text-h3 leading-relaxed text-text">
           {renderInline(block.c)}
         </p>
       );
@@ -65,7 +65,7 @@ function renderBlock(block: Block, index: number): ReactNode {
     case "ol": {
       const List = block.t;
       return (
-        <List key={index} className={`space-y-1 pl-6 text-body text-text ${block.t === "ul" ? "list-disc" : "list-decimal"}`}>
+        <List key={index} className={`space-y-1 pl-6 font-serif text-h3 text-text ${block.t === "ul" ? "list-disc" : "list-decimal"}`}>
           {block.items.map((item, itemIndex) => (
             <li key={itemIndex}>{renderInline(item)}</li>
           ))}
@@ -74,7 +74,7 @@ function renderBlock(block: Block, index: number): ReactNode {
     }
     case "quote":
       return (
-        <blockquote key={index} className="border-l-2 border-border-strong pl-4 text-body text-text-secondary">
+        <blockquote key={index} className="border-l-2 border-border-strong pl-4 font-serif text-h3 text-text-secondary">
           {renderInline(block.c)}
         </blockquote>
       );

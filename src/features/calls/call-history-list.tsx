@@ -77,7 +77,7 @@ export function CallHistoryList({ embedded = false }: { embedded?: boolean }) {
             const startCall = (type: "audio" | "video") => peer && void calls?.startCall({ conversationId: row.conversationId, peer, type });
             return (
               <li key={row.id} data-call-item data-call-outcome={summary.outcome} className="flex items-stretch">
-                <Link href={messageHref({ id: row.conversationId })} aria-label={`${name}: ${t("calls.list.open")}`} className={cn("flex min-w-0 flex-1 items-center gap-3 py-2.5 text-left hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary", embedded ? "pl-4" : "pl-1")}>
+                <Link href={messageHref({ id: row.conversationId })} aria-label={`${name}: ${t("calls.list.open")}`} className={cn("flex min-w-0 flex-1 items-center gap-3 py-2.5 text-left hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-focus", embedded ? "pl-4" : "pl-1")}>
                   <Avatar src={peer?.avatarUrl ?? null} alt="" size={48} />
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-body font-semibold text-text">{name}</span>
@@ -94,10 +94,10 @@ export function CallHistoryList({ embedded = false }: { embedded?: boolean }) {
                 </Link>
                 {calls && peer && (
                   <span className={cn("flex shrink-0 items-center gap-1", embedded ? "pr-3" : "pr-1")}>
-                    <button type="button" disabled={calls.busy} onClick={() => startCall("audio")} aria-label={t("calls.startVoiceAria", { name })} title={t("calls.startVoice")} data-call-again="audio" className="inline-flex h-10 w-10 items-center justify-center rounded-full text-primary hover:bg-primary-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-50">
+                    <button type="button" disabled={calls.busy} onClick={() => startCall("audio")} aria-label={t("calls.startVoiceAria", { name })} title={t("calls.startVoice")} data-call-again="audio" className="inline-flex h-10 w-10 items-center justify-center rounded-sm text-primary-text hover:bg-primary-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:opacity-50">
                       <Phone size={20} aria-hidden />
                     </button>
-                    <button type="button" disabled={calls.busy} onClick={() => startCall("video")} aria-label={t("calls.startVideoAria", { name })} title={t("calls.startVideo")} data-call-again="video" className="inline-flex h-10 w-10 items-center justify-center rounded-full text-primary hover:bg-primary-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-50">
+                    <button type="button" disabled={calls.busy} onClick={() => startCall("video")} aria-label={t("calls.startVideoAria", { name })} title={t("calls.startVideo")} data-call-again="video" className="inline-flex h-10 w-10 items-center justify-center rounded-sm text-primary-text hover:bg-primary-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:opacity-50">
                       <Video size={20} aria-hidden />
                     </button>
                   </span>

@@ -286,7 +286,7 @@ export function RelationMapView() {
               <button
                 type="button"
                 onClick={() => setDrawerOpen(true)}
-                className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg card-flat px-4 text-label font-medium text-text shadow-card"
+                className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-sm card-flat px-4 text-label font-medium text-text shadow-card"
               >
                 <PanelBottomOpen size={16} aria-hidden />
                 {t("relations.openDetails")}

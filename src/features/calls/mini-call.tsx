@@ -33,7 +33,7 @@ export function MiniCall({ call, peer, onExpand }: { call: CallApi; peer: CallPe
   const remoteOn = connected && snapshot.remoteStream !== null && snapshot.remoteCamera;
   const waiting = !connected;
   const status = connected ? (snapshot.unstable ? t("calls.status.unstable") : formatCallDuration(seconds)) : snapshot.phase === "connecting" ? t("calls.status.connecting") : snapshot.phase === "ringing" ? t("calls.status.ringing") : t("calls.status.calling");
-  const round = "inline-flex h-9 w-9 items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary";
+  const round = "inline-flex h-9 w-9 items-center justify-center rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus";
 
   return (
     <div
@@ -44,7 +44,7 @@ export function MiniCall({ call, peer, onExpand }: { call: CallApi; peer: CallPe
       title={t("calls.mini.hint")}
       data-mini-call
       data-call-phase={snapshot.phase}
-      className={cn("fixed z-(--z-celebration) w-44 cursor-grab touch-none overflow-hidden rounded-lg bg-call-stage text-on-art shadow-pop data-[dragging]:cursor-grabbing focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:w-52")}
+      className={cn("fixed z-(--z-celebration) w-44 cursor-grab touch-none overflow-hidden rounded-lg bg-call-stage text-on-art shadow-pop data-[dragging]:cursor-grabbing focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus sm:w-52")}
       style={{ left: 0, top: 0 }}
     >
       <div className="relative aspect-[3/4] w-full sm:aspect-[4/3]">

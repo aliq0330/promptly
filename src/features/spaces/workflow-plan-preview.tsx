@@ -85,7 +85,7 @@ export function WorkflowPlanPreview({ plan, steps }: { plan: WorkflowImportPlan;
           }
           return (
             <div key={item.id} data-plan-prompt="" className={cn("absolute overflow-hidden rounded-lg card-flat p-3")} style={{ ...style, zIndex: 10 }}>
-              <p className="flex items-center gap-1.5 text-caption font-semibold text-primary">
+              <p className="flex items-center gap-1.5 text-caption font-semibold text-primary-text">
                 <SquareTerminal size={12} aria-hidden />
                 {t("spaces.item.prompt")}
               </p>

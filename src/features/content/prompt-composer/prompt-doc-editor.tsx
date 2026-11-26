@@ -33,7 +33,7 @@ export interface PromptDocEditorHandle {
 
 const TONE_CLASS: Record<TokenTone, string> = {
   variable:
-    "bg-primary-soft text-primary [box-shadow:0_0_0_2px_var(--color-primary-soft)]",
+    "bg-primary-soft text-primary-text [box-shadow:0_0_0_2px_var(--color-primary-soft)]",
   field:
     "bg-secondary-soft text-secondary [box-shadow:0_0_0_2px_color-mix(in_srgb,var(--color-secondary)_15%,transparent)]",
   unknown:

@@ -35,7 +35,7 @@ type ControlProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, "onChange" | "
   [data: `data-${string}`]: string | boolean | undefined;
 };
 
-const FOCUS_CLASS = "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background";
+const FOCUS_CLASS = "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-background";
 
 /** A standalone switch. */
 export const Switch = forwardRef<HTMLButtonElement, ControlProps>(function Switch({ checked, onChange, label, labelledBy, disabled, className, ...rest }, ref) {

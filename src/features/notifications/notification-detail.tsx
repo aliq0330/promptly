@@ -85,7 +85,7 @@ function GroupMembers({ card }: { card: NotificationCard }) {
             <p className="text-caption text-text-muted">{formatRelativeTime(member.createdAt, language)}</p>
           </div>
           {member.reaction && (
-            <span className="inline-flex h-8 items-center gap-1.5 rounded-full bg-surface-soft px-3 text-caption font-semibold text-text-secondary" data-member-reaction={member.reaction}>
+            <span className="inline-flex h-8 items-center gap-1.5 rounded-sm bg-surface-soft px-3 text-caption font-semibold text-text-secondary" data-member-reaction={member.reaction}>
               <ReactionIcon reaction={member.reaction} size={16} />
               {t(REACTION_LABEL[member.reaction])}
             </span>
@@ -105,7 +105,7 @@ function LinkedContent({ card, list }: { card: NotificationCard; list: List }) {
   if (!item) return null;
   if (!linked) {
     return (
-      <Link href={attachmentHref(item.type, item.id)} className="flex items-center gap-3 rounded-lg border border-border p-3 text-small font-semibold text-primary hover:bg-primary-soft" data-linked-content="open">
+      <Link href={attachmentHref(item.type, item.id)} className="flex items-center gap-3 rounded-lg border border-border p-3 text-small font-semibold text-primary-text hover:bg-primary-soft" data-linked-content="open">
         {t(`nc.open.${item.type}` as const)}
         <ArrowRight size={16} aria-hidden />
       </Link>
@@ -169,18 +169,18 @@ export function NotificationDetail({ card, list, variant, onBack }: { card: Noti
     <div className="flex flex-wrap items-center gap-4">
       <CardAvatar card={card} size={variant === "panel" ? 56 : 52} />
       <div className="min-w-0 flex-1 basis-60">
-        <p className="text-small font-semibold text-primary">
+        <p className="text-small font-semibold text-primary-text">
           {t(cardKindKey(card))} <span className="font-medium text-text-muted">· {new Date(card.sortAt).toLocaleString(language === "tr" ? "tr-TR" : "en-US", { dateStyle: "medium", timeStyle: "short" })}</span>
         </p>
-        <h2 className="mt-1 font-display text-h2 font-bold leading-snug tracking-[-0.01em] text-text">
+        <h2 className="mt-1 font-display text-h2 font-bold leading-snug text-text">
           <CardHeadline card={card} as="span" plain className="!text-h2 !font-semibold" />
         </h2>
       </div>
       <div className="flex gap-1.5">
-        <button type="button" onClick={() => void (unread ? markRead(card) : markUnread(card))} aria-label={unread ? t("nc.markRead") : t("nc.markUnread")} title={unread ? t("nc.markRead") : t("nc.markUnread")} data-action="toggle-read" className="grid size-11 place-items-center rounded-full bg-primary-soft text-primary hover:bg-primary-soft/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+        <button type="button" onClick={() => void (unread ? markRead(card) : markUnread(card))} aria-label={unread ? t("nc.markRead") : t("nc.markUnread")} title={unread ? t("nc.markRead") : t("nc.markUnread")} data-action="toggle-read" className="grid size-11 place-items-center rounded-sm bg-primary-soft text-primary-text hover:bg-primary-soft/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus">
           {unread ? <Check size={20} aria-hidden /> : <Undo2 size={20} aria-hidden />}
         </button>
-        <button type="button" onClick={() => { remove(card); onBack?.(); }} aria-label={t("notifications.deleteNotification")} title={t("notifications.deleteNotification")} data-action="delete" className="grid size-11 place-items-center rounded-full bg-danger-soft text-danger hover:bg-danger-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger">
+        <button type="button" onClick={() => { remove(card); onBack?.(); }} aria-label={t("notifications.deleteNotification")} title={t("notifications.deleteNotification")} data-action="delete" className="grid size-11 place-items-center rounded-sm bg-danger-soft text-danger hover:bg-danger-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger">
           <TrashIcon size={20} />
         </button>
       </div>
@@ -264,7 +264,7 @@ export function NotificationDetail({ card, list, variant, onBack }: { card: Noti
       )}
       {kind === "milestone" && milestone && (
         <div className="flex flex-wrap items-center gap-5 rounded-lg border border-secondary/30 bg-secondary-soft p-5" data-milestone="">
-          <p className="font-display text-display-xl font-extrabold leading-none tracking-[-0.03em] text-secondary">{milestone.count}</p>
+          <p className="font-display text-display-xl font-extrabold leading-none text-secondary">{milestone.count}</p>
           <p className="min-w-0 flex-1 basis-60 text-body leading-relaxed text-text-secondary">{t(milestone.kind === "copies" ? "nc.milestone.copiesBody" : "nc.milestone.reactionsBody", { count: milestone.count, title: milestone.title })}</p>
           <Link href={card.targetHref} className={buttonClassName({ variant: "primary", className: "h-11 !bg-secondary" })}>
             {t("nc.viewStats")}
@@ -358,10 +358,10 @@ export function NotificationDetail({ card, list, variant, onBack }: { card: Noti
   return (
     <div className="flex min-h-0 flex-1 flex-col" data-notification-detail={card.key}>
       <div className="flex shrink-0 items-center gap-2 border-b border-border-soft px-3 py-2.5">
-        <button type="button" onClick={onBack} aria-label={t("nc.backToList")} className="grid size-11 place-items-center rounded-full bg-surface-soft text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary" data-action="back">
+        <button type="button" onClick={onBack} aria-label={t("nc.backToList")} className="grid size-11 place-items-center rounded-sm bg-surface-soft text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus" data-action="back">
           <ArrowLeft size={20} aria-hidden />
         </button>
-        <p className="min-w-0 flex-1 truncate font-display text-h2 font-bold tracking-[-0.01em]">{t(cardKindKey(card))}</p>
+        <p className="min-w-0 flex-1 truncate font-display text-h2 font-bold">{t(cardKindKey(card))}</p>
         <span className="grid size-11 place-items-center text-text-muted" aria-hidden>
           <MoreVertical size={20} />
         </span>
