@@ -714,7 +714,8 @@ await scenario("31. Ayarlar → Aramalar: kim arayabilir (sunucuda zorlanır), c
   await alice.locator('[data-call-privacy="everyone"]').waitFor();
   assert.equal(await alice.locator('[data-call-privacy="everyone"]').isChecked(), true);
   await alice.locator('[data-call-privacy="nobody"]').click();
-  await alice.waitForFunction(() => document.querySelector('[data-call-privacy="nobody"]')?.checked);
+  // Seçenekler ortak OptionGroup'tur (docs/history/453-*): `<button role="radio">`, durum `aria-checked` (`.checked` özelliği yok).
+  await alice.waitForFunction(() => document.querySelector('[data-call-privacy="nobody"]')?.getAttribute("aria-checked") === "true");
   assert.equal(rpcs(db, "set_my_call_settings").at(-1).p_privacy, "nobody");
   await openThread(bob);
   const bobCallEnabled = () => bob.waitForFunction(() => { const b = document.querySelector('[data-call-start="audio"]'); return b && !b.disabled; });
@@ -727,13 +728,13 @@ await scenario("31. Ayarlar → Aramalar: kim arayabilir (sunucuda zorlanır), c
   await alice.locator('[data-call-pref="ring"]').click();
   assert.equal(await alice.evaluate(() => JSON.parse(localStorage.getItem("promptly-call-prefs")).ringSound), false);
   await alice.reload();
-  await alice.waitForFunction(() => document.querySelector('[data-call-privacy="nobody"]')?.checked, null, { timeout: 8000 });
+  await alice.waitForFunction(() => document.querySelector('[data-call-privacy="nobody"]')?.getAttribute("aria-checked") === "true", null, { timeout: 8000 });
   assert.equal(await alice.locator('[data-call-privacy="nobody"]').isChecked(), true, "persisted");
   assert.equal(await alice.locator('[data-call-pref="ring"]').getAttribute("aria-checked"), "false");
   assert.match(await alice.locator("[data-call-privacy-note]").innerText(), /IP adresini/);
   // Takip ettiklerim: aranan arayanı takip ediyorsa arama başlar
   await alice.locator('[data-call-privacy="following"]').click();
-  await alice.waitForFunction(() => document.querySelector('[data-call-privacy="following"]')?.checked);
+  await alice.waitForFunction(() => document.querySelector('[data-call-privacy="following"]')?.getAttribute("aria-checked") === "true");
   await bobCallEnabled();
   await bob.locator('[data-call-start="audio"]').click();
   await bob.waitForFunction(() => document.body.innerText.includes("kabul etmiyor"));
