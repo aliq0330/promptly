@@ -3,8 +3,11 @@
 import { useEffect, useState } from "react";
 import { keyboardFrame, type KeyboardFrame } from "./keyboard-frame";
 
-/** Görünür alanın üst kenarı (iOS klavye açılınca sayfayı kaydırır) ve yüksekliği — `window.visualViewport`. */
-export type KeyboardViewport = KeyboardFrame;
+/**
+ * Görünür alanın üst kenarı (iOS klavye açılınca sayfayı kaydırır) ve yüksekliği — `window.visualViewport`. `pageBottom`: görünür alanın alt
+ * kenarının BELGEDEKİ konumu (`pageTop + height`) — `fixed` katmanların çizilmediği şeride belgeye bağlı bir öğe koymak için (`Modal`).
+ */
+export type KeyboardViewport = KeyboardFrame & { pageBottom: number };
 
 /**
  * Ekran klavyesi açıkken görünür alan (`visualViewport`), yoksa `null`. iOS Safari'de klavye açılınca düzen görünümü küçülmez: `fixed`
@@ -17,8 +20,10 @@ export function useKeyboardViewport(): KeyboardViewport | null {
     const visual = window.visualViewport;
     if (!visual) return;
     const update = () => {
-      const frame = keyboardFrame({ innerHeight: window.innerHeight, viewportHeight: visual.height, viewportOffsetTop: visual.offsetTop });
-      setViewport((prev) => (prev && frame && prev.top === frame.top && prev.height === frame.height ? prev : frame));
+      const base = keyboardFrame({ innerHeight: window.innerHeight, viewportHeight: visual.height, viewportOffsetTop: visual.offsetTop });
+      const pageTop = Number.isFinite(visual.pageTop) ? visual.pageTop : window.scrollY + visual.offsetTop;
+      const frame = base ? { ...base, pageBottom: Math.floor(pageTop + visual.height) } : null;
+      setViewport((prev) => (prev && frame && prev.top === frame.top && prev.height === frame.height && prev.pageBottom === frame.pageBottom ? prev : frame));
     };
     // iOS reports the visible area in steps while the keyboard slides in, and a layer whose input was focused on mount misses the first
     // events — so besides every `visualViewport` event the frame is measured again shortly after mount, on focus changes and on resize.
@@ -32,6 +37,7 @@ export function useKeyboardViewport(): KeyboardViewport | null {
     visual.addEventListener("resize", update);
     visual.addEventListener("scroll", update);
     window.addEventListener("resize", update);
+    window.addEventListener("scroll", update, { passive: true });
     window.addEventListener("orientationchange", settle);
     document.addEventListener("focusin", settle);
     document.addEventListener("focusout", settle);
@@ -40,6 +46,7 @@ export function useKeyboardViewport(): KeyboardViewport | null {
       visual.removeEventListener("resize", update);
       visual.removeEventListener("scroll", update);
       window.removeEventListener("resize", update);
+      window.removeEventListener("scroll", update);
       window.removeEventListener("orientationchange", settle);
       document.removeEventListener("focusin", settle);
       document.removeEventListener("focusout", settle);

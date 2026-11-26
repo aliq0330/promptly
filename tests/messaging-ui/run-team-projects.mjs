@@ -1353,7 +1353,7 @@ await scenario("45h. Klasörün içinden Ekle → Not: yeni not doğrudan o grub
   assert.equal(db.spaceItems.find((row) => row.id === IMAGE(1)).group_id, GROUP1, "var olan öğeye dokunulmadı");
 }, { items: detailItems });
 
-await scenario("45i. Klavye açıkken (docs/history/378-*, mockup K4): Yeni grup penceresi görünür alanı TAM kaplar (arkada sayfa görünmez), alt menü ve sabit Ekle gizli; klavye kapanınca ortadaki küçük pencereye döner", async ({ page }) => {
+await scenario("45i. Klavye açıkken (docs/history/470-*; 378 K4 tam ekran kaplaması kalktı): Yeni grup penceresi KART kalır, görünür alanın içinde durur, arkası karartılmış sayfadır; alt menü ve sabit Ekle gizli; klavye kapanınca aynı küçük pencere", async ({ page }) => {
   await page.goto(projectUrl(`&file=${FILE}`));
   await page.locator("[data-area-view=groups]").click();
   await page.locator("[data-area-folder-new]").click();
@@ -1370,9 +1370,10 @@ await scenario("45i. Klavye açıkken (docs/history/378-*, mockup K4): Yeni grup
   await page.waitForTimeout(250);
   assert.equal(await page.evaluate(() => document.documentElement.hasAttribute("data-keyboard-open")), true, "klavye açık işareti");
   const box = await form.boundingBox();
-  assert.ok(Math.abs(box.y) <= 2 && Math.abs(box.height - frame.height) <= 4, `pencere görünür alanı kaplar: ${JSON.stringify(box)}`);
+  assert.ok(box.y >= 0 && box.y + box.height <= frame.height + 1 && box.height < frame.height - 8, `pencere görünür alanın içinde kart: ${JSON.stringify(box)}`);
   const overlayBg = await page.getByRole("dialog").last().evaluate((el) => getComputedStyle(el).backgroundColor);
-  assert.ok(!/0\.45/.test(overlayBg) && !/rgba\(10, 8, 20/.test(overlayBg), "zemin opak: " + overlayBg);
+  assert.ok(/rgba\(10, 8, 20, 0\.45\)/.test(overlayBg), "zemin karartı (beyaz değil): " + overlayBg);
+  assert.equal(await page.locator("#main-content").evaluate((el) => getComputedStyle(el).visibility), "visible", "arkadaki sayfa gizlenmez");
   assert.equal(await page.locator("[data-app-nav]").evaluate((el) => getComputedStyle(el).display), "none", "alt menü gizli");
   await page.evaluate(() => {
     const vv = window.visualViewport;
