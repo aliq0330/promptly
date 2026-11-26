@@ -17,6 +17,19 @@ Kaynaklar: `substack-tasarim-dili.md` (ölçümler, Bölüm 10 oluşturma akış
 - Dokunma hedefi ≥ 36 px, alan kenarlığı ≥ 3:1 (silik referans kenarlığı yalnız kart/liste ayırıcıda; alan kenarlığı `#868686` ≥3:1 kalır).
 - Her aşama: `tsc`, `lint`, `npm test`, `npm run build`, TR+EN çeviri (`node scripts/build-i18n.mjs`) temiz; sık commit/push; bitince PR + ana dala merge.
 
+## Durum (son güncelleme)
+
+**Bitti ve doğrulandı** (tsc, eslint, `npm test` 1569/1569, `npm run build`, CI UI paketleri ana dalla aynı sonuçta, yeni `run-create-pages` 8/8):
+- [x] Bölüm 1 tamamı: radius/renk/yazı/odak tokenları, `fonts.css`, Spectral, marka varlıkları, kilit testleri (`brand-tokens.test.ts` güncellendi)
+- [x] Bölüm 2: Button, IconButton, Chip, Field/Input/Textarea, SearchField, Tabs, ChoiceGroup, floating katmanlar, DialogShell, Badge, VisibilityTag + tüm kodda 827 `rounded-full` sınıflandırması ve 188 kontrol benzeri `rounded-md/lg/xl` dönüşümü
+- [x] Bölüm 3: Sidebar, NavRail, MobileNav oluştur düğmeleri (12 px), üst çubuk arama kutusu
+- [x] 4.5 Oluşturma: Ekip / Topluluk / Space telefonda tam ekran sayfa (`/teams/new`, `/communities/new`, `/spaces/new`), `md+` pencere
+- [x] 4.9 Mesajlar kind segmenti + birincil oluştur düğmesi, 4.14 Bildirimler düz satırlar, 4.4 detay eylem düğmeleri, 4.15 Ayarlar 600 px sütun, Spectral okuma metni (Skill markdown, yasal metin, `DetailLede`)
+
+**Token/bileşen üzerinden tüm sayfalara yansıdı, sayfa sayfa tek tek gözle denetlenmedi** (ekran görüntüsü yalnız Ana Sayfa, Mesajlar, Ayarlar/Bildirimler, Keşfet, Giriş, Şartlar, oluşturma sayfaları için alındı): Odak, Studio, Profil, Topluluklar, Ekipler, Spaces panosu, Hikâyeler, Moderasyon, Geliştiriciler vb. Bunlarda elle yazılmış, sınıflandırıcıya yakalanmayan özel hap/köşe kalmış olabilir; bulunursa bu listeye eklenip düzeltilir.
+
+**Bilerek yapılmayanlar / açık:** `design-metrics` içinde `rounded-full` kontrolü için otomatik kural (sınıflandırma sezgiseldir, yanlış pozitif riski); Playwright paketlerinden CI listesinde olmayanların tümü yeniden koşulmadı (koşulanlar: chat, communities, community-home, search-notifications, discover, detail-pages, feed-filters, first-run… — ana dalda zaten kırık olanlar aynı kalır: `run-communities` 13b/22, `run-chat` 15/18/18b, `run-skills-social`, `run-comment-extras`, `run-telegram-settings` ortam bayrağına bağlı).
+
 ## 1. Temel katman
 - [ ] `globals.css` radius ölçeği: xs 4 · sm 10 · md 12 · lg 16 · xl 20; yorum satırları güncellenir
 - [ ] Renk tokenları (açık+koyu), `--color-focus`, `--shadow-focus`; odak halkası `ring-primary` → `ring-focus` (tüm kodda)
