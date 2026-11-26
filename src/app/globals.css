@@ -642,36 +642,11 @@
     }
   }
 
-  /* Klavye açıkken görünür alana oturtulan katman (`Modal`, telefondaki tam ekran sohbet paneli; docs/history/468-*): katman yalnız
-   * `visualViewport` kadardır, ama iOS 26 Safari o alanı yüzen adres hapının ve Otomatik Doldur çubuğunun şeridini DIŞARIDA bırakarak
-   * bildirir (klavye kayarken de adım adım ölçülür). Katmanın altında/üstünde kalan düzen alanında sayfa görünmesin diye katmanın zemini
-   * her yöne taşırılır (gölge yayılımı: düzen yok, tıklama yok, kırpılmaz). Telefonda opak yüzey, daha genişte pencerenin karartısı. */
-  [data-keyboard-fit] {
-    box-shadow: 0 0 0 100vh var(--kb-fill, var(--color-scrim));
-  }
-  @media (max-width: 639.98px) {
-    [data-keyboard-fit] {
-      --kb-fill: var(--color-surface);
-    }
-  }
+  /* Telefondaki tam ekran sohbet paneli klavye açıkken görünür alana oturur (docs/history/468-*): iOS 26 o alanı yüzen adres hapının
+   * şeridini DIŞARIDA bırakarak bildirir; panelin zemini gölge yayılımıyla taşırılır ki altında sayfa görünmesin (düzen/tıklama yok).
+   * `Modal` bunu kullanmaz: kart kalır, arkası karartılır (470-*). */
   [data-keyboard-fit="background"] {
-    --kb-fill: var(--color-background);
-  }
-  /* Gölge yetmez (docs/history/469-*): iOS 26'da Otomatik Doldur çubuğu SAYDAMDIR ve düzen görünümünün DIŞINDA durur; WebKit `fixed`
-   * katmanları (gölgesi dahil) düzen görünümüne kırpar, o şeritte belgenin kendisini (kartlar, görseller) gösterir. Telefonda pencere
-   * klavyeyle birlikte görünür alanın TAMAMINI kapladığı için arkadaki sayfa bu sürede gizlenir ve belge zemini pencereyle aynı renk olur:
-   * iOS hangi şeridi gösterirse göstersin orada sayfa yoktur. `Modal` katmanı `<body>`'nin doğrudan çocuğudur (portal); klavye kapanınca
-   * öznitelik kalkar, sayfa geri gelir. Sohbet paneli (`="background"`) sayfanın kendisidir, gizlenmez. */
-  @media (max-width: 639.98px) {
-    html:has(> body > [data-keyboard-fit]:not([data-keyboard-fit="background"])),
-    html:has(> body > [data-keyboard-fit]:not([data-keyboard-fit="background"])) > body {
-      background-color: var(--color-surface);
-    }
-    /* Pencereden ÖNCE gelen her şey (uygulama ağacı ve daha önce açılmış portal katmanları: hikâye, oluşturma ekranı…) gizlenir; pencereden
-     * SONRA açılanlar (içindeki menü, üstüne açılan pencere, bildirim kartı) görünür kalır. */
-    body > :has(~ [data-keyboard-fit]:not([data-keyboard-fit="background"])) {
-      visibility: hidden;
-    }
+    box-shadow: 0 0 0 100vh var(--color-background);
   }
 
   /* Scrolling down hides the header (below `lg`; the desktop sidebar never moves); the bottom nav stays as it is — scrolling up

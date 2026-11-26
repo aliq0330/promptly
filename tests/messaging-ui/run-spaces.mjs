@@ -466,6 +466,31 @@ await scenario("30. Yeni Space penceresi (iOS klavyesi): dokunmatikte başlık k
   assert.ok(title && title.y >= 0, `başlık ekranın içinde: ${JSON.stringify(title)}`);
   const submit = await form.getByRole("button", { name: "Oluştur" }).boundingBox();
   assert.ok(submit && submit.y + submit.height <= 381, `Oluştur düğmesi klavyenin üstünde: ${JSON.stringify(submit)}`);
+  // docs/history/470-*: klavye açıkken de pencere KART kalır (yanlardan boşluklu, yuvarlak), arkası karartılmış sayfadır (beyaz kaplama yok);
+  // görünür alanın altındaki şerit (iOS 26 Otomatik Doldur çubuğu) belgeye bağlı karartıyla boyanır, sayfa gizlenmez.
+  const card = await form.evaluate((element) => {
+    let panel = element;
+    while (panel.parentElement && !panel.parentElement.matches("[role=dialog] > div")) panel = panel.parentElement;
+    const box = panel.getBoundingClientRect();
+    return { x: box.x, width: box.width, radius: getComputedStyle(panel).borderTopLeftRadius };
+  });
+  assert.ok(card.x >= 8 && card.width <= 390 - 16, `kart yanlardan boşluklu: ${JSON.stringify(card)}`);
+  assert.notEqual(card.radius, "0px", "kartın köşeleri yuvarlak");
+  const ground = await page.evaluate(() => {
+    const overlay = document.querySelector("[role=dialog]");
+    const below = overlay.nextElementSibling;
+    return {
+      overlayBg: getComputedStyle(overlay).backgroundColor,
+      belowTop: below ? below.getBoundingClientRect().top + window.scrollY : null,
+      belowBg: below ? getComputedStyle(below).backgroundColor : null,
+      pageVisible: getComputedStyle(document.querySelector("#main-content")).visibility,
+    };
+  });
+  assert.match(ground.overlayBg, /rgba\(/, `arka plan karartı (yarı saydam): ${ground.overlayBg}`);
+  assert.equal(ground.belowTop, 380, `görünür alanın altından başlayan karartı: ${JSON.stringify(ground)}`);
+  assert.equal(ground.belowBg, ground.overlayBg, "şerit aynı karartıyla boyanır");
+  assert.equal(ground.pageVisible, "visible", "arkadaki sayfa gizlenmez");
+  if (process.env.SHOTS) await page.screenshot({ path: `${process.env.SHOTS}/space-new-keyboard.png` });
   // Klavye kapandı: katman tam ekrana döner.
   await page.evaluate(() => {
     window.visualViewport.height = window.innerHeight;

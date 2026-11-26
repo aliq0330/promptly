@@ -329,24 +329,30 @@ export function Modal({
   }, [overlayEl, opener]);
   // Ekran klavyesi açıkken (iOS Safari) katman görünür alana oturur: alt sayfa klavyenin ÜSTÜNDE kalır, başlığı ekranın dışına kaçmaz.
   const keyboard = useKeyboardViewport();
-  // `--sheet-max-h`: klavye açıkken kartın en çok yüksekliği görünür alanı (klavyenin üstünü) aşmaz; kapalıyken %75 sınırı geçerlidir.
+  const fitKeyboard = Boolean(keyboard) && variant !== "side";
+  // Klavye açıkken pencere KART olarak kalır (docs/history/470-*; 378/468/469'daki opak tam ekran kaplamanın yerine): katman görünür alana
+  // oturur, kart klavyenin hemen üstünde yerden kopuk durur, arkada her zamanki karartılmış sayfa görünür. `--sheet-max-h`: kart görünür
+  // alanın üst/alt 8 px boşluğuna sığar.
   const overlayStyle =
-    keyboard && variant !== "side"
-      ? ({ top: keyboard.top, height: keyboard.height, bottom: "auto", "--sheet-max-h": `${keyboard.height}px`, "--sheet-snap": `${keyboard.height}px` } as React.CSSProperties)
+    keyboard && fitKeyboard
+      ? ({ top: keyboard.top, height: keyboard.height, bottom: "auto", "--sheet-max-h": `${keyboard.height - 16}px`, "--sheet-snap": `${keyboard.height - 16}px` } as React.CSSProperties)
       : undefined;
-  // Katman görünür alan kadardır; altında/üstünde kalan düzen alanında (klavyenin arkası, iOS 26'nın yüzen adres hapı ve Otomatik Doldur
-  // şeridi — görünür alan ölçümü bunları dışarıda bırakır) sayfa görünmesin diye zemin `globals.css` `[data-keyboard-fit]` ile taşırılır.
-  const keyboardFit = keyboard && variant !== "side" ? "" : undefined;
-  // Klavye açılınca odaktaki yazma alanı kartın kaydırılan gövdesinde görünür kalır (klavye alanı örtmesin).
-  // Yazarken arka yer görünmesin (docs/history/378-*, mockup K4): telefonda klavye açıkken pencere görünür alanın TAMAMINI kaplar (opak zemin, kartın
-  // yüksekliği/köşesi/kenarlığı kalkar); başlık üstte, düğmeler klavyenin hemen üstünde, gövde kayar.
-  const cover = keyboard && variant !== "side" ? "max-sm:h-full max-sm:*:!h-full max-sm:*:!max-w-none max-sm:*:!rounded-none max-sm:*:!border-0 max-sm:*:!shadow-none" : "";
-  const coverOverlay = keyboard && variant !== "side" ? "max-sm:!bg-surface " : "";
-  // Telefonda alttan açılan kart ekranın dibine YAPIŞMAZ (docs/history/380-*): altta %5 boşluk (alt güvenli alandan az olamaz), yanlardan 10 px, dört köşesi
-  // yuvarlak. Toplam yükseklik %75 (üstte %20), yukarı sürüklenince %90 (üstte %5). Klavye açıkken boşluklar kalkar (`cover` kartı görünür alana yayar).
+  // Telefonda alttan açılan kart ekranın dibine YAPIŞMAZ (docs/history/380-*): altta %5 boşluk (alt güvenli alandan az olamaz; klavye açıkken
+  // 8 px), yanlardan 10 px, dört köşesi yuvarlak. Toplam yükseklik %75 (üstte %20), yukarı sürüklenince %90 (üstte %5).
   // Sarmalayıcı dokunmayı geçirir ki kartın yanındaki/altındaki boşluğa dokunmak (arka plan gibi) pencereyi kapatsın.
-  const floatWrap = keyboard ? "" : "max-sm:mb-[max(5dvh,env(safe-area-inset-bottom))] max-sm:pointer-events-none ";
-  const floatCard = keyboard ? "" : "max-sm:*:pointer-events-auto max-sm:*:!w-[calc(100%-1.25rem)] max-sm:*:!rounded-xl ";
+  const floatWrap = (keyboard ? "max-sm:mb-2 " : "max-sm:mb-[max(5dvh,env(safe-area-inset-bottom))] ") + "max-sm:pointer-events-none ";
+  const floatCard = "max-sm:*:pointer-events-auto max-sm:*:!w-[calc(100%-1.25rem)] max-sm:*:!rounded-xl ";
+  // iOS 26'nın saydam Otomatik Doldur çubuğu düzen görünümünün DIŞINDA durur; WebKit `fixed` katmanları (karartı dahil) oraya çizmez ve
+  // o şeritte belgenin kendisi görünür. Görünür alanın altından başlayan, BELGEYE bağlı (`absolute`) bir karartı o şeridi de aynı tonda
+  // boyar; görünür alanla çakışmaz (karartı ikiye katlanmaz).
+  const underlay =
+    keyboard && fitKeyboard ? (
+      <div
+        aria-hidden
+        className={"pointer-events-none absolute inset-x-0 h-dvh animate-fade-in bg-scrim " + (overLayers ? "z-(--z-toast)" : "z-(--z-overlay)")}
+        style={{ top: keyboard.pageBottom }}
+      />
+    ) : null;
   const keyboardHeight = keyboard?.height ?? 0;
   useEffect(() => {
     if (!keyboardHeight) return;
@@ -407,13 +413,11 @@ export function Modal({
           ref={overlayRef}
           className={
             "fixed inset-0 flex animate-fade-in bg-scrim " +
-            coverOverlay +
             (keyboard ? "" : "backdrop-blur-[2px] ") +
             (overLayers ? "z-(--z-toast) " : "z-(--z-overlay) ") +
             (isSide ? "justify-end" : "flex-col justify-end")
           }
           style={overlayStyle}
-          data-keyboard-fit={keyboardFit}
           role="dialog"
           aria-modal="true"
           aria-labelledby={labelledBy}
@@ -421,13 +425,14 @@ export function Modal({
         >
           <div
             ref={sheetRef}
-            className={isSide ? "flex h-full animate-panel-in" : "relative flex w-full justify-center animate-sheet-up *:!max-h-[min(var(--sheet-snap,75dvh),var(--sheet-max-h,100dvh))] " + floatWrap + floatCard + cover}
+            className={isSide ? "flex h-full animate-panel-in" : "relative flex w-full justify-center animate-sheet-up *:!max-h-[min(var(--sheet-snap,75dvh),var(--sheet-max-h,100dvh))] " + floatWrap + floatCard}
             onClick={(event) => event.stopPropagation()}
           >
             {!isSide && <SheetGrabber always />}
             {children}
           </div>
         </div>
+        {underlay}
       </Portal>
     );
   }
@@ -437,18 +442,18 @@ export function Modal({
       <Portal>
         <div
           ref={overlayRef}
-          className={"fixed inset-0 flex flex-col overflow-y-auto bg-scrim p-4 animate-fade-in " + coverOverlay + (keyboard ? "max-sm:!p-0 " : "") + (keyboard ? "" : "backdrop-blur-[2px] ") + (overLayers ? "z-(--z-toast)" : "z-(--z-overlay)")}
+          className={"fixed inset-0 flex flex-col overflow-y-auto bg-scrim p-4 animate-fade-in " + (keyboard ? "" : "backdrop-blur-[2px] ") + (overLayers ? "z-(--z-toast)" : "z-(--z-overlay)")}
           style={overlayStyle}
-          data-keyboard-fit={keyboardFit}
           role="dialog"
           aria-modal="true"
           aria-labelledby={labelledBy}
           onClick={onClose}
         >
-          <div ref={sheetRef} className={"relative my-auto flex w-full justify-center animate-pop-in *:shadow-pop " + (keyboard ? "max-sm:my-0 max-sm:h-full " : "") + cover} onClick={(event) => event.stopPropagation()}>
+          <div ref={sheetRef} className={"relative my-auto flex w-full justify-center animate-pop-in *:shadow-pop"} onClick={(event) => event.stopPropagation()}>
             {children}
           </div>
         </div>
+        {underlay}
       </Portal>
     );
   }
@@ -457,9 +462,8 @@ export function Modal({
     <Portal>
       <div
         ref={overlayRef}
-        className={"fixed inset-0 flex flex-col overflow-y-auto bg-scrim animate-fade-in sm:p-4 " + coverOverlay + (keyboard ? "" : "backdrop-blur-[2px] ") + (overLayers ? "z-(--z-toast)" : "z-(--z-overlay)")}
+        className={"fixed inset-0 flex flex-col overflow-y-auto bg-scrim animate-fade-in sm:p-4 " + (keyboard ? "" : "backdrop-blur-[2px] ") + (overLayers ? "z-(--z-toast)" : "z-(--z-overlay)")}
         style={overlayStyle}
-        data-keyboard-fit={keyboardFit}
         role="dialog"
         aria-modal="true"
         aria-labelledby={labelledBy}
@@ -468,7 +472,7 @@ export function Modal({
         <div
           ref={sheetRef}
           className={
-            "relative mt-auto flex w-full justify-center animate-sheet-up sm:mb-auto sm:animate-pop-in " + floatWrap + cover + " " +
+            "relative mt-auto flex w-full justify-center animate-sheet-up sm:mb-auto sm:animate-pop-in " + floatWrap + " " +
             "*:shadow-pop max-sm:*:max-w-none " + floatCard +
             // Alttan açılan kart en çok ekranın %75'i (alttan %5 boşlukla: üstte %20, docs/history/242-*, 380-*). Başlık/düğme satırı sabit, ortası kayar:
             // kartın kendisi `flex flex-col` + kaydırılan gövde (`SheetFrame`) olmalı.
@@ -481,6 +485,7 @@ export function Modal({
           {children}
         </div>
       </div>
+      {underlay}
     </Portal>
   );
 }
