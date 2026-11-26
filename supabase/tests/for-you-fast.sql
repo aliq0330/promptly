@@ -102,5 +102,11 @@ select public._check(10, '_for_you_rank security definer + search_path',
   exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
            where n.nspname = 'public' and p.proname = '_for_you_rank' and p.prosecdef and p.proconfig::text like '%search_path=public%'));
 
+-- 11. Plan her çağrıda gerçek değerlerle kurulur (docs/history/467-*): SQL dilinde genel plan, beğenisi çok olan hesapta 6 sn sürüyordu.
+select public._check(11, '_for_you_rank plpgsql + force_custom_plan',
+  exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace join pg_language l on l.oid = p.prolang
+           where n.nspname = 'public' and p.proname = '_for_you_rank' and l.lanname = 'plpgsql'
+             and p.proconfig::text like '%plan_cache_mode=force_custom_plan%'));
+
 select 'FAILED=' || count(*) filter (where not ok) from public._results;
 select n, name, detail from public._results where not ok order by n;
