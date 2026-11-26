@@ -6,6 +6,8 @@ import { X } from "@/components/icons/x";
 import { Button } from "@/components/ui/button";
 import { ChoiceGroup } from "@/components/ui/choice-group";
 import { fieldControlClassName, fieldInputClassName, fieldLabelClassName, Input } from "@/components/ui/field";
+import { CreatePageShell, CREATE_PAGE_QUERY } from "@/features/content/create-page-shell";
+import { useMediaQuery } from "@/lib/use-media-query";
 import { Modal } from "@/components/ui/modal";
 import { useAuth } from "@/features/auth/auth-provider";
 import { GroupAvatar } from "@/features/groups/group-avatar";
@@ -44,6 +46,7 @@ const ACCEPTED_AVATAR_TYPES = "image/jpeg,image/png,image/webp";
  */
 export function CreateCommunityModal({ onClose, onCreated }: { onClose: () => void; onCreated: (groupId: string) => void }) {
   const { t } = useTranslation();
+  const phone = useMediaQuery(CREATE_PAGE_QUERY);
   // Ekip (docs/history/350-*): görünürlük HEP tamamen kapalıdır, kategori/akış politikası/kurallar sorulmaz (sonradan Ayarlar'dan açılır).
   const { user } = useAuth();
   const { busy, error, setError, run } = useAsyncAction();
@@ -150,30 +153,8 @@ export function CreateCommunityModal({ onClose, onCreated }: { onClose: () => vo
     );
   }
 
-  return (
-    <Modal onClose={busy ? () => undefined : onClose} labelledBy="create-community-title">
-      <form
-        onSubmit={handleSubmit}
-        noValidate
-        className="flex max-h-[90dvh] w-full max-w-lg flex-col rounded-lg card-flat shadow-pop"
-        onClick={(event) => event.stopPropagation()}
-      >
-        <div className="flex items-center justify-between gap-2 px-5 pb-3 pt-5">
-          <h2 id="create-community-title" className="text-h3 font-bold text-text">
-            {t("communities.create.title")}
-          </h2>
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={busy}
-            aria-label={t("common.close")}
-            className="flex h-9 w-9 items-center justify-center rounded-sm text-text-muted hover:bg-surface-soft hover:text-text disabled:opacity-50"
-          >
-            <X size={20} />
-          </button>
-        </div>
-
-        <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-5 pb-4">
+  const fields = (
+        <div className="space-y-5">
           <div className="flex items-center gap-4">
             <button
               type="button"
@@ -352,14 +333,53 @@ export function CreateCommunityModal({ onClose, onCreated }: { onClose: () => vo
             </InlineAlert>
           )}
         </div>
-
-        <div className="flex justify-end gap-2 border-t border-border-soft px-5 py-3">
-          <Button type="button" variant="ghost" size="sm" onClick={onClose} disabled={busy}>
+  );
+  const footerNode = <>
+<Button type="button" variant="ghost" size="sm" onClick={onClose} disabled={busy}>
             {t("common.cancel")}
           </Button>
           <Button type="submit" size="sm" disabled={busy} onClick={() => setError(null)}>
             {busy ? t("common.creating") : t("communities.create.submit")}
           </Button>
+          </>;
+
+  if (phone) {
+    return (
+      <CreatePageShell title={t("communities.create.title")} onClose={onClose} busy={busy} onSubmit={handleSubmit} footer={footerNode}>
+        {fields}
+      </CreatePageShell>
+    );
+  }
+
+  return (
+    <Modal onClose={busy ? () => undefined : onClose} labelledBy="create-community-title">
+      <form
+        onSubmit={handleSubmit}
+        noValidate
+        className="flex max-h-[90dvh] w-full max-w-lg flex-col rounded-lg card-flat shadow-pop"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="flex items-center justify-between gap-2 px-5 pb-3 pt-5">
+          <h2 id="create-community-title" className="text-h3 font-bold text-text">
+            {t("communities.create.title")}
+          </h2>
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={busy}
+            aria-label={t("common.close")}
+            className="flex h-9 w-9 items-center justify-center rounded-sm text-text-muted hover:bg-surface-soft hover:text-text disabled:opacity-50"
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-4">
+          {fields}
+        </div>
+
+        <div className="flex justify-end gap-2 border-t border-border-soft px-5 py-3">
+          {footerNode}
         </div>
       </form>
     </Modal>

@@ -26,6 +26,7 @@ import { PagedListState } from "@/features/feed/paged-list-state";
 import { useToast } from "@/features/groups/use-toast";
 import { PHONE_HOME_BOTTOM_PAD, PhoneHomeSection } from "@/features/content/phone-home";
 import { SpaceDialog } from "@/features/spaces/space-modals";
+import { useCreateEntry, useOpenCreateFromQuery } from "@/features/content/create-page-shell";
 import { useMediaQuery } from "@/lib/use-media-query";
 import { LanguageTermScope, useTranslation } from "@/lib/i18n/language-provider";
 import { rewriteAreaTerms } from "@/lib/team-area-terms";
@@ -58,6 +59,8 @@ function TeamsPageInner() {
   const { user } = useAuth();
   const { node: toastNode, show } = useToast();
   const [createOpen, setCreateOpen] = useState(false);
+  const openCreate = useCreateEntry("/teams/new", () => setCreateOpen(true));
+  useOpenCreateFromQuery(() => setCreateOpen(true));
   const [filter, setFilter] = useState<"all" | "managed">("all");
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -135,7 +138,7 @@ function TeamsPageInner() {
         tone="neutral"
         title={t("tm.title")}
         description={t("hub.teams.intro")}
-        action={<HubCreateButton label={t("tm.create")} shortLabel={t("hub.teams.createShort")} onClick={() => setCreateOpen(true)} attr={{ "data-team-create": true, "data-team-create-phone": true }} />}
+        action={<HubCreateButton label={t("tm.create")} shortLabel={t("hub.teams.createShort")} onClick={openCreate} attr={{ "data-team-create": true, "data-team-create-phone": true }} />}
       />
 
       {tabItems.length > 1 && <Tabs items={tabItems} active={activeTab} onChange={setTab} ariaLabel={t("tm.filter.aria")} />}
@@ -220,7 +223,7 @@ function TeamsPageInner() {
           }
         >
           {list.items.length === 0 && !list.failed ? (
-            <EmptyState icon={Briefcase} scene="team" title={t("tm.empty.title")} description={t("tm.empty.body")} action={{ label: t("tm.create"), onClick: () => setCreateOpen(true) }} />
+            <EmptyState icon={Briefcase} scene="team" title={t("tm.empty.title")} description={t("tm.empty.body")} action={{ label: t("tm.create"), onClick: openCreate }} />
           ) : (
             <HubGrid data-testid="teams-list">
               {visibleTeams.map((team) => (
@@ -229,7 +232,7 @@ function TeamsPageInner() {
               <li className="max-md:hidden">
                 <button
                   type="button"
-                  onClick={() => setCreateOpen(true)}
+                  onClick={openCreate}
                   data-team-new-card
                   className="flex h-full w-full flex-col rounded-lg border-2 border-dashed border-border text-center transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
                 >
@@ -422,7 +425,7 @@ export function CreateTeamModal({ onClose, onCreated }: { onClose: () => void; o
   };
 
   return (
-    <SpaceDialog
+    <SpaceDialog page
       title={t("tm.create")}
       onClose={onClose}
       busy={busy}

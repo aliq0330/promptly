@@ -8,6 +8,7 @@ import { X } from "@/components/icons/x";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { ConfirmDialog } from "@/features/groups/confirm-dialog";
+import { CreatePageShell } from "@/features/content/create-page-shell";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { useMediaQuery } from "@/lib/use-media-query";
 import { cn } from "@/lib/utils";
@@ -44,8 +45,11 @@ export function SpaceDialog({
   eyebrow,
   leading,
   drawer,
+  page,
 }: {
   title: string;
+  /** Oluşturma akışı: telefonda `Modal` yerine tam ekran sayfa kabuğu (docs/history/473-*). */
+  page?: boolean;
   /** Öğe çekmecesi (docs/history/371-*): md+ sağa yapışık tam yükseklikte panel, telefonda alt sayfa — ekip projesindeki öğe çekmecesiyle aynı kalıp. */
   drawer?: boolean;
   /** Başlığın üstünde küçük büyük harfli etiket (ör. "ERİŞİM"). */
@@ -64,6 +68,13 @@ export function SpaceDialog({
   const { t } = useTranslation();
   const id = useId();
   const wideScreen = useMediaQuery("(min-width: 768px)");
+  if (page && !wideScreen) {
+    return (
+      <CreatePageShell title={title} onClose={onClose} busy={busy} onSubmit={onSubmit} footer={footer} formTestId={formTestId}>
+        {children}
+      </CreatePageShell>
+    );
+  }
   const content = (
     <>
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-4 has-[[data-dialog-footer]]:pb-0">{children}</div>
@@ -178,7 +189,7 @@ export function CreateSpaceModal({ onClose, onCreated, initialKind }: { onClose:
   }
 
   return (
-    <SpaceDialog
+    <SpaceDialog page
       title={t("spaces.create.title")}
       onClose={onClose}
       busy={busy}

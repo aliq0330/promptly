@@ -35,6 +35,8 @@ import {
 } from "@/lib/supabase/spaces";
 import { isSpaceFilter, SPACE_KIND_LABEL, SPACE_PAGE_SIZE, SPACE_ROLE_LABEL, spaceHref, type SpaceFilter, type SpaceKind, type SpaceSort } from "@/lib/spaces";
 import { CreateSpaceModal } from "./space-modals";
+import { CREATE_PAGE_QUERY } from "@/features/content/create-page-shell";
+import { useMediaQuery } from "@/lib/use-media-query";
 import { SpaceCard } from "./space-card";
 import { type SectionMenuItem, CONTROL_ICON_BUTTON } from "@/features/content/section-menu";
 import { HUB_GRID_CLASS, HUB_PAGE_CLASS, HubAttentionStrip, HubBand, HubCardSkeleton, HubControlRow, HubCreateButton } from "@/features/hub/hub-kit";
@@ -179,8 +181,13 @@ export function SpacesHome() {
     }
   }
 
+  const phoneCreate = useMediaQuery(CREATE_PAGE_QUERY);
   function openCreate(kind?: SpaceKind) {
     if (!requireAuth("create")) return;
+    if (phoneCreate) {
+      router.push(kind ? `/spaces/new?kind=${kind}` : "/spaces/new");
+      return;
+    }
     setCreateKind(kind);
     setCreateOpen(true);
   }
@@ -189,6 +196,10 @@ export function SpacesHome() {
   const wantsNew = searchParams.get("new") === "1";
   useEffect(() => {
     if (!wantsNew || authLoading) return;
+    if (user && window.matchMedia(CREATE_PAGE_QUERY).matches) {
+      router.replace("/spaces/new");
+      return;
+    }
     router.replace("/spaces");
     // eslint-disable-next-line react-hooks/set-state-in-effect -- adresten gelen tek seferlik açılış
     if (user) setCreateOpen(true);
