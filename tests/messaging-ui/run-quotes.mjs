@@ -159,19 +159,28 @@ await scenario("1. Ana Sayfa: alıntı normal gönderi kartıyla akışta — no
   assert.ok(!state.likes[0].prompt_id);
 });
 
-await scenario("2. Alıntı sayfası: üstte alıntılayan + not, 'Orijinal içeriği aç' orijinale gider, ALINTININ yorumu `quote_id` ile yazılır", async ({ page, state }) => {
+await scenario("2. Alıntı sayfası: üstte alıntılayan + not, notun altında eylem satırı, ardından YALNIZ alıntılanan gönderinin kartı (detay sayfası yok); 'Orijinal içeriği aç' kartta; ALINTININ yorumu `quote_id` ile yazılır", async ({ page, state }) => {
   await page.goto(`${BASE}/quotes/local?id=${Q_BOB}`);
   await page.locator(`[data-quote-page="${Q_BOB}"]`).waitFor();
   await page.locator("[data-quote-note]").getByText("Bu ışık gerçekten çok iyi").waitFor();
-  const original = page.locator("[data-open-original]");
+  const card = page.locator("[data-quoted-card]");
+  await card.getByRole("link", { name: "Ay ışığında bekleyen kitsune" }).waitFor();
+  const original = card.locator("[data-open-original]");
   assert.match((await original.getAttribute("href")) ?? "", /\/prompts\/local\/?\?id=b0000000/);
-  // Topluluk gönderisiyle AYNI yapı: alıntılanan içeriğin NORMAL detay sayfası (Albüm bandı: başlık + prompt metni) altta çizilir.
-  await page.getByRole("heading", { name: "Ay ışığında bekleyen kitsune" }).first().waitFor();
-  await page.getByText("cinematic portrait, soft light").first().waitFor();
-  assert.equal(await page.locator("[data-quote-engagement]").count(), 0, "ayrı alıntı etkileşim bloğu yok; detay sayfasının kendi eylem satırı kullanılır");
+  // Detay sayfası bu sayfaya gömülmez: bant, prompt metni, yan kart yok.
+  assert.equal(await page.locator("[data-detail-band]").count(), 0, "detay bandı yok");
+  assert.equal(await page.locator("[data-detail-aside]").count(), 0, "yan sütun yok");
+  assert.equal(await page.getByText("cinematic portrait, soft light").count(), 0, "prompt metni yok");
+  // Sıra: not → eylem satırı → kart → yorumlar.
+  const y = async (loc) => (await loc.first().boundingBox())?.y ?? -1;
+  const yNote = await y(page.locator("[data-quote-note]"));
+  const yActions = await y(page.locator("[data-detail-actions]"));
+  const yCard = await y(card);
+  const yComments = await y(page.locator("#comments"));
+  assert.ok(yNote < yActions && yActions < yCard && yCard < yComments, `sıra bozuk: ${[yNote, yActions, yCard, yComments]}`);
   const input = page.getByPlaceholder("Bir yorum yaz...").first();
   await input.fill("Aynı fikirdeyim");
-  await input.press("Enter");
+  await page.getByRole("button", { name: "Gönder" }).first().click();
   await waitFor(() => state.comments.length > 0);
   assert.equal(state.comments.length, 1);
   assert.equal(state.comments[0].quote_id, Q_BOB);
@@ -289,30 +298,42 @@ await scenario("10. Orijinalde 'N kez alıntılandı': prompt sayfasındaki meta
   assert.match(await page.locator("[data-quote-count]").innerText(), /3 kez alıntılandı/);
 });
 
-await scenario("12. Alıntı sayfası = normal detay + ALINTININ eylemleri: beğeni `quote_id`, Kaydet yok, ⋮ menüsünde yalnız alıntı işleri (kendi alıntında sil, başkasınınkinde şikâyet)", async ({ page, state }) => {
+await scenario("12. Alıntı sayfası eylemleri ALINTININ: beğeni `quote_id`, Kaydet yok, ⋮ menüsünde yalnız alıntı işleri (kendi alıntında sil, başkasınınkinde şikâyet)", async ({ page, state }) => {
   await page.goto(`${BASE}/quotes/local?id=${Q_BOB}`);
   await page.locator(`[data-quote-page="${Q_BOB}"]`).waitFor();
-  await page.getByRole("heading", { name: "Ay ışığında bekleyen kitsune" }).first().waitFor();
+  await page.locator("[data-quoted-card]").waitFor();
   assert.equal(await page.getByRole("button", { name: /^Kaydet/ }).count(), 0, "alıntı kaydedilmez");
-  await page.getByRole("button", { name: /Beğen|Tepki/ }).first().click();
+  await page.locator("[data-detail-actions]").getByRole("button", { name: /Beğen|Tepki/ }).first().click();
   await page.getByRole("menuitem", { name: /^(Sevdim|Love)/ }).click();
   await waitFor(() => state.likes.length > 0);
   assert.equal(state.likes[0].quote_id, Q_BOB);
   assert.ok(!state.likes[0].prompt_id, "orijinalin beğenisine karışmaz");
-  await page.getByRole("button", { name: "Paylaş" }).first().click();
-  await page.locator("[data-share-actions]").waitFor({ state: "detached" }).catch(() => {});
+  await page.locator("[data-detail-actions]").getByRole("button", { name: "Paylaş" }).first().click();
   await page.keyboard.press("Escape");
-  const menu = page.locator('button[aria-label="Gönderi seçenekleri"]').first();
+  const menu = page.locator('button[aria-label="Alıntı menüsü"]').first();
   await menu.click();
-  await page.getByRole("menuitem", { name: /Şikayet/ }).first().waitFor();
+  await page.getByRole("menuitem", { name: /Şikayet|Şikâyet/ }).first().waitFor();
   assert.equal(await page.getByRole("menuitem", { name: "Bağlantıyı kopyala" }).count(), 0, "içeriğin kendi yönetimi orijinalde kalır");
   assert.equal(await page.getByRole("menuitem", { name: "Alıntıyı sil" }).count(), 0);
   await shot(page, "qt-page-scoped");
   await page.goto(`${BASE}/quotes/local?id=${Q_ME}`);
   await page.locator(`[data-quote-page="${Q_ME}"]`).waitFor();
-  await page.locator('button[aria-label="Gönderi seçenekleri"]').first().click();
+  await page.locator('button[aria-label="Alıntı menüsü"]').first().click();
   await page.getByRole("menuitem", { name: "Alıntıyı sil" }).waitFor();
 });
+
+await scenario("13. Telefon: sayfa aşağı kayınca eylem satırı alt menünün üstüne sabitlenir (`data-detail-dock`), yukarı çıkınca bırakır", async ({ page }) => {
+  await page.goto(`${BASE}/quotes/local?id=${Q_BOB}`);
+  await page.locator(`[data-quote-page="${Q_BOB}"]`).waitFor();
+  await page.locator("[data-quoted-card]").waitFor();
+  assert.equal(await page.locator("[data-detail-dock]").count(), 0, "başta sabit değil");
+  await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+  await page.locator("[data-detail-dock]").waitFor();
+  await page.locator("[data-detail-dock] [data-detail-actions]").waitFor();
+  await shot(page, "qt-page-dock");
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.locator("[data-detail-dock]").waitFor({ state: "detached" });
+}, { viewport: { width: 390, height: 420 } });
 
 await scenario("11. İngilizce + telefon: kart, sayfa ve Alıntıla bölümü çevrilmiş, yatay taşma yok", async ({ page }) => {
   await openNewest(page, "Newest");
