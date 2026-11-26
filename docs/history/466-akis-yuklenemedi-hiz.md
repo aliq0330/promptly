@@ -70,4 +70,9 @@ Kullanıcı kararı: Pro plan alınmayacak, prosuz yapılabilecek her şey yapı
   - CI kesitindeki 20 paketin hepsi geçti; bunlardan `run-chat-load` önce 4/6'ydı, yukarıdaki düzeltmeyle 6/6 oldu.
   - Ek olarak `run-discover` 8/8 (test, tembel bölümlere kaydırılacak biçimde güncellendi), `run-feed-scroll`, `run-topic-pages`, `run-creator-suggestions`, `run-interest`, `run-auth-storage` temiz.
   - `run-stories` 21, `run-focus-feed` 15/27/28 ve `run-community-home` 4 aynı derleme bayraklarıyla `main`'de de aynı biçimde düşüyor; bu değişiklikle ilgisiz.
+- **Skill sayfası (CI'da yakalandı):** `run-skills-package` 14 sıra sınırıyla kırıldı.
+  - Sayfa, sürümler gelmeden çiziliyordu: indirme düğmesi bir an "SKILL.md indir" diyordu (o anda basılırsa ZIP yerine onu indirirdi).
+  - Aynı anda başka okuyucu, yayınlanan anlık görüntü yerine sahibin çalışma kopyasını görüyordu (415-*).
+  - Bu eski bir boşluktu; okumalar sıraya girince uzadı. `skill-detail-view.tsx` artık sürümler gelene kadar iskelet gösterir.
+  - Aynı CI turunda `run-skills-package` 3 (çift yükleme) bir kez düştü; yerelde, yük altında 11 denemede tekrarlanmadı. Depolama yüklemesi bu halkalardan geçmez.
 - **İngilizce:** yeni metin `feed.staleNotice` TR + EN eklendi.

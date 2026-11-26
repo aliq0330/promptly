@@ -64,7 +64,10 @@ export function SkillDetailView({ skillId }: { skillId?: string } = {}) {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
-  const [versions, setVersions] = useState<SkillVersion[]>([]);
+  // Sürümler hangi Skill için yüklendi (docs/history/466-*): gelmeden sayfa çizilirse indirme düğmesi bir an "SKILL.md indir" der (basılırsa ZIP
+  // yerine onu indirir) ve okuyucu yayınlanan anlık görüntü yerine sahibin çalışma kopyasını görür (415-*). Yüklenene kadar iskelet.
+  const [versionState, setVersionState] = useState<{ id: string; list: SkillVersion[] } | null>(null);
+  const versions = versionState && versionState.id === id ? versionState.list : null;
   const [downloadError, setDownloadError] = useState<string | null>(null);
   const [copyNote, setCopyNote] = useState<string | null>(null);
   const [tab, setTab] = useState<SkillTab>("text");
@@ -86,8 +89,8 @@ export function SkillDetailView({ skillId }: { skillId?: string } = {}) {
     if (!id) return;
     let cancelled = false;
     fetchSkillVersions(id)
-      .then((list) => !cancelled && setVersions(list))
-      .catch(() => !cancelled && setVersions([]));
+      .then((list) => !cancelled && setVersionState({ id, list }))
+      .catch(() => !cancelled && setVersionState({ id, list: [] }));
     return () => {
       cancelled = true;
     };
@@ -112,6 +115,7 @@ export function SkillDetailView({ skillId }: { skillId?: string } = {}) {
   const category = skill.category ? skillCategoryName(skill.category, language, t, categoryRows) : null;
   const tools = skill.compat.map((tool) => skillLabelText(SKILL_COMPAT_LABEL[tool], t)).join(", ");
 
+  if (!versions) return <DetailSkeleton />;
   const latest = pickLatestVersion(versions);
   // Yayınlanan sürümün talimatı DEĞİŞMEZDİR (docs/history/415-*): okuyucu (indirme, kopyalama, sayfa) yayınlanan metni ve sürümü görür; sahibin sonradan değiştirdiği çalışma kopyası yalnız sahibine görünür.
   // Anlık görüntüsü olmayan eski sürümde çalışma kopyasına düşülür.
