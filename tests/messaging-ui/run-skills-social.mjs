@@ -499,8 +499,9 @@ await scenario("18. Alıntıla: Skill detayında Paylaş → Alıntıla; create_
 
 await scenario("19. Alıntı sayfası: Skill alıntısı not + Skill kartı + 'Orijinal içeriği aç' gösterir", async ({ page }) => {
   await page.goto(`${BASE}/quotes/local?id=a0000000-0000-4000-8000-0000000000b4`);
-  const card = page.locator("[data-quote-skill]");
+  const card = page.locator("[data-quoted-card]");
   await card.waitFor();
+  await card.locator("[data-quote-skill-art]").waitFor();
   assert.match(await page.locator("[data-quote-note]").first().innerText(), /Skill alıntı notu/);
   assert.match((await page.locator("[data-open-original]").getAttribute("href")) ?? "", new RegExp(`/skills/local/?\\?id=${S_PUB}`));
 });

@@ -34,7 +34,6 @@ export const quoteTranslations = {
   "quotes.delete.body": { tr: "Alıntı, beğenileri ve yorumlarıyla birlikte kalkar. Alıntıladığın içerik silinmez.", en: "The quote goes away with its likes and comments. The content you quoted isn't deleted." },
   "quotes.delete.confirm": { tr: "Sil", en: "Delete" },
   "quotes.report.title": { tr: "Alıntıyı şikâyet et", en: "Report this quote" },
-  "quotes.page.scopeHelp": { tr: "Aşağıdaki içerik alıntılanan içeriğin kendisidir; beğeni, yorum ve paylaşım bu alıntıya aittir.", en: "The content below is the quoted content itself; likes, comments and shares belong to this quote." },
   "quotes.delete.done": { tr: "Alıntı silindi.", en: "Quote deleted." },
 
   // ---- Alıntıla bölümü (Paylaş penceresi) ----
@@ -56,8 +55,6 @@ export const quoteTranslations = {
   "quotes.page.back": { tr: "Geri", en: "Back" },
   "quotes.page.titleFor": { tr: "{{name}} alıntıladı", en: "{{name}} quoted" },
   "quotes.page.openOriginal": { tr: "Orijinal içeriği aç", en: "Open the original" },
-  "quotes.page.commentsTitle": { tr: "Alıntının yorumları", en: "Comments on the quote" },
-  "quotes.page.commentsHelp": { tr: "Beğeni ve yorumlar bu alıntıya aittir; alıntılanan içeriğin sayaçlarını etkilemez.", en: "Likes and comments belong to this quote; they don't change the quoted content's counts." },
   "quotes.page.notFoundTitle": { tr: "Alıntı bulunamadı", en: "Quote not found" },
   "quotes.page.notFoundBody": { tr: "Alıntı silinmiş, alıntılanan içerik gizlenmiş ya da bu alıntıyı görme iznin yok.", en: "The quote was deleted, the quoted content is hidden, or you can't see this quote." },
   "quotes.page.loadError": { tr: "Alıntı yüklenemedi.", en: "The quote couldn't be loaded." },

@@ -1,21 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { EyeOff } from "@/components/icons/eye-off";
-import { GraduationCap } from "@/components/icons/graduation-cap";
 import { Badge } from "@/components/ui/badge";
 import { ContentCard, ContentCardPost, ContentCardTitle } from "@/features/content/content-card";
-import { ContentTypePill } from "@/features/content/content-type-label";
 import { summarizeContent } from "@/features/communities/content-summary";
-import { OutputPosterPreview, OutputThumbnailStrip } from "@/features/prompts/multi-image-output-options";
-import { PlayableCardArt } from "@/features/prompts/playable-card-art";
-import { SummaryTextArt } from "@/features/content/text-art";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { quoteHref } from "@/lib/quotes";
 import { formatRelativeTime } from "@/lib/utils";
 import type { Quote } from "@/lib/supabase/quotes";
 import { QuoteCommentLink, QuoteLike } from "./quote-engagement";
 import { QuoteMenu } from "./quote-menu";
+import { QuotedArt, QuotedKicker, quotedTitleInArt, quotedTypeIcon } from "./quoted-parts";
 
 /**
  * Alıntının akıştaki kartı (docs/history/217-*): başvuru gönderisinin kartıyla (`ApplicationCard`) AYNI aile — Albüm kartı
@@ -30,38 +25,18 @@ export function QuoteCard({ quote }: { quote: Quote }) {
   const href = quoteHref(quote.id);
   const summary = quote.content ? summarizeContent(quote.content) : null;
   const skill = quote.skill;
-  const poster = summary?.playable ? summary.media[0] : undefined;
 
   return (
     <ContentCard variant="visual" href={href}>
       <ContentCardPost
         author={quote.author}
         meta={`${t("quotes.card.quoted")} · ${formatRelativeTime(quote.createdAt, language)}`}
-        typeIcon={summary?.typeIcon ?? (skill ? GraduationCap : undefined)}
-        titleInArt={Boolean(summary && summary.media.length === 0 && !summary.promptText)}
+        typeIcon={quotedTypeIcon(quote, summary)}
+        titleInArt={quotedTitleInArt(summary)}
         status={<Badge variant="default">{t("quotes.badge")}</Badge>}
-        badges={skill ? <ContentTypePill icon={GraduationCap} label={t("skill.singular")} detail={null} /> : summary && <ContentTypePill icon={summary.typeIcon} label={t(summary.typeLabelKey)} detail={summary.tools.length > 0 ? null : summary.detail} />}
+        badges={<QuotedKicker quote={quote} summary={summary} />}
         menu={<QuoteMenu quote={quote} onDeleted={() => setGone(true)} />}
-        art={
-          summary ? (
-            summary.playable && poster ? (
-              quote.content?.type === "prompt" ? <PlayableCardArt prompt={quote.content.data} poster={poster} /> : <OutputPosterPreview media={poster} />
-            ) : summary.media.length > 0 ? (
-              <OutputThumbnailStrip media={summary.media} />
-            ) : (
-              <SummaryTextArt summary={summary} seed={quote.id} />
-            )
-          ) : skill ? (
-            <p data-quote-skill-art="" className="flex aspect-[4/3] w-full flex-col items-center justify-center gap-2 bg-surface-soft px-4 text-center">
-              <GraduationCap size={32} aria-hidden className="text-text-muted" />
-              <span className="line-clamp-3 break-words text-small text-text-secondary">{skill.summary}</span>
-            </p>
-          ) : (
-            <p className="flex aspect-[4/3] w-full items-center justify-center gap-2 bg-surface-soft px-3 text-small text-text-muted">
-              <EyeOff size={16} aria-hidden /> {t("quotes.card.contentGone")}
-            </p>
-          )
-        }
+        art={<QuotedArt quote={quote} summary={summary} />}
         title={summary ? <ContentCardTitle href={href} title={summary.title} /> : skill ? <ContentCardTitle href={href} title={skill.title} /> : null}
         footer={
           // `contents`: the buttons stay direct items of the shared action row; the wrapper only marks them as the QUOTE's own counters.
