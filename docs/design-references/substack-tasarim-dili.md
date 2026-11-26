@@ -10,7 +10,7 @@ Bu dosya referans uygulamanın (substack.com) arayüzünü **tarayıcıdan okuna
 
 Ölçülmüş olsa da bazı gölge değerleri kısaltılmış okundu; "≈" işaretli değerler tahmindir. Yazı tipi yığını sistem fontudur (`SF Pro Display`, `system-ui`); tuvalde Inter ile temsil edildi. Çizimler markasız yeniden çizimdir, ekran görüntüleri depoya konmadı.
 
-Yeniden ölçmek için: `node docs/design-references/olcum/ekran-goruntusu.cjs <klasör>` ve `hesaplanmis-stiller.cjs <klasör>` (Playwright gerekir).
+Yeniden ölçmek için: `node docs/design-references/olcum/ekran-goruntusu.mjs <klasör>` ve `hesaplanmis-stiller.mjs <klasör>` (Playwright gerekir).
 
 ## 2. Temel ilkeler
 

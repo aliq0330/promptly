@@ -1,4 +1,4 @@
-const { chromium } = require('playwright');
+import { chromium } from 'playwright';
 const out = process.argv[2];
 const pages = {home:'https://substack.com/', chat:'https://substack.com/chat', inbox:'https://substack.com/inbox', signin:'https://substack.com/sign-in', explore:'https://substack.com/explore'};
 const vps = {m:[390,844],t:[820,1180],d:[1440,900]};

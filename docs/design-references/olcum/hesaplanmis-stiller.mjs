@@ -1,5 +1,5 @@
-const { chromium } = require('playwright');
-const fs=require('fs');
+import { chromium } from 'playwright';
+import fs from 'node:fs';
 const out = process.argv[2];
 const targets = {home:'https://substack.com/', chat:'https://substack.com/chat', inbox:'https://substack.com/inbox', explore:'https://substack.com/explore', signin:'https://substack.com/sign-in'};
 const vps = {m:[390,844],d:[1440,900]};
