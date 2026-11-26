@@ -173,7 +173,7 @@ function SkillLinkPicker({ excludeIds, onPick, onClose }: { excludeIds: Set<stri
           ) : (
             items.map((skill) => (
               <li key={skill.id}>
-                <button type="button" onClick={() => onPick(skill)} data-skill-link-pick={skill.id} className="flex w-full flex-col rounded-xl px-3 py-2 text-left hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+                <button type="button" onClick={() => onPick(skill)} data-skill-link-pick={skill.id} className="flex w-full flex-col rounded-xl px-3 py-2 text-left hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus">
                   <span className="truncate text-body font-semibold text-text">{skill.title}</span>
                   <span className="truncate text-small text-text-muted">{skill.summary}</span>
                 </button>

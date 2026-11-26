@@ -131,7 +131,7 @@ export function VariableCreateModal({
               aria-invalid={Boolean(error)}
               className="h-10 w-full rounded-lg card-inset px-3 text-small text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
             />
-            {normalizedName && <p className="mt-1.5 font-mono text-caption text-primary">{`{${normalizedName}}`}</p>}
+            {normalizedName && <p className="mt-1.5 font-mono text-caption text-primary-text">{`{${normalizedName}}`}</p>}
             {error && (
               <p role="alert" className="mt-1.5 text-caption text-danger">
                 {error}
@@ -141,7 +141,7 @@ export function VariableCreateModal({
 
           {existing ? (
             <div className="space-y-1.5 rounded-md border border-primary/30 bg-primary/5 p-3 text-small">
-              <p className="font-medium text-primary">{t("variable.alreadyExistsTitle")}</p>
+              <p className="font-medium text-primary-text">{t("variable.alreadyExistsTitle")}</p>
               <p className="text-caption text-text-muted">
                 {t("variable.willLinkPrefix")} <span className="font-mono">{`{${existing.name}}`}</span> {t("variable.willLinkSuffix")}
               </p>

@@ -40,7 +40,7 @@ export function PromptVariableInputs({
           {t("variable.sectionHeading", { count: variables.length })}
         </h3>
         {isCustomized && (
-          <button type="button" onClick={onReset} className="text-caption font-medium text-primary hover:underline">
+          <button type="button" onClick={onReset} className="text-caption font-medium text-primary-text hover:underline">
             {t("prompt.resetToDefaults")}
           </button>
         )}

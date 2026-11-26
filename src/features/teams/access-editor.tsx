@@ -141,7 +141,7 @@ export function AccessEditor({
                   <button
                     type="button"
                     onClick={() => add({ type: "group", id: group.id, level: defaultLevel, name: group.name, sub: String(group.memberCount) })}
-                    className="inline-flex h-9 items-center gap-1 rounded-full bg-primary-soft px-3 text-caption font-medium text-primary"
+                    className="inline-flex h-9 items-center gap-1 rounded-full bg-primary-soft px-3 text-caption font-medium text-primary-text"
                   >
                     <Plus size={12} aria-hidden />
                     {t("tm.access.add")}
@@ -160,7 +160,7 @@ export function AccessEditor({
                   <button
                     type="button"
                     onClick={() => add({ type: "member", id: person.userId, level: roleCanHoldSpaceLevel(person.role as TeamRole, defaultLevel) ? defaultLevel : "edit", name: person.displayName || person.username, username: person.username, sub: person.role })}
-                    className="inline-flex h-9 items-center gap-1 rounded-full bg-primary-soft px-3 text-caption font-medium text-primary"
+                    className="inline-flex h-9 items-center gap-1 rounded-full bg-primary-soft px-3 text-caption font-medium text-primary-text"
                   >
                     <Plus size={12} aria-hidden />
                     {t("tm.access.add")}

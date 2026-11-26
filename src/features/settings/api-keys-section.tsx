@@ -178,7 +178,7 @@ export function ApiKeysSection() {
 
       <p className="text-caption leading-relaxed text-text-muted" data-api-keys-count="">
         {rows !== null && <>{t("apiKeys.activeCount", { count: activeCount, max: API_TOKEN_ACTIVE_LIMIT })} · </>}
-        <Link href="/settings/developer/" className="font-medium text-primary hover:underline">{t("devSettings.access.title")}</Link>
+        <Link href="/settings/developer/" className="font-medium text-primary-text hover:underline">{t("devSettings.access.title")}</Link>
       </p>
       {loadFailed && (
         <div className="flex flex-wrap items-center gap-3">

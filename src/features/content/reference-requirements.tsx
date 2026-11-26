@@ -102,7 +102,7 @@ export function ReferenceRequirementNotes({
             key={kind}
             className="flex items-start gap-2 rounded-lg card-soft px-3 py-2 text-small text-text-secondary"
           >
-            <Icon size={16} className="mt-0.5 shrink-0 text-primary" />
+            <Icon size={16} className="mt-0.5 shrink-0 text-primary-text" />
             <span className="min-w-0 break-words">{t(NOTE_KEYS[kind])}</span>
           </p>
         );

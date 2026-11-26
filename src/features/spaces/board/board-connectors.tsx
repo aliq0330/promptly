@@ -15,7 +15,7 @@ import { cn } from "@/lib/utils";
  */
 
 const STROKE: Record<SpaceColor, { line: string; fill: string; pill: string }> = {
-  primary: { line: "stroke-primary", fill: "fill-primary", pill: "border-primary/50 text-primary" },
+  primary: { line: "stroke-primary", fill: "fill-primary", pill: "border-primary/50 text-primary-text" },
   secondary: { line: "stroke-secondary", fill: "fill-secondary", pill: "border-secondary/50 text-secondary" },
   success: { line: "stroke-success", fill: "fill-success", pill: "border-success/50 text-success" },
   warning: { line: "stroke-warning", fill: "fill-warning", pill: "border-warning/60 text-warning" },

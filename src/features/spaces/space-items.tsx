@@ -218,7 +218,7 @@ function GroupPicker({ value, onChange, canManage, id }: { value: string | null;
       )}
       <FormError message={error} />
       {canManage && groups.length > 0 && (
-        <button type="button" onClick={() => setManage(true)} className="inline-flex items-center gap-1 text-caption font-semibold text-primary hover:underline" data-group-manage>
+        <button type="button" onClick={() => setManage(true)} className="inline-flex items-center gap-1 text-caption font-semibold text-primary-text hover:underline" data-group-manage>
           <Layers size={12} aria-hidden />
           {t("spaces.groups.manage")}
         </button>
@@ -318,7 +318,7 @@ export function ItemDetailModal({ itemId, onClose, onShowOnBoard, drawer }: { it
                 {(prompt?.author ?? source.request?.author)!.displayName}
               </Link>
             )}
-            <Link href={source.href} className="inline-flex items-center gap-1 text-small font-semibold text-primary hover:underline">
+            <Link href={source.href} className="inline-flex items-center gap-1 text-small font-semibold text-primary-text hover:underline">
               {t("spaces.source.open")}
               <ArrowUpRight size={16} aria-hidden />
             </Link>

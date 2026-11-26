@@ -104,7 +104,7 @@ export function StoryContentPicker({ onPick, onClose }: { onPick: (item: Linkabl
                       onClick={() => onPick(item)}
                       className="flex min-h-12 w-full items-start gap-3 rounded-md px-3 py-2 text-left hover:bg-surface-soft"
                     >
-                      <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary-soft text-primary">
+                      <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary-soft text-primary-text">
                         <Icon size={16} aria-hidden />
                       </span>
                       <span className="min-w-0">

@@ -118,7 +118,7 @@ function ConnectInner() {
           </div>
         </div>
         <SwitchRow checked={write} onChange={setWrite} disabled={busy} label={t("connect.writeLabel")} className="cursor-pointer p-4">
-          <span aria-hidden className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary-soft text-primary">
+          <span aria-hidden className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary-soft text-primary-text">
             <Plus size={16} />
           </span>
           <span className="min-w-0 flex-1">
@@ -127,7 +127,7 @@ function ConnectInner() {
           </span>
         </SwitchRow>
         <SwitchRow checked={interact} onChange={setInteract} disabled={busy} label={t("connect.interactLabel")} className="cursor-pointer p-4">
-          <span aria-hidden className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary-soft text-primary">
+          <span aria-hidden className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary-soft text-primary-text">
             <Heart size={16} />
           </span>
           <span className="min-w-0 flex-1">

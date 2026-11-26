@@ -87,7 +87,7 @@ export function CreatePostModal({
 
   const tileClass = cn(
     "flex h-full items-start gap-3 rounded-lg card-flat p-4 text-left transition-colors",
-    "hover:border-primary hover:bg-primary-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+    "hover:border-primary hover:bg-primary-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus",
   );
 
   return (
@@ -115,7 +115,7 @@ export function CreatePostModal({
                 {TYPES.map(({ type, icon: Icon, label, desc }) => (
                   <li key={type}>
                     <Link href={`${CREATE_HREF[type]}${CREATE_HREF[type].includes("?") ? "&" : "?"}community=${communityId}`} className={tileClass} data-post-new-type={type}>
-                      <span className="grid h-11 w-11 shrink-0 place-items-center rounded-md bg-primary-soft text-primary">
+                      <span className="grid h-11 w-11 shrink-0 place-items-center rounded-md bg-primary-soft text-primary-text">
                         <Icon size={20} aria-hidden />
                       </span>
                       <span className="min-w-0">
@@ -160,7 +160,7 @@ export function CreatePostModal({
                           type="button"
                           onClick={() => setPicked(item)}
                           data-post-recent-pick={item.id}
-                          className="inline-flex h-9 shrink-0 items-center rounded-full border border-border-strong bg-surface px-4 text-small font-semibold text-text hover:border-primary hover:text-primary"
+                          className="inline-flex h-9 shrink-0 items-center rounded-full border border-border-strong bg-surface px-4 text-small font-semibold text-text hover:border-primary hover:text-primary-text"
                         >
                           {t("cs.post.pick")}
                         </button>
@@ -169,7 +169,7 @@ export function CreatePostModal({
                   })}
                 </ul>
               )}
-              <button type="button" onClick={onApply} data-post-option="apply" className="min-h-9 text-small font-semibold text-primary hover:text-primary-hover">
+              <button type="button" onClick={onApply} data-post-option="apply" className="min-h-9 text-small font-semibold text-primary-text hover:text-primary-hover">
                 {t("cs.post.seeAll")}
               </button>
               <p className="text-caption text-text-muted">{t("cs.post.footnote")}</p>

@@ -167,7 +167,7 @@ export function RoomsManageSection({ group, onToast }: { group: ChatGroup; onToa
             aria-label={t("rooms.manage.dragHandle", { name: room.name })}
             data-room-drag-handle
             onPointerDown={(event) => startDrag(event, room)}
-            className="flex h-10 w-6 shrink-0 cursor-grab touch-none items-center justify-center text-text-muted hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary active:cursor-grabbing"
+            className="flex h-10 w-6 shrink-0 cursor-grab touch-none items-center justify-center text-text-muted hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus active:cursor-grabbing"
           >
             <GripVertical size={20} aria-hidden />
           </button>
@@ -175,12 +175,12 @@ export function RoomsManageSection({ group, onToast }: { group: ChatGroup; onToa
         <RoomIconTile icon={room.icon} size={40} />
         <div className="min-w-0 flex-1">
           <div className="truncate text-body font-semibold text-text">{room.name}</div>
-          <div className={cn("truncate text-caption", dragging ? "font-semibold text-primary" : "text-text-muted")}>{dragging ? t("rooms.manage.dragging") : room.archivedAt ? t("rooms.row.archived") : subtitle(room)}</div>
+          <div className={cn("truncate text-caption", dragging ? "font-semibold text-primary-text" : "text-text-muted")}>{dragging ? t("rooms.manage.dragging") : room.archivedAt ? t("rooms.row.archived") : subtitle(room)}</div>
         </div>
         {room.isDefault && <Lock size={16} className="shrink-0 text-text-muted" aria-label={t("rooms.manage.defaultRoom")} />}
         <DropdownMenu
           label={t("rooms.manage.rowMenu", { name: room.name })}
-          triggerClassName="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-text-secondary transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          triggerClassName="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-text-secondary transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
         >
           {(close) => (
             <>
@@ -257,7 +257,7 @@ export function RoomsManageSection({ group, onToast }: { group: ChatGroup; onToa
                 type="button"
                 onClick={() => setArchivedOpen((open) => !open)}
                 aria-expanded={archivedOpen}
-                className="flex min-h-12 w-full items-center justify-between rounded-xl border border-dashed border-border-strong px-4 text-small font-semibold text-text-secondary hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                className="flex min-h-12 w-full items-center justify-between rounded-xl border border-dashed border-border-strong px-4 text-small font-semibold text-text-secondary hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
               >
                 <span>{t("rooms.manage.archived")}</span>
                 <span className="flex items-center gap-1.5">

@@ -150,7 +150,7 @@ export function SpaceCard({
   if (layout === "list") {
     return (
       <li data-space-card={space.id} className="relative flex items-center gap-3 rounded-lg card-flat p-2.5 shadow-xs">
-        <Link href={href} className="flex min-w-0 flex-1 items-center gap-3 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+        <Link href={href} className="flex min-w-0 flex-1 items-center gap-3 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus">
           <SpaceCoverArt urls={art} iconSize={22} className="h-16 w-16 shrink-0 overflow-hidden rounded-md" />
           <span className="min-w-0 flex-1 space-y-1">
             <span className="flex min-w-0 items-center gap-2">

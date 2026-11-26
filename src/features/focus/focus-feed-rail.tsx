@@ -72,7 +72,7 @@ function SoundButton() {
       aria-label={muted ? t("focusFeed.soundOn") : t("focusFeed.soundOff")}
       title={muted ? t("focusFeed.soundOn") : t("focusFeed.soundOff")}
       data-focus-sound=""
-      className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-art-chip text-on-art transition-colors hover:bg-black/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+      className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-art-chip text-on-art transition-colors hover:bg-black/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
     >
       {muted ? <VolumeX size={24} aria-hidden /> : <Volume2 size={24} aria-hidden />}
     </button>

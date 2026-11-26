@@ -9,19 +9,19 @@ import { cn } from "@/lib/utils";
 
 /** The shared control surface, without a height — inputs, textareas, selects. */
 export const fieldControlClassName =
-  "w-full rounded-lg border border-control-border bg-background px-4 text-small text-text shadow-xs transition-colors duration-200 ease-soft placeholder:text-text-muted hover:border-text-muted focus:border-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
+  "w-full rounded-sm border border-control-border bg-background px-3 text-body text-text shadow-xs transition-colors duration-200 ease-soft placeholder:text-text-muted hover:border-text-muted focus:border-focus focus:shadow-focus focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus";
 
 /** A single-line text input. */
-export const fieldInputClassName = `h-11 ${fieldControlClassName}`;
+export const fieldInputClassName = `h-10 ${fieldControlClassName}`;
 
 /**
  * Control heights pair with button heights: `dense` 40 px sits beside a `Button md` (40), the default 44 px beside the 44 px
  * buttons of the auth / settings forms. Pick one — never a bare `h-9` / `h-12` on a text field (audit G4).
  */
-export const fieldDenseInputClassName = `h-10 ${fieldControlClassName}`;
+export const fieldDenseInputClassName = `h-9 ${fieldControlClassName}`;
 
 /** A multi-line field: same surface, a sensible minimum, vertical resize only. */
-export const fieldTextareaClassName = `min-h-24 resize-y py-2.5 ${fieldControlClassName}`;
+export const fieldTextareaClassName = `min-h-24 resize-y py-2 ${fieldControlClassName}`;
 
 const invalidClassName = "border-danger focus:border-danger";
 
@@ -53,7 +53,7 @@ export const fieldLabelClassName = "mb-1.5 block text-label font-medium text-tex
 /** The round icon badge above an auth form's title. */
 export function FormIconBadge({ children }: { children: ReactNode }) {
   return (
-    <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-border-soft bg-primary-soft text-primary shadow-xs">
+    <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-border-soft bg-primary-soft text-primary-text shadow-xs">
       {children}
     </div>
   );

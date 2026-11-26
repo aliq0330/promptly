@@ -198,9 +198,9 @@ export function GroupInfoModal({
         <Link
           href={communityHref(group.id, "members", "requests")}
           data-info-requests-link
-          className="mx-4 mt-3 flex shrink-0 items-center gap-3 rounded-xl bg-primary-soft px-4 py-3 text-small text-text transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          className="mx-4 mt-3 flex shrink-0 items-center gap-3 rounded-xl bg-primary-soft px-4 py-3 text-small text-text transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
         >
-          <UserCog size={20} className="shrink-0 text-primary" aria-hidden />
+          <UserCog size={20} className="shrink-0 text-primary-text" aria-hidden />
           <span className="min-w-0 flex-1">
             <span className="font-medium">{t("groups.info.pendingRequests", { count: pendingRequests })}</span>
             <span className="block text-caption text-text-muted">{t("groups.info.pendingRequestsHelp")}</span>
@@ -215,7 +215,7 @@ export function GroupInfoModal({
               {t("rooms.info.rooms")}
             </h3>
             {canManageRooms && onAddRoom && (
-              <button type="button" onClick={onAddRoom} data-info-add-room className="text-small font-semibold text-primary hover:underline">
+              <button type="button" onClick={onAddRoom} data-info-add-room className="text-small font-semibold text-primary-text hover:underline">
                 {t("rooms.info.addRoom")}
               </button>
             )}
@@ -242,7 +242,7 @@ export function GroupInfoModal({
                       onClick={() => onSelectRoom?.(room.id)}
                       data-info-room={room.name}
                       aria-current={current ? "true" : undefined}
-                      className="flex min-h-14 min-w-0 flex-1 items-center gap-3 px-4 py-2 text-left transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
+                      className="flex min-h-14 min-w-0 flex-1 items-center gap-3 px-4 py-2 text-left transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-focus"
                     >
                       <RoomIconTile icon={room.icon} size={36} />
                       <span className="min-w-0 flex-1">
@@ -257,7 +257,7 @@ export function GroupInfoModal({
                       onClick={() => onOpenRoomInfo?.(room.id)}
                       aria-label={t("rooms.info.roomInfoAria", { name: room.name })}
                       data-info-room-info={room.name}
-                      className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-text-muted transition-colors hover:bg-surface hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                      className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-text-muted transition-colors hover:bg-surface hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
                     >
                       <Info size={16} aria-hidden />
                     </button>
@@ -275,7 +275,7 @@ export function GroupInfoModal({
           aria-expanded={membersOpen}
           aria-controls="info-members-panel"
           data-info-members-toggle
-          className="flex min-h-16 w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
+          className="flex min-h-16 w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-focus"
         >
           <span className="flex items-center pl-2" aria-hidden>
             {stack.length === 0 ? (
@@ -301,7 +301,7 @@ export function GroupInfoModal({
           <div className="px-3 pb-3 pt-1">
             <GroupMembersSection group={group} viewerId={user.id} onChanged={onGroupChanged} onToast={show} manage={false} />
             {canManagePeople && (
-              <Link href={communityHref(group.id, "members")} className="mt-3 inline-block text-caption font-medium text-primary hover:underline">
+              <Link href={communityHref(group.id, "members")} className="mt-3 inline-block text-caption font-medium text-primary-text hover:underline">
                 {t("groups.info.manageMembers")}
               </Link>
             )}
@@ -350,7 +350,7 @@ export function GroupInfoModal({
               onClick={() => setSettingsOpen((open) => !open)}
               aria-expanded={settingsOpen}
               aria-controls="info-settings-panel"
-              className="flex h-14 w-full items-center gap-4 px-4 text-left text-body text-text transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
+              className="flex h-14 w-full items-center gap-4 px-4 text-left text-body text-text transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-focus"
             >
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface-soft text-text-secondary" aria-hidden>
                 <Settings size={20} />
@@ -377,7 +377,7 @@ export function GroupInfoModal({
       {canManageCommunity && (
         <p className="mx-6 mt-3 shrink-0 text-caption text-text-muted">
           {t("groups.info.communitySettingsHint")}{" "}
-          <Link href={communityHref(group.id, "manage", "settings")} className="font-medium text-primary hover:underline">
+          <Link href={communityHref(group.id, "manage", "settings")} className="font-medium text-primary-text hover:underline">
             {t("groups.info.communitySettingsLink")}
           </Link>
         </p>

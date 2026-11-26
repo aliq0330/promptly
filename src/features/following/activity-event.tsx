@@ -109,7 +109,7 @@ function Row({ actor, last, head, children }: { actor: UserProfile | null; last:
 function Who({ actor }: { actor: UserProfile | null }) {
   if (!actor) return null;
   return (
-    <Link href={profileHref(actor)} className="font-semibold text-text hover:text-primary">
+    <Link href={profileHref(actor)} className="font-semibold text-text hover:text-primary-text">
       {actor.displayName}
     </Link>
   );
@@ -176,8 +176,8 @@ export function ActivityEventRow({ event, last }: { event: ActivityEvent; last: 
           </div>
         )}
         {answered && (
-          <Link href={requestHref(answered)} className="block rounded-md bg-primary-soft px-4 py-3 text-small text-text hover:text-primary">
-            <span className="font-semibold text-primary">{t("follow.requestLabel")} · </span>
+          <Link href={requestHref(answered)} className="block rounded-md bg-primary-soft px-4 py-3 text-small text-text hover:text-primary-text">
+            <span className="font-semibold text-primary-text">{t("follow.requestLabel")} · </span>
             {answered.title}
           </Link>
         )}
@@ -208,7 +208,7 @@ export function ActivityEventRow({ event, last }: { event: ActivityEvent; last: 
         }
       >
         <div className="flex max-w-[640px] flex-col gap-3 rounded-lg card-flat p-4">
-          <Link href={entryHref(item)} className="font-display text-h3 font-bold text-text hover:text-primary">
+          <Link href={entryHref(item)} className="font-display text-h3 font-bold text-text hover:text-primary-text">
             {entryTitle(item)}
           </Link>
           {event.diff && event.diff.length > 0 && (
@@ -265,7 +265,7 @@ export function ActivityEventRow({ event, last }: { event: ActivityEvent; last: 
         {event.result.originalPrompt && (
           <div className="flex min-w-0 flex-1 basis-48 flex-col gap-2">
             {event.result.modificationSummary && <p className="text-small text-text-secondary">{event.result.modificationSummary}</p>}
-            <Link href={promptHref({ id: event.result.originalPrompt.id })} className="text-small font-semibold text-primary hover:text-primary-hover">
+            <Link href={promptHref({ id: event.result.originalPrompt.id })} className="text-small font-semibold text-primary-text hover:text-primary-hover">
               {t("follow.openPrompt", { title: event.result.originalPrompt.title })}
             </Link>
           </div>
@@ -314,13 +314,13 @@ function GroupRow({ event, last }: { event: Extract<ActivityEvent, { kind: "grou
                     <Icon size={24} aria-hidden />
                   </span>
                 )}
-                <span className="line-clamp-2 text-caption font-semibold text-text group-hover:text-primary">{entryTitle(item)}</span>
+                <span className="line-clamp-2 text-caption font-semibold text-text group-hover:text-primary-text">{entryTitle(item)}</span>
               </Link>
             );
           })}
         </div>
       )}
-      <button type="button" onClick={() => setExpanded((value) => !value)} className="self-start text-small font-semibold text-primary hover:text-primary-hover">
+      <button type="button" onClick={() => setExpanded((value) => !value)} className="self-start text-small font-semibold text-primary-text hover:text-primary-hover">
         {expanded ? t("follow.collapseGroup") : t("follow.expandGroup", { count: event.items.length })}
       </button>
     </Row>

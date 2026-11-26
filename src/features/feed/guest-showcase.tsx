@@ -57,7 +57,7 @@ export function GuestShowcase({ onUnavailable }: { onUnavailable: () => void }) 
       className="relative grid overflow-hidden rounded-lg card-flat shadow-card md:grid-cols-[minmax(0,0.85fr)_minmax(0,1fr)]"
     >
       <div className="relative z-10 space-y-3 self-center px-5 pb-5 pt-6 sm:px-8 sm:py-9">
-        <p className="text-caption font-semibold text-primary">{t("nav.tagline")}</p>
+        <p className="text-caption font-semibold text-primary-text">{t("nav.tagline")}</p>
         <h1 id="guest-showcase-title" className="text-h1 font-bold text-text">
           {t("showcase.title")}
         </h1>
@@ -126,7 +126,7 @@ function ShowcaseCard({ prompt, active, open, onToggle }: { prompt: Prompt; acti
         onClick={onToggle}
         aria-expanded={active ? open : undefined}
         aria-label={t("showcase.tileAria", { title: prompt.title })}
-        className="group absolute inset-0 block text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
+        className="group absolute inset-0 block text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-focus"
       >
         <StorageAppearanceImage
           src={media.url}

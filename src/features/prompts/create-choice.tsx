@@ -66,7 +66,7 @@ export function CreateMenuList({ tag = null, community = null, onPick }: { tag?:
         {ROWS.map((option) => (
           <li key={option.key}>
             <Link href={hrefOf(option)} onClick={onPick} data-create-option={option.key} className="group flex min-h-16 items-center gap-3 px-1 py-3 transition-colors">
-              <span className={cn("grid h-11 w-11 shrink-0 place-items-center rounded-xl transition-colors", option.key === "prompt" ? "bg-primary-soft text-primary" : "bg-surface-soft text-text-secondary group-hover:text-primary")}>
+              <span className={cn("grid h-11 w-11 shrink-0 place-items-center rounded-xl transition-colors", option.key === "prompt" ? "bg-primary-soft text-primary-text" : "bg-surface-soft text-text-secondary group-hover:text-primary-text")}>
                 <option.icon size={20} />
               </span>
               <span className="min-w-0 flex-1">
@@ -85,7 +85,7 @@ export function CreateMenuList({ tag = null, community = null, onPick }: { tag?:
             href={hrefOf(option)}
             onClick={onPick}
             data-create-option={option.key}
-            className="flex min-h-20 flex-col items-center justify-center gap-1.5 rounded-xl bg-surface-soft px-2 py-3 text-center text-small font-semibold text-text transition-colors hover:bg-primary-soft hover:text-primary"
+            className="flex min-h-20 flex-col items-center justify-center gap-1.5 rounded-xl bg-surface-soft px-2 py-3 text-center text-small font-semibold text-text transition-colors hover:bg-primary-soft hover:text-primary-text"
           >
             <option.icon size={20} className="text-text-secondary" />
             {t(option.titleKey)}
@@ -99,7 +99,7 @@ export function CreateMenuList({ tag = null, community = null, onPick }: { tag?:
         data-create-share-existing=""
         className="group mt-2 flex min-h-16 w-full items-center gap-3 px-1 py-3 text-left"
       >
-        <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-surface-soft text-text-secondary group-hover:text-primary">
+        <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-surface-soft text-text-secondary group-hover:text-primary-text">
           <Quote size={20} />
         </span>
         <span className="min-w-0 flex-1">

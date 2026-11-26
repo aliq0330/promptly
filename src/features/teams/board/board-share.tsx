@@ -134,7 +134,7 @@ export function ShareDialog({
               <div className="flex items-center gap-2 pt-1">
                 <p className="flex-1 text-caption font-semibold text-text-muted">{t("tb.share.people")}</p>
                 {canEditAccess && (
-                  <button type="button" onClick={onEditAccess} data-board-edit-access="" className="text-small font-semibold text-primary">
+                  <button type="button" onClick={onEditAccess} data-board-edit-access="" className="text-small font-semibold text-primary-text">
                     {t("tb.share.editRoles")}
                   </button>
                 )}
@@ -193,7 +193,7 @@ export function ShareDialog({
                 return (
                   <li key={row.kind}>
                     <button type="button" disabled={!canExport || busy !== null} onClick={() => void runExport(row.kind)} data-board-export={row.kind} className="flex min-h-16 w-full items-center gap-3 rounded-xl px-1 text-left disabled:opacity-50">
-                      <span className="grid h-11 w-11 shrink-0 place-items-center rounded-lg card-flat text-primary">
+                      <span className="grid h-11 w-11 shrink-0 place-items-center rounded-lg card-flat text-primary-text">
                         <Icon size={24} aria-hidden />
                       </span>
                       <span className="min-w-0 flex-1 leading-tight">

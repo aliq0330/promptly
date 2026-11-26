@@ -296,7 +296,7 @@ export function SpacesHome() {
           <ScrollRow as="ul" className="-mx-3 gap-3 px-3 pb-1 sm:mx-0 sm:px-0" data-testid="spaces-recent">
             {recent.map((space) => (
               <li key={space.id} className="w-24 shrink-0 sm:w-28">
-                <Link href={spaceHref(space.id)} className="group block space-y-1.5 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+                <Link href={spaceHref(space.id)} className="group block space-y-1.5 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus">
                   <SpaceCoverArt
                     urls={summaryArt(space)}
                     className="aspect-square w-full overflow-hidden rounded-lg shadow-card transition-transform duration-200 ease-soft group-active:scale-[0.97]"
@@ -445,7 +445,7 @@ function FirstSpaceEmpty({ onCreate }: { onCreate: () => void }) {
   return (
     <div data-testid="spaces-first-empty" className="grid gap-6 rounded-xl border border-dashed border-border p-6 sm:p-8 lg:grid-cols-[1fr_minmax(0,360px)] lg:items-center">
       <div className="space-y-3">
-        <span className="flex h-11 w-11 items-center justify-center rounded-md bg-primary-soft text-primary">
+        <span className="flex h-11 w-11 items-center justify-center rounded-md bg-primary-soft text-primary-text">
           <SpacesIcon size={20} aria-hidden />
         </span>
         <h2 className="text-h2 font-bold text-text">{t("spaces.empty.firstTitle")}</h2>
@@ -463,7 +463,7 @@ function FirstSpaceEmpty({ onCreate }: { onCreate: () => void }) {
       <figure aria-label={t("spaces.empty.exampleLabel")} className="relative rounded-lg card-soft p-4">
         <figcaption className="absolute right-3 top-3 rounded-full bg-surface px-2 py-0.5 text-caption font-semibold text-text-muted">{t("spaces.empty.exampleBadge")}</figcaption>
         <div aria-hidden className="grid grid-cols-3 gap-2 pt-6">
-          <span className="col-span-2 row-span-2 flex aspect-square items-center justify-center rounded-md bg-primary-soft text-primary">
+          <span className="col-span-2 row-span-2 flex aspect-square items-center justify-center rounded-md bg-primary-soft text-primary-text">
             <ImageIcon size={24} />
           </span>
           <span className="flex aspect-square items-center justify-center rounded-md bg-secondary-soft text-secondary">

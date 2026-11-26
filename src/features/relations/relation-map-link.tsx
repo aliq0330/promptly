@@ -38,7 +38,7 @@ export function RelationMapRow({ kind, id }: { kind: RelatableKind; id: string }
     <Link
       href={relationMapHref({ kind, id })}
       data-relation-map-link
-      className="flex min-h-11 items-center gap-3 border-t border-border-soft bg-surface-soft px-4 py-3 text-label font-semibold text-text transition-colors hover:text-primary"
+      className="flex min-h-11 items-center gap-3 border-t border-border-soft bg-surface-soft px-4 py-3 text-label font-semibold text-text transition-colors hover:text-primary-text"
     >
       <Network size={20} aria-hidden />
       <span className="flex-1">{t("relations.open")}</span>

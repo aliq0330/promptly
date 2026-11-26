@@ -117,7 +117,7 @@ export function ForYouSettingsModal({ onClose, onChanged }: { onClose: () => voi
             <InterestChips onChanged={onChanged} />
           </section>
           <p className="rounded-md bg-surface-soft px-3 py-2.5 text-small text-text-secondary">{t("forYou.settingsHow")}</p>
-          <Link href="/discover" onClick={onClose} className="inline-flex text-small font-medium text-primary hover:text-primary-hover">
+          <Link href="/discover" onClick={onClose} className="inline-flex text-small font-medium text-primary-text hover:text-primary-hover">
             {t("feed.goToDiscover")}
           </Link>
         </div>
@@ -176,7 +176,7 @@ export function ForYouSetupBanner({ onOpen }: { onOpen: () => void }) {
   }
   return (
     <Banner aria-label={t("forYou.settingsTitle")} data-for-you-setup onDismiss={dismiss} dismissLabel={t("common.close")}>
-      <button type="button" onClick={onOpen} aria-haspopup="dialog" className="flex min-h-11 min-w-0 flex-1 items-center gap-1.5 text-left text-label font-semibold text-primary">
+      <button type="button" onClick={onOpen} aria-haspopup="dialog" className="flex min-h-11 min-w-0 flex-1 items-center gap-1.5 text-left text-label font-semibold text-primary-text">
         <span className="truncate">{t("forYou.setupBanner")}</span>
         <ChevronRight size={16} aria-hidden className="shrink-0" />
       </button>
@@ -216,7 +216,7 @@ export function ForYouReasonNote({ item, reason }: { item: FeedItem; reason: For
   const Icon = REASON_ICON[reason.kind];
   return (
     <p className="mb-1.5 flex min-w-0 items-center gap-1.5 px-1 text-caption font-semibold text-text-secondary">
-      <Icon size={12} aria-hidden className="shrink-0 text-primary" />
+      <Icon size={12} aria-hidden className="shrink-0 text-primary-text" />
       <span className="truncate">{text}</span>
     </p>
   );

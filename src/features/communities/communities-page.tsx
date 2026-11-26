@@ -315,8 +315,8 @@ export function DiscoverView({
             onClick={() => setCategory(value)}
             aria-pressed={category === value}
             className={
-              "shrink-0 rounded-full border px-3 py-1.5 text-caption font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary " +
-              (category === value ? "border-primary/50 bg-primary-soft text-primary" : "border-border-soft bg-surface text-text-secondary hover:border-border-strong")
+              "shrink-0 rounded-full border px-3 py-1.5 text-caption font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus " +
+              (category === value ? "border-primary/50 bg-primary-soft text-primary-text" : "border-border-soft bg-surface text-text-secondary hover:border-border-strong")
             }
           >
             {value ? t(DOMAIN_LABEL_KEYS[value]) : t("communities.filter.all")}

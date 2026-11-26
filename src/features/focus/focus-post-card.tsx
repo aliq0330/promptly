@@ -57,7 +57,7 @@ import { usePromptVersions, usePromptWorks } from "./use-focus-data";
  */
 
 const ROW =
-  "flex min-h-12 w-full items-center justify-between gap-3 border-t border-border-soft text-left text-body font-semibold text-text transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary";
+  "flex min-h-12 w-full items-center justify-between gap-3 border-t border-border-soft text-left text-body font-semibold text-text transition-colors hover:text-primary-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus";
 
 const SOFT_PANEL = "rounded-lg bg-surface-soft";
 
@@ -131,7 +131,7 @@ function SheetHeader({ item, titleId, onClose }: { item: PostFeedItem; titleId: 
         onClick={onClose}
         aria-label={t("common.close")}
         title={t("common.close")}
-        className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-soft text-text transition-colors hover:bg-surface-elevated focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-soft text-text transition-colors hover:bg-surface-elevated focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
       >
         <X size={20} aria-hidden />
       </button>
@@ -184,7 +184,7 @@ function PromptPane({ prompt, fill, expanded, inline }: { prompt: Prompt; fill: 
           <div className="mb-2 flex items-center justify-between gap-2">
             <h4 className="text-caption font-semibold text-text-secondary">{t("variable.sectionHeading", { count: fill.variables.length })}</h4>
             {fill.isCustomized && (
-              <button type="button" onClick={fill.reset} className="text-caption font-medium text-primary hover:underline">
+              <button type="button" onClick={fill.reset} className="text-caption font-medium text-primary-text hover:underline">
                 {t("prompt.resetToDefaults")}
               </button>
             )}
@@ -218,7 +218,7 @@ function PromptPane({ prompt, fill, expanded, inline }: { prompt: Prompt; fill: 
           {prompt.tags.length > 0 && (
             <div className="flex flex-wrap items-center gap-2 border-t border-border-soft py-3">
               {prompt.tags.slice(0, 8).map((tag) => (
-                <Link key={tag.slug} href={tagHref(tag)} className="inline-flex h-9 items-center rounded-full bg-primary-soft px-3 text-caption font-semibold text-primary hover:bg-primary-soft/70">
+                <Link key={tag.slug} href={tagHref(tag)} className="inline-flex h-9 items-center rounded-full bg-primary-soft px-3 text-caption font-semibold text-primary-text hover:bg-primary-soft/70">
                   #{tag.label}
                 </Link>
               ))}
@@ -266,7 +266,7 @@ function ActionBar({ item, fill, side }: { item: PostFeedItem; fill: PromptFill 
   const { user } = useAuth();
   const action = focusFeedPrimaryAction(item, user?.id ?? null);
   const model = modelOf(item, t);
-  const big = "inline-flex h-12 min-w-0 flex-1 items-center justify-center gap-2 rounded-full bg-primary px-5 text-body font-semibold text-primary-foreground transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary";
+  const big = "inline-flex h-12 min-w-0 flex-1 items-center justify-center gap-2 rounded-full bg-primary px-5 text-body font-semibold text-primary-foreground transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus";
   let main: ReactNode = null;
   if (item.kind === "prompt" && action === "copy") {
     main = (
@@ -283,7 +283,7 @@ function ActionBar({ item, fill, side }: { item: PostFeedItem; fill: PromptFill 
           href={`/studio?prompt=${encodeURIComponent(item.data.id)}`}
           aria-label={t("focusSheet.tryInStudio")}
           title={t("focusSheet.tryInStudio")}
-          className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-border text-text transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary md:w-auto md:gap-2 md:px-5"
+          className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-border text-text transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus md:w-auto md:gap-2 md:px-5"
         >
           <WandSparkles size={20} aria-hidden />
           <span className="max-md:sr-only text-label font-semibold">{t("focusSheet.tryInStudio")}</span>
@@ -757,7 +757,7 @@ export function FocusSidePanel({
         onClick={onHide}
         aria-label={t("focusSheet.hidePanel")}
         title={t("focusSheet.hidePanel")}
-        className="absolute right-4 top-5 z-10 inline-flex h-11 w-11 items-center justify-center rounded-full bg-surface-soft text-text transition-colors hover:bg-surface-elevated focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        className="absolute right-4 top-5 z-10 inline-flex h-11 w-11 items-center justify-center rounded-full bg-surface-soft text-text transition-colors hover:bg-surface-elevated focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
       >
         <ChevronRight size={20} aria-hidden />
       </button>

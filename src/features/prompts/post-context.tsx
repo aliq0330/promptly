@@ -77,7 +77,7 @@ export function RequestResponseContext({
     <ContextBox href={requestHref({ id: requestId })}>
       <span className="flex items-center justify-between gap-2">
         <span className="flex min-w-0 items-center gap-1.5 text-caption font-medium text-text-muted">
-          <Reply size={12} className="shrink-0 text-primary" />
+          <Reply size={12} className="shrink-0 text-primary-text" />
           <span className="truncate">
             {t("prompt.replyToARequest")}
             {request && <> · {request.author.displayName}</>}
@@ -88,7 +88,7 @@ export function RequestResponseContext({
 
       <span className="flex items-center gap-1 text-label font-semibold text-text">
         <span className="truncate">{request?.title ?? t("request.aRequest")}</span>
-        <ArrowUpRight size={12} className="shrink-0 text-text-muted transition-colors group-hover/ctx:text-primary" />
+        <ArrowUpRight size={12} className="shrink-0 text-text-muted transition-colors group-hover/ctx:text-primary-text" />
       </span>
 
       {isSelected && (

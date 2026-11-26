@@ -54,7 +54,7 @@ function Chip({ children, tone = "plain" }: { children: React.ReactNode; tone?: 
     <span
       className={cn(
         "max-w-full truncate rounded-md px-1.5 py-0.5 text-caption leading-4",
-        tone === "flow" ? "bg-primary-soft font-semibold text-primary" : "border border-border-soft bg-surface-soft font-mono text-text-secondary",
+        tone === "flow" ? "bg-primary-soft font-semibold text-primary-text" : "border border-border-soft bg-surface-soft font-mono text-text-secondary",
       )}
     >
       {children}
@@ -130,7 +130,7 @@ function LinkCard({ step, box, lowDetail }: { step: WorkflowStep; box: FlowBox; 
     >
       {!lowDetail && (
         <>
-          <p className={cn("flex items-center gap-1.5 text-caption font-semibold", content ? "text-primary" : "text-text-muted")}>
+          <p className={cn("flex items-center gap-1.5 text-caption font-semibold", content ? "text-primary-text" : "text-text-muted")}>
             {content ? <Icon size={12} aria-hidden /> : <Link2Off size={12} aria-hidden />}
             {content ? t(step.stepType === "request" ? "spaces.content.request" : "spaces.item.prompt") : t(step.contentMissing ? "spaces.source.unavailable" : "wfSpace.flow.noContent")}
           </p>
@@ -199,7 +199,7 @@ export const WorkflowFlowDiagram = memo(function WorkflowFlowDiagram({
       <div className="absolute left-0 top-0 origin-top-left" style={{ width: layout.width, height: layout.height, transform: `translate(${offsetX}px, ${offsetY}px) scale(${scale})` }}>
         <div className="absolute inset-2 rounded-xl border-2 border-dashed border-border-strong bg-surface/60" aria-hidden />
         <div className="absolute flex items-center gap-3" style={{ left: FLOW_PAD_X, right: FLOW_PAD_X, top: 18, height: 32 }}>
-          <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-primary-soft px-2.5 py-1 text-caption font-semibold text-primary">
+          <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-primary-soft px-2.5 py-1 text-caption font-semibold text-primary-text">
             <WorkflowIcon size={16} aria-hidden />
             {t("workflow.singular")}
           </span>
@@ -236,7 +236,7 @@ export const WorkflowFlowDiagram = memo(function WorkflowFlowDiagram({
             .map((arrow) => (
               <span
                 key={`al${arrow.from}`}
-                className="absolute max-w-[120px] -translate-x-1/2 -translate-y-1/2 truncate rounded-full border border-border bg-surface px-2 py-0.5 font-mono text-caption text-primary"
+                className="absolute max-w-[120px] -translate-x-1/2 -translate-y-1/2 truncate rounded-full border border-border bg-surface px-2 py-0.5 font-mono text-caption text-primary-text"
                 style={{ left: arrow.labelX, top: arrow.labelY }}
               >
                 {arrow.label}

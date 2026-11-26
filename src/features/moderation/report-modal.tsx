@@ -187,7 +187,7 @@ export function ReportModal({ target, onClose, onReported }: { target: ReportTar
             <button
               type="button"
               onClick={onClose}
-              className="mt-2 h-11 rounded-full bg-surface-soft px-9 text-body font-semibold text-text transition-colors hover:bg-border-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              className="mt-2 h-11 rounded-full bg-surface-soft px-9 text-body font-semibold text-text transition-colors hover:bg-border-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
             >
               {t("common.close")}
             </button>
@@ -209,7 +209,7 @@ export function ReportModal({ target, onClose, onReported }: { target: ReportTar
                 onClick={onClose}
                 disabled={submitting}
                 aria-label={t("common.close")}
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-soft text-text transition-colors hover:bg-border-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-50"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-soft text-text transition-colors hover:bg-border-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:opacity-50"
               >
                 <X size={20} />
               </button>
@@ -217,7 +217,7 @@ export function ReportModal({ target, onClose, onReported }: { target: ReportTar
 
             <div data-report-preview="" className="mx-5 flex shrink-0 items-center gap-3 rounded-lg bg-surface-soft px-3 py-2.5 sm:mx-6">
               <div className="min-w-0 flex-1">
-                <span className="inline-block rounded-full bg-primary-soft px-2 text-caption font-semibold leading-5 text-primary">{t(REPORT_TYPE_LABEL[target.type])}</span>
+                <span className="inline-block rounded-full bg-primary-soft px-2 text-caption font-semibold leading-5 text-primary-text">{t(REPORT_TYPE_LABEL[target.type])}</span>
                 {previewTitle && <p className="mt-0.5 truncate text-small font-semibold text-text">{previewTitle}</p>}
                 {previewSub && <p className="truncate text-caption text-text-muted">{previewSub}</p>}
               </div>
@@ -290,7 +290,7 @@ export function ReportModal({ target, onClose, onReported }: { target: ReportTar
                   type="button"
                   onClick={onClose}
                   disabled={submitting}
-                  className="h-11 flex-1 rounded-full bg-surface-soft text-body font-semibold text-text transition-colors hover:bg-border-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-50"
+                  className="h-11 flex-1 rounded-full bg-surface-soft text-body font-semibold text-text transition-colors hover:bg-border-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:opacity-50"
                 >
                   {t("report.modal.cancel")}
                 </button>
@@ -304,7 +304,7 @@ export function ReportModal({ target, onClose, onReported }: { target: ReportTar
                     void submit();
                   }}
                   className={cn(
-                    "inline-flex h-11 flex-[1.4] items-center justify-center gap-2 rounded-full text-body font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface",
+                    "inline-flex h-11 flex-[1.4] items-center justify-center gap-2 rounded-full text-body font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-surface",
                     !code ? "cursor-not-allowed bg-surface-soft text-text-muted" : "bg-primary text-primary-foreground hover:bg-primary-hover",
                     submitting && "opacity-80",
                   )}

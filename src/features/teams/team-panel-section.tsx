@@ -148,7 +148,7 @@ export function TeamPanelSection({ ctx }: { ctx: TeamCtx }) {
               <ul className="space-y-1" data-panel-top>
                 {data.top.map((project) => (
                   <li key={project.id} data-panel-top-row>
-                    <Link href={teamLink(team.id, "projects", { project: project.id })} className="flex min-h-11 items-center gap-3 text-small hover:text-primary">
+                    <Link href={teamLink(team.id, "projects", { project: project.id })} className="flex min-h-11 items-center gap-3 text-small hover:text-primary-text">
                       <b className="w-32 truncate font-semibold text-text md:w-36">{project.title}</b>
                       <span aria-hidden className="h-2.5 flex-1 overflow-hidden rounded-full bg-surface-soft">
                         <span className="block h-full rounded-full bg-primary" style={{ width: `${Math.max(4, (project.added / maxTop) * 100)}%` }} />
@@ -174,7 +174,7 @@ export function TeamPanelSection({ ctx }: { ctx: TeamCtx }) {
                     <span className={cn("grid h-7 min-w-7 shrink-0 place-items-center rounded-md px-1.5 text-small font-semibold tabular-nums", alert.tone)}>{alert.n}</span>
                     <span className="flex-1 text-text-secondary">{alert.text}</span>
                     {alert.link && (
-                      <Link href={teamLink(team.id, "approvals")} className="font-semibold text-primary hover:underline">
+                      <Link href={teamLink(team.id, "approvals")} className="font-semibold text-primary-text hover:underline">
                         {t("tm.panel.alert.review")}
                       </Link>
                     )}

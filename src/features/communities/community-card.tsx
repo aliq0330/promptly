@@ -64,11 +64,11 @@ export function CommunityCard({
   ) : (
     <span className="inline-flex min-w-0 items-center gap-x-3 whitespace-nowrap">
       {community.unreadCount > 0 && (
-        <span className="inline-flex items-center gap-1 text-primary">
+        <span className="inline-flex items-center gap-1 text-primary-text">
           <MessagesSquare size={12} aria-hidden /> {t("communities.card.unread", { count: formatUnread(community.unreadCount) })}
         </span>
       )}
-      {community.pendingRequestCount > 0 && <span className="text-primary">{t("communities.card.pendingRequests", { count: community.pendingRequestCount })}</span>}
+      {community.pendingRequestCount > 0 && <span className="text-primary-text">{t("communities.card.pendingRequests", { count: community.pendingRequestCount })}</span>}
       <span className="truncate">
         {memberCountText(t, community.memberCount)}
         {full && ` · ${t("groups.page.full")}`}

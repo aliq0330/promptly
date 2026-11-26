@@ -448,7 +448,7 @@ export function SkillFilesWorkspace({
                 {task.status === "error" && (
                   <>
                     {task.issues.length === 0 && (
-                      <button type="button" onClick={() => uploads.retry(task.id)} className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-caption font-semibold text-primary hover:bg-primary-soft">
+                      <button type="button" onClick={() => uploads.retry(task.id)} className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-caption font-semibold text-primary-text hover:bg-primary-soft">
                         <RefreshCw size={12} aria-hidden /> {t("common.retry")}
                       </button>
                     )}
@@ -597,7 +597,7 @@ function AddFileDialog({
                 setPicked(Array.from(event.target.files ?? []));
                 setError(null);
               }}
-              className="block w-full text-small text-text-secondary file:mr-3 file:rounded-full file:border-0 file:bg-primary-soft file:px-4 file:py-2 file:text-small file:font-semibold file:text-primary"
+              className="block w-full text-small text-text-secondary file:mr-3 file:rounded-full file:border-0 file:bg-primary-soft file:px-4 file:py-2 file:text-small file:font-semibold file:text-primary-text"
             />
           </FormField>
         )}

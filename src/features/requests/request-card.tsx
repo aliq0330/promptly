@@ -78,9 +78,9 @@ export function RequestCard({ request, onDeleted }: { request: PromptRequest; on
             <TextArt seed={request.id}>
               {/* Akış 2.1 (docs/history/451-*): istek bir SORUDUR — başlık tırnak içinde, büyük; altında kısa açıklama ve yanıt sayısı. */}
               <TextArtTitle>
-                <span aria-hidden className="text-primary">“</span>
+                <span aria-hidden className="text-primary-text">“</span>
                 {request.title}
-                <span aria-hidden className="text-primary">”</span>
+                <span aria-hidden className="text-primary-text">”</span>
               </TextArtTitle>
               <p className="line-clamp-3 whitespace-pre-line break-words text-small leading-relaxed">{request.description}</p>
               <p className="inline-flex items-center gap-1.5 text-caption font-semibold">

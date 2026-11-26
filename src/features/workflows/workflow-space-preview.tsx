@@ -210,7 +210,7 @@ export function WorkflowSpacePreview({ workflowId }: { workflowId: string }) {
                   onClick={() => setPickedId(link.spaceId)}
                   className={cn(
                     "inline-flex h-9 max-w-full items-center gap-1.5 rounded-full border px-3 text-small font-semibold transition-colors",
-                    link.spaceId === current.spaceId ? "border-primary bg-primary-soft text-primary" : "border-border bg-surface text-text-secondary hover:bg-surface-soft",
+                    link.spaceId === current.spaceId ? "border-primary bg-primary-soft text-primary-text" : "border-border bg-surface text-text-secondary hover:bg-surface-soft",
                   )}
                 >
                   <Lock size={12} aria-hidden />
@@ -221,7 +221,7 @@ export function WorkflowSpacePreview({ workflowId }: { workflowId: string }) {
           )}
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
             <p className="flex min-w-0 items-center gap-1.5 text-small font-semibold text-text">
-              <Shapes size={16} className="shrink-0 text-primary" aria-hidden />
+              <Shapes size={16} className="shrink-0 text-primary-text" aria-hidden />
               <span className="truncate">{current.spaceTitle}</span>
             </p>
             <span className="inline-flex items-center gap-1 rounded-full bg-surface px-2 py-0.5 text-caption font-semibold text-text-secondary">

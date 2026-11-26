@@ -9,7 +9,7 @@ import { VideoOff } from "@/components/icons/video-off";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
 
-const ROUND = "inline-flex h-12 shrink-0 items-center justify-center rounded-full transition-[background-color,color,transform] duration-200 ease-soft active:scale-[0.94] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-call-stage disabled:opacity-50";
+const ROUND = "inline-flex h-12 shrink-0 items-center justify-center rounded-full transition-[background-color,color,transform] duration-200 ease-soft active:scale-[0.94] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-call-stage disabled:opacity-50";
 
 /**
  * Görüşme denetimleri (docs/history/449-*): mikrofon · (görüntülüde) kamera · bitir. Her düğme erişilebilir ad + ipucu taşır, ≥48 px

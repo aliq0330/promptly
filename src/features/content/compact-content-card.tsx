@@ -65,7 +65,7 @@ export function CompactContentCard({
   if (state.status === "loading") {
     return (
       <div className={cn(SHELL, "h-[4.5rem]", className)} role="status" aria-label={t("commentExtras.attachmentLoading")} data-comment-attachment-state="loading">
-        <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary/60">
+        <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary-text/60">
           <Loader2 size={20} className="animate-spin motion-reduce:animate-none" aria-hidden />
         </span>
         <span className="min-w-0 flex-1 space-y-1.5" aria-hidden>
@@ -94,7 +94,7 @@ export function CompactContentCard({
   const { card } = state;
   const body = (
     <>
-      <span className="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-primary-soft text-primary">
+      <span className="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-primary-soft text-primary-text">
         {card.thumbnailUrl ? (
           <StorageImage src={card.thumbnailUrl} alt="" fill sizes="56px" className="object-cover" />
         ) : (
@@ -133,7 +133,7 @@ export function CompactContentCard({
       aria-label={t("commentExtras.attachmentOpen", { type: typeLabel, title: card.title })}
       data-comment-attachment={attachment.type}
       data-comment-attachment-state="ready"
-      className={cn(SHELL, "transition-colors hover:bg-surface-elevated focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary", className)}
+      className={cn(SHELL, "transition-colors hover:bg-surface-elevated focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus", className)}
     >
       {body}
     </Link>
@@ -148,7 +148,7 @@ function RemoveButton({ onRemove }: { onRemove: () => void }) {
       onClick={onRemove}
       aria-label={t("commentExtras.removeContent")}
       data-comment-extra-remove="attachment"
-      className="absolute -right-2 -top-2 flex h-9 w-9 items-center justify-center rounded-full border-2 border-surface bg-text text-background shadow-xs hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+      className="absolute -right-2 -top-2 flex h-9 w-9 items-center justify-center rounded-full border-2 border-surface bg-text text-background shadow-xs hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
     >
       <X size={16} aria-hidden />
     </button>

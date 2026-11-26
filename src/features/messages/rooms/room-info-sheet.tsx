@@ -92,7 +92,7 @@ export function RoomInfoSheet({
     [t("rooms.info.whoPosts"), room.isDefault ? t("rooms.info.postsDefault") : room.postingPolicy === "admins" ? t("rooms.info.postsStaff") : t("rooms.info.postsAll")],
   ];
   const rowClass =
-    "flex min-h-12 w-full items-center gap-3 border-b border-border-soft px-4 text-left last:border-b-0 hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary disabled:opacity-50";
+    "flex min-h-12 w-full items-center gap-3 border-b border-border-soft px-4 text-left last:border-b-0 hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-focus disabled:opacity-50";
 
   return (
     <>
@@ -106,7 +106,7 @@ export function RoomInfoSheet({
               </h2>
               <p className="truncate text-small text-text-muted">{t("rooms.info.title", { community: community.name })}</p>
             </div>
-            <button type="button" onClick={onClose} aria-label={t("common.close")} className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-surface-soft text-text-secondary hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+            <button type="button" onClick={onClose} aria-label={t("common.close")} className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-surface-soft text-text-secondary hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus">
               <X size={20} aria-hidden />
             </button>
           </div>
@@ -149,8 +149,8 @@ export function RoomInfoSheet({
                 <span className="min-w-0 flex-1 text-small font-semibold text-text">{t("rooms.info.search")}</span>
               </button>
               <Link href={communityHref(community.id)} data-room-info-row="community" className={rowClass}>
-                <ArrowUpRight size={20} className="shrink-0 text-primary" aria-hidden />
-                <span className="min-w-0 flex-1 text-small font-semibold text-primary">{t("rooms.info.communityPage")}</span>
+                <ArrowUpRight size={20} className="shrink-0 text-primary-text" aria-hidden />
+                <span className="min-w-0 flex-1 text-small font-semibold text-primary-text">{t("rooms.info.communityPage")}</span>
               </Link>
             </div>
 

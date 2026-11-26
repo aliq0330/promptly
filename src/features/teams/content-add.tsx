@@ -62,7 +62,7 @@ function ContentAddChoice({ kind, onCreate, onPick, onClose }: { kind: TeamCreat
         </h2>
         <div className="grid gap-3">
           <button type="button" onClick={onCreate} data-add-choice="create" className="flex items-center gap-3 rounded-lg card-flat p-4 text-left transition-colors hover:bg-surface-soft">
-            <span aria-hidden className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-primary-soft text-primary">
+            <span aria-hidden className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-primary-soft text-primary-text">
               <Plus size={20} />
             </span>
             <span className="min-w-0">
@@ -71,7 +71,7 @@ function ContentAddChoice({ kind, onCreate, onPick, onClose }: { kind: TeamCreat
             </span>
           </button>
           <button type="button" onClick={onPick} data-add-choice="pick" className="flex items-center gap-3 rounded-lg card-flat p-4 text-left transition-colors hover:bg-surface-soft">
-            <span aria-hidden className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-primary-soft text-primary">
+            <span aria-hidden className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-primary-soft text-primary-text">
               <Search size={20} />
             </span>
             <span className="min-w-0">

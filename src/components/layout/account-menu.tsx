@@ -196,7 +196,7 @@ function ShortcutGrid({ items, onNavigate }: { items: NavItem[]; onNavigate: () 
                 onClick={onNavigate}
                 className="flex min-h-21 flex-col items-center justify-center gap-1 rounded-lg card-inset px-1 text-center text-label font-semibold text-text transition-colors duration-200 hover:bg-surface-soft"
               >
-                <Icon size={24} className="text-primary" />
+                <Icon size={24} className="text-primary-text" />
                 <span className="max-w-full truncate">{t(item.tileLabelKey ?? item.labelKey)}</span>
               </Link>
             </li>
@@ -348,7 +348,7 @@ export function PhoneAccountButton() {
         aria-haspopup="dialog"
         aria-expanded={open}
         data-header-you=""
-        className="relative ml-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary md:hidden"
+        className="relative ml-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus md:hidden"
       >
         <Avatar src={profile?.avatarUrl} alt={profile?.displayName ?? ""} size={32} className={open ? "ring-2 ring-primary" : undefined} />
         <span aria-hidden className="absolute -bottom-0.5 -right-0.5 grid h-4.5 w-4.5 place-items-center rounded-full border border-border bg-surface text-text">
@@ -396,7 +396,7 @@ export function RailAccount() {
         aria-haspopup="menu"
         aria-expanded={open}
         data-nav-you=""
-        className={cn("flex h-16 w-full flex-col items-center justify-center gap-1 rounded-lg text-caption font-medium transition-colors duration-200 hover:bg-surface-soft", open ? "text-primary" : "text-text-secondary")}
+        className={cn("flex h-16 w-full flex-col items-center justify-center gap-1 rounded-lg text-caption font-medium transition-colors duration-200 hover:bg-surface-soft", open ? "text-primary-text" : "text-text-secondary")}
       >
         <Avatar src={profile.avatarUrl} alt={profile.displayName} size={32} className={open ? "ring-2 ring-primary" : undefined} badge={<OwnPresenceDot avatarSize={32} />} />
         <span>{t("nav.you")}</span>

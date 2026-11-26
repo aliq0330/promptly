@@ -114,7 +114,7 @@ export function ConversationRow({
             {showKindTag && group && (
               <span
                 data-kind-tag={team ? "team" : "community"}
-                className={cn("shrink-0 rounded-full px-2 py-0.5 text-caption font-semibold", team ? "bg-primary-soft text-primary" : "bg-success-soft text-success")}
+                className={cn("shrink-0 rounded-full px-2 py-0.5 text-caption font-semibold", team ? "bg-primary-soft text-primary-text" : "bg-success-soft text-success")}
               >
                 {t(team ? "rooms.filter.team" : "rooms.filter.community")}
               </span>
@@ -134,11 +134,11 @@ export function ConversationRow({
           ) : (
           <span className={cn("line-clamp-2 min-w-0 flex-1 break-words text-small", unread ? "font-medium text-text" : "text-text-muted")}>
             {team && (
-              <span data-team-channel className="font-semibold text-primary">
+              <span data-team-channel className="font-semibold text-primary-text">
                 # {team.channelName} ·{" "}
               </span>
             )}
-            {lastRoom && <span data-last-room className="font-semibold text-primary"># {roomSlug(lastRoom.name)} </span>}
+            {lastRoom && <span data-last-room className="font-semibold text-primary-text"># {roomSlug(lastRoom.name)} </span>}
             {callSummary ? (
               <span data-call-preview={callSummary.outcome} className={cn("inline-flex items-center gap-1", callSummary.outcome === "missed" && "font-semibold text-danger")}>
                 {callSummary.type === "video" ? <Video size={16} aria-hidden /> : <Phone size={16} aria-hidden />}
@@ -168,7 +168,7 @@ export function ConversationRow({
               <>
                 {rollup ? (
                   <span data-team-last>
-                    <span data-team-channel className="font-semibold text-primary"># {team.channelName}</span> · {conversation.lastMessage}
+                    <span data-team-channel className="font-semibold text-primary-text"># {team.channelName}</span> · {conversation.lastMessage}
                   </span>
                 ) : (
                   <>
@@ -195,7 +195,7 @@ export function ConversationRow({
 
   // Meydan düz liste (WhatsApp tarzı): kutusuz, tam genişlikte satırlar; açık sohbet ve seçili satır dolgulu zemin alır.
   const rowClass = cn(
-    "flex items-stretch pl-4 text-left transition-colors duration-200 ease-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary",
+    "flex items-stretch pl-4 text-left transition-colors duration-200 ease-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-focus",
     selected ? "bg-primary-soft" : isActive ? "bg-primary-soft" : "hover:bg-surface-soft",
   );
 

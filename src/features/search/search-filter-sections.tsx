@@ -160,7 +160,7 @@ function FinderInput({ value, onChange, placeholder, label }: { value: string; o
         placeholder={placeholder}
         aria-label={label}
         autoComplete="off"
-        className="h-11 w-full rounded-md card-flat pl-10 pr-3 text-small text-text placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+        className="h-11 w-full rounded-md card-flat pl-10 pr-3 text-small text-text placeholder:text-text-muted focus:border-focus focus:outline-none focus:ring-2 focus:ring-primary/20"
       />
     </div>
   );
@@ -235,7 +235,7 @@ function TokenFinder({
             const { icon: Icon, label } = tokenChip(token, t);
             return (
               <span key={tokenKey(token)} className="inline-flex h-10 items-center gap-1.5 rounded-full bg-primary-soft pl-3 pr-1 text-label font-medium text-text">
-                <Icon size={16} className="text-primary" aria-hidden />
+                <Icon size={16} className="text-primary-text" aria-hidden />
                 {label}
                 <button
                   type="button"
@@ -305,7 +305,7 @@ function ToolSection({ selected, onToggle, has, bare }: { selected: SearchToken[
         </SheetChips>
         {expanded && filtered.length === 0 && <p className="text-caption text-text-muted">{t("search.noMatch")}</p>}
         {tools.length > TOOL_PREVIEW && (
-          <button type="button" onClick={() => setExpanded((value) => !value)} className="h-9 text-label font-semibold text-primary hover:text-primary-hover">
+          <button type="button" onClick={() => setExpanded((value) => !value)} className="h-9 text-label font-semibold text-primary-text hover:text-primary-hover">
             {expanded ? t("search.showLess") : t("search.showAll", { count: tools.length })}
           </button>
         )}

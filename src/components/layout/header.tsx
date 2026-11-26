@@ -77,7 +77,7 @@ export function Header() {
           aria-label={t("nav.focus")}
           title={t("nav.focus")}
           data-header-focus=""
-          className="inline-flex h-10 w-10 shrink-0 items-center justify-center gap-2 rounded-full text-text-muted max-md:hidden transition-colors duration-200 hover:bg-surface-soft hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary lg:mr-1 lg:w-auto lg:border lg:border-border lg:px-4 lg:text-label lg:font-semibold lg:text-text"
+          className="inline-flex h-10 w-10 shrink-0 items-center justify-center gap-2 rounded-full text-text-muted max-md:hidden transition-colors duration-200 hover:bg-surface-soft hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus lg:mr-1 lg:w-auto lg:border lg:border-border lg:px-4 lg:text-label lg:font-semibold lg:text-text"
         >
           <Focus size={20} aria-hidden />
           <span className="max-lg:sr-only">{t("nav.focus")}</span>

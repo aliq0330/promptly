@@ -153,7 +153,7 @@ export function StarredMessagesView() {
                   <span className="min-w-0 flex-1">
                     <span className="flex items-center gap-2 text-caption text-text-muted">
                       <span className="max-w-[12rem] truncate font-semibold text-text-secondary">{item.chatName}</span>
-                      {item.kind === "group" && <span className="rounded-full bg-primary-soft px-1.5 py-px text-caption font-medium text-primary">{t("chat.starred.groupTag")}</span>}
+                      {item.kind === "group" && <span className="rounded-full bg-primary-soft px-1.5 py-px text-caption font-medium text-primary-text">{t("chat.starred.groupTag")}</span>}
                       <span className="ml-auto shrink-0">{formatRelativeTime(item.createdAt, language)}</span>
                     </span>
                     <span className="mt-0.5 block text-caption text-text-muted">{item.senderName}</span>

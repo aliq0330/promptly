@@ -81,9 +81,9 @@ export function CollectionAddContent({
               type="button"
               onClick={() => setKind(row.kind)}
               data-collection-add-kind={row.kind}
-              className="flex w-full items-center gap-3 rounded-md border border-border p-3 text-left text-small font-medium text-text transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              className="flex w-full items-center gap-3 rounded-md border border-border p-3 text-left text-small font-medium text-text transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
             >
-              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-md bg-primary-soft text-primary">
+              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-md bg-primary-soft text-primary-text">
                 <row.icon size={20} aria-hidden />
               </span>
               {t(row.label)}

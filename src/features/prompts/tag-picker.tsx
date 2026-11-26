@@ -81,7 +81,7 @@ export function TagPicker({ picker, disabled }: TagPickerProps) {
               className={cn(
                 "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-caption font-medium",
                 source === "automatic"
-                  ? "border-primary/40 bg-primary/10 text-primary"
+                  ? "border-primary/40 bg-primary/10 text-primary-text"
                   : "border-border bg-surface text-text",
               )}
             >
@@ -129,7 +129,7 @@ export function TagPicker({ picker, disabled }: TagPickerProps) {
                     }}
                     disabled={isAccepting}
                     title={tag.isCandidate ? t("tagPicker.candidateHint") : undefined}
-                    className="inline-flex items-center gap-1 rounded-full border border-dashed border-border px-2.5 py-1 text-caption font-medium text-text-muted transition-colors hover:border-primary hover:text-primary disabled:opacity-50"
+                    className="inline-flex items-center gap-1 rounded-full border border-dashed border-border px-2.5 py-1 text-caption font-medium text-text-muted transition-colors hover:border-primary hover:text-primary-text disabled:opacity-50"
                   >
                     <Plus size={12} />
                     {tag.label}
@@ -183,7 +183,7 @@ export function TagPicker({ picker, disabled }: TagPickerProps) {
                   type="button"
                   onClick={handleCreate}
                   disabled={isCreating}
-                  className="flex w-full items-center gap-1.5 border-t border-border px-3 py-2 text-left text-small font-medium text-primary hover:bg-accent-surface disabled:opacity-50"
+                  className="flex w-full items-center gap-1.5 border-t border-border px-3 py-2 text-left text-small font-medium text-primary-text hover:bg-accent-surface disabled:opacity-50"
                 >
                   <Plus size={12} />
                   {isCreating ? t("tagPicker.creating") : t("tagPicker.createTagAction", { label: query.trim() })}

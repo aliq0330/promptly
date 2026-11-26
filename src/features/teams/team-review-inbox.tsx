@@ -137,7 +137,7 @@ export function TeamReviewInbox({ ctx, detail, onChanged }: { ctx: TeamCtx; deta
               type="button"
               onClick={() => setFileFilter(file.id)}
               aria-pressed={fileFilter === file.id}
-              className={cn("h-9 rounded-full border px-3 text-small", fileFilter === file.id ? "border-primary bg-primary-soft font-semibold text-primary" : "border-border-soft bg-surface text-text-secondary")}
+              className={cn("h-9 rounded-full border px-3 text-small", fileFilter === file.id ? "border-primary bg-primary-soft font-semibold text-primary-text" : "border-border-soft bg-surface text-text-secondary")}
             >
               {file.title}
             </button>

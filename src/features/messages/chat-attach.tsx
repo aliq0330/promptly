@@ -73,7 +73,7 @@ export function ChatAttachSheet({
 }) {
   const { t } = useTranslation();
   const rowClass =
-    "flex min-h-16 w-full items-center gap-4 rounded-xl px-2 text-left transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary";
+    "flex min-h-16 w-full items-center gap-4 rounded-xl px-2 text-left transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus";
   return (
     <Modal onClose={onClose} labelledBy="chat-attach-title" variant="sheet">
       <div data-chat-attach className="flex w-full max-w-lg flex-col overflow-y-auto rounded-t-lg border border-b-0 border-border-soft bg-surface px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-5 shadow-pop">
@@ -81,7 +81,7 @@ export function ChatAttachSheet({
           {t("messages.attach.title")}
         </h2>
         <button type="button" onClick={onPhoto} className={rowClass} data-attach-photo>
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary-soft text-primary">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary-soft text-primary-text">
             <ImagePlus size={24} aria-hidden />
           </span>
           <span className="flex flex-col">
@@ -91,7 +91,7 @@ export function ChatAttachSheet({
         </button>
         {onGif && (
           <button type="button" onClick={onGif} className={rowClass} data-attach-gif>
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary-soft text-primary">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary-soft text-primary-text">
               <span aria-hidden className="rounded-xs border-[1.75px] border-current px-[3px] py-[2px] text-caption font-semibold leading-none">
                 {t("gif.badge")}
               </span>
@@ -104,7 +104,7 @@ export function ChatAttachSheet({
         )}
         {onImport && (
           <button type="button" onClick={onImport} className={rowClass} data-attach-import>
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary-soft text-primary">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary-soft text-primary-text">
               <FileDown size={24} aria-hidden />
             </span>
             <span className="flex flex-col">
@@ -124,9 +124,9 @@ export function ChatAttachSheet({
                     type="button"
                     onClick={() => onPickType(type)}
                     data-attach-library={type}
-                    className="flex w-full flex-col items-center gap-2 rounded-xl px-1 py-1.5 text-text transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                    className="flex w-full flex-col items-center gap-2 rounded-xl px-1 py-1.5 text-text transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
                   >
-                    <span className="flex h-14 w-14 items-center justify-center rounded-lg bg-primary-soft text-primary">
+                    <span className="flex h-14 w-14 items-center justify-center rounded-lg bg-primary-soft text-primary-text">
                       <Icon size={24} aria-hidden />
                     </span>
                     <span className="text-caption font-medium">{t(`communities.feed.type.${type}`)}</span>
@@ -219,7 +219,7 @@ export function ChatLibraryPicker({
                 options={items.map((item) => ({
                   key: item.id,
                   leading: (
-                    <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-primary-soft text-primary">
+                    <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-primary-soft text-primary-text">
                       <Icon size={24} aria-hidden />
                     </span>
                   ),

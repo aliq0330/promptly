@@ -19,7 +19,7 @@ function Section({ id, n, total, title, children }: { id: string; n: number; tot
   return (
     <section id={id} data-dev-section={id} aria-labelledby={`${id}-title`} className="scroll-mt-24 space-y-4">
       <div className="space-y-1">
-        <p className="text-caption font-semibold text-primary">{t("devSec.eyebrow", { n, total })}</p>
+        <p className="text-caption font-semibold text-primary-text">{t("devSec.eyebrow", { n, total })}</p>
         <h2 id={`${id}-title`} className="text-h2 text-text">
           {title}
         </h2>
@@ -46,7 +46,7 @@ function StartCard({ target, title, desc }: { target: string; title: string; des
       type="button"
       onClick={() => scrollToSection(target)}
       data-dev-start={target}
-      className="group flex w-full items-center gap-3 rounded-lg card-flat p-4 text-left shadow-card transition-colors duration-200 ease-soft hover:border-border-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+      className="group flex w-full items-center gap-3 rounded-lg card-flat p-4 text-left shadow-card transition-colors duration-200 ease-soft hover:border-border-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
     >
       <span className="min-w-0 flex-1">
         <span className="block text-body font-semibold text-text">{title}</span>
@@ -152,7 +152,7 @@ export function DevelopersPage() {
               <h3 className="text-h3 text-text">{t("devAccount.codeTitle")}</h3>
               <p className="text-body leading-relaxed text-text-secondary">{t("dev.meLead")}</p>
               <p>
-                <Link href="/settings/developer" className="font-medium text-primary underline underline-offset-2 hover:no-underline">
+                <Link href="/settings/developer" className="font-medium text-primary-text underline underline-offset-2 hover:no-underline">
                   {t("dev.meKeyLink")}
                 </Link>
               </p>
@@ -224,7 +224,7 @@ export function DevelopersPage() {
                 href={endpoints.openApiUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="break-all font-medium text-primary underline underline-offset-2 hover:no-underline"
+                className="break-all font-medium text-primary-text underline underline-offset-2 hover:no-underline"
               >
                 openapi.json
               </a>
@@ -266,11 +266,11 @@ export function DevelopersPage() {
         </ul>
         <p className="text-body text-text-secondary">
           {t("dev.rulesTerms")}{" "}
-          <Link href="/terms" className="font-medium text-primary underline underline-offset-2 hover:no-underline">
+          <Link href="/terms" className="font-medium text-primary-text underline underline-offset-2 hover:no-underline">
             {t("legal.termsTitle")}
           </Link>
           . {t("dev.contact")}{" "}
-          <a href={`mailto:${LEGAL_CONTACT_EMAIL}`} className="font-medium text-primary underline underline-offset-2 hover:no-underline">
+          <a href={`mailto:${LEGAL_CONTACT_EMAIL}`} className="font-medium text-primary-text underline underline-offset-2 hover:no-underline">
             {LEGAL_CONTACT_EMAIL}
           </a>
         </p>

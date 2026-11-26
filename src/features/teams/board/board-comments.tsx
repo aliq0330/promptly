@@ -169,7 +169,7 @@ export function CommentText({ body }: { body: string }) {
     <>
       {parts.map((part, index) =>
         /^@[A-Za-z0-9_]{2,30}$/.test(part) ? (
-          <span key={index} className="font-semibold text-primary">
+          <span key={index} className="font-semibold text-primary-text">
             {part}
           </span>
         ) : (
@@ -409,7 +409,7 @@ export function CommentsPanel({
         <h2 className="font-display text-h3 font-extrabold text-text">{t("tb.comments.title")}</h2>
         <span className="rounded-full bg-surface-soft px-2 py-0.5 text-caption font-semibold text-text-secondary">{threads.length}</span>
         <span className="flex-1" />
-        <button type="button" onClick={onNew} data-comment-new="" className="inline-flex h-10 items-center gap-1.5 rounded-full bg-primary-soft px-4 text-small font-semibold text-primary">
+        <button type="button" onClick={onNew} data-comment-new="" className="inline-flex h-10 items-center gap-1.5 rounded-full bg-primary-soft px-4 text-small font-semibold text-primary-text">
           <MessageCircle size={16} aria-hidden />
           {t("tb.comments.new")}
         </button>
@@ -489,7 +489,7 @@ export function CommentsPanel({
                   aria-label={t("tb.comments.locate")}
                   title={t("tb.comments.locate")}
                   data-comment-locate={root.id}
-                  className={cn("grid h-9 w-9 shrink-0 place-items-center rounded-full", active ? "bg-primary text-primary-foreground" : "bg-surface-soft text-text-secondary hover:text-primary")}
+                  className={cn("grid h-9 w-9 shrink-0 place-items-center rounded-full", active ? "bg-primary text-primary-foreground" : "bg-surface-soft text-text-secondary hover:text-primary-text")}
                 >
                   <MapPin size={20} aria-hidden />
                 </button>
@@ -515,7 +515,7 @@ export function CommentsPanel({
                   />
                 )}
               </div>
-              {thread.boardTitle && <p className="text-caption font-semibold text-primary">{thread.boardTitle}</p>}
+              {thread.boardTitle && <p className="text-caption font-semibold text-primary-text">{thread.boardTitle}</p>}
               <CommentTargetChip item={target ?? null} itemTitle={itemTitle} />
               {editing === root.id ? (
                 <CommentInput
@@ -577,7 +577,7 @@ export function CommentsPanel({
               ) : (
                 <div className="flex items-center gap-3 text-small font-semibold">
                   <span className="text-text-secondary">{thread.replies.length > 0 ? t("tb.comments.replies", { count: thread.replies.length }) : t("tb.comments.noReplies")}</span>
-                  <button type="button" onClick={() => setReplyTo(root.id)} className="text-primary" data-comment-reply-open={root.id}>
+                  <button type="button" onClick={() => setReplyTo(root.id)} className="text-primary-text" data-comment-reply-open={root.id}>
                     {t("tb.comments.reply")}
                   </button>
                 </div>
@@ -640,7 +640,7 @@ export function CommentPeek({
           <span aria-hidden className="text-h3">›</span>
         </button>
         <span className="flex-1" />
-        <button type="button" onClick={onList} className="h-11 rounded-full bg-primary-soft px-4 text-small font-semibold text-primary">
+        <button type="button" onClick={onList} className="h-11 rounded-full bg-primary-soft px-4 text-small font-semibold text-primary-text">
           {t("tb.comments.backToList")}
         </button>
       </div>

@@ -273,7 +273,7 @@ export function OwnerActivitySheet({ story, initialTab, onClose, onLeave }: { st
                         onLeave();
                         router.push(`/stories/create?story=${story.id}&answer=${answer.id}`);
                       }}
-                      className="inline-flex min-h-9 items-center gap-1 rounded-full px-2 font-semibold text-primary hover:bg-primary-soft"
+                      className="inline-flex min-h-9 items-center gap-1 rounded-full px-2 font-semibold text-primary-text hover:bg-primary-soft"
                     >
                       <Share2 size={12} aria-hidden /> {t("stories.question.shareAnswer")}
                     </button>

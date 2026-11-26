@@ -54,7 +54,7 @@ export function CollectionBand({ collection, items, members }: { collection: Col
             <Avatar src={collection.owner.avatarUrl} alt={collection.owner.displayName} size={32} />
           )}
           <span className="min-w-0 text-label leading-tight">
-            <span className="font-semibold text-text transition-colors group-hover:text-primary">
+            <span className="font-semibold text-text transition-colors group-hover:text-primary-text">
               {collection.isShared && collection.memberCount > 0
                 ? collection.memberCount === 1
                   ? t("collab.withPartnerOne", { owner: collection.owner.displayName })

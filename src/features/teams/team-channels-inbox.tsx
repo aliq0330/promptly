@@ -55,7 +55,7 @@ export function TeamChannelsInbox() {
         <section key={team.id} aria-label={team.name}>
           <h2 className="mb-1 flex items-center gap-2 text-label font-semibold">
             <TeamMark name={team.name} tone={team.tone} size={22} />
-            <Link href={teamLink(team.id)} className="truncate hover:text-primary">
+            <Link href={teamLink(team.id)} className="truncate hover:text-primary-text">
               {team.name}
             </Link>
           </h2>

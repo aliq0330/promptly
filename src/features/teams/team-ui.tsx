@@ -21,7 +21,7 @@ const TONE_ALIAS: Record<string, TeamLook> = { primary: "primary", sky: "sky", p
 export const resolveTeamTone = (tone: string | null | undefined): TeamLook => TONE_ALIAS[tone ?? "primary"] ?? "primary";
 
 const TONE_CLASS: Record<TeamLook, string> = {
-  primary: "bg-primary-soft text-primary",
+  primary: "bg-primary-soft text-primary-text",
   sky: "bg-[color-mix(in_srgb,var(--color-primary)_6%,var(--color-surface-soft))] text-text-secondary",
   plum: "bg-surface-soft text-text-secondary",
 };

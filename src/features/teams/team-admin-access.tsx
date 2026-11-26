@@ -115,7 +115,7 @@ export function AdminGroupsSection({ ctx }: { ctx: TeamCtx }) {
                   onClick={() => setSelectedId(group.id)}
                   aria-pressed={on}
                   data-group-item={group.id}
-                  className={cn("flex w-full items-center gap-3 rounded-xl border bg-surface p-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary", on ? "border-2 border-primary" : "border-border-soft hover:border-border-strong")}
+                  className={cn("flex w-full items-center gap-3 rounded-xl border bg-surface p-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus", on ? "border-2 border-primary" : "border-border-soft hover:border-border-strong")}
                 >
                   <TeamMark name={group.name} tone={group.tone} size={40} />
                   <span className="min-w-0 flex-1">
@@ -132,7 +132,7 @@ export function AdminGroupsSection({ ctx }: { ctx: TeamCtx }) {
             );
           })}
           <li>
-            <button type="button" onClick={() => setEditing("new")} data-group-new className="flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-dashed border-border-strong text-small font-semibold text-text-secondary hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+            <button type="button" onClick={() => setEditing("new")} data-group-new className="flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-dashed border-border-strong text-small font-semibold text-text-secondary hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus">
               <Plus size={16} aria-hidden />
               {t("tm.groups.new")}
             </button>
@@ -196,7 +196,7 @@ function GroupMembersCard({ group, members }: { group: TeamGroup; members: TeamM
           <span key={m.userId} className="inline-flex items-center gap-1.5 rounded-full bg-surface-soft py-1 pl-1 pr-3 text-caption font-semibold text-text">
             <Avatar src={m.avatarUrl} alt={m.displayName || m.username} size={24} />
             {m.displayName || m.username}
-            {group.leadId === m.userId && <span className="rounded-full bg-primary-soft px-1.5 text-caption text-primary">{t("tm.groups.leadBadge")}</span>}
+            {group.leadId === m.userId && <span className="rounded-full bg-primary-soft px-1.5 text-caption text-primary-text">{t("tm.groups.leadBadge")}</span>}
           </span>
         ))}
         {rest > 0 && <span className="inline-flex items-center rounded-full border border-border-soft px-3 py-1 text-caption font-semibold text-text-muted">{t("tm.groups.more", { count: rest })}</span>}
@@ -352,7 +352,7 @@ export function AdminGuestsSection({ ctx }: { ctx: TeamCtx }) {
       aria-label={t("tm.guests.extend")}
       value=""
       onChange={(event) => event.target.value && void run(() => extendGuest(ctx.team.id, guest.userId, Number(event.target.value)), t("tm.guests.extended"))}
-      className="h-9 rounded-full border border-border bg-surface px-3 text-caption font-semibold text-primary"
+      className="h-9 rounded-full border border-border bg-surface px-3 text-caption font-semibold text-primary-text"
       data-guest-extend
     >
       <option value="">{t("tm.guests.extend")}</option>

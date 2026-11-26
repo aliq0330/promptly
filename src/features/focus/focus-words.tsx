@@ -45,7 +45,7 @@ export function FocusPromptWords({
                 aria-label={segment.name}
                 className={cn(
                   TOKEN_INK,
-                  "inline cursor-pointer break-words text-left align-baseline font-medium transition-colors hover:bg-secondary/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+                  "inline cursor-pointer break-words text-left align-baseline font-medium transition-colors hover:bg-secondary/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus",
                   empty && "border border-dashed border-secondary/60",
                   editing === segment.name && "bg-secondary text-secondary-foreground ring-2 ring-primary",
                 )}

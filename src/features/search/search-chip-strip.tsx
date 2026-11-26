@@ -39,7 +39,7 @@ export function SearchChipStrip({
               pendingKey === key && "ring-2 ring-primary",
             )}
           >
-            <Icon size={16} className="text-primary" aria-hidden />
+            <Icon size={16} className="text-primary-text" aria-hidden />
             <span>{label}</span>
             <button
               type="button"
@@ -58,7 +58,7 @@ export function SearchChipStrip({
       <button
         type="button"
         onClick={onClear}
-        className="inline-flex h-9 shrink-0 items-center px-2 text-label font-semibold whitespace-nowrap text-primary hover:text-primary-hover"
+        className="inline-flex h-9 shrink-0 items-center px-2 text-label font-semibold whitespace-nowrap text-primary-text hover:text-primary-hover"
       >
         {t("search.clear")}
       </button>

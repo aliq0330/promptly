@@ -80,7 +80,7 @@ export function CommunityAside({ group, people, onReadRules }: { group: ChatGrou
               </li>
             ))}
           </ol>
-          <button type="button" onClick={onReadRules} className="mt-2.5 flex items-center gap-1 rounded-sm text-caption font-semibold text-primary hover:text-primary-hover">
+          <button type="button" onClick={onReadRules} className="mt-2.5 flex items-center gap-1 rounded-sm text-caption font-semibold text-primary-text hover:text-primary-hover">
             {t("communities.aside.readRules")} <ArrowRight size={12} aria-hidden />
           </button>
         </section>
@@ -95,7 +95,7 @@ export function CommunityAside({ group, people, onReadRules }: { group: ChatGrou
             {staff.slice(0, 6).map((person) => (
               <li key={person.userId} className="flex items-center gap-3">
                 <Avatar src={person.avatarUrl} alt={person.displayName} size={32} />
-                <Link href={profileHref(person)} className="min-w-0 flex-1 truncate text-small font-semibold text-text hover:text-primary">
+                <Link href={profileHref(person)} className="min-w-0 flex-1 truncate text-small font-semibold text-text hover:text-primary-text">
                   {person.displayName}
                 </Link>
                 <RoleBadge role={person.role as GroupRole} />

@@ -95,12 +95,12 @@ const KIND_ICON: Record<DetailKind | "workflow" | "preset" | "request", IconComp
   request: LayoutDashboard,
 };
 const KIND_TONE: Record<DetailKind | "workflow" | "preset" | "request", string> = {
-  prompt: "bg-primary-soft text-primary",
+  prompt: "bg-primary-soft text-primary-text",
   image: "bg-success-soft text-success",
   note: "bg-warning-soft text-warning",
   palette: "bg-secondary-soft text-secondary",
   content: "bg-surface-soft text-text-secondary",
-  workflow: "bg-primary-soft text-primary",
+  workflow: "bg-primary-soft text-primary-text",
   preset: "bg-secondary-soft text-secondary",
   request: "bg-surface-soft text-text-secondary",
 };
@@ -356,7 +356,7 @@ function ItemBody({ ctx, role, item, palette, onChanged }: { ctx: AreaItemContex
             boardIds.map((id) => {
               const board = ctx.placement?.boards.find((entry) => entry.id === id);
               return board ? (
-                <Link key={id} href={ctx.placement!.boardHref(id, null)} className="rounded-full bg-primary-soft px-2.5 py-1 text-caption font-semibold text-primary" data-item-board={id}>
+                <Link key={id} href={ctx.placement!.boardHref(id, null)} className="rounded-full bg-primary-soft px-2.5 py-1 text-caption font-semibold text-primary-text" data-item-board={id}>
                   {board.title}
                 </Link>
               ) : null;
@@ -715,7 +715,7 @@ function PromptSection({ ctx, item, role, onChanged }: { ctx: AreaItemContext; i
       )}
       {item.note && <p className="break-words rounded-xl bg-surface-soft px-3 py-2 text-small text-text-secondary">{item.note}</p>}
       {resolved.href && !item.isDraft && (
-        <Link href={resolved.href} className="inline-flex items-center gap-1 text-small font-semibold text-primary hover:underline">
+        <Link href={resolved.href} className="inline-flex items-center gap-1 text-small font-semibold text-primary-text hover:underline">
           {t("spaces.source.open")}
           <ArrowUpRight size={16} aria-hidden />
         </Link>
@@ -858,7 +858,7 @@ function PaletteSection({ palette }: { palette: SpacePalette }) {
             <button type="button" onClick={() => void copy(hex)} aria-label={t("tp.item.copyColor", { hex })} className="flex min-h-[3.5rem] w-full items-center gap-3 px-4 py-2 text-left hover:bg-surface-soft" data-item-color={hex}>
               <span aria-hidden className="h-9 w-9 shrink-0 rounded-md border border-border" style={{ backgroundColor: hex }} />
               <span className="prompt-text min-w-0 flex-1 text-body font-semibold text-text">{hex}</span>
-              <span className={cn("shrink-0 text-small font-semibold", copied === hex ? "text-success" : "text-primary")}>{copied === hex ? t("common.copied") : t("common.copy")}</span>
+              <span className={cn("shrink-0 text-small font-semibold", copied === hex ? "text-success" : "text-primary-text")}>{copied === hex ? t("common.copied") : t("common.copy")}</span>
             </button>
           </li>
         ))}

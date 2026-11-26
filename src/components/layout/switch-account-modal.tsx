@@ -68,7 +68,7 @@ export function SwitchAccountModal({ currentUserId, onClose }: { currentUserId: 
                       <span className="block truncate text-small font-medium text-text">{account.displayName}</span>
                       <span className="block truncate text-caption text-text-muted">@{account.username}</span>
                     </span>
-                    {isCurrent && <span className="text-caption text-primary">{t("accountSwitch.current")}</span>}
+                    {isCurrent && <span className="text-caption text-primary-text">{t("accountSwitch.current")}</span>}
                   </button>
                 </li>
               );

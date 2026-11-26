@@ -119,8 +119,8 @@ export function TeamChatSection({ ctx }: { ctx: TeamCtx }) {
           data-channel-mode={channel.mode}
           aria-current={current ? "true" : undefined}
           className={cn(
-            "flex min-h-10 w-full items-center gap-3 rounded-xl px-3 text-left text-small transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
-            current ? "bg-primary-soft font-semibold text-primary" : cn("text-text-secondary hover:bg-surface-soft", unread && "font-semibold text-text"),
+            "flex min-h-10 w-full items-center gap-3 rounded-xl px-3 text-left text-small transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus",
+            current ? "bg-primary-soft font-semibold text-primary-text" : cn("text-text-secondary hover:bg-surface-soft", unread && "font-semibold text-text"),
           )}
         >
           {channel.mode === "private" ? <Lock size={16} aria-hidden /> : isProject ? <FolderOpen size={16} aria-hidden /> : <Hash size={16} aria-hidden />}
@@ -168,7 +168,7 @@ export function TeamChatSection({ ctx }: { ctx: TeamCtx }) {
               {archived.map((channel) => (
                 <li key={channel.id} className="flex items-center justify-between px-3 py-1">
                   <span className="truncate">#{channel.name}</span>
-                  <button type="button" className="text-primary hover:underline" onClick={() => void archiveTeamChannel(channel.id, false).then(load)}>
+                  <button type="button" className="text-primary-text hover:underline" onClick={() => void archiveTeamChannel(channel.id, false).then(load)}>
                     {t("tm.chat.unarchive")}
                   </button>
                 </li>
@@ -282,7 +282,7 @@ function ChannelAside({
             {archived.map((entry) => (
               <li key={entry.id} className="flex items-center justify-between">
                 <span className="truncate">#{entry.name}</span>
-                <button type="button" className="text-primary hover:underline" onClick={() => onUnarchive(entry.id)}>
+                <button type="button" className="text-primary-text hover:underline" onClick={() => onUnarchive(entry.id)}>
                   {t("tm.chat.unarchive")}
                 </button>
               </li>
@@ -317,7 +317,7 @@ function ChannelView({
   const { t } = useTranslation();
   const faces = members.slice(0, 4);
   const more = Math.max(0, channel.memberCount - faces.length);
-  const iconButton = "flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary";
+  const iconButton = "flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus";
 
   return (
     <div className="flex flex-col overflow-hidden rounded-lg card-flat md:h-[calc(100dvh-20rem)] md:min-h-[32rem]" data-testid="team-channel-view" data-channel-id={channel.id}>
@@ -357,7 +357,7 @@ function ChannelView({
           <Search size={16} aria-hidden />
           <span className="hidden text-small lg:inline">{t("tm.chat.searchHint")}</span>
         </button>
-        <button type="button" onClick={() => controls.current?.openChannelInfo()} aria-label={`${t("tm.info.channelInfo")}: #${channel.name}`} title={t("tm.info.channelInfo")} data-channel-info-open className={cn(iconButton, "bg-primary-soft text-primary hover:bg-border-soft")}>
+        <button type="button" onClick={() => controls.current?.openChannelInfo()} aria-label={`${t("tm.info.channelInfo")}: #${channel.name}`} title={t("tm.info.channelInfo")} data-channel-info-open className={cn(iconButton, "bg-primary-soft text-primary-text hover:bg-border-soft")}>
           <Info size={20} aria-hidden />
         </button>
       </header>
@@ -371,7 +371,7 @@ function ChannelView({
             data-channel-chip={c.name}
             className={cn(
               "inline-flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-4 text-small font-semibold",
-              c.id === channel.id ? "bg-primary-soft text-primary" : "bg-surface-soft text-text-secondary",
+              c.id === channel.id ? "bg-primary-soft text-primary-text" : "bg-surface-soft text-text-secondary",
             )}
           >
             {c.mode === "private" ? <Lock size={12} aria-hidden /> : c.mode === "project" ? <span aria-hidden className="h-2.5 w-2.5 rounded-2xs bg-primary" /> : <Hash size={12} aria-hidden />}

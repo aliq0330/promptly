@@ -63,11 +63,11 @@ function StructureShell({
         <div className="space-y-2">
           <div className="flex items-center gap-2">
             {/* Icon tile on roomier cards; on a two-column phone layout the icon sits inline so the label has the room. */}
-            <span className="hidden h-7 w-7 shrink-0 items-center justify-center rounded-md bg-primary-soft text-primary sm:flex">
+            <span className="hidden h-7 w-7 shrink-0 items-center justify-center rounded-md bg-primary-soft text-primary-text sm:flex">
               <Icon size={16} aria-hidden />
             </span>
             <span className="flex min-w-0 items-center gap-1 text-caption font-semibold text-text-muted">
-              <Icon size={12} aria-hidden className="shrink-0 text-primary sm:hidden" />
+              <Icon size={12} aria-hidden className="shrink-0 text-primary-text sm:hidden" />
               <span className="truncate">{badge}</span>
               {detail && (
                 <>

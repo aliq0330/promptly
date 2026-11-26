@@ -454,14 +454,14 @@ export function MessageBubble({
                 data-announcement-card
                 className="flex w-fit max-w-full flex-col gap-1 self-start rounded-xl bg-surface-soft px-4 py-4 text-small text-text transition-colors hover:bg-surface-elevated"
               >
-                <span className="flex items-center gap-2 text-caption font-semibold text-primary">
+                <span className="flex items-center gap-2 text-caption font-semibold text-primary-text">
                   <span className="flex h-7 w-7 items-center justify-center rounded-full bg-surface-elevated">
                     <Megaphone size={16} aria-hidden />
                   </span>
                   {t("communities.chat.announcement")}
                 </span>
                 <span className="mt-1 block break-words font-display text-h3 font-semibold">{displayBody}</span>
-                <span className="inline-flex items-center gap-0.5 text-small text-primary">
+                <span className="inline-flex items-center gap-0.5 text-small text-primary-text">
                   {t("communities.chat.announcementOpen")} <ChevronRight size={16} aria-hidden />
                 </span>
               </Link>
@@ -501,7 +501,7 @@ export function MessageBubble({
 }
 
 /** Grup sohbetinde gönderen adının rengi: kişiye göre sabit, yalnız tema renkleriyle (koyu/açık temada okunur). */
-const SENDER_TONES = ["text-primary", "text-secondary", "text-success"] as const;
+const SENDER_TONES = ["text-primary-text", "text-secondary", "text-success"] as const;
 function senderTone(senderId: string): string {
   let hash = 0;
   for (let i = 0; i < senderId.length; i += 1) hash = (hash * 31 + senderId.charCodeAt(i)) >>> 0;

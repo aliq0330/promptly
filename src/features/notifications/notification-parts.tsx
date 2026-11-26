@@ -29,7 +29,7 @@ export function CardAvatar({ card, size = 40 }: { card: NotificationCard; size?:
   const { t } = useTranslation();
   if (!actor) {
     return (
-      <span className="flex shrink-0 items-center justify-center rounded-full bg-primary-soft text-primary" style={{ width: size, height: size }} data-card-avatar="icon">
+      <span className="flex shrink-0 items-center justify-center rounded-full bg-primary-soft text-primary-text" style={{ width: size, height: size }} data-card-avatar="icon">
         <Icon size={Math.round(size * 0.45)} aria-hidden />
       </span>
     );

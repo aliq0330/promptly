@@ -190,7 +190,7 @@ export function ConversationSearchPanel({
             <div className="flex items-center justify-between gap-3 px-4 py-3 text-small text-danger">
               <span>{t("chat.search.error")}</span>
               {term && (
-                <button type="button" onClick={() => void run(term, false)} className="font-medium text-primary hover:underline">
+                <button type="button" onClick={() => void run(term, false)} className="font-medium text-primary-text hover:underline">
                   {t("common.retry")}
                 </button>
               )}

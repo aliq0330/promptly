@@ -24,7 +24,7 @@ export function CreatorCard({ creator }: { creator: UserProfile }) {
           </span>
           <div className="min-w-0 flex-1 leading-tight">
             <h3 className="truncate font-display text-h3 font-extrabold tracking-[-0.015em] text-text">
-              <Link href={profileHref(creator)} className="relative z-10 hover:text-primary">
+              <Link href={profileHref(creator)} className="relative z-10 hover:text-primary-text">
                 {creator.displayName}
               </Link>
             </h3>

@@ -148,7 +148,7 @@ function TopicRow({ topic, selected, atMax, onToggle }: { topic: FirstRunTopic; 
       aria-disabled={blocked || undefined}
       data-first-run-topic={topic.slug}
       className={cn(
-        "block w-full overflow-hidden rounded-lg border-2 text-left transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+        "block w-full overflow-hidden rounded-lg border-2 text-left transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-background",
         selected ? "border-primary bg-primary text-primary-foreground" : "border-border-soft bg-surface text-text hover:border-border-strong",
         blocked && "opacity-60",
       )}
@@ -167,7 +167,7 @@ function TopicRow({ topic, selected, atMax, onToggle }: { topic: FirstRunTopic; 
         <span className="min-w-0 font-display text-body font-bold leading-tight">{label}</span>
         {selected ? (
           <span className="flex shrink-0 items-center gap-2 text-small font-semibold">
-            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-surface text-primary" aria-hidden>
+            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-surface text-primary-text" aria-hidden>
               <Check size={12} />
             </span>
             {t("firstRun.followed")}

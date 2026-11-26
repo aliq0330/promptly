@@ -144,7 +144,7 @@ export function GroupAssignDialog({ itemIds, onClose, onDone }: { itemIds: strin
             disabled={busy}
             aria-expanded={creating}
             data-group-tile="new"
-            className={cn("flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border-[1.5px] border-dashed p-3 text-small font-semibold text-primary transition-colors", creating ? "border-primary bg-primary-soft" : "border-border bg-surface-soft/50 hover:bg-surface-soft")}
+            className={cn("flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border-[1.5px] border-dashed p-3 text-small font-semibold text-primary-text transition-colors", creating ? "border-primary bg-primary-soft" : "border-border bg-surface-soft/50 hover:bg-surface-soft")}
           >
             <FolderPlus size={20} aria-hidden />
             {t("tf.group.newTile")}
@@ -176,7 +176,7 @@ export function GroupAssignDialog({ itemIds, onClose, onDone }: { itemIds: strin
         <p className="text-caption text-text-secondary">{t("tf.group.moveNote")}</p>
         <FormError message={error} />
         {caps.edit && groups.length > 0 && (
-          <button type="button" onClick={() => setManage(true)} className="inline-flex items-center gap-1.5 text-small font-semibold text-primary hover:underline" data-group-manage>
+          <button type="button" onClick={() => setManage(true)} className="inline-flex items-center gap-1.5 text-small font-semibold text-primary-text hover:underline" data-group-manage>
             <Layers size={16} aria-hidden />
             {t("spaces.groups.manage")}
           </button>

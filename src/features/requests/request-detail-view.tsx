@@ -356,7 +356,7 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
           <div className="space-y-3 rounded-xl border border-dashed border-border py-8 text-center text-small text-text-muted">
             <p>{t("request.noRepliesYet")}</p>
             {!isClosed && !isOwnRequest && (
-              <Link href={`/create?answerRequest=${live.id}`} className="font-medium text-primary underline">
+              <Link href={`/create?answerRequest=${live.id}`} className="font-medium text-primary-text underline">
                 {t("request.beTheFirstToReply")}
               </Link>
             )}
@@ -427,7 +427,7 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
                             type="button"
                             disabled={isSelecting}
                             onClick={() => confirmSelection(prompt.id)}
-                            className="text-caption font-medium text-primary hover:underline"
+                            className="text-caption font-medium text-primary-text hover:underline"
                           >
                             {t("request.selectReply")}
                           </button>
@@ -436,7 +436,7 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
                         <button
                           type="button"
                           onClick={() => setSelectionTarget({ id: prompt.id, confirming: true })}
-                          className="text-caption font-medium text-primary hover:underline"
+                          className="text-caption font-medium text-primary-text hover:underline"
                         >
                           {t("request.selectReply")}
                         </button>
@@ -482,7 +482,7 @@ function ContributorsList({ answers }: { answers: Prompt[] }) {
             <Link href={profileHref(author)} className="group flex items-center gap-3 px-4 py-2.5 transition-colors duration-200 hover:bg-surface-soft">
               <Avatar src={author.avatarUrl} alt={author.displayName} size={32} />
               <span className="min-w-0 leading-tight">
-                <span className="block truncate text-label font-semibold text-text transition-colors group-hover:text-primary">{author.displayName}</span>
+                <span className="block truncate text-label font-semibold text-text transition-colors group-hover:text-primary-text">{author.displayName}</span>
                 <span className="block truncate text-caption text-text-muted">@{author.username}</span>
               </span>
             </Link>

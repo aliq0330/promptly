@@ -168,7 +168,7 @@ export function PromptDnaEditor({
         <div className="space-y-2 rounded-md border border-primary/30 bg-primary-soft/40 p-3" role="region" aria-label={t("dna.detectedHeading")}>
           <div className="flex flex-wrap items-center justify-between gap-2">
             <p className="flex items-center gap-1.5 text-label font-semibold text-text">
-              <Dna size={16} className="text-primary" />
+              <Dna size={16} className="text-primary-text" />
               {t("dna.detectedHeading")} ({diff.newSections.length})
             </p>
             <Button type="button" size="sm" onClick={() => onChange(applyDiff(sections, diff))}>
@@ -322,7 +322,7 @@ export function PromptDnaEditor({
           onClick={() => setMenuOpen((open) => !open)}
           aria-expanded={menuOpen}
           aria-controls="dna-add-menu"
-          className="inline-flex h-9 items-center gap-1.5 rounded-md px-2 text-label font-medium text-primary hover:bg-primary-soft"
+          className="inline-flex h-9 items-center gap-1.5 rounded-md px-2 text-label font-medium text-primary-text hover:bg-primary-soft"
         >
           <Plus size={16} />
           {t("dna.addSection")}

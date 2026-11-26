@@ -29,7 +29,7 @@ export function SelectionSummary({
         <h3 className="text-caption font-semibold text-text-muted">
           {t("presetField.selected")} <span className="tabular-nums">({entries.length})</span>
         </h3>
-        <button type="button" onClick={() => onChange({})} className="rounded px-1.5 py-0.5 text-caption font-medium text-text-muted underline hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+        <button type="button" onClick={() => onChange({})} className="rounded px-1.5 py-0.5 text-caption font-medium text-text-muted underline hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus">
           {t("extra.clear")}
         </button>
       </div>

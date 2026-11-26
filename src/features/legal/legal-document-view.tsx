@@ -44,7 +44,7 @@ export function LegalDocumentView({ document }: { document: LegalDocument }) {
         <h2 className="text-h3 text-text">{t("legal.contactTitle")}</h2>
         <p className="text-body text-text-secondary">
           {t("legal.contactBody")}{" "}
-          <a href={`mailto:${LEGAL_CONTACT_EMAIL}`} className="font-medium text-primary underline underline-offset-2 hover:no-underline">
+          <a href={`mailto:${LEGAL_CONTACT_EMAIL}`} className="font-medium text-primary-text underline underline-offset-2 hover:no-underline">
             {LEGAL_CONTACT_EMAIL}
           </a>
         </p>

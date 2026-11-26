@@ -20,10 +20,10 @@ export function buttonClassName({
   className,
 }: { variant?: ButtonVariant; size?: ButtonSize; className?: string } = {}) {
   return cn(
-    "inline-flex select-none items-center justify-center rounded-full font-semibold tracking-[-0.005em] whitespace-nowrap",
+    "inline-flex select-none items-center justify-center rounded-sm font-semibold whitespace-nowrap",
     "transition-[background-color,border-color,color,box-shadow,transform] duration-200 ease-soft active:scale-[0.98]",
     "disabled:pointer-events-none disabled:opacity-50",
-    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-background",
     variantClasses[variant],
     sizeClasses[size],
     className,
@@ -31,8 +31,8 @@ export function buttonClassName({
 }
 
 const variantClasses: Record<ButtonVariant, string> = {
-  primary: "bg-primary text-primary-foreground hover:bg-primary-hover",
-  secondary: "bg-primary-soft text-primary hover:bg-primary-soft/70",
+  primary: "bg-primary text-primary-foreground shadow-btn hover:bg-primary-hover",
+  secondary: "bg-primary-soft text-primary-text hover:bg-primary-soft/70",
   ghost: "bg-transparent text-text-secondary hover:bg-surface-soft hover:text-text",
   outline: "border border-border bg-surface text-text shadow-xs hover:border-border-strong hover:bg-surface-soft",
   danger: "bg-danger text-danger-foreground hover:bg-danger/90",
@@ -40,7 +40,7 @@ const variantClasses: Record<ButtonVariant, string> = {
 
 const sizeClasses: Record<ButtonSize, string> = {
   sm: "h-9 gap-1.5 px-4 text-label",
-  md: "h-10 gap-2 px-4 text-small",
+  md: "h-10 gap-2 px-4 text-body",
   lg: "h-12 gap-2 px-6 text-body",
   icon: "h-10 w-10 p-0",
 };

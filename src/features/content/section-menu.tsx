@@ -11,7 +11,7 @@ import { DialogShell } from "@/components/ui/dialog-shell";
 
 /** Ortak sade kontrol satırı simge düğmesi (docs/history/231-*, 232-*): arama · filtre · görünüm · "+". */
 export const CONTROL_ICON_BUTTON =
-  "grid h-11 w-11 shrink-0 place-items-center rounded-xl text-text transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary";
+  "grid h-11 w-11 shrink-0 place-items-center rounded-xl text-text transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus";
 
 /** sm+ = açılır kutu, altı = alt sayfa (paylaşılan `Modal`). */
 function useWide() {
@@ -121,7 +121,7 @@ export function SectionMenu<K extends string>({
         data-section-menu
         data-section-trigger={variant}
         className={cn(
-          "relative inline-flex items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+          "relative inline-flex items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus",
           variant === "tab"
             ? cn(
                 "-mb-px h-11 gap-1.5 whitespace-nowrap border-b-2 px-3 text-body transition-colors",

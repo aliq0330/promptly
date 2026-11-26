@@ -107,7 +107,7 @@ export function PresetLists({
           onClick={() => onPreview(preset)}
           aria-haspopup="dialog"
           aria-label={t("preset.previewAria", { name: preset.title })}
-          className="min-w-0 flex-1 rounded-md px-1.5 py-1 text-left hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          className="min-w-0 flex-1 rounded-md px-1.5 py-1 text-left hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
         >
           <span className="block truncate text-label font-semibold text-text">{preset.title}</span>
           <span className="block truncate text-caption text-text-muted">
@@ -120,7 +120,7 @@ export function PresetLists({
             type="button"
             data-preset-pick={preset.id}
             onClick={() => onApply(bundleOf(preset))}
-            className="inline-flex h-9 shrink-0 items-center justify-center rounded-md bg-primary px-3 text-small font-medium text-primary-foreground hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            className="inline-flex h-9 shrink-0 items-center justify-center rounded-md bg-primary px-3 text-small font-medium text-primary-foreground hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
           >
             {t("common.apply")}
           </button>

@@ -157,7 +157,7 @@ export function SuggestEditModal({
               <button
                 type="button"
                 onClick={() => setShowProposedField(true)}
-                className="text-caption font-medium text-primary hover:underline"
+                className="text-caption font-medium text-primary-text hover:underline"
               >
                 {t("prompt.suggestFullTextToggle")}
               </button>

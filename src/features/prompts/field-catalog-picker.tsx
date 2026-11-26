@@ -223,7 +223,7 @@ export function FieldCatalogPicker({
               )
             )}
             <span className="truncate font-medium text-text">{catalogText(field.label, language)}</span>
-            {used && <span className="text-caption font-medium text-primary">{t("fieldCatalog.alreadyAdded")}</span>}
+            {used && <span className="text-caption font-medium text-primary-text">{t("fieldCatalog.alreadyAdded")}</span>}
           </span>
           {breadcrumb && <span className="mt-0.5 block truncate text-caption text-text-muted">{breadcrumb}</span>}
           {renderFieldPreview(field)}
@@ -308,7 +308,7 @@ export function FieldCatalogPicker({
                   <div ref={previewRef} className="mt-3 animate-fade-in scroll-mb-4 rounded-lg bg-primary-soft/50 p-3 ring-1 ring-primary/15">
                     <div className="flex flex-wrap items-center justify-between gap-2 px-1 pb-2">
                       <p className="flex items-center gap-1.5 text-small font-semibold text-text">
-                        <Eye size={16} className="text-primary" aria-hidden /> {catalogText(previewPackage.label, language)}
+                        <Eye size={16} className="text-primary-text" aria-hidden /> {catalogText(previewPackage.label, language)}
                         <span className="text-caption font-normal text-text-secondary">· {t("fieldCatalog.packagePreview")}</span>
                       </p>
                       <button
@@ -379,7 +379,7 @@ export function FieldCatalogPicker({
                                   <label
                                     className={cn(
                                       "flex shrink-0 items-center gap-1 pr-2 text-caption font-medium",
-                                      selectableFields.length === 0 ? "cursor-not-allowed text-text-muted/50" : "cursor-pointer text-text-muted hover:text-primary",
+                                      selectableFields.length === 0 ? "cursor-not-allowed text-text-muted/50" : "cursor-pointer text-text-muted hover:text-primary-text",
                                     )}
                                   >
                                     <input
@@ -447,7 +447,7 @@ export function FieldCatalogPicker({
 
         <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border-soft px-5 py-4">
           {onCreateCustom ? (
-            <button type="button" onClick={onCreateCustom} className="inline-flex items-center gap-1.5 text-small font-medium text-primary hover:underline">
+            <button type="button" onClick={onCreateCustom} className="inline-flex items-center gap-1.5 text-small font-medium text-primary-text hover:underline">
               <Plus size={16} /> {t("fieldCatalog.createCustomField")}
             </button>
           ) : (

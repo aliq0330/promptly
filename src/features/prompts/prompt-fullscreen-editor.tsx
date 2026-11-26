@@ -309,7 +309,7 @@ export function PromptFullscreenEditor({
               className={cn(
                 "inline-flex h-11 min-w-0 max-w-[62%] items-center gap-3 rounded-full border px-4 text-left transition-colors",
                 tone === "active" && "border-primary bg-primary text-primary-foreground hover:bg-primary-hover",
-                tone === "token" && "border-primary bg-surface text-primary hover:bg-primary-soft",
+                tone === "token" && "border-primary bg-surface text-primary-text hover:bg-primary-soft",
                 tone === "done" && "border-success bg-success-soft text-success",
                 tone === "idle" && "cursor-default border-border bg-surface-soft text-text-muted",
               )}

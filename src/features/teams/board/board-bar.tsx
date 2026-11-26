@@ -69,7 +69,7 @@ export function TeamBoardBar({
         <span className="max-sm:hidden">{t("tb.share.button")}</span>
       </button>
       {team.role && <ProjectRoleChip role={team.role} className="hidden lg:inline-flex" />}
-      <button type="button" onClick={onInfo} aria-label={t("tp.info.open")} data-path-info="" className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-border-soft bg-surface text-primary hover:bg-surface-soft">
+      <button type="button" onClick={onInfo} aria-label={t("tp.info.open")} data-path-info="" className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-border-soft bg-surface text-primary-text hover:bg-surface-soft">
         <Info size={20} aria-hidden />
       </button>
     </header>

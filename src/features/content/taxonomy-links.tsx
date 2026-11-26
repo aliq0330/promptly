@@ -27,7 +27,7 @@ export function TaxonomyLinks({
   if (!cat) return null;
   const sub = findSubcategory(contentType, cat.id, subcategory);
   const hrefFor = (subId?: string) => categoryHref(contentType, cat.id, subId);
-  const link = "font-medium text-text transition-colors hover:text-primary";
+  const link = "font-medium text-text transition-colors hover:text-primary-text";
   return (
     <DetailMetaBlock label={t("taxonomy.categoryLabel")} className={className}>
       <nav data-taxonomy-path className="flex flex-wrap items-center gap-x-1 gap-y-1 text-label">

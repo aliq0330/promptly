@@ -38,7 +38,7 @@ export function ProfileAbout({ user }: { user: UserProfile }) {
             href={user.website.startsWith("http") ? user.website : `https://${user.website}`}
             target="_blank"
             rel="noreferrer noopener"
-            className="flex items-center gap-2 text-primary hover:underline"
+            className="flex items-center gap-2 text-primary-text hover:underline"
           >
             <Link2 size={16} className="shrink-0" />
             {user.website}

@@ -299,7 +299,7 @@ export function RelationGraph({
             event.preventDefault();
           }
         }}
-        className="absolute inset-0 touch-none overflow-hidden outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        className="absolute inset-0 touch-none overflow-hidden outline-none focus-visible:ring-2 focus-visible:ring-focus"
       >
         <div
           data-relation-layer
@@ -424,7 +424,7 @@ export function RelationGraph({
                   </span>
                   <span className={cn("block font-semibold leading-snug text-text", isCenter ? "line-clamp-2 text-small" : "line-clamp-2 text-label")}>{node.title}</span>
                   {relationText && (
-                    <span data-node-relation title={relationText} className="mt-0.5 inline-block max-w-full truncate rounded-full bg-primary-soft px-1.5 text-caption font-medium text-primary">
+                    <span data-node-relation title={relationText} className="mt-0.5 inline-block max-w-full truncate rounded-full bg-primary-soft px-1.5 text-caption font-medium text-primary-text">
                       {relationText}
                     </span>
                   )}
@@ -462,8 +462,8 @@ export function RelationGraph({
   );
 }
 
-const EDGE_COLOR = { dna: "text-secondary", manual: "text-primary", derived: "text-text-secondary" } as const;
-const ARROW_FILL = { dna: "text-secondary", manual: "text-primary", derived: "text-text-secondary" } as const;
+const EDGE_COLOR = { dna: "text-secondary", manual: "text-primary-text", derived: "text-text-secondary" } as const;
+const ARROW_FILL = { dna: "text-secondary", manual: "text-primary-text", derived: "text-text-secondary" } as const;
 
 function ToolButton({ label, onClick, bordered, children }: { label: string; onClick: () => void; bordered?: boolean; children: React.ReactNode }) {
   return (

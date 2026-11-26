@@ -73,7 +73,7 @@ export function ConnectionBar({
               }}
               placeholder={t("spaces.connect.labelPlaceholder")}
               aria-label={t("spaces.connect.labelField")}
-              className="h-9 w-36 shrink-0 rounded-full border border-border bg-surface-soft px-3 text-small text-text placeholder:text-text-muted focus:border-primary focus:outline-none"
+              className="h-9 w-36 shrink-0 rounded-full border border-border bg-surface-soft px-3 text-small text-text placeholder:text-text-muted focus:border-focus focus:outline-none"
             />
             <PopoverMenu
               label={t("spaces.connect.style")}

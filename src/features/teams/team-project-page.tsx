@@ -246,7 +246,7 @@ function ProjectInfoSheet({
           <div className="flex items-center gap-2">
             <h3 className="min-w-0 flex-1 text-body font-bold text-text">{t("tp.people.title")}</h3>
             {lead && (
-              <button type="button" onClick={onAccess} className="inline-flex h-9 items-center gap-1 rounded-full bg-primary-soft px-3 text-caption font-semibold text-primary" data-project-edit-access>
+              <button type="button" onClick={onAccess} className="inline-flex h-9 items-center gap-1 rounded-full bg-primary-soft px-3 text-caption font-semibold text-primary-text" data-project-edit-access>
                 <UsersRound size={12} aria-hidden />
                 {t("tp.people.edit")}
               </button>
@@ -404,7 +404,7 @@ function ProjectHome({ ctx, detail, onChanged }: { ctx: TeamCtx; detail: Project
           <header className={cn("hidden items-center gap-4 rounded-xl px-[18px] py-4 md:flex", BAND_TONE[project.tone] ?? BAND_TONE.primary)} data-project-header>
             <TeamMark name={project.title} tone={project.tone} solid size={56} className="rounded-lg" />
             <div className="min-w-0 flex-1">
-              <p className="text-caption font-semibold text-primary">
+              <p className="text-caption font-semibold text-primary-text">
                 {t("tp.page.kicker")} · {t("tc.proj.yourRole")}: {t(projectRoleLabelKey(myRole)).toLocaleUpperCase()}
               </p>
               <h1 className="break-words font-display text-h2 font-extrabold leading-tight text-text" data-project-title>
@@ -422,7 +422,7 @@ function ProjectHome({ ctx, detail, onChanged }: { ctx: TeamCtx; detail: Project
                 {t("tp.file.new")}
               </Button>
             )}
-            <button type="button" onClick={() => setDialog("info")} aria-label={t("tp.info.open")} data-path-info className="grid h-10 w-10 place-items-center rounded-full bg-surface text-primary xl:hidden">
+            <button type="button" onClick={() => setDialog("info")} aria-label={t("tp.info.open")} data-path-info className="grid h-10 w-10 place-items-center rounded-full bg-surface text-primary-text xl:hidden">
               <Info size={20} aria-hidden />
             </button>
           </header>
@@ -438,7 +438,7 @@ function ProjectHome({ ctx, detail, onChanged }: { ctx: TeamCtx; detail: Project
             <Link href={projectLink(team.id, project.id, { review: true })} className="flex min-h-12 items-center gap-3 rounded-lg card-flat px-4 py-3 text-small hover:shadow-card" data-project-review-link>
               <span aria-hidden className="h-2 w-2 shrink-0 rounded-full bg-heart" />
               <span className="min-w-0 flex-1 font-semibold text-text">{t("tc.proj.waitingBanner", { count: detail.pendingCount ?? 0 })}</span>
-              <span className="font-semibold text-primary">{t("tc.over.open")}</span>
+              <span className="font-semibold text-primary-text">{t("tc.over.open")}</span>
             </Link>
           )}
 
@@ -505,7 +505,7 @@ function ProjectHome({ ctx, detail, onChanged }: { ctx: TeamCtx; detail: Project
             <div className="mb-1 flex items-center gap-2">
               <h3 className="min-w-0 flex-1 font-display text-body font-bold text-text">{t("tp.people.title")}</h3>
               {lead && (
-                <button type="button" onClick={() => setDialog("access")} className="text-small font-semibold text-primary" data-project-edit-access>
+                <button type="button" onClick={() => setDialog("access")} className="text-small font-semibold text-primary-text" data-project-edit-access>
                   {t("tc.proj.edit")}
                 </button>
               )}
@@ -574,7 +574,7 @@ function FileCard({ href, title, meta, tone, chip, chipTone, attrs }: { href: st
         <span className="block truncate text-body font-semibold text-text">{title}</span>
         <span className="block text-small text-text-secondary max-sm:line-clamp-2 sm:truncate">{meta}</span>
         {chip && (
-          <span className={cn("mt-2 inline-flex h-6 items-center rounded-full px-2.5 text-caption font-semibold", chipTone === "warning" ? "bg-warning-soft text-warning" : chipTone === "primary" ? "bg-primary-soft text-primary" : "bg-surface-soft text-text-secondary")}>
+          <span className={cn("mt-2 inline-flex h-6 items-center rounded-full px-2.5 text-caption font-semibold", chipTone === "warning" ? "bg-warning-soft text-warning" : chipTone === "primary" ? "bg-primary-soft text-primary-text" : "bg-surface-soft text-text-secondary")}>
             {chip}
           </span>
         )}

@@ -78,7 +78,7 @@ export function CollectionCover({ collection, className }: { collection: Collect
     return <StorageBackground url={collection.coverImage.url} className={cn("bg-surface-soft bg-cover bg-center", className)} />;
   }
   return (
-    <div className={cn("flex items-center justify-center bg-surface-soft text-primary", className)}>
+    <div className={cn("flex items-center justify-center bg-surface-soft text-primary-text", className)}>
       <span className="flex h-12 w-12 items-center justify-center rounded-md bg-primary-soft">
         <FolderOpen size={24} />
       </span>

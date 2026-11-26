@@ -73,7 +73,7 @@ export function CallMenu({
               role="menuitemradio"
               aria-checked={selected}
               onClick={() => pick(device.deviceId)}
-              className={cn(MENU_ITEM_CLASS, "justify-between", selected && "bg-primary-soft text-primary")}
+              className={cn(MENU_ITEM_CLASS, "justify-between", selected && "bg-primary-soft text-primary-text")}
             >
               <span className="min-w-0 flex-1 truncate">{deviceLabel(device, index, fallback)}</span>
               {selected && <Check size={16} aria-hidden />}

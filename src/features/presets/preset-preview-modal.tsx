@@ -107,7 +107,7 @@ export function PresetPreviewModal({
             type="button"
             data-preview-apply
             onClick={onApply}
-            className="inline-flex h-9 shrink-0 items-center rounded-md bg-primary px-4 text-small font-medium text-primary-foreground hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            className="inline-flex h-9 shrink-0 items-center rounded-md bg-primary px-4 text-small font-medium text-primary-foreground hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
           >
             {t("common.apply")}
           </button>

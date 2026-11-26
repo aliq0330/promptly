@@ -72,7 +72,7 @@ function PickerBody({
                 gridRef.current?.scrollTo({ top: 0 });
               }}
               className={cn(
-                "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-lg leading-none transition-colors focus-visible:outline-2 focus-visible:outline-primary",
+                "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-lg leading-none transition-colors focus-visible:outline-2 focus-visible:outline-focus",
                 tab.id === current.id ? "bg-primary-soft" : "hover:bg-surface-soft",
               )}
             >
@@ -86,7 +86,7 @@ function PickerBody({
             onClick={onBackspace}
             aria-label={t("emoji.backspace")}
             title={t("emoji.backspace")}
-            className="mx-1.5 flex h-9 w-10 shrink-0 items-center justify-center rounded-lg text-text-muted transition-colors hover:bg-surface-soft hover:text-text focus-visible:outline-2 focus-visible:outline-primary"
+            className="mx-1.5 flex h-9 w-10 shrink-0 items-center justify-center rounded-lg text-text-muted transition-colors hover:bg-surface-soft hover:text-text focus-visible:outline-2 focus-visible:outline-focus"
           >
             <Delete size={20} aria-hidden />
           </button>
@@ -104,7 +104,7 @@ function PickerBody({
             type="button"
             onClick={() => pick(emoji)}
             aria-label={emoji}
-            className="flex h-9 items-center justify-center rounded-lg text-xl leading-none transition-colors hover:bg-surface-soft focus-visible:bg-surface-soft focus-visible:outline-2 focus-visible:outline-primary"
+            className="flex h-9 items-center justify-center rounded-lg text-xl leading-none transition-colors hover:bg-surface-soft focus-visible:bg-surface-soft focus-visible:outline-2 focus-visible:outline-focus"
           >
             {emoji}
           </button>

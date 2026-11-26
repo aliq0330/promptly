@@ -128,7 +128,7 @@ export function VariableEditorModal({
               className="h-10 w-full rounded-lg card-inset px-3 text-small text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
             />
             {normalizedName && (
-              <p className="mt-1.5 font-mono text-caption text-primary">{`{${normalizedName}}`}</p>
+              <p className="mt-1.5 font-mono text-caption text-primary-text">{`{${normalizedName}}`}</p>
             )}
             {error && <p className="mt-1 text-caption text-danger">{error}</p>}
           </div>

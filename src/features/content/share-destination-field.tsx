@@ -40,7 +40,7 @@ function communityHint(community: { visibility: CommunitySummary["visibility"] }
 function DestinationIcon({ destination, size }: { destination: CreateDestination | null; size: number }) {
   if (destination) return <GroupAvatar name={destination.name} avatarUrl={destination.avatarUrl} size={size} />;
   return (
-    <span aria-hidden className="grid shrink-0 place-items-center rounded-full bg-primary-soft text-primary" style={{ width: size, height: size }}>
+    <span aria-hidden className="grid shrink-0 place-items-center rounded-full bg-primary-soft text-primary-text" style={{ width: size, height: size }}>
       <Globe size={Math.round(size * 0.55)} />
     </span>
   );
@@ -78,7 +78,7 @@ export function DestinationPicker({ selectedId, onChoose, onClose }: { selectedI
 
   const rowClass = (selected: boolean) =>
     cn(
-      "flex min-h-14 w-full items-center gap-3 rounded-xl border px-3 py-2 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+      "flex min-h-14 w-full items-center gap-3 rounded-xl border px-3 py-2 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus",
       selected ? "border-primary/50 bg-primary-soft/60" : "border-border-soft bg-background hover:border-border-strong",
     );
 
@@ -97,7 +97,7 @@ export function DestinationPicker({ selectedId, onChoose, onClose }: { selectedI
               <span className="block truncate text-label font-semibold text-text">{t("home.destination.feed")}</span>
               <span className="block truncate text-caption text-text-muted">{t("home.destination.feedHint")}</span>
             </span>
-            {selectedId === null && <Check size={20} aria-hidden className="shrink-0 text-primary" />}
+            {selectedId === null && <Check size={20} aria-hidden className="shrink-0 text-primary-text" />}
           </button>
 
           <p className="px-1 pt-2 text-caption font-semibold text-text-muted">{t("home.destination.myCommunities")}</p>
@@ -140,7 +140,7 @@ export function DestinationPicker({ selectedId, onChoose, onClose }: { selectedI
                   {communityHint(community, t)}
                 </span>
               </span>
-              {selectedId === community.id && <Check size={20} aria-hidden className="shrink-0 text-primary" />}
+              {selectedId === community.id && <Check size={20} aria-hidden className="shrink-0 text-primary-text" />}
             </button>
           ))}
         </div>

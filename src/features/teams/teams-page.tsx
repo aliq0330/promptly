@@ -231,10 +231,10 @@ function TeamsPageInner() {
                   type="button"
                   onClick={() => setCreateOpen(true)}
                   data-team-new-card
-                  className="flex h-full w-full flex-col rounded-lg border-2 border-dashed border-border text-center transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                  className="flex h-full w-full flex-col rounded-lg border-2 border-dashed border-border text-center transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
                 >
                   <span className="grid aspect-video w-full place-items-center">
-                    <span className="grid h-11 w-11 place-items-center rounded-full bg-primary-soft text-primary">
+                    <span className="grid h-11 w-11 place-items-center rounded-full bg-primary-soft text-primary-text">
                       <Plus size={20} aria-hidden />
                     </span>
                   </span>
@@ -288,7 +288,7 @@ function TodoList({ todos }: { todos: TeamTodo[] }) {
       <ul className="space-y-3">
         {todos.map((todo, index) => {
           const Icon = todo.kind === "unread" ? MessageCircle : todo.kind === "project_review" ? Eye : Check;
-          const tone = todo.kind === "unread" ? "bg-success-soft text-success" : todo.kind === "project_review" ? "bg-primary-soft text-primary" : "bg-warning-soft text-warning";
+          const tone = todo.kind === "unread" ? "bg-success-soft text-success" : todo.kind === "project_review" ? "bg-primary-soft text-primary-text" : "bg-warning-soft text-warning";
           return (
             <li key={`${todo.teamId}-${todo.kind}-${index}`} className="flex items-center gap-3 rounded-lg card-flat px-4 py-3">
               <span className={cn("grid h-9 w-9 shrink-0 place-items-center rounded-xl", tone)} aria-hidden>

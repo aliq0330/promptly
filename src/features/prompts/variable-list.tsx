@@ -61,7 +61,7 @@ export function VariableList({
               className="flex flex-wrap items-center justify-between gap-2 rounded-md card-inset px-3 py-2 text-small"
             >
               <div className="min-w-0 flex-1 basis-40 break-words">
-                <span className="font-mono text-primary">{`{${variable.name}}`}</span>
+                <span className="font-mono text-primary-text">{`{${variable.name}}`}</span>
                 {variable.type !== "text" && (
                   <Badge variant="neutral" className="ml-2 align-middle">
                     {t(TYPE_LABEL_KEYS[variable.type])}

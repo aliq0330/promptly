@@ -129,7 +129,7 @@ export function ZoomMenuBody({ props, onDone }: { props: ZoomMenuProps; onDone: 
     >
       <span aria-hidden className="grid h-6 w-6 place-items-center text-text-secondary">{icon}</span>
       <span className="flex-1">{label}</span>
-      {opts.checked && <Check size={20} className="text-primary" aria-hidden />}
+      {opts.checked && <Check size={20} className="text-primary-text" aria-hidden />}
     </button>
   );
   const divider = <div className="my-1.5 h-px bg-border-soft" />;
@@ -152,7 +152,7 @@ export function ZoomMenuBody({ props, onDone }: { props: ZoomMenuProps; onDone: 
               props.onPreset(preset);
               onDone();
             }}
-            className={cn("h-11 rounded-xl border text-body font-semibold", Math.abs(props.zoom - preset) < 0.005 ? "border-primary bg-primary-soft text-primary" : "border-border-soft text-text")}
+            className={cn("h-11 rounded-xl border text-body font-semibold", Math.abs(props.zoom - preset) < 0.005 ? "border-primary bg-primary-soft text-primary-text" : "border-border-soft text-text")}
           >
             {Math.round(preset * 100)}%
           </button>
@@ -239,7 +239,7 @@ export function MovePopover({
         disabled={busy}
         data-board-move-new=""
         onClick={() => void run(() => (currentPage && !currentPage.isMain ? createBoardInGroup(team.currentId, t("tb.pages.newDefaultName")) : createBoard(team.projectId, t("tb.pages.newDefaultName"), team.fileId ?? "")).then((id) => { team.reload(); return id; }))}
-        className="flex min-h-11 w-full items-center gap-3 rounded-xl px-2.5 text-small font-semibold text-primary hover:bg-surface-soft disabled:opacity-50"
+        className="flex min-h-11 w-full items-center gap-3 rounded-xl px-2.5 text-small font-semibold text-primary-text hover:bg-surface-soft disabled:opacity-50"
       >
         <Plus size={20} aria-hidden />
         {t("tb.move.new")}

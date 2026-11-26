@@ -22,7 +22,7 @@ function renderInline(nodes: Inline[]): ReactNode[] {
         return <em key={index}>{renderInline(node.c)}</em>;
       default:
         return (
-          <a key={index} href={node.href} target="_blank" rel="noopener noreferrer nofollow ugc" className="text-primary underline underline-offset-2 hover:text-primary-hover">
+          <a key={index} href={node.href} target="_blank" rel="noopener noreferrer nofollow ugc" className="text-primary-text underline underline-offset-2 hover:text-primary-hover">
             {renderInline(node.c)}
           </a>
         );

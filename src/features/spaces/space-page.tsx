@@ -268,7 +268,7 @@ function SpaceView({ owner }: { owner: SpacePerson | null }) {
             <div className="space-y-2">
               {owner && (
                 <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-caption text-text-secondary">
-                  <Link href={profileHref(owner)} className="inline-flex items-center gap-1.5 font-semibold text-text hover:text-primary">
+                  <Link href={profileHref(owner)} className="inline-flex items-center gap-1.5 font-semibold text-text hover:text-primary-text">
                     <Avatar src={owner.avatarUrl} alt="" size={24} />
                     {owner.displayName}
                   </Link>

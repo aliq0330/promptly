@@ -13,10 +13,10 @@ export const Chip = forwardRef<
     type="button"
     aria-pressed={selected}
     className={cn(
-      "inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full border px-3 text-label font-medium whitespace-nowrap",
+      "inline-flex h-9 shrink-0 items-center gap-1.5 rounded-sm border px-3 text-label font-semibold whitespace-nowrap",
       "transition-[background-color,border-color,color,transform] duration-200 ease-soft active:scale-[0.96]",
       selected
-        ? "border-transparent bg-primary-soft text-primary"
+        ? "border-transparent bg-primary-soft text-primary-text"
         : "border-border bg-surface text-text-secondary hover:border-border-strong hover:bg-surface-soft/60 hover:text-text",
       className,
     )}

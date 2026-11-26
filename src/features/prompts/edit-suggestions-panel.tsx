@@ -125,7 +125,7 @@ export function EditSuggestionsPanel({
   return (
     <section className="space-y-3 rounded-lg card-flat p-4 sm:p-5">
       <h2 className="text-label font-semibold text-text">
-        {t("editSuggestion.title")} {pending.length > 0 && <span className="text-primary">({pending.length})</span>}
+        {t("editSuggestion.title")} {pending.length > 0 && <span className="text-primary-text">({pending.length})</span>}
       </h2>
 
       <ul className="space-y-3">
@@ -158,7 +158,7 @@ export function EditSuggestionsPanel({
               <button
                 type="button"
                 onClick={() => setExpandedId(isExpanded ? null : suggestion.id)}
-                className="mt-2 inline-flex items-center gap-1 text-caption font-medium text-primary hover:underline"
+                className="mt-2 inline-flex items-center gap-1 text-caption font-medium text-primary-text hover:underline"
               >
                 {isExpanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
                 {isExpanded ? t("editSuggestion.hidePreview") : t("editSuggestion.preview")}

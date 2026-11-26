@@ -15,7 +15,7 @@ interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
  * drawn on a picture (`bg-art-chip`). Role / review / mute / dock badges are thin wrappers that only pick the label and tone.
  */
 const variantClasses: Record<BadgeVariant, string> = {
-  default: "bg-primary-soft text-primary",
+  default: "bg-primary-soft text-primary-text",
   accent: "bg-primary text-primary-foreground",
   outline: "border border-border text-text-secondary",
   neutral: "bg-surface-soft text-text-secondary",
@@ -34,7 +34,7 @@ const sizeClasses: Record<BadgeSize, string> = {
 export function Badge({ className, variant = "default", size = "md", ...props }: BadgeProps) {
   return (
     <span
-      className={cn("inline-flex items-center rounded-full text-caption font-medium", sizeClasses[size], variantClasses[variant], className)}
+      className={cn("inline-flex items-center rounded-xs text-caption font-medium", sizeClasses[size], variantClasses[variant], className)}
       {...props}
     />
   );

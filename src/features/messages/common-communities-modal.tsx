@@ -38,7 +38,7 @@ export function CommonCommunitiesModal({ communities, name, onClose }: { communi
             <li key={community.id}>
               <Link
                 href={communityHref(community.id)}
-                className="flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                className="flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
               >
                 <GroupAvatar name={community.name} avatarUrl={community.avatarUrl} size={40} />
                 <span className="min-w-0 flex-1 leading-tight">

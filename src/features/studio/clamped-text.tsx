@@ -33,7 +33,7 @@ export function ClampedText({ text, lines = 6, className, inset = "p-4" }: { tex
         {text}
       </p>
       {(overflowing || expanded) && (
-        <button type="button" onClick={() => setExpanded((v) => !v)} aria-expanded={expanded} className="mt-2 text-small font-medium text-primary hover:underline">
+        <button type="button" onClick={() => setExpanded((v) => !v)} aria-expanded={expanded} className="mt-2 text-small font-medium text-primary-text hover:underline">
           {expanded ? t("common.showLess") : t("common.showMore")}
         </button>
       )}

@@ -91,7 +91,7 @@ export function InsertPicker({
   }
 
   const pillClass =
-    tone === "field" ? "bg-secondary-soft text-secondary" : tone === "unknown" ? "bg-warning-soft text-warning" : "bg-primary-soft text-primary";
+    tone === "field" ? "bg-secondary-soft text-secondary" : tone === "unknown" ? "bg-warning-soft text-warning" : "bg-primary-soft text-primary-text";
 
   return (
     <div className={cn("flex min-h-0 flex-1 flex-col", className)}>
@@ -203,7 +203,7 @@ export function InsertPicker({
           <button
             type="button"
             onClick={onCreate}
-            className="flex min-h-[44px] w-full items-center gap-2 rounded-lg px-2.5 py-2 text-small font-medium text-primary transition-colors hover:bg-primary-soft"
+            className="flex min-h-[44px] w-full items-center gap-2 rounded-lg px-2.5 py-2 text-small font-medium text-primary-text transition-colors hover:bg-primary-soft"
           >
             <Plus size={16} /> {createLabel}
           </button>

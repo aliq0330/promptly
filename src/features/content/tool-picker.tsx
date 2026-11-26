@@ -235,7 +235,7 @@ function ToolPickerModal({
                         className={cn(
                           "h-9 rounded-full border px-2.5 text-caption font-medium",
                           modelId === model.id
-                            ? "border-transparent bg-primary-soft text-primary"
+                            ? "border-transparent bg-primary-soft text-primary-text"
                             : "border-border text-text-secondary hover:border-border-strong",
                         )}
                       >

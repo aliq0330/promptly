@@ -38,23 +38,28 @@
  * Light (default)
  * ------------------------------------------------------------------------- */
 :root {
-  --p-bg: #f8f8fb;
+  /* Referans tasarım dili (docs/history/473-*): beyaz zemin, nötr gri yüzeyler, tek turuncu vurgu. */
+  --p-bg: #ffffff;
   --p-surface: #ffffff;
-  --p-surface-soft: #f0f0f5;
+  --p-surface-soft: #f5f5f5;
   --p-surface-elevated: #ffffff;
-  --p-text: #121218;
-  --p-text-secondary: #464854;
-  --p-text-muted: #62646f;
-  --p-border: #e4e4ec;
-  --p-border-soft: #ececf2;
-  --p-border-strong: #cfd0dc;
-  --p-primary: #3b5be2;
-  --p-primary-hover: #2e4bc9;
-  --p-primary-soft: #eceffd;
+  --p-text: #363737;
+  --p-text-secondary: #555656;
+  --p-text-muted: #6b6b6b;
+  --p-border: #e6e6e6;
+  --p-border-soft: #ededed;
+  --p-border-strong: #cfcfcf;
+  --p-primary: #ff6719;
+  --p-primary-hover: #ff5600;
+  --p-primary-soft: #fff0e8;
   --p-primary-fg: #ffffff;
-  --p-secondary: #a64718;
-  --p-heart: #d86934;
-  --p-shadow: 18 18 40;
+  /* Vurgu rengi METİN olarak (bağlantı, seçili sekme/çip, simge): dolgu `#ff6719` beyaz zeminde 3:1'in altında kalır, bu ton AA'yı geçer. */
+  --p-primary-text: #b23b00;
+  /* Klavye/alan odağı: vurgudan bağımsız mavi (referansla aynı). */
+  --p-focus: #005dd9;
+  --p-secondary: #b23b00;
+  --p-heart: #ff6719;
+  --p-shadow: 0 0 0;
   /* Line-art scenes (docs/history/373-*): window/lamp light and muted clothes, so brand blue and heart stay the accents. */
   --p-scene-glow: #f7c47c;
   --p-scene-cloth-1: #8b9fd6;
@@ -73,9 +78,9 @@
   --p-warning-fg: #ffffff;
   /* Boundary of a form control (input, textarea, select): WCAG 1.4.11 needs 3:1 against the ground. Cards keep the
    * hairline `border` — they are decoration; a field is something you have to find. */
-  --p-control-border: #868899;
+  --p-control-border: #868686;
   /* Overlay scrim (RGB triplet, so the alpha can be animated) and the z-index ladder. */
-  --p-scrim: 10 8 20;
+  --p-scrim: 0 0 0;
   /* Space left at the bottom of a page for the 64 px mobile tab bar + the home-indicator inset. */
   --nav-clearance: calc(5.5rem + env(safe-area-inset-bottom));
   /* Gezinme genişlikleri (docs/history/406-*): ray, kenar çubuğu ve onlara yaslanan sabit konumlu öğeler (Mesajlar paneli, detay eylem çubuğu) bunu okur — 84/248 px. */
@@ -109,22 +114,24 @@
  * Dark — on <html> (the user's mode) or on any subtree (Odak's stage)
  * ------------------------------------------------------------------------- */
 .dark {
-  --p-bg: #0b0a0f;
-  --p-surface: #16151c;
-  --p-surface-soft: #1e1d26;
-  --p-surface-elevated: #23222c;
-  --p-text: #f3f3f7;
-  --p-text-secondary: #c8c8d3;
-  --p-text-muted: #9a9aaa;
-  --p-border: #2a2933;
-  --p-border-soft: #201f28;
-  --p-border-strong: #3a3946;
-  --p-primary: #738cf0;
-  --p-primary-hover: #93a6f4;
-  --p-primary-soft: #1c2142;
-  --p-primary-fg: #0b0a0f;
-  --p-secondary: #f29051;
-  --p-heart: #f29051;
+  --p-bg: #121212;
+  --p-surface: #1a1a1a;
+  --p-surface-soft: #242424;
+  --p-surface-elevated: #262626;
+  --p-text: #ececec;
+  --p-text-secondary: #c4c4c4;
+  --p-text-muted: #9b9b9b;
+  --p-border: #2f2f2f;
+  --p-border-soft: #262626;
+  --p-border-strong: #404040;
+  --p-primary: #ff7a38;
+  --p-primary-hover: #ff9559;
+  --p-primary-soft: #3a2316;
+  --p-primary-fg: #121212;
+  --p-primary-text: #ff8a50;
+  --p-focus: #5aa2ff;
+  --p-secondary: #ff8a50;
+  --p-heart: #ff7a38;
   --p-shadow: 0 0 0;
   --p-scene-glow: #f2a65a;
   --p-scene-cloth-1: #3d4a86;
@@ -135,11 +142,11 @@
   --p-success: #4ade80;
   --p-warning: #fbbf24;
   --p-danger: #f87171;
-  --p-danger-fg: #0b0a0f;
-  --p-secondary-fg: #0b0a0f;
-  --p-success-fg: #0b0a0f;
-  --p-warning-fg: #0b0a0f;
-  --p-control-border: #74738a;
+  --p-danger-fg: #121212;
+  --p-secondary-fg: #121212;
+  --p-success-fg: #121212;
+  --p-warning-fg: #121212;
+  --p-control-border: #7a7a7a;
   --p-sa: 4;
   --p-highlight: rgb(255 255 255 / 0.045);
 }
@@ -207,6 +214,8 @@
   --color-primary-hover: var(--p-primary-hover);
   --color-primary-soft: var(--p-primary-soft);
   --color-primary-foreground: var(--p-primary-fg);
+  --color-primary-text: var(--p-primary-text);
+  --color-focus: var(--p-focus);
   --color-secondary: var(--p-secondary);
   /* The logo heart's fill tone (docs/history/342-*): marks and dots, never body text. */
   --color-heart: var(--p-heart);
@@ -267,16 +276,19 @@
   --color-focus-workflow: #1b1430;
   --color-focus-skill: #142229;
 
-  /* Radius — Meydan's softer, friendlier corners (cards 16px); never pill-shaped cards */
+  /* Radius (docs/history/473-*): kontroller 10 (düğme, alan, seçici, segment, sekme, çip) · kart/panel/gezinme 12–16 · pencere ve alt kart 20.
+   * Tam yuvarlak (`rounded-full`) yalnız avatar, anahtar, sayaç/nokta ve oynat düğmesidir. */
   --radius-2xs: 0.125rem;
-  --radius-xs: 0.375rem;
-  --radius-sm: 0.5rem;
+  --radius-xs: 0.25rem;
+  --radius-sm: 0.625rem;
   --radius-md: 0.75rem;
   --radius-lg: 1rem;
-  --radius-xl: 1.375rem;
+  --radius-xl: 1.25rem;
 
   /* Shadows — tinted by the palette, layered (hairline + soft ambient), with
    * a 1px top highlight in dark mode (`--p-highlight`) — only on the floating shadows (`lg`, `pop`): a resting card is a hairline, not glass. */
+  --shadow-btn: inset 0 1px 0 rgb(255 255 255 / 0.2), 0 1px 2px rgb(0 0 0 / 0.12);
+  --shadow-focus: 0 0 0 3px rgb(0 93 217 / 0.2);
   --shadow-xs: 0 1px 2px rgb(var(--p-shadow) / calc(0.05 * var(--p-sa)));
   --shadow-sm: 0 1px 2px rgb(var(--p-shadow) / calc(0.06 * var(--p-sa))), 0 1px 1px rgb(var(--p-shadow) / calc(0.03 * var(--p-sa)));
   --shadow-card: 0 1px 1px rgb(var(--p-shadow) / calc(0.03 * var(--p-sa))), 0 2px 6px -2px rgb(var(--p-shadow) / calc(0.05 * var(--p-sa)));
@@ -286,34 +298,32 @@
   --shadow-pop: 0 24px 56px -18px rgb(var(--p-shadow) / calc(0.28 * var(--p-sa))), 0 3px 10px -2px rgb(var(--p-shadow) / calc(0.08 * var(--p-sa))), inset 0 1px 0 var(--p-highlight);
 
   /* Fonts */
-  /* Meydan (docs/history/190-*): DM Sans for UI/body, Bricolage Grotesque for
-   * headings and the wordmark. */
-  --font-sans: var(--font-body-face), ui-sans-serif, system-ui, sans-serif;
-  --font-display: var(--font-display-face), var(--font-body-face), ui-sans-serif, system-ui, sans-serif;
+  /* Referans tasarım dili (docs/history/473-*): arayüz ve başlıklar sistem yazı tipi, okuma gövdesi Spectral (serif), prompt metni JetBrains Mono. */
+  --font-sans: system-ui, -apple-system, "SF Pro Display", BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-display: system-ui, -apple-system, "SF Pro Display", BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-mono: var(--font-mono-face), ui-monospace, SFMono-Regular, Menlo, monospace;
-  /* Pre-186 name: page-level titles used an editorial serif. Kept as an alias
-   * of the display face so every existing `font-serif` keeps working. */
-  --font-serif: var(--font-display);
+  /* Okuma gövdesi: uzun metin (açıklama, belge, Skill talimatı). Sans arayüzde kullanılmaz. */
+  --font-serif: var(--font-serif-face), Georgia, "Times New Roman", serif;
 
   /* Type scale: Display / H1 / H2 / H3 / Body / Small / Caption / Label.
    * The three editorial sizes breathe with the viewport (clamp) so page
    * titles feel generous on desktop without crowding a phone. */
-  --text-display: clamp(2.125rem, 1.55rem + 2vw, 3rem);
+  --text-display: clamp(2rem, 1.6rem + 1.4vw, 2.75rem);
   --text-display--line-height: 1.04;
-  --text-display--letter-spacing: -0.032em;
+  --text-display--letter-spacing: -0.01em;
   /* The big title of an Albüm band (detail pages): one step above `display`. */
-  --text-display-xl: clamp(2rem, 1.5rem + 3vw, 3.5rem);
+  --text-display-xl: clamp(2rem, 1.6rem + 1.4vw, 2.75rem);
   --text-display-xl--line-height: 1.02;
-  --text-display-xl--letter-spacing: -0.035em;
-  --text-h1: clamp(1.75rem, 1.5rem + 0.9vw, 2.25rem);
+  --text-display-xl--letter-spacing: -0.01em;
+  --text-h1: clamp(1.625rem, 1.5rem + 0.6vw, 2rem);
   --text-h1--line-height: 1.1;
-  --text-h1--letter-spacing: -0.028em;
+  --text-h1--letter-spacing: -0.01em;
   --text-h2: clamp(1.3125rem, 1.2rem + 0.35vw, 1.5rem);
   --text-h2--line-height: 1.22;
-  --text-h2--letter-spacing: -0.02em;
+  --text-h2--letter-spacing: -0.005em;
   --text-h3: 1.0625rem;
   --text-h3--line-height: 1.35;
-  --text-h3--letter-spacing: -0.01em;
+  --text-h3--letter-spacing: 0em;
   --text-body: 0.9375rem;
   --text-body--line-height: 1.6;
   --text-small: 0.875rem;
@@ -703,7 +713,7 @@
    * component's own `focus-visible:ring-*` / `outline-none` always wins.
    */
   :where(a, button, input, textarea, select, summary, [tabindex]):focus-visible {
-    outline: 2px solid var(--color-primary);
+    outline: 2px solid var(--color-focus);
     outline-offset: 2px;
   }
 

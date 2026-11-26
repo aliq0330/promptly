@@ -231,7 +231,7 @@ function CreatorCard({ candidate, onDismiss }: { candidate: SuggestedCreator; on
       >
         <X size={16} aria-hidden />
       </button>
-      <Link href={profileHref(profile)} className="flex min-w-0 flex-col items-center gap-2 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+      <Link href={profileHref(profile)} className="flex min-w-0 flex-col items-center gap-2 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus">
         <Avatar src={profile.avatarUrl} alt="" size={80} />
         <span className="w-full min-w-0 space-y-0.5">
           <span className="block truncate text-label font-semibold text-text">{profile.displayName}</span>

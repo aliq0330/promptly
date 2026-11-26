@@ -367,7 +367,7 @@ export function PageRows({ team, actions, onPicked, thumbClass = "h-9 w-14" }: {
                 <span className="block truncate text-small font-semibold text-text">{page.title}</span>
                 <span className="block truncate text-caption text-text-secondary">{pageMeta(page, t, language)}</span>
               </span>
-              {current && <Check size={20} className="shrink-0 text-primary" aria-label={t("tb.pages.current")} />}
+              {current && <Check size={20} className="shrink-0 text-primary-text" aria-label={t("tb.pages.current")} />}
             </button>
             <PageMenu page={page} index={index} extrasCount={extrasCount} actions={actions} />
           </li>
@@ -389,7 +389,7 @@ function PageFooterActions({ actions, onOverview, onClosed }: { actions: PageAct
             actions.create();
           }}
           data-board-page-new=""
-          className="flex min-h-11 w-full items-center gap-3 rounded-xl px-2.5 text-small font-semibold text-primary hover:bg-surface-soft"
+          className="flex min-h-11 w-full items-center gap-3 rounded-xl px-2.5 text-small font-semibold text-primary-text hover:bg-surface-soft"
         >
           <Plus size={20} aria-hidden />
           {t("tb.pages.new")}
@@ -543,7 +543,7 @@ export function PagesOverview({ team, actions, onClose }: { team: TeamBoardConfi
                     <span className="block truncate text-small font-semibold text-text">{page.title}</span>
                     <span className="block truncate text-caption text-text-secondary">{pageMeta(page, t, language)}</span>
                   </span>
-                  {current && <span className="shrink-0 rounded-full bg-primary-soft px-2 py-0.5 text-caption font-semibold text-primary">{t("tb.overview.open.chip")}</span>}
+                  {current && <span className="shrink-0 rounded-full bg-primary-soft px-2 py-0.5 text-caption font-semibold text-primary-text">{t("tb.overview.open.chip")}</span>}
                   <PageMenu page={page} index={index} extrasCount={extrasCount} actions={actions} />
                 </div>
               </li>
@@ -552,7 +552,7 @@ export function PagesOverview({ team, actions, onClose }: { team: TeamBoardConfi
           {actions.canCreate && (
             <li>
               <button type="button" onClick={actions.create} className="flex h-full min-h-40 w-full flex-col items-center justify-center gap-2 rounded-lg border-[1.5px] border-dashed border-border text-small font-semibold text-text-secondary hover:bg-surface-soft">
-                <span className="grid h-11 w-11 place-items-center rounded-full bg-primary-soft text-primary">
+                <span className="grid h-11 w-11 place-items-center rounded-full bg-primary-soft text-primary-text">
                   <Plus size={24} aria-hidden />
                 </span>
                 {t("tb.pages.new")}

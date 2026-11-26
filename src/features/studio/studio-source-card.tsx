@@ -67,10 +67,10 @@ export function StudioSourceCard({
         {badge && <div className="mt-1">{badge}</div>}
       </div>
       <div className="flex shrink-0 flex-col items-end text-small font-semibold">
-        <button type="button" onClick={onChange} className="min-h-9 text-primary hover:underline">
+        <button type="button" onClick={onChange} className="min-h-9 text-primary-text hover:underline">
           {t("studio.change")}
         </button>
-        <Link href={href} target="_blank" rel="noopener" className="hidden min-h-9 items-center gap-1 text-primary hover:underline sm:inline-flex">
+        <Link href={href} target="_blank" rel="noopener" className="hidden min-h-9 items-center gap-1 text-primary-text hover:underline sm:inline-flex">
           <ArrowUpRight size={12} aria-hidden /> {t("studio.openOriginal")}
         </Link>
         <button type="button" onClick={onRemove} className="min-h-9 font-medium text-text-muted hover:text-text">

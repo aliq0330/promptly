@@ -28,10 +28,10 @@ export function InsightTopList({ items }: { items: InsightTopItem[] }) {
             <Link
               href={insightPromptHref(item.id)}
               aria-label={t("insights.top.rowAria", { title: item.title, copies: item.copies, reactions: item.reactions })}
-              className="grid grid-cols-[1.5rem_2.75rem_minmax(0,1fr)_auto] items-center gap-3 rounded-md py-3 transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:grid-cols-[1.5rem_2.75rem_minmax(0,1fr)_5.5rem_4.5rem_5.5rem] sm:gap-4"
+              className="grid grid-cols-[1.5rem_2.75rem_minmax(0,1fr)_auto] items-center gap-3 rounded-md py-3 transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus sm:grid-cols-[1.5rem_2.75rem_minmax(0,1fr)_5.5rem_4.5rem_5.5rem] sm:gap-4"
             >
               <span className="font-display text-h3 font-bold text-text-muted tabular-nums">{index + 1}</span>
-              <span className="grid h-11 w-11 place-items-center rounded-md bg-primary-soft text-primary">
+              <span className="grid h-11 w-11 place-items-center rounded-md bg-primary-soft text-primary-text">
                 <Icon size={20} aria-hidden />
               </span>
               <span className="min-w-0">

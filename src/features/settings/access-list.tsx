@@ -146,7 +146,7 @@ const CONFIRM_KEY: Record<AccessKind, TranslationKey> = { ai: "apps.revokeConfir
 const YES_KEY: Record<AccessKind, TranslationKey> = { ai: "apps.revokeYes", extension: "apps.revokeYes", legacy: "apps.revokeYes", key: "apiKeys.revokeYes", telegram: "tg.removeYes" };
 
 const HINT_KEY: Record<(typeof PERMISSIONS)[number], TranslationKey> = { read: "devSettings.perm.readHint", write: "devSettings.perm.writeHint", interact: "devSettings.perm.interactHint" };
-const scopeClass = (scope: string) => (scope === "read" ? "bg-primary-soft text-primary" : "bg-secondary-soft text-secondary");
+const scopeClass = (scope: string) => (scope === "read" ? "bg-primary-soft text-primary-text" : "bg-secondary-soft text-secondary");
 
 async function revokeRow(row: AccessRow): Promise<void> {
   if (row.kind === "key") await revokeApiToken(row.id);

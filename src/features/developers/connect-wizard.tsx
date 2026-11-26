@@ -63,18 +63,18 @@ export function ConnectWizard({ mcpMeUrl, keysHref, headingLevel = "h4" }: { mcp
             <span key={item.id} className={cn("h-1.5 flex-1 rounded-full", i < filledSegments(index, steps.length) ? "bg-primary" : "bg-border")} />
           ))}
         </div>
-        <p className="text-caption font-semibold text-primary" data-guide-step="">
+        <p className="text-caption font-semibold text-primary-text" data-guide-step="">
           {t("guide.stepOf", { n: index + 1, total: steps.length })}
         </p>
         <Heading className="break-words font-display text-h3 text-text">{t(step.title)}</Heading>
         <p className="text-body leading-relaxed text-text-secondary">{t(step.body)}</p>
         {step.keysLink &&
           (keysHref.startsWith("#") ? (
-            <a href={keysHref} className="inline-flex min-h-9 items-center text-small font-semibold text-primary hover:underline">
+            <a href={keysHref} className="inline-flex min-h-9 items-center text-small font-semibold text-primary-text hover:underline">
               {t("guide.keysLink")}
             </a>
           ) : (
-            <Link href={keysHref} className="inline-flex min-h-9 items-center text-small font-semibold text-primary hover:underline">
+            <Link href={keysHref} className="inline-flex min-h-9 items-center text-small font-semibold text-primary-text hover:underline">
               {t("guide.keysLink")}
             </Link>
           ))}
@@ -114,7 +114,7 @@ export function ConnectWizard({ mcpMeUrl, keysHref, headingLevel = "h4" }: { mcp
                 onClick={() => setStepIndex(i)}
                 aria-current={state === "current" ? "step" : undefined}
                 data-guide-overview={state}
-                className="flex min-h-11 w-full items-center gap-3 py-2 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                className="flex min-h-11 w-full items-center gap-3 py-2 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
               >
                 <span
                   aria-hidden
@@ -155,10 +155,10 @@ function ConnectorSketch() {
         </div>
         <div className="space-y-1">
           <p className="text-caption text-text-muted">{t("guide.sketch.url")}</p>
-          <div className="flex h-8 items-center rounded-md border-2 border-primary bg-surface px-2.5 text-caption font-semibold text-primary ring-4 ring-primary/15">
+          <div className="flex h-8 items-center rounded-md border-2 border-primary bg-surface px-2.5 text-caption font-semibold text-primary-text ring-4 ring-primary/15">
             {t("guide.sketch.paste")}
           </div>
-          <p className="flex items-center justify-end gap-1 text-caption font-semibold text-primary">
+          <p className="flex items-center justify-end gap-1 text-caption font-semibold text-primary-text">
             <ArrowUp size={16} />
             {t("guide.sketch.onlyThis")}
           </p>

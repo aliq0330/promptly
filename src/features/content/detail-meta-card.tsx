@@ -43,7 +43,7 @@ export function DetailMetaCard({
   const hasTool = items.length > 0 || Boolean(legacyTool) || Boolean(fallbackTool);
   if (!hasTool && !hasChips && quoteCount <= 0 && !footer) return null;
 
-  const linkClass = "transition-colors hover:text-primary";
+  const linkClass = "transition-colors hover:text-primary-text";
   return (
     // One context card (docs/history/448-*): tool, category path and #tags as labelled blocks on one left edge, the relation-map strip last.
     <section data-testid="detail-meta" className="overflow-hidden rounded-lg card-flat shadow-card">

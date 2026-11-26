@@ -160,7 +160,7 @@ export function UsersPanel({ userId, onSelectUser }: { userId: string | null; on
               type="button"
               onClick={() => onSelectUser(u.id)}
               data-user-row={u.username}
-              className="flex w-full items-start gap-3 rounded-lg card-flat p-3 text-left shadow-xs transition-colors hover:border-border-strong hover:bg-surface-soft/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              className="flex w-full items-start gap-3 rounded-lg card-flat p-3 text-left shadow-xs transition-colors hover:border-border-strong hover:bg-surface-soft/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
             >
               <Avatar src={u.avatarUrl} alt={u.displayName} size={40} />
               <span className="min-w-0 flex-1">

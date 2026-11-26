@@ -36,7 +36,7 @@ export function PhoneSubBar({
   return (
     <div className={cn("-mx-3 mb-3 md:hidden", className)} data-phone-subbar data-testid={testId}>
       <div className="flex h-14 items-center gap-1 border-b border-border-soft bg-surface px-2">
-        <Link href={backHref} aria-label={t("common.back")} className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-text hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary" data-phone-back>
+        <Link href={backHref} aria-label={t("common.back")} className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-text hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus" data-phone-back>
           <ArrowLeft size={20} aria-hidden />
         </Link>
         <div className="min-w-0 flex-1 leading-tight">
@@ -76,11 +76,11 @@ export function PhoneSectionList({ items, ariaLabel, className }: { items: Phone
                 href={item.href}
                 data-phone-section={item.key}
                 className={cn(
-                  "flex min-h-14 items-center gap-3 px-4 py-2 text-body font-medium transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary",
+                  "flex min-h-14 items-center gap-3 px-4 py-2 text-body font-medium transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-focus",
                   item.danger ? "text-danger" : "text-text",
                 )}
               >
-                <span className={cn("grid h-9 w-9 shrink-0 place-items-center rounded-full", item.danger ? "bg-danger-soft text-danger" : "bg-primary-soft text-primary")}>
+                <span className={cn("grid h-9 w-9 shrink-0 place-items-center rounded-full", item.danger ? "bg-danger-soft text-danger" : "bg-primary-soft text-primary-text")}>
                   <Icon size={20} aria-hidden />
                 </span>
                 <span className="min-w-0 flex-1 truncate">{item.label}</span>

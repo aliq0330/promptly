@@ -155,7 +155,7 @@ export function DraftsButton({
           className="relative flex h-9 min-w-9 shrink-0 items-center justify-center gap-1.5 rounded-full px-2 text-text-secondary transition-colors hover:bg-surface-soft hover:text-text lg:px-3"
         >
           <FileText size={20} aria-hidden />
-          <span className="hidden text-small font-semibold text-primary lg:inline">
+          <span className="hidden text-small font-semibold text-primary-text lg:inline">
             {t("cs.drafts.mine")}
             {count > 0 ? ` (${count})` : ""}
           </span>

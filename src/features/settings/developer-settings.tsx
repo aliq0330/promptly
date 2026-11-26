@@ -46,7 +46,7 @@ function Tile({ href, icon, title, lead, status, statusTone, action, primary, ti
       className="group flex min-h-36 flex-col gap-3 rounded-lg card-flat p-4 shadow-card transition-colors duration-200 ease-soft hover:border-border-strong"
     >
       <span className="flex items-center gap-3">
-        <span aria-hidden className="grid h-10 w-10 shrink-0 place-items-center rounded-md bg-primary-soft text-primary">{icon}</span>
+        <span aria-hidden className="grid h-10 w-10 shrink-0 place-items-center rounded-md bg-primary-soft text-primary-text">{icon}</span>
         <span className="font-display text-body font-semibold text-text">{title}</span>
       </span>
       <span className="text-small leading-relaxed text-text-secondary">{lead}</span>
@@ -139,7 +139,7 @@ export function DeveloperAiPage() {
           {endpoints ? <ConnectWizard mcpMeUrl={endpoints.mcpMeUrl} keysHref={`${DEVELOPER_HREF}/api/`} /> : null}
           <p className="border-t border-border-soft pt-4 text-caption leading-relaxed text-text-muted">
             {t("devSettings.moreTools")}{" "}
-            <Link href="/developers" className="font-medium text-primary hover:underline">{t("devSettings.docsTitle")}</Link>
+            <Link href="/developers" className="font-medium text-primary-text hover:underline">{t("devSettings.docsTitle")}</Link>
           </p>
         </div>
       </SettingsCard>

@@ -80,7 +80,7 @@ export function TagsDiscoverView() {
           {followed.tags.length > 0 && (
             <section className="space-y-3">
               <div className="flex items-center gap-1.5">
-                <Hash size={16} className="text-primary" />
+                <Hash size={16} className="text-primary-text" />
                 <h2 className="text-h3 font-bold text-text">{t("tag.followedHeading")}</h2>
               </div>
               <TagChipRow tags={followed.tags} emptyMessage="" />
@@ -89,7 +89,7 @@ export function TagsDiscoverView() {
 
           <section className="space-y-3">
             <div className="flex items-center gap-1.5">
-              <Flame size={16} className="text-primary" />
+              <Flame size={16} className="text-primary-text" />
               <h2 className="text-h3 font-bold text-text">{t("tag.popularHeading")}</h2>
             </div>
             <TagChipRow tags={popular} emptyMessage={t("tag.noUsageData")} />
@@ -97,7 +97,7 @@ export function TagsDiscoverView() {
 
           <section className="space-y-3">
             <div className="flex items-center gap-1.5">
-              <TrendingUp size={16} className="text-primary" />
+              <TrendingUp size={16} className="text-primary-text" />
               <h2 className="text-h3 font-bold text-text">{t("tag.risingHeading")}</h2>
             </div>
             {trending.length === 0 ? (
@@ -109,7 +109,7 @@ export function TagsDiscoverView() {
                 {trending.map((tag) => (
                   <Link key={tag.slug} href={tagHref(tag)}>
                     <Badge variant="default" className="hover:bg-accent-surface/70">
-                      #{tag.label} <span className="ml-1 text-primary/70">+{tag.recentCount}</span>
+                      #{tag.label} <span className="ml-1 text-primary-text/70">+{tag.recentCount}</span>
                     </Badge>
                   </Link>
                 ))}
@@ -119,7 +119,7 @@ export function TagsDiscoverView() {
 
           <section className="space-y-3">
             <div className="flex items-center gap-1.5">
-              <Hash size={16} className="text-primary" />
+              <Hash size={16} className="text-primary-text" />
               <h2 className="text-h3 font-bold text-text">{t("tag.newHeading")}</h2>
             </div>
             <TagChipRow tags={newest} emptyMessage={t("tag.noNewTags")} />

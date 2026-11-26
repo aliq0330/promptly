@@ -49,7 +49,7 @@ export function CommentReactions({
           aria-haspopup="dialog"
           aria-label={t("reaction.summary.aria", { count: entry.count })}
           data-comment-reaction-stack=""
-          className="flex items-center rounded-full py-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          className="flex items-center rounded-full py-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
         >
           {stack.map((key, index) => (
             <span key={key} className={cn("inline-flex size-5 items-center justify-center rounded-full bg-primary-soft ring-2 ring-surface", index > 0 && "-ml-1.5")}>

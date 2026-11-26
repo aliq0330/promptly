@@ -122,7 +122,7 @@ export function SkillFileTree({ files, selected, onSelect, label, defaultOpen = 
             data-tree-folder={node.path}
             onClick={() => toggle(node.path)}
             style={indent}
-            className="flex min-h-11 w-full items-center gap-2 rounded-md pr-2 text-left text-small font-semibold text-text-secondary hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary md:min-h-9"
+            className="flex min-h-11 w-full items-center gap-2 rounded-md pr-2 text-left text-small font-semibold text-text-secondary hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus md:min-h-9"
           >
             <ChevronRight size={16} className={cn("shrink-0 transition-transform duration-200 ease-soft", isOpen && "rotate-90")} aria-hidden />
             <Folder size={16} className="shrink-0 text-text-muted" aria-hidden />
@@ -146,14 +146,14 @@ export function SkillFileTree({ files, selected, onSelect, label, defaultOpen = 
         onClick={() => onSelect(file.path)}
         style={{ paddingLeft: `${10 + depth * 18 + (depth === 0 ? 0 : 20)}px` }}
         className={cn(
-          "flex min-h-11 w-full items-center gap-2 rounded-md pr-2 text-left text-small focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary md:min-h-9",
-          active ? "bg-primary-soft font-semibold text-primary" : file.auto ? "text-text-muted hover:bg-surface-soft" : "text-text hover:bg-surface-soft",
+          "flex min-h-11 w-full items-center gap-2 rounded-md pr-2 text-left text-small focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus md:min-h-9",
+          active ? "bg-primary-soft font-semibold text-primary-text" : file.auto ? "text-text-muted hover:bg-surface-soft" : "text-text hover:bg-surface-soft",
         )}
       >
         {depth === 0 && <FileText size={16} className="shrink-0" aria-hidden />}
         <span className="min-w-0 flex-1 truncate">{node.name}</span>
         {file.badge}
-        {file.meta && <span className={cn("shrink-0 text-caption font-normal", active ? "text-primary" : "text-text-muted")}>{file.meta}</span>}
+        {file.meta && <span className={cn("shrink-0 text-caption font-normal", active ? "text-primary-text" : "text-text-muted")}>{file.meta}</span>}
       </button>
     );
   }

@@ -35,14 +35,14 @@ export function ExtensionSection() {
         <ol className="grid gap-3 sm:grid-cols-3" aria-label={t("devSettings.extInstallTitle")}>
           <li className="space-y-1.5 rounded-lg card-flat p-3">
             <p className="flex items-center gap-2 text-small font-semibold text-text">
-              <span aria-hidden className="grid h-6 w-6 place-items-center rounded-full bg-primary-soft text-caption font-semibold text-primary">1</span>
+              <span aria-hidden className="grid h-6 w-6 place-items-center rounded-full bg-primary-soft text-caption font-semibold text-primary-text">1</span>
               {t("devSettings.extStepDownload")}
             </p>
             <p className="text-caption leading-relaxed text-text-secondary">{t("devSettings.extStep1")}</p>
           </li>
           <li className="space-y-1.5 rounded-lg card-flat p-3">
             <p className="flex items-center gap-2 text-small font-semibold text-text">
-              <span aria-hidden className="grid h-6 w-6 place-items-center rounded-full bg-primary-soft text-caption font-semibold text-primary">2</span>
+              <span aria-hidden className="grid h-6 w-6 place-items-center rounded-full bg-primary-soft text-caption font-semibold text-primary-text">2</span>
               {t("devSettings.extStepLoad")}
             </p>
             <p className="text-caption leading-relaxed text-text-secondary">{t("devSettings.extStep2")}</p>
@@ -52,7 +52,7 @@ export function ExtensionSection() {
           </li>
           <li className="space-y-1.5 rounded-lg card-flat p-3">
             <p className="flex items-center gap-2 text-small font-semibold text-text">
-              <span aria-hidden className="grid h-6 w-6 place-items-center rounded-full bg-primary-soft text-caption font-semibold text-primary">3</span>
+              <span aria-hidden className="grid h-6 w-6 place-items-center rounded-full bg-primary-soft text-caption font-semibold text-primary-text">3</span>
               {t("devSettings.extStepConnect")}
             </p>
             <p className="text-caption leading-relaxed text-text-secondary">{t("devSettings.extStep5")}</p>
@@ -62,7 +62,7 @@ export function ExtensionSection() {
 
         <div className="space-y-2">
           <details className="rounded-lg card-flat px-4" data-extension-use="">
-            <summary className="cursor-pointer py-3 text-small font-semibold text-text focus-visible:outline-2 focus-visible:outline-primary">{t("devSettings.extUseTitle")}</summary>
+            <summary className="cursor-pointer py-3 text-small font-semibold text-text focus-visible:outline-2 focus-visible:outline-focus">{t("devSettings.extUseTitle")}</summary>
             <ul className="space-y-2 pb-4 text-small leading-relaxed text-text-secondary">
               {USE_KEYS.map((key) => (
                 <li key={key}>{t(key)}</li>
@@ -70,7 +70,7 @@ export function ExtensionSection() {
             </ul>
           </details>
           <details className="rounded-lg card-flat px-4" data-extension-safety="">
-            <summary className="cursor-pointer py-3 text-small font-semibold text-text focus-visible:outline-2 focus-visible:outline-primary">{t("devSettings.extSafetyTitle")}</summary>
+            <summary className="cursor-pointer py-3 text-small font-semibold text-text focus-visible:outline-2 focus-visible:outline-focus">{t("devSettings.extSafetyTitle")}</summary>
             <div className="space-y-2 pb-4">
               <ul className="space-y-2 text-small leading-relaxed text-text-secondary">
                 {SAFE_KEYS.map((key) => (
@@ -79,7 +79,7 @@ export function ExtensionSection() {
               </ul>
               <p className="text-caption text-text-muted">
                 {t("devSettings.extRevoke")}{" "}
-                <Link href="/settings/developer/" className="font-medium text-primary hover:underline">
+                <Link href="/settings/developer/" className="font-medium text-primary-text hover:underline">
                   {t("devSettings.extRevokeLink")}
                 </Link>
               </p>

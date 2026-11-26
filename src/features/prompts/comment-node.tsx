@@ -121,7 +121,7 @@ export function CommentNode({
 /** İçeriğin sahibinin yorumlarında küçük "Yazar" rozeti (docs/history/385-*). */
 function AuthorBadge({ className }: { className?: string }) {
   const { t } = useTranslation();
-  return <span className={cn("inline-flex items-center rounded-full bg-primary-soft px-2 py-0.5 text-caption font-semibold text-primary", className)}>{t("comments.authorBadge")}</span>;
+  return <span className={cn("inline-flex items-center rounded-full bg-primary-soft px-2 py-0.5 text-caption font-semibold text-primary-text", className)}>{t("comments.authorBadge")}</span>;
 }
 
 /** Sabitlenmiş yorumun etiketi: yalnız raptiye ve yazı (dolgu yok); yorum her sıralamada listenin başında durur. */
@@ -211,7 +211,7 @@ function ThreadCommentNode({ comment, depth, tree }: { comment: PromptComment; d
       className={cn("min-w-0 space-y-1.5", !hookedForm && "mt-3")}
     >
       <p className="text-caption text-text-muted">
-        <span className="font-medium text-primary">@{comment.author.username}</span> {t("comments.replyingToSuffix")}
+        <span className="font-medium text-primary-text">@{comment.author.username}</span> {t("comments.replyingToSuffix")}
       </p>
       {tree.currentUserId && (
         <CommentComposerBox
@@ -323,7 +323,7 @@ function ThreadCommentNode({ comment, depth, tree }: { comment: PromptComment; d
                 <div className="mt-0.5">
                   <p className="break-words text-small text-text">
                     {showParentHint && (
-                      <span className="mr-1 inline-flex items-center gap-0.5 text-caption font-medium text-primary">
+                      <span className="mr-1 inline-flex items-center gap-0.5 text-caption font-medium text-primary-text">
                         <Reply size={12} />@{parent.author.username}
                       </span>
                     )}
@@ -342,7 +342,7 @@ function ThreadCommentNode({ comment, depth, tree }: { comment: PromptComment; d
                 <button
                   type="button"
                   onClick={() => (isReplyingHere ? tree.onCancelReply() : tree.onStartReply(comment.id))}
-                  className="inline-flex min-h-9 items-center gap-1.5 rounded-full px-2.5 font-medium transition-colors hover:bg-surface-soft hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                  className="inline-flex min-h-9 items-center gap-1.5 rounded-full px-2.5 font-medium transition-colors hover:bg-surface-soft hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
                 >
                   <Reply size={20} aria-hidden />
                   {t("request.reply")}
@@ -374,7 +374,7 @@ function ThreadCommentNode({ comment, depth, tree }: { comment: PromptComment; d
               onClick={() => tree.onToggleExpand(comment.id)}
               aria-expanded={isExpanded}
               data-comment-fold
-              className="-ml-2 inline-flex min-h-9 items-center gap-1.5 rounded-full px-2 text-small font-medium text-primary transition-colors hover:bg-primary-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              className="-ml-2 inline-flex min-h-9 items-center gap-1.5 rounded-full px-2 text-small font-medium text-primary-text transition-colors hover:bg-primary-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
             >
               <ChevronDown size={12} aria-hidden className={cn("transition-transform duration-200", !isExpanded && "-rotate-90")} />
               {isExpanded
@@ -530,7 +530,7 @@ function SheetCommentNode({ comment, depth, tree }: { comment: PromptComment; de
             <>
               {(comment.body || showParentHint) && (
                 <p className="whitespace-pre-line break-words text-body leading-snug text-text">
-                  {showParentHint && <span className="mr-1 font-semibold text-primary">@{parent.author.username}</span>}
+                  {showParentHint && <span className="mr-1 font-semibold text-primary-text">@{parent.author.username}</span>}
                   <MentionText text={comment.body} />
                 </p>
               )}

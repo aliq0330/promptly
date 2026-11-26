@@ -165,7 +165,7 @@ export function InterestCardFrame({ interest, item, index, children }: { interes
         <button
           type="button"
           onClick={() => interest.undoHidden(target)}
-          className="mt-3 inline-flex min-h-10 items-center rounded-full border border-border bg-surface px-5 text-label font-semibold text-primary transition-colors duration-200 hover:bg-surface-soft"
+          className="mt-3 inline-flex min-h-10 items-center rounded-full border border-border bg-surface px-5 text-label font-semibold text-primary-text transition-colors duration-200 hover:bg-surface-soft"
         >
           {t("interest.undo")}
         </button>
@@ -206,7 +206,7 @@ function InterestPromptStrip({ interest, target, answered }: { interest: Interes
     return (
       <StripShell data-interest-thanks role="status" className="px-4 py-3">
         <p className="flex items-center gap-2 text-label font-semibold text-text-secondary">
-          <Check size={16} aria-hidden className="text-primary" />
+          <Check size={16} aria-hidden className="text-primary-text" />
           {t("interest.thanks")}
         </p>
         <p className="mt-0.5 text-caption text-text-muted">{t("interest.thanksHint")}</p>
@@ -267,7 +267,7 @@ function ReplyPill({ onClick, icon, primary, children }: { onClick: () => void; 
       onClick={onClick}
       className={cn(
         "flex min-h-10 items-center justify-center gap-1.5 rounded-full border border-border bg-surface px-3 text-label font-semibold transition-colors duration-200 hover:bg-surface-elevated",
-        primary ? "text-primary" : "text-text",
+        primary ? "text-primary-text" : "text-text",
       )}
     >
       {icon}

@@ -118,7 +118,7 @@ export function UserDetail({ userId, onBack }: { userId: string; onBack: () => v
               {user.lastSignInAt ? formatRelativeTime(user.lastSignInAt, language) : t("admin.user.neverSignedIn")}
             </p>
             {user.bio && <p className="mt-2 break-words text-small text-text-secondary">{user.bio}</p>}
-            <Link href={`/profile/real?username=${encodeURIComponent(user.username)}`} className="mt-2 inline-flex items-center gap-1 text-caption font-medium text-primary hover:underline">
+            <Link href={`/profile/real?username=${encodeURIComponent(user.username)}`} className="mt-2 inline-flex items-center gap-1 text-caption font-medium text-primary-text hover:underline">
               <ArrowUpRight size={12} aria-hidden /> {t("admin.user.openProfile")}
             </Link>
           </div>

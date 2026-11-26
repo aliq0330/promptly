@@ -238,7 +238,7 @@ export function LiveToast({ entry, mode, onClose }: { entry: LiveToastEntry; mod
             }
           }}
           className={cn(
-            "live-toast group pointer-events-auto relative grid cursor-pointer select-none grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-3 overflow-hidden p-3 pb-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+            "live-toast group pointer-events-auto relative grid cursor-pointer select-none grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-3 overflow-hidden p-3 pb-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus",
             FLOATING_PANEL_CLASS,
             milestone && "border-secondary/40",
             mode === "phone" && "touch-none",
@@ -256,7 +256,7 @@ export function LiveToast({ entry, mode, onClose }: { entry: LiveToastEntry; mod
           )}
 
           {summary ? (
-            <span className="relative flex size-10 items-center justify-center rounded-full bg-primary-soft text-primary" data-live-toast-icon="summary">
+            <span className="relative flex size-10 items-center justify-center rounded-full bg-primary-soft text-primary-text" data-live-toast-icon="summary">
               <Bell size={20} aria-hidden />
             </span>
           ) : milestone ? (

@@ -126,7 +126,7 @@ export function ImagesTab({ onShowOnBoard, focusId }: { onShowOnBoard: (id: stri
                 onClick={() => setView(key)}
                 aria-pressed={view === key}
                 aria-label={t(key === "grid" ? "spaces.home.viewGrid" : "spaces.home.viewList")}
-                className={cn("flex h-9 w-10 items-center justify-center rounded-full", view === key ? "bg-primary-soft text-primary" : "text-text-muted hover:text-text")}
+                className={cn("flex h-9 w-10 items-center justify-center rounded-full", view === key ? "bg-primary-soft text-primary-text" : "text-text-muted hover:text-text")}
               >
                 {key === "grid" ? <Grid2x2 size={16} aria-hidden /> : <List size={16} aria-hidden />}
               </button>

@@ -1379,7 +1379,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
                 title={t("chat.search.open")}
                 aria-pressed={searchOpen}
                 data-chat-search-toggle
-                className={cn(DOCK_ICON_BUTTON, searchOpen && "bg-primary-soft text-primary")}
+                className={cn(DOCK_ICON_BUTTON, searchOpen && "bg-primary-soft text-primary-text")}
               >
                 <Search size={20} aria-hidden />
               </button>
@@ -1395,7 +1395,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
             <span className="min-w-0 leading-tight">
               <span className="block truncate font-display text-body font-semibold tracking-[-0.01em] text-text">{group ? group.name : participant.displayName}</span>
               {typingText ? (
-                <span data-typing-indicator role="status" className="block truncate text-caption font-medium text-primary">
+                <span data-typing-indicator role="status" className="block truncate text-caption font-medium text-primary-text">
                   {typingText}
                 </span>
               ) : group ? (
@@ -1444,7 +1444,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
             <span className="min-w-0 leading-tight">
               <span className="block truncate font-display text-h3 font-semibold tracking-[-0.01em] text-text">{teamChannel ? teamChannel.name : group.name}</span>
               {typingText ? (
-                <span data-typing-indicator role="status" className="block truncate text-caption font-medium text-primary">
+                <span data-typing-indicator role="status" className="block truncate text-caption font-medium text-primary-text">
                   {typingText}
                 </span>
               ) : teamChannel ? (
@@ -1492,7 +1492,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
             <span className="min-w-0 leading-tight">
               <span className="block truncate font-display text-h3 font-semibold tracking-[-0.01em] text-text">{participant.displayName}</span>
               {typingText ? (
-                <span data-typing-indicator role="status" className="block truncate text-caption font-medium text-primary">
+                <span data-typing-indicator role="status" className="block truncate text-caption font-medium text-primary-text">
                   {typingText}
                 </span>
               ) : (
@@ -1515,7 +1515,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
             <Users size={16} aria-hidden /> {group.memberCount.toLocaleString()}
           </button>
         )}
-        {renderCallButtons("flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-transparent text-text-muted transition-colors hover:bg-surface-soft hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary")}
+        {renderCallButtons("flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-transparent text-text-muted transition-colors hover:bg-surface-soft hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus")}
         <button
           type="button"
           onClick={() => setSearchOpen((open) => !open)}
@@ -1525,7 +1525,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
           data-chat-search-toggle
           className={cn(
             "flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-transparent text-text-muted transition-colors hover:bg-surface-soft hover:text-text",
-            searchOpen && "bg-primary-soft text-primary",
+            searchOpen && "bg-primary-soft text-primary-text",
           )}
         >
           <Search size={20} />
@@ -1678,7 +1678,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
             {t("messages.pendingRequestNotice", { name: participant?.displayName ?? "" })}
           </p>
           <div className="flex shrink-0 items-center gap-3 text-caption font-medium">
-            <button type="button" onClick={handleAcceptRequest} className="text-primary hover:underline">
+            <button type="button" onClick={handleAcceptRequest} className="text-primary-text hover:underline">
               {t("messages.acceptAction")}
             </button>
             <button
@@ -1798,7 +1798,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
             <button
               type="button"
               onClick={() => void returnToLatest()}
-              className="rounded-full border border-border-soft bg-surface px-4 py-1.5 text-caption font-medium text-primary shadow-xs transition-colors hover:border-border-strong"
+              className="rounded-full border border-border-soft bg-surface px-4 py-1.5 text-caption font-medium text-primary-text shadow-xs transition-colors hover:border-border-strong"
             >
               {t("chat.jump.latest")}
             </button>
@@ -1813,7 +1813,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
           onClick={() => void returnToLatest()}
           aria-label={t("chat.jump.latest")}
           title={t("chat.jump.latest")}
-          className="absolute bottom-24 right-4 z-20 flex h-10 w-10 items-center justify-center rounded-full border border-border-soft bg-surface text-primary shadow-card transition-colors hover:border-border-strong"
+          className="absolute bottom-24 right-4 z-20 flex h-10 w-10 items-center justify-center rounded-full border border-border-soft bg-surface text-primary-text shadow-card transition-colors hover:border-border-strong"
         >
           <ChevronsDown size={20} />
         </button>

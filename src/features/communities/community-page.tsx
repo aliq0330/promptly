@@ -253,7 +253,7 @@ function CommunityPageInner() {
             {role && (
               <Link href={communityChatHref(g.id)} data-open-chat className={buttonClassName()}>
                 <MessagesSquare size={20} aria-hidden /> {t("communities.detail.openChat")}
-                {unread > 0 && <span className="ml-1 rounded-full bg-primary-foreground px-1.5 text-caption text-primary">{unread}</span>}
+                {unread > 0 && <span className="ml-1 rounded-full bg-primary-foreground px-1.5 text-caption text-primary-text">{unread}</span>}
               </Link>
             )}
             {joinButton}

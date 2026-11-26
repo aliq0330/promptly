@@ -13,7 +13,7 @@ export function MentionText({ text }: { text: string }) {
     <>
       {splitMentions(text).map((segment, index) =>
         segment.username ? (
-          <Link key={index} href={profileHref({ username: segment.username })} className="font-medium text-primary hover:underline">
+          <Link key={index} href={profileHref({ username: segment.username })} className="font-medium text-primary-text hover:underline">
             {segment.text}
           </Link>
         ) : (

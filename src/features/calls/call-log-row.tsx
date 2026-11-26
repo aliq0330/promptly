@@ -53,7 +53,7 @@ export function CallLogRow({ call, userId, onCallBack }: { call: CallRow; userId
         {summary.outcome === "completed" && <span>{t("calls.log.duration", { time: formatCallDuration(summary.durationSec) })}</span>}
         <span className="text-text-muted">{formatClockTime(summary.at, language)}</span>
         {canCall && summary.outcome !== "completed" && (
-          <button type="button" onClick={() => onCallBack?.(summary.type)} data-call-callback className="rounded-full px-2 py-0.5 font-semibold text-primary hover:bg-primary-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+          <button type="button" onClick={() => onCallBack?.(summary.type)} data-call-callback className="rounded-full px-2 py-0.5 font-semibold text-primary-text hover:bg-primary-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus">
             {actionLabel}
           </button>
         )}

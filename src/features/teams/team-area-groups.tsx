@@ -131,7 +131,7 @@ export function FolderGrid({
       {(counts.get(NO_GROUP) ?? 0) > 0 && card(NO_GROUP, t("spaces.groups.none"), "bg-border-strong", counts.get(NO_GROUP) ?? 0, previews.get(NO_GROUP) ?? [], true)}
       {canAdd && (
         <li>
-          <button type="button" onClick={onNew} data-area-folder-new="" className="flex h-full min-h-[9.5rem] w-full flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-surface-soft/50 text-small font-semibold text-primary transition-colors hover:bg-surface-soft">
+          <button type="button" onClick={onNew} data-area-folder-new="" className="flex h-full min-h-[9.5rem] w-full flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-surface-soft/50 text-small font-semibold text-primary-text transition-colors hover:bg-surface-soft">
             <FolderPlus size={24} aria-hidden />
             {t("tf.group.newTile")}
           </button>
@@ -169,7 +169,7 @@ export function EmptyFolder({ name, canAdd, onAdd, onPick }: { name: string; can
   const { t } = useTranslation();
   return (
     <div className="mx-auto max-w-sm space-y-4 px-2 py-10 text-center" data-testid="area-folder-empty">
-      <span aria-hidden className="mx-auto grid h-20 w-20 place-items-center rounded-xl bg-primary-soft text-primary">
+      <span aria-hidden className="mx-auto grid h-20 w-20 place-items-center rounded-xl bg-primary-soft text-primary-text">
         <FolderPlus size={40} />
       </span>
       <div className="space-y-1.5">

@@ -94,13 +94,13 @@ function SharedCard({
   }
   return (
     <div className={CARD_CLASS} data-shared-card={state} data-shared-post-card={testId === "post" ? "ready" : undefined}>
-      <Link href={href} className="block space-y-2 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+      <Link href={href} className="block space-y-2 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus">
         <span className="relative block h-32 w-full overflow-hidden rounded-xl bg-primary-soft">
           {cover ??
             (thumbnail ? (
               <StorageImage src={thumbnail.url} alt={thumbnail.alt} fill sizes="288px" className="object-cover" />
             ) : (
-              <span aria-hidden className="flex h-full w-full items-center justify-center text-primary/60">
+              <span aria-hidden className="flex h-full w-full items-center justify-center text-primary-text/60">
                 <Icon size={36} />
               </span>
             ))}

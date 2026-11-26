@@ -219,7 +219,7 @@ export function GroupSettingsSection({
             onClick={() => fileRef.current?.click()}
             disabled={save.busy}
             aria-label={t("groups.create.avatarPick")}
-            className="group relative rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            className="group relative rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
           >
             <GroupAvatar name={name || group.name} avatarUrl={shownAvatar} size={56} />
             <span className="absolute inset-0 flex items-center justify-center rounded-full bg-text/40 text-background opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
@@ -229,7 +229,7 @@ export function GroupSettingsSection({
           <input ref={fileRef} type="file" accept={ACCEPTED_AVATAR_TYPES.join(",")} className="sr-only" tabIndex={-1} onChange={(event) => pickAvatar(event.target.files?.[0])} />
           <div className="space-y-1 text-small">
             <div className="flex items-center gap-3">
-              <button type="button" onClick={() => fileRef.current?.click()} disabled={save.busy} className="text-label font-medium text-primary hover:underline disabled:opacity-50">
+              <button type="button" onClick={() => fileRef.current?.click()} disabled={save.busy} className="text-label font-medium text-primary-text hover:underline disabled:opacity-50">
                 {t("groups.create.avatarChange")}
               </button>
               {(group.avatarUrl || avatarFile) && !removeAvatar && (
@@ -302,7 +302,7 @@ export function GroupSettingsSection({
 
         <p className="rounded-md bg-surface-soft px-3 py-2.5 text-caption text-text-muted">
           {t("groups.settings.chatSettingsMoved")}{" "}
-          <Link href={`${communityChatHref(group.id)}&panel=settings`} className="font-medium text-primary hover:underline">
+          <Link href={`${communityChatHref(group.id)}&panel=settings`} className="font-medium text-primary-text hover:underline">
             {t("groups.settings.chatSettingsLink")}
           </Link>
         </p>

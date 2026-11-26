@@ -552,7 +552,7 @@ export function StoryCreator() {
             tabIndex={isPreview ? -1 : 0}
             onKeyDown={isPreview ? undefined : onCanvasKeyDown}
             aria-label={t("stories.editor.canvasLabel")}
-            className="overflow-hidden rounded-xl shadow-card focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            className="overflow-hidden rounded-xl shadow-card focus:outline-none focus-visible:ring-2 focus-visible:ring-focus"
             onPointerDown={(event) => {
               // Boş tuvale dokunmak seçimi kaldırır (katman/kart/çıkartma kendi seçimini yapar).
               if (!isPreview && !(event.target as HTMLElement).closest("[data-story-layer], [data-story-link], [data-story-sticker]")) setSelected(null);
@@ -683,7 +683,7 @@ export function StoryCreator() {
             <p role="alert" className="flex flex-wrap items-center gap-2 text-small text-danger">
               {error}
               {media && !media.uploadedUrl && media.prepared && !busy && (
-                <button type="button" onClick={() => void (isPreview ? onPublish() : onSaveDraft())} className="inline-flex items-center gap-1 font-semibold text-primary">
+                <button type="button" onClick={() => void (isPreview ? onPublish() : onSaveDraft())} className="inline-flex items-center gap-1 font-semibold text-primary-text">
                   <RefreshCw size={12} aria-hidden /> {t("common.retry")}
                 </button>
               )}
@@ -758,7 +758,7 @@ function ChoiceTile({ icon: Icon, label, hint, onClick }: { icon: typeof Type; l
       onClick={onClick}
       className="flex min-h-28 flex-col items-start justify-between gap-3 rounded-lg card-flat p-4 text-left shadow-card transition-colors duration-200 ease-soft hover:border-border-strong"
     >
-      <span className="flex h-10 w-10 items-center justify-center rounded-md bg-primary-soft text-primary">
+      <span className="flex h-10 w-10 items-center justify-center rounded-md bg-primary-soft text-primary-text">
         <Icon size={20} aria-hidden />
       </span>
       <span>
@@ -777,7 +777,7 @@ function ToolButton({ icon: Icon, label, onClick, pressed }: { icon: typeof Type
       aria-pressed={pressed}
       className={cn(
         "inline-flex min-h-10 items-center gap-1.5 rounded-full border px-4 text-label font-medium transition-colors duration-200 ease-soft",
-        pressed ? "border-primary bg-primary-soft text-primary" : "border-border bg-surface text-text-secondary hover:border-border-strong hover:text-text",
+        pressed ? "border-primary bg-primary-soft text-primary-text" : "border-border bg-surface text-text-secondary hover:border-border-strong hover:text-text",
       )}
     >
       <Icon size={16} aria-hidden />
@@ -801,14 +801,14 @@ function LayerPanel({ layer, onChange, onRemove, onDone }: { layer: StoryTextLay
       <div className="flex flex-wrap items-center gap-3">
         <div className="flex gap-1" role="group" aria-label={t("stories.editor.align")}>
           {([["left", AlignLeft], ["center", AlignCenter], ["right", AlignRight]] as const).map(([align, Icon]) => (
-            <button key={align} type="button" aria-pressed={layer.align === align} aria-label={t(`stories.editor.align.${align}` as TranslationKey)} onClick={() => onChange({ align })} className={cn("flex h-9 w-9 items-center justify-center rounded-md", layer.align === align ? "bg-primary-soft text-primary" : "text-text-secondary hover:bg-surface-soft")}>
+            <button key={align} type="button" aria-pressed={layer.align === align} aria-label={t(`stories.editor.align.${align}` as TranslationKey)} onClick={() => onChange({ align })} className={cn("flex h-9 w-9 items-center justify-center rounded-md", layer.align === align ? "bg-primary-soft text-primary-text" : "text-text-secondary hover:bg-surface-soft")}>
               <Icon size={16} aria-hidden />
             </button>
           ))}
         </div>
         <div className="flex gap-1" role="group" aria-label={t("stories.editor.size")}>
           {STORY_TEXT_SIZES.map((size) => (
-            <button key={size} type="button" aria-pressed={layer.size === size} onClick={() => onChange({ size })} className={cn("flex h-9 min-w-9 items-center justify-center rounded-md px-2 text-label font-semibold", layer.size === size ? "bg-primary-soft text-primary" : "text-text-secondary hover:bg-surface-soft")}>
+            <button key={size} type="button" aria-pressed={layer.size === size} onClick={() => onChange({ size })} className={cn("flex h-9 min-w-9 items-center justify-center rounded-md px-2 text-label font-semibold", layer.size === size ? "bg-primary-soft text-primary-text" : "text-text-secondary hover:bg-surface-soft")}>
               {t(SIZE_LABEL[size])}
             </button>
           ))}

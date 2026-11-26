@@ -47,7 +47,7 @@ export function OnlineMembersStrip({
           {members.length > 0 && <span className="font-normal text-text-muted">{members.length >= limit ? `${limit}+` : members.length}</span>}
         </h3>
         {moreHref && members.length > 0 && (
-          <Link href={moreHref} className="shrink-0 text-caption font-medium text-primary hover:underline">
+          <Link href={moreHref} className="shrink-0 text-caption font-medium text-primary-text hover:underline">
             {t("presence.onlineMembersMore")}
           </Link>
         )}
@@ -67,7 +67,7 @@ export function OnlineMembersStrip({
             <li key={member.userId}>
               <Link
                 href={profileHref({ username: member.username })}
-                className="flex max-w-[12rem] items-center gap-2 rounded-full py-0.5 pr-2 transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                className="flex max-w-[12rem] items-center gap-2 rounded-full py-0.5 pr-2 transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
               >
                 <PresenceAvatar userId={member.userId} src={member.avatarUrl} alt={member.displayName} size={40} />
                 <span className="min-w-0 leading-tight">

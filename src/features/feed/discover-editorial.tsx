@@ -295,11 +295,11 @@ function SectionHead({ title, hint, href, onSeeAll }: { title: string; hint: str
         <p className="text-small text-text-muted">{hint}</p>
       </div>
       {href ? (
-        <Link href={href} className="inline-flex items-center gap-1.5 text-small font-semibold text-primary hover:text-primary-hover">
+        <Link href={href} className="inline-flex items-center gap-1.5 text-small font-semibold text-primary-text hover:text-primary-hover">
           {more}
         </Link>
       ) : onSeeAll ? (
-        <button type="button" onClick={onSeeAll} className="inline-flex items-center gap-1.5 text-small font-semibold text-primary hover:text-primary-hover">
+        <button type="button" onClick={onSeeAll} className="inline-flex items-center gap-1.5 text-small font-semibold text-primary-text hover:text-primary-hover">
           {more}
         </button>
       ) : null}

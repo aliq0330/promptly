@@ -154,7 +154,7 @@ export function VersionHistoryPanel<V extends HistoryVersion>({
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="text-small font-medium text-text">
                   v{version.versionNumber}
-                  {version.versionNumber === latest && <span className="ml-1.5 text-primary">· {t("promptHistory.current")}</span>}
+                  {version.versionNumber === latest && <span className="ml-1.5 text-primary-text">· {t("promptHistory.current")}</span>}
                 </span>
                 <time dateTime={version.createdAt} title={new Date(version.createdAt).toLocaleString(language === "tr" ? "tr-TR" : "en-US")} className="text-caption text-text-muted">
                   {formatRelativeTime(version.createdAt, language)}
@@ -171,7 +171,7 @@ export function VersionHistoryPanel<V extends HistoryVersion>({
                     type="button"
                     onClick={() => toggleComparison(version)}
                     aria-expanded={isComparing}
-                    className="text-caption font-medium text-primary hover:underline"
+                    className="text-caption font-medium text-primary-text hover:underline"
                   >
                     {isComparing ? t("promptHistory.hideComparison") : t("history.compare")}
                   </button>
@@ -278,7 +278,7 @@ function VersionPicker<V extends HistoryVersion>({
       <select
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="h-9 rounded-md card-flat px-2 text-small font-normal text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        className="h-9 rounded-md card-flat px-2 text-small font-normal text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
       >
         {versions.map((version) => (
           <option key={version.id} value={version.id}>

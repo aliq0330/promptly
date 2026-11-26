@@ -66,7 +66,7 @@ export function AddContentModal({
               onClick={() => setMode(value)}
               className={cn(
                 "h-9 flex-1 rounded-md border px-3 text-label font-medium transition-colors",
-                mode === value ? "border-primary bg-primary-soft text-primary" : "border-border text-text-secondary hover:border-border-strong",
+                mode === value ? "border-primary bg-primary-soft text-primary-text" : "border-border text-text-secondary hover:border-border-strong",
               )}
             >
               {value === "existing" ? t("workflow.useExisting") : t("workflow.createNew")}
@@ -149,7 +149,7 @@ function ExistingList({ onSelect }: { onSelect: (ref: WorkflowContentRef) => voi
                   {ref.thumbnailUrl ? (
                     <StorageImg src={ref.thumbnailUrl} alt="" className="h-10 w-10 shrink-0 rounded-md object-cover" />
                   ) : (
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-primary-soft text-primary">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-primary-soft text-primary-text">
                       <Icon size={20} />
                     </span>
                   )}
@@ -164,7 +164,7 @@ function ExistingList({ onSelect }: { onSelect: (ref: WorkflowContentRef) => voi
                       </span>
                     </span>
                   </span>
-                  <span className={cn("flex h-7 w-7 shrink-0 items-center justify-center rounded-full", isAdded ? "bg-success text-success-foreground" : "bg-primary-soft text-primary")}>
+                  <span className={cn("flex h-7 w-7 shrink-0 items-center justify-center rounded-full", isAdded ? "bg-success text-success-foreground" : "bg-primary-soft text-primary-text")}>
                     {isAdded ? <Check size={16} aria-label={t("workflow.pickerAdded")} /> : <Plus size={16} />}
                   </span>
                 </button>

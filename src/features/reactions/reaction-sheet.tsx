@@ -60,21 +60,21 @@ function ReactorRow({ reactor, mine, onRemove, onNavigate }: { reactor: Reactor;
 
   return (
     <li data-reactor={profile.username} className={cn("flex items-center gap-3 rounded-lg px-1 py-2.5", mine && "bg-primary-soft/60 px-2")}>
-      <Link href={profileHref(profile)} onClick={onNavigate} className="shrink-0 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+      <Link href={profileHref(profile)} onClick={onNavigate} className="shrink-0 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus">
         <Avatar src={profile.avatarUrl} alt={profile.displayName} size={40} />
       </Link>
       <div className="min-w-0 flex-1">
-        <Link href={profileHref(profile)} onClick={onNavigate} className="block rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+        <Link href={profileHref(profile)} onClick={onNavigate} className="block rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus">
           <span className="block truncate text-small font-semibold text-text">
             {profile.displayName}
-            {mine && <span className="ml-1.5 rounded-xs bg-surface px-1.5 py-0.5 text-caption font-semibold text-primary">{t("reaction.sheet.you")}</span>}
+            {mine && <span className="ml-1.5 rounded-xs bg-surface px-1.5 py-0.5 text-caption font-semibold text-primary-text">{t("reaction.sheet.you")}</span>}
           </span>
           <span className="block truncate text-caption text-text-muted">
             @{profile.username} · {time}
           </span>
         </Link>
         {mine && (
-          <button type="button" onClick={onRemove} className="mt-0.5 rounded-xs text-caption font-semibold text-text-muted underline-offset-2 hover:text-text hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+          <button type="button" onClick={onRemove} className="mt-0.5 rounded-xs text-caption font-semibold text-text-muted underline-offset-2 hover:text-text hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus">
             {t("reaction.sheet.removeMine")}
           </button>
         )}
@@ -131,7 +131,7 @@ export function ReactionSheet({
             type="button"
             onClick={onClose}
             aria-label={t("common.close")}
-            className="rounded-md p-1.5 text-text-muted hover:bg-surface-soft hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            className="rounded-md p-1.5 text-text-muted hover:bg-surface-soft hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
           >
             <X size={20} />
           </button>
@@ -148,8 +148,8 @@ export function ReactionSheet({
                 aria-label={key === "all" ? undefined : `${t(REACTION_LABEL[key])} ${counts[key]}`}
                 onClick={() => setTab(key)}
                 className={cn(
-                  "inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full border px-3 text-small font-semibold tabular-nums transition-colors duration-200 ease-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
-                  active === key ? "border-border bg-primary-soft text-primary" : "border-transparent text-text-muted hover:bg-surface-soft hover:text-text",
+                  "inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full border px-3 text-small font-semibold tabular-nums transition-colors duration-200 ease-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus",
+                  active === key ? "border-border bg-primary-soft text-primary-text" : "border-transparent text-text-muted hover:bg-surface-soft hover:text-text",
                 )}
               >
                 {key === "all" ? (

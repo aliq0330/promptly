@@ -180,7 +180,7 @@ export function CreateCommunityModal({ onClose, onCreated }: { onClose: () => vo
               onClick={() => fileRef.current?.click()}
               disabled={busy}
               aria-label={t("communities.create.avatarPick")}
-              className="group relative rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              className="group relative rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
             >
               <GroupAvatar name={name || t("communities.create.title")} avatarUrl={avatarPreview} size={56} />
               <span className="absolute inset-0 flex items-center justify-center rounded-full bg-text/40 text-background opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
@@ -191,7 +191,7 @@ export function CreateCommunityModal({ onClose, onCreated }: { onClose: () => vo
             <div className="min-w-0 space-y-1 text-small">
               <p className="font-medium text-text">{t("communities.create.avatarLabel")}</p>
               <div className="flex items-center gap-3">
-                <button type="button" onClick={() => fileRef.current?.click()} disabled={busy} className="text-label font-medium text-primary hover:underline disabled:opacity-50">
+                <button type="button" onClick={() => fileRef.current?.click()} disabled={busy} className="text-label font-medium text-primary-text hover:underline disabled:opacity-50">
                   {avatarFile ? t("communities.create.avatarChange") : t("communities.create.avatarPick")}
                 </button>
                 {avatarFile && (

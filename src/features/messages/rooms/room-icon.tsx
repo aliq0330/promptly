@@ -26,8 +26,8 @@ export const ROOM_ICON_COMPONENTS: Record<CommunityRoomIcon, IconComponent> = {
 
 /** Simge karosunun tonu (yalnız token'lar): mavi = yapabileceğin şey, turuncu = duyuru/vurgu, yeşil = içerik, nötr = yönetim/yardım. */
 const TONES: Record<CommunityRoomIcon, string> = {
-  message: "bg-primary-soft text-primary",
-  prompt: "bg-primary-soft text-primary",
+  message: "bg-primary-soft text-primary-text",
+  prompt: "bg-primary-soft text-primary-text",
   image: "bg-success-soft text-success",
   megaphone: "bg-secondary-soft text-secondary",
   sparkles: "bg-secondary-soft text-secondary",
@@ -46,7 +46,7 @@ export function RoomIconTile({ icon, size = 44, selected = false, className }: {
   return (
     <span
       aria-hidden
-      className={cn("flex shrink-0 items-center justify-center rounded-md", selected ? "bg-surface text-primary" : TONES[icon] ?? TONES.message, className)}
+      className={cn("flex shrink-0 items-center justify-center rounded-md", selected ? "bg-surface text-primary-text" : TONES[icon] ?? TONES.message, className)}
       style={{ width: size, height: size }}
     >
       <RoomIcon icon={icon} size={Math.round(size * 0.5)} />

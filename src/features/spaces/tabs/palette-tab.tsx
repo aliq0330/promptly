@@ -443,7 +443,7 @@ function ExtractPaletteModal({ onClose }: { onClose: () => void }) {
                   <SpaceImage url={item.mediaUrl} alt="" className="aspect-square w-full" />
                   {busy === item.id && (
                     <span className="absolute inset-0 flex items-center justify-center bg-background/60">
-                      <Loader2 size={20} className="animate-spin text-primary" aria-hidden />
+                      <Loader2 size={20} className="animate-spin text-primary-text" aria-hidden />
                     </span>
                   )}
                 </button>

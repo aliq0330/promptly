@@ -334,7 +334,7 @@ export function PostMenu({
               }}
               className={cn(
                 "flex w-full items-center gap-2 px-3 py-2 text-left text-small hover:bg-surface-soft",
-                extra.danger ? "text-danger" : extra.selected ? "font-semibold text-primary" : "text-text",
+                extra.danger ? "text-danger" : extra.selected ? "font-semibold text-primary-text" : "text-text",
               )}
             >
               {extra.icon}

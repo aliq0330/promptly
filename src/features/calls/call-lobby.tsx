@@ -59,8 +59,8 @@ export function CallLobby({
     setCallDevices({ [kind]: id });
     onReacquire();
   };
-  const select = "h-10 w-full rounded-md border border-(--p-control-border) bg-surface px-3 text-small text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary";
-  const round = "inline-flex h-12 w-12 items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary";
+  const select = "h-10 w-full rounded-md border border-(--p-control-border) bg-surface px-3 text-small text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus";
+  const round = "inline-flex h-12 w-12 items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus";
 
   return (
     <div role="dialog" aria-modal="true" aria-label={t("calls.lobby.title")} data-call-lobby className="fixed inset-0 z-(--z-celebration) flex items-stretch justify-center bg-scrim animate-fade-in sm:items-center sm:p-6">

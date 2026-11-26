@@ -109,7 +109,7 @@ export function InviteePicker({
                 onClick={() => toggle(person)}
                 disabled={disabled}
                 aria-label={t("groups.invite.removeSelected", { name: person.displayName })}
-                className="flex items-center gap-1.5 rounded-full border border-border-soft bg-primary-soft py-1 pl-1 pr-2 text-caption font-medium text-primary transition-colors hover:border-primary/40 disabled:opacity-50"
+                className="flex items-center gap-1.5 rounded-full border border-border-soft bg-primary-soft py-1 pl-1 pr-2 text-caption font-medium text-primary-text transition-colors hover:border-primary/40 disabled:opacity-50"
               >
                 <Avatar src={person.avatarUrl} alt={person.displayName} size={20} />
                 <span className="max-w-[9rem] truncate">{person.displayName}</span>
@@ -151,7 +151,7 @@ export function InviteePicker({
                 setFollowed(null);
                 setReloadKey((k) => k + 1);
               }}
-              className="text-label font-medium text-primary hover:underline"
+              className="text-label font-medium text-primary-text hover:underline"
             >
               {t("common.retry")}
             </button>

@@ -210,7 +210,7 @@ export function CollageArt({
   );
   if (images.length === 0) {
     return (
-      <span aria-hidden {...rest} className={cn(tile, "flex items-center justify-center text-primary")}>
+      <span aria-hidden {...rest} className={cn(tile, "flex items-center justify-center text-primary-text")}>
         <Icon size={compact ? 36 : 56} className="lg:h-14 lg:w-14" />
       </span>
     );
@@ -239,7 +239,7 @@ export function CollageArt({
 /** Art for a post without a picture: its type's icon on a soft tile, so every band has the same rhythm. */
 export function DetailArtPlaceholder({ icon: Icon }: { icon: IconComponent }) {
   return (
-    <span aria-hidden className="flex h-36 w-36 items-center justify-center rounded-xl bg-surface/80 text-primary shadow-card lg:h-48 lg:w-48">
+    <span aria-hidden className="flex h-36 w-36 items-center justify-center rounded-xl bg-surface/80 text-primary-text shadow-card lg:h-48 lg:w-48">
       <Icon size={56} />
     </span>
   );
@@ -351,14 +351,14 @@ export function DetailByline({
       </Link>
       <div className="min-w-0 leading-tight">
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-          <Link href={href} data-detail-author className="-mx-1.5 -my-2.5 min-w-0 truncate px-1.5 py-2.5 text-label font-semibold text-text transition-colors hover:text-primary">
+          <Link href={href} data-detail-author className="-mx-1.5 -my-2.5 min-w-0 truncate px-1.5 py-2.5 text-label font-semibold text-text transition-colors hover:text-primary-text">
             {person.displayName}
           </Link>
           {person.isDemo && <DemoAccountBadge />}
           {follow}
         </div>
         <p className="mt-0.5 text-caption text-text-secondary">
-          <Link href={href} className="transition-colors hover:text-primary">
+          <Link href={href} className="transition-colors hover:text-primary-text">
             @{person.username}
           </Link>{" "}
           · {formatRelativeTime(createdAt, language)}
@@ -513,7 +513,7 @@ export function AsideSection({
 export function ViewAllLink({ href }: { href: string }) {
   const { t } = useTranslation();
   return (
-    <Link href={href} className="inline-flex shrink-0 items-center gap-1 text-caption font-medium text-primary transition-opacity hover:opacity-80">
+    <Link href={href} className="inline-flex shrink-0 items-center gap-1 text-caption font-medium text-primary-text transition-opacity hover:opacity-80">
       {t("common.viewAll")}
       <ArrowRight size={12} aria-hidden />
     </Link>
@@ -534,11 +534,11 @@ export function AsideLinkRow({
 }) {
   return (
     <Link href={href} className="group flex items-start gap-3 px-4 py-3 transition-colors duration-200 hover:bg-surface-soft">
-      <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-primary-soft text-primary">
+      <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-primary-soft text-primary-text">
         <Icon size={16} />
       </span>
       <span className="min-w-0 leading-tight">
-        <span className="line-clamp-2 text-label font-semibold text-text transition-colors group-hover:text-primary">{title}</span>
+        <span className="line-clamp-2 text-label font-semibold text-text transition-colors group-hover:text-primary-text">{title}</span>
         <span className="mt-0.5 block truncate text-caption text-text-muted">{meta}</span>
       </span>
     </Link>
@@ -553,7 +553,7 @@ export function DetailTags({ tags, className }: { tags: Tag[]; className?: strin
     <DetailMetaBlock label={t("forms.tags")} className={className}>
       <div className="flex flex-wrap gap-x-3 gap-y-1">
         {tags.map((tag) => (
-          <Link key={tag.slug} href={tagHref(tag)} className="inline-flex min-h-9 items-center text-label font-medium text-primary transition-colors hover:text-primary-hover">
+          <Link key={tag.slug} href={tagHref(tag)} className="inline-flex min-h-9 items-center text-label font-medium text-primary-text transition-colors hover:text-primary-hover">
             <span aria-hidden className="mr-px opacity-60">#</span>
             {tag.label}
           </Link>

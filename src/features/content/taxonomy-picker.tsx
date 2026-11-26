@@ -117,7 +117,7 @@ export function TaxonomyPicker({
             onClick={() => setTreeOpen((open) => !open)}
             aria-expanded={treeOpen}
             aria-controls="taxonomy-category-tree"
-            className="flex min-h-12 min-w-0 flex-1 items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            className="flex min-h-12 min-w-0 flex-1 items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
           >
             <span className="min-w-0 flex-1">
               <span className="block text-caption text-text-muted">{t("taxonomy.categoryLabel")} ({t("common.optional")})</span>
@@ -126,7 +126,7 @@ export function TaxonomyPicker({
                   {pathParts.map((part, index) => (
                     <li key={`${index}-${part}`} className="flex min-w-0 items-center gap-1">
                       {index > 0 && <ChevronRight size={12} className="shrink-0 text-text-muted" aria-hidden />}
-                      <span className={cn("break-words", index === pathParts.length - 1 && "text-primary")}>{part}</span>
+                      <span className={cn("break-words", index === pathParts.length - 1 && "text-primary-text")}>{part}</span>
                     </li>
                   ))}
                 </ol>
@@ -134,7 +134,7 @@ export function TaxonomyPicker({
                 <span className="block text-small text-text-secondary">{t("taxonomy.pickCategory", { count: getCategories(value.contentType).length })}</span>
               )}
             </span>
-            <span className="shrink-0 text-caption font-medium text-primary">{treeOpen ? t("vision.hide") : pathParts.length > 0 ? t("taxonomy.change") : t("vision.show")}</span>
+            <span className="shrink-0 text-caption font-medium text-primary-text">{treeOpen ? t("vision.hide") : pathParts.length > 0 ? t("taxonomy.change") : t("vision.show")}</span>
             <ChevronRight size={20} className={cn("shrink-0 text-text-muted transition-transform duration-200", treeOpen && "rotate-90")} aria-hidden />
           </button>
           {value.category && (
@@ -144,7 +144,7 @@ export function TaxonomyPicker({
                 onChange({ ...value, category: null, subcategory: null });
                 setOpenCategory(undefined);
               }}
-              className="shrink-0 rounded-md px-2 py-1 text-caption font-medium text-text-muted underline hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              className="shrink-0 rounded-md px-2 py-1 text-caption font-medium text-text-muted underline hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
             >
               {t("taxonomy.clearSelection")}
             </button>
@@ -235,17 +235,17 @@ function CategoryRow({
       aria-controls={`taxonomy-panel-${category.id}`}
       data-taxonomy-category={category.id}
       className={cn(
-        "flex min-h-12 w-full items-center gap-3 rounded-md px-2 py-2 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary @md:gap-3 @md:px-2.5",
+        "flex min-h-12 w-full items-center gap-3 rounded-md px-2 py-2 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus @md:gap-3 @md:px-2.5",
         open ? "bg-surface-soft" : "hover:bg-surface-soft",
       )}
     >
-      <span className={cn("grid h-8 w-8 shrink-0 place-items-center rounded-md", isSelected ? "bg-primary text-primary-foreground" : "bg-primary-soft text-primary")}>
+      <span className={cn("grid h-8 w-8 shrink-0 place-items-center rounded-md", isSelected ? "bg-primary text-primary-foreground" : "bg-primary-soft text-primary-text")}>
         <Icon size={16} aria-hidden />
       </span>
       <span className="min-w-0 flex-1">
         <span className="block break-words text-label font-semibold text-text">{taxonomyLabel(category.labelKey, language)}</span>
         {selectedSub ? (
-          <span className="block truncate text-caption text-primary">{taxonomyLabel(selectedSub.labelKey, language)}</span>
+          <span className="block truncate text-caption text-primary-text">{taxonomyLabel(selectedSub.labelKey, language)}</span>
         ) : (
           <span className="block truncate text-caption text-text-muted">{t("taxonomy.subcategoryCount", { count: category.subcategories.length })}</span>
         )}
@@ -306,7 +306,7 @@ function Leaf({ selected, onClick, subtle, children, ...rest }: { selected: bool
       onClick={onClick}
       {...rest}
       className={cn(
-        "flex min-h-11 w-full items-center gap-3 rounded-md px-2 py-2 text-left text-small transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary @md:min-h-12 @md:px-2.5",
+        "flex min-h-11 w-full items-center gap-3 rounded-md px-2 py-2 text-left text-small transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus @md:min-h-12 @md:px-2.5",
         selected ? "bg-primary-soft font-medium text-text" : cn("hover:bg-surface-soft hover:text-text", subtle ? "text-text-muted" : "text-text-secondary"),
       )}
     >

@@ -130,7 +130,7 @@ export function StepNumber({ index, state, active, className }: { index: number;
     );
   if (state === "done")
     return (
-      <span aria-hidden className={cn("grid h-7 w-7 shrink-0 place-items-center rounded-full bg-primary-soft text-primary", className)}>
+      <span aria-hidden className={cn("grid h-7 w-7 shrink-0 place-items-center rounded-full bg-primary-soft text-primary-text", className)}>
         <Check size={16} />
       </span>
     );
@@ -173,13 +173,13 @@ export function ComposeStepNav({ footer }: { footer?: ReactNode }) {
             data-compose-nav-item={step.id}
             data-step-state={step.state}
             className={cn(
-              "flex w-full items-start gap-3 rounded-md px-3 py-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+              "flex w-full items-start gap-3 rounded-md px-3 py-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus",
               isActive ? "bg-primary-soft" : "hover:bg-surface-soft",
             )}
           >
             <StepNumber index={index} state={step.state} active={isActive} className="mt-0.5" />
             <span className="min-w-0 flex-1">
-              <span className={cn("block truncate text-body", isActive ? "font-semibold text-primary" : "font-medium text-text")}>{step.title}</span>
+              <span className={cn("block truncate text-body", isActive ? "font-semibold text-primary-text" : "font-medium text-text")}>{step.title}</span>
               {sub.text && <span className={cn("block truncate text-caption", sub.danger ? "font-medium text-danger" : "text-text-muted")}>{sub.text}</span>}
             </span>
             {step.state === "missing" && !isActive && <span aria-hidden className="mt-3 h-2 w-2 shrink-0 rounded-full bg-danger lg:hidden" />}
@@ -237,7 +237,7 @@ export function ComposeStep({ id, anchorId, headerExtra, children }: { id: strin
     step.state === "missing" ? (
       <span className="rounded-full bg-danger-soft px-3 py-0.5 text-caption font-semibold text-danger">{t("cs.requiredMissing")}</span>
     ) : step.required ? (
-      <span className="rounded-full bg-primary-soft px-3 py-0.5 text-caption font-semibold text-primary">{t("cs.required")}</span>
+      <span className="rounded-full bg-primary-soft px-3 py-0.5 text-caption font-semibold text-primary-text">{t("cs.required")}</span>
     ) : (
       <span className="text-caption text-text-muted">{t("cs.optional")}</span>
     );
@@ -257,7 +257,7 @@ export function ComposeStep({ id, anchorId, headerExtra, children }: { id: strin
           aria-expanded={false}
           data-compose-step-summary={id}
           className={cn(
-            "flex w-full items-center gap-3 rounded-lg border bg-surface px-4 py-4 text-left transition-colors hover:border-border-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+            "flex w-full items-center gap-3 rounded-lg border bg-surface px-4 py-4 text-left transition-colors hover:border-border-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus",
             step.state === "missing" ? "border-danger/40" : "border-border-soft",
           )}
         >
@@ -289,7 +289,7 @@ export function ComposeStep({ id, anchorId, headerExtra, children }: { id: strin
         {children}
         {active && next && (
           <div className="flex justify-end border-t border-border-soft pt-3 md:max-lg:hidden">
-            <button type="button" onClick={() => ctx.activate(next.id)} data-compose-next={next.id} className="min-h-9 rounded-full px-1 text-small font-semibold text-primary hover:text-primary-hover">
+            <button type="button" onClick={() => ctx.activate(next.id)} data-compose-next={next.id} className="min-h-9 rounded-full px-1 text-small font-semibold text-primary-text hover:text-primary-hover">
               {t("cs.next", { title: next.title })}
             </button>
           </div>
@@ -304,7 +304,7 @@ export function ComposeStep({ id, anchorId, headerExtra, children }: { id: strin
           )}
           <div className="flex-1" />
           {next && (
-            <Button type="button" variant="outline" size="md" onClick={() => ctx.activate(next.id)} className="border-primary text-primary">
+            <Button type="button" variant="outline" size="md" onClick={() => ctx.activate(next.id)} className="border-primary text-primary-text">
               {t("cs.nextShort", { title: next.title })}
             </Button>
           )}
@@ -339,12 +339,12 @@ export function ComposeAudienceRow({ label, icon: Icon = Globe }: { label: strin
   const { t } = useTranslation();
   return (
     <div className="flex items-center gap-3 rounded-lg border border-border-soft px-4 py-3" data-compose-audience-row="">
-      <Icon size={20} aria-hidden className="shrink-0 text-primary" />
+      <Icon size={20} aria-hidden className="shrink-0 text-primary-text" />
       <span className="min-w-0 flex-1">
         <span className="block text-caption text-text-muted">{t("cs.whoSees")}</span>
         <span className="block truncate text-body font-semibold text-text">{label}</span>
       </span>
-      <button type="button" onClick={() => revealComposeField("compose-publish")} className="min-h-9 rounded-full px-2 text-small font-semibold text-primary hover:text-primary-hover">
+      <button type="button" onClick={() => revealComposeField("compose-publish")} className="min-h-9 rounded-full px-2 text-small font-semibold text-primary-text hover:text-primary-hover">
         {t("cs.change")}
       </button>
     </div>
@@ -494,7 +494,7 @@ export function ComposeDetailPreview({
   return (
     <article className="space-y-3 rounded-lg card-flat p-4" data-compose-detail-preview="">
       <div className="space-y-1">
-        <p className="text-caption font-semibold text-primary">{typeLabel}</p>
+        <p className="text-caption font-semibold text-primary-text">{typeLabel}</p>
         <h3 className="font-display text-h3 font-bold text-text">{title}</h3>
         <p className="flex items-center gap-2 text-caption text-text-muted">
           <Avatar src={author.avatarUrl} alt="" size={24} />

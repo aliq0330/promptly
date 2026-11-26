@@ -39,7 +39,7 @@ export function NavRail({ desktop = false }: { desktop?: boolean }) {
           aria-current={active ? "page" : undefined}
           className={cn(
             "flex h-15 w-full flex-col items-center justify-center gap-1 rounded-lg text-caption transition-colors duration-200",
-            active ? "bg-primary-soft font-semibold text-primary" : "font-medium text-text-secondary hover:bg-surface-soft hover:text-text",
+            active ? "bg-primary-soft font-semibold text-primary-text" : "font-medium text-text-secondary hover:bg-surface-soft hover:text-text",
           )}
         >
           <Icon size={24} />

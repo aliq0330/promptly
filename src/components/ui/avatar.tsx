@@ -36,7 +36,7 @@ export function Avatar({ src, alt, size = 40, className, badge }: AvatarProps) {
   const face = (
     <span
       className={cn(
-        "relative inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary-soft font-medium text-primary ring-1 ring-border-soft",
+        "relative inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary-soft font-medium text-primary-text ring-1 ring-border-soft",
         className,
       )}
       style={{ width: size, height: size, fontSize: size * 0.4 }}

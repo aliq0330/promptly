@@ -37,14 +37,14 @@ export function TagsSection() {
       {trending.length > 0 && (
         <div className="space-y-2">
           <h2 className="flex items-center gap-1.5 text-h3 font-bold text-text">
-            <TrendingUp size={16} className="text-primary" aria-hidden />
+            <TrendingUp size={16} className="text-primary-text" aria-hidden />
             {t("tag.risingHeading")}
           </h2>
           <div className="flex flex-wrap gap-2">
             {trending.map((tag) => (
               <Link key={tag.slug} href={tagHref(tag)}>
                 <Badge variant="default" className="hover:bg-accent-surface/70">
-                  #{tag.label} <span className="ml-1 text-primary/70">+{tag.recentCount}</span>
+                  #{tag.label} <span className="ml-1 text-primary-text/70">+{tag.recentCount}</span>
                 </Badge>
               </Link>
             ))}
@@ -66,7 +66,7 @@ export function TagRows({ tags, emptyMessage }: { tags: Tag[]; emptyMessage: str
     <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
       {tags.map((tag) => (
         <li key={tag.slug} className="flex items-center gap-3 rounded-lg card-flat p-3 shadow-card">
-          <Link href={tagHref(tag)} className="min-w-0 flex-1 rounded-lg leading-tight focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+          <Link href={tagHref(tag)} className="min-w-0 flex-1 rounded-lg leading-tight focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus">
             <span className="block truncate font-semibold text-text">#{tag.label}</span>
             {tag.usageCount !== undefined && (
               <span className="block truncate text-caption text-text-muted">{t("tagPicker.usageCount", { count: formatCount(tag.usageCount) })}</span>

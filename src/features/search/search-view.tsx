@@ -311,7 +311,7 @@ export function SearchView({ idle, scope }: { idle?: ReactNode; scope?: SearchSc
         >
           <Avatar src={user.avatarUrl} alt={user.displayName} size={40} />
           <div className="min-w-0">
-            <p className="truncate text-small font-semibold tracking-[-0.01em] text-text transition-colors group-hover:text-primary">{user.displayName}</p>
+            <p className="truncate text-small font-semibold tracking-[-0.01em] text-text transition-colors group-hover:text-primary-text">{user.displayName}</p>
             <p className="truncate text-caption text-text-muted">
               @{user.username} · {formatCount(user.followerCount)} {t("profile.followersSuffix")}
             </p>
@@ -561,7 +561,7 @@ export function SearchView({ idle, scope }: { idle?: ReactNode; scope?: SearchSc
                           onClick={() => setTokens(toggleToken(tokens, token))}
                           className="flex min-h-11 items-center gap-2 rounded-lg card-flat px-4 text-left text-label text-text hover:border-primary"
                         >
-                          <Icon size={16} className="shrink-0 text-primary" aria-hidden />
+                          <Icon size={16} className="shrink-0 text-primary-text" aria-hidden />
                           <span className="min-w-0 flex-1 truncate">{t("search.removeNamed", { label })}</span>
                         </button>
                       );

@@ -91,7 +91,7 @@ function Cell({
       aria-label={t("messages.openPhotoAria", { index: index + 1, total })}
       style={aspect ? { aspectRatio: String(aspect) } : undefined}
       className={cn(
-        "relative block overflow-hidden bg-surface-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
+        "relative block overflow-hidden bg-surface-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus",
         !aspect && "aspect-square",
         className,
       )}

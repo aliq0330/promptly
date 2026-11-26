@@ -69,10 +69,10 @@ export function ChoiceGroup<K extends string>({
         onClick={() => !selected && onChange(option.key)}
         {...option.attrs}
         className={cn(
-          "text-small transition-colors duration-200 ease-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-50",
-          variant === "pill" && cn("inline-flex min-h-9 items-center gap-1.5 rounded-full border px-4", selected ? "border-primary bg-primary-soft font-semibold text-primary" : "border-border-strong bg-surface font-medium text-text-secondary hover:bg-surface-soft"),
-          variant === "segmented" && cn("inline-flex min-h-9 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-full px-2 py-1.5 leading-tight", selected ? "bg-surface font-semibold text-primary shadow-xs" : "font-medium text-text-secondary hover:text-text"),
-          variant === "tile" && cn("flex flex-col items-center justify-center gap-1.5 rounded-md border text-center leading-tight", iconOnly ? "h-12 px-0" : "min-h-18 px-2 py-2", selected ? "border-primary bg-primary-soft font-semibold text-primary" : "border-border-strong bg-surface font-medium text-text-secondary hover:bg-surface-soft"),
+          "text-small transition-colors duration-200 ease-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:cursor-not-allowed disabled:opacity-50",
+          variant === "pill" && cn("inline-flex min-h-9 items-center gap-1.5 rounded-sm border px-4", selected ? "border-primary bg-primary-soft font-semibold text-primary-text" : "border-border-strong bg-surface font-medium text-text-secondary hover:bg-surface-soft"),
+          variant === "segmented" && cn("inline-flex min-h-9 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-sm px-2 py-1.5 leading-tight", selected ? "bg-surface font-semibold text-primary-text shadow-xs" : "font-medium text-text-secondary hover:text-text"),
+          variant === "tile" && cn("flex flex-col items-center justify-center gap-1.5 rounded-sm border text-center leading-tight", iconOnly ? "h-12 px-0" : "min-h-18 px-2 py-2", selected ? "border-primary bg-primary-soft font-semibold text-primary-text" : "border-border-strong bg-surface font-medium text-text-secondary hover:bg-surface-soft"),
         )}
       >
         {Icon && <Icon size={iconOnly ? 24 : variant === "tile" ? 20 : 16} aria-hidden className="shrink-0" />}
@@ -91,7 +91,7 @@ export function ChoiceGroup<K extends string>({
       data-choice-group={testId}
       className={cn(
         variant === "pill" && "flex flex-wrap gap-2",
-        variant === "segmented" && "flex rounded-full bg-surface-soft p-0.5",
+        variant === "segmented" && "flex rounded-sm bg-surface-soft p-0.5",
         variant === "tile" && (iconOnly ? "grid grid-cols-[repeat(auto-fill,minmax(3rem,1fr))] gap-2" : "grid grid-cols-[repeat(auto-fit,minmax(5.5rem,1fr))] gap-2"),
         className,
       )}

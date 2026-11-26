@@ -1847,7 +1847,7 @@ export function SpaceBoard({ focusId, team, openComment }: { focusId: string | n
         aria-roledescription={t("spaces.board.roleDescription")}
         aria-label={t("spaces.board.ariaLabel", { count: items.length })}
         data-board-canvas=""
-        className={cn("relative min-h-0 flex-1 touch-none overflow-hidden outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary", cursor)}
+        className={cn("relative min-h-0 flex-1 touch-none overflow-hidden outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-focus", cursor)}
         style={{ backgroundImage: "radial-gradient(circle, var(--color-border) 1px, transparent 1px)", backgroundSize: `${24 * vp.zoom}px ${24 * vp.zoom}px`, backgroundPosition: `${vp.x}px ${vp.y}px` }}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
@@ -2090,7 +2090,7 @@ export function SpaceBoard({ focusId, team, openComment }: { focusId: string | n
                     aria-haspopup="dialog"
                     aria-expanded={moveOpen}
                     data-board-move-button=""
-                    className="flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-primary-soft px-3 text-caption font-semibold text-primary"
+                    className="flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-primary-soft px-3 text-caption font-semibold text-primary-text"
                   >
                     {t(size === "desktop" ? "tb.move.button" : "tb.move.buttonShort")}
                   </button>
@@ -2273,7 +2273,7 @@ function ToolButton({ icon: Icon, label, onClick, active, disabled, danger, clas
       aria-pressed={active}
       className={cn(
         "relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors disabled:opacity-50",
-        active ? "bg-primary-soft text-primary" : danger ? "text-danger hover:bg-danger-soft" : "text-text-secondary hover:bg-surface-soft hover:text-text",
+        active ? "bg-primary-soft text-primary-text" : danger ? "text-danger hover:bg-danger-soft" : "text-text-secondary hover:bg-surface-soft hover:text-text",
         className,
       )}
     >

@@ -10,7 +10,7 @@ const TONES = {
   danger: "bg-danger-soft text-danger",
   warning: "bg-warning-soft text-warning",
   success: "bg-success-soft text-success",
-  info: "bg-primary-soft text-primary",
+  info: "bg-primary-soft text-primary-text",
 } as const;
 
 export function InlineAlert({

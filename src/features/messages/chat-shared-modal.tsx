@@ -67,7 +67,7 @@ export function ChatSharedModal({
                 onClick={() => setTab(kind)}
                 className={cn(
                   "h-9 rounded-full px-4 text-small font-medium transition-colors",
-                  tab === kind ? "bg-primary-soft text-primary" : "bg-surface-soft text-text-secondary hover:text-text",
+                  tab === kind ? "bg-primary-soft text-primary-text" : "bg-surface-soft text-text-secondary hover:text-text",
                 )}
               >
                 {kind === "photos" ? t("messages.shared.tabPhotos") : t("messages.shared.tabLinks")}
@@ -136,7 +136,7 @@ function SharedList({ conversationId, kind, onJump }: { conversationId: string; 
                   type="button"
                   onClick={() => onJump(photo.messageId)}
                   aria-label={t("messages.contact.openPhotoAria", { index: index + 1 })}
-                  className="relative block aspect-square w-full overflow-hidden rounded-xl bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                  className="relative block aspect-square w-full overflow-hidden rounded-xl bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
                 >
                   {url && (
                     // eslint-disable-next-line @next/next/no-img-element -- imzalı (signed) özel bucket adresi
@@ -163,7 +163,7 @@ function SharedList({ conversationId, kind, onJump }: { conversationId: string; 
               <button
                 type="button"
                 onClick={() => onJump(item.id)}
-                className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
               >
                 {kind === "links" && (
                   <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface-soft text-text-secondary" aria-hidden>
@@ -171,7 +171,7 @@ function SharedList({ conversationId, kind, onJump }: { conversationId: string; 
                   </span>
                 )}
                 <span className="min-w-0 flex-1">
-                  <span className={cn("block truncate text-body text-text", kind === "links" && "text-primary")}>{title}</span>
+                  <span className={cn("block truncate text-body text-text", kind === "links" && "text-primary-text")}>{title}</span>
                   <span className="block truncate text-caption text-text-muted">
                     {kind === "links" && item.body && link && item.body.replace(link, "").trim() ? `${item.body.replace(link, "").trim().slice(0, 80)} · ` : ""}
                     {formatRelativeTime(item.createdAt, language)}

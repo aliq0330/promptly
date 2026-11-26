@@ -92,7 +92,7 @@ export function PromptTryButton({ prompt, text, className }: { prompt: Prompt; t
       <button type="button" onClick={() => setOpen(true)} className={className}>
         {/* Simge + yazı TEK grup: bir `justify-between` satırında (Odak kartı) ayrı çocuk olarak üçe bölünüp yazıyı ortaya iterdi. */}
         <span className="inline-flex min-w-0 items-center gap-2">
-          <SlidersHorizontal size={16} aria-hidden className="shrink-0 text-primary" />
+          <SlidersHorizontal size={16} aria-hidden className="shrink-0 text-primary-text" />
           <span className="min-w-0 truncate">{t("promptTry.title")}</span>
         </span>
         {matches > 0 && (
@@ -202,7 +202,7 @@ function PromptTrySheet({
                 leading: item.coverUrl ? (
                   <StorageImg src={item.coverUrl} alt="" className="h-12 w-12 shrink-0 rounded-md bg-surface-soft object-cover" />
                 ) : (
-                  <span aria-hidden className="grid h-12 w-12 shrink-0 place-items-center rounded-md bg-primary-soft text-primary">
+                  <span aria-hidden className="grid h-12 w-12 shrink-0 place-items-center rounded-md bg-primary-soft text-primary-text">
                     <SlidersHorizontal size={20} />
                   </span>
                 ),

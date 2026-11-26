@@ -145,7 +145,7 @@ export function PromptWorksVote({ promptId, isOwn, contentType }: { promptId: st
         </h3>
         <p className="flex flex-wrap items-center gap-2 text-caption text-text-secondary" data-works-summary>
           {summary.tier === "proven" && (
-            <span key={provenSeq} title={t("prompt.works.provenHint")} className={cn("inline-flex items-center gap-1 rounded-full bg-primary-soft px-2 py-0.5 font-semibold text-primary", provenSeq > 0 && "mi-badge-in mi-shine")}>
+            <span key={provenSeq} title={t("prompt.works.provenHint")} className={cn("inline-flex items-center gap-1 rounded-full bg-primary-soft px-2 py-0.5 font-semibold text-primary-text", provenSeq > 0 && "mi-badge-in mi-shine")}>
               <BadgeCheck size={12} aria-hidden />
               {t("prompt.works.proven")}
             </span>

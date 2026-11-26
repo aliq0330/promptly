@@ -40,7 +40,7 @@ export function InfoPanelShell({
             type="button"
             onClick={onClose}
             aria-label={t("common.close")}
-            className="flex h-11 w-11 items-center justify-center rounded-full text-text-secondary transition-colors hover:bg-surface hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            className="flex h-11 w-11 items-center justify-center rounded-full text-text-secondary transition-colors hover:bg-surface hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
           >
             <ChevronLeft size={24} aria-hidden />
           </button>
@@ -91,7 +91,7 @@ export function InfoIdentity({
 }
 
 const TILE =
-  "relative flex min-h-[4.75rem] flex-1 flex-col items-center justify-center gap-2 rounded-xl bg-surface px-1 py-3 text-center text-caption font-medium leading-tight text-text shadow-xs transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-50";
+  "relative flex min-h-[4.75rem] flex-1 flex-col items-center justify-center gap-2 rounded-xl bg-surface px-1 py-3 text-center text-caption font-medium leading-tight text-text shadow-xs transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:opacity-50";
 
 /** Kimliğin altındaki hızlı eylem karoları (Profil · Ara · Sessize al gibi). */
 export function InfoTiles({ children }: { children: ReactNode }) {
@@ -122,7 +122,7 @@ export function InfoTile({
 }) {
   const inner = (
     <>
-      <span className={cn("text-primary", pressed && "text-text")} aria-hidden>
+      <span className={cn("text-primary-text", pressed && "text-text")} aria-hidden>
         {icon}
       </span>
       {label}
@@ -154,7 +154,7 @@ export function InfoCard({ children, className, ...rest }: { children: ReactNode
 }
 
 const ROW =
-  "flex h-14 w-full items-center gap-4 px-4 text-left text-body text-text transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary disabled:opacity-50";
+  "flex h-14 w-full items-center gap-4 px-4 text-left text-body text-text transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-focus disabled:opacity-50";
 
 export function InfoRow({
   icon,

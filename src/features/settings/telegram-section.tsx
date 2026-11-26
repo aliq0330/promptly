@@ -153,7 +153,7 @@ export function TelegramSection() {
             <li key={row.id} className="space-y-3 rounded-lg card-flat p-4 shadow-card" data-telegram-link={row.id}>
               <div className="flex items-start justify-between gap-3">
                 <div className="flex min-w-0 items-center gap-3">
-                  <span aria-hidden className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary-soft text-primary">
+                  <span aria-hidden className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary-soft text-primary-text">
                     <Send size={16} />
                   </span>
                   <p className="break-words text-body font-semibold tracking-[-0.01em] text-text [overflow-wrap:anywhere]">{telegramLinkLabel(row)}</p>
@@ -162,7 +162,7 @@ export function TelegramSection() {
               </div>
               <div className="flex flex-wrap gap-1.5">
                 {row.scopes.map((scope) => (
-                  <span key={scope} className={cn("rounded-full px-2.5 py-0.5 text-caption font-semibold", scope === "write" ? "bg-secondary-soft text-secondary" : "bg-primary-soft text-primary")}>
+                  <span key={scope} className={cn("rounded-full px-2.5 py-0.5 text-caption font-semibold", scope === "write" ? "bg-secondary-soft text-secondary" : "bg-primary-soft text-primary-text")}>
                     {scope === "write" ? t("apps.scope.write") : t("apps.scope.read")}
                   </span>
                 ))}
@@ -225,7 +225,7 @@ export function TelegramSection() {
                   {deepLink && (
                     <>
                       {" "}
-                      <a href={deepLink} target="_blank" rel="noopener noreferrer" className="font-medium text-primary hover:underline">{t("tg.openBot")}</a>
+                      <a href={deepLink} target="_blank" rel="noopener noreferrer" className="font-medium text-primary-text hover:underline">{t("tg.openBot")}</a>
                     </>
                   )}
                 </li>
@@ -250,7 +250,7 @@ export function TelegramSection() {
 
       <p className="px-1 text-caption leading-relaxed text-text-muted">
         {t("tg.privacy")}{" "}
-        <Link href="/privacy" className="font-medium text-primary hover:underline">{t("tg.privacyLink")}</Link>
+        <Link href="/privacy" className="font-medium text-primary-text hover:underline">{t("tg.privacyLink")}</Link>
       </p>
     </section>
   );

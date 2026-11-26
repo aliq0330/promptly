@@ -74,7 +74,7 @@ export function CategoryView() {
             <Link
               href={categoryHref(type, category.id)}
               aria-current={!sub ? "page" : undefined}
-              className={cn(SUB_CHIP, !sub ? "border-transparent bg-primary-soft text-primary" : "border-border bg-surface text-text-secondary hover:border-border-strong hover:text-text")}
+              className={cn(SUB_CHIP, !sub ? "border-transparent bg-primary-soft text-primary-text" : "border-border bg-surface text-text-secondary hover:border-border-strong hover:text-text")}
             >
               {t("common.all")}
             </Link>
@@ -85,7 +85,7 @@ export function CategoryView() {
                   key={entry.id}
                   href={categoryHref(type, category.id, entry.id)}
                   aria-current={active ? "page" : undefined}
-                  className={cn(SUB_CHIP, active ? "border-transparent bg-primary-soft text-primary" : "border-border bg-surface text-text-secondary hover:border-border-strong hover:text-text")}
+                  className={cn(SUB_CHIP, active ? "border-transparent bg-primary-soft text-primary-text" : "border-border bg-surface text-text-secondary hover:border-border-strong hover:text-text")}
                 >
                   {taxonomyLabel(entry.labelKey, language)}
                 </Link>

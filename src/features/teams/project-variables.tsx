@@ -49,7 +49,7 @@ export function ProjectVariablesPanel({
       <div className="flex items-center gap-2">
         <h3 className="min-w-0 flex-1 text-body font-bold text-text">{t("tp.variable.fileTitle")}</h3>
         {canWrite && (
-          <button type="button" onClick={() => setEditing("new")} className="inline-flex h-9 items-center gap-1 rounded-full bg-primary-soft px-3 text-caption font-semibold text-primary" data-variable-add>
+          <button type="button" onClick={() => setEditing("new")} className="inline-flex h-9 items-center gap-1 rounded-full bg-primary-soft px-3 text-caption font-semibold text-primary-text" data-variable-add>
             <Plus size={12} aria-hidden />
             {t("tp.variable.add")}
           </button>

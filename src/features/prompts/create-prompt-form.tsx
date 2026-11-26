@@ -912,7 +912,7 @@ export function CreatePromptForm() {
         {isAnswerMode && answeredRequest && (
           <div className="space-y-2 rounded-xl border border-primary/30 bg-primary/5 p-3 text-small">
             <div className="flex items-center justify-between gap-2">
-              <span className="font-medium text-primary">{t("prompt.answeringThisRequest")}</span>
+              <span className="font-medium text-primary-text">{t("prompt.answeringThisRequest")}</span>
               <Link
                 href="/create"
                 title={t("prompt.exitAnswerMode")}
@@ -927,14 +927,14 @@ export function CreatePromptForm() {
                 <span className="font-medium text-text">{answeredRequest.author.displayName}</span> {t("prompt.requestColon")} &ldquo;{answeredRequest.title}&rdquo;
               </span>
             </div>
-            <Link href={requestHref(answeredRequest)} className="inline-block font-medium text-primary underline">
+            <Link href={requestHref(answeredRequest)} className="inline-block font-medium text-primary-text underline">
               {t("request.viewRequest")}
             </Link>
           </div>
         )}
 
         {duplicateSource && (
-          <div className="flex items-start gap-2 rounded-xl border border-primary/30 bg-primary/5 p-3 text-small text-primary">
+          <div className="flex items-start gap-2 rounded-xl border border-primary/30 bg-primary/5 p-3 text-small text-primary-text">
             <Copy size={16} className="mt-0.5 shrink-0" />
             <p>
               <Link href={promptHref(duplicateSource)} className="font-medium underline">

@@ -99,8 +99,8 @@ function RolesMatrix({ ctx }: { ctx: TeamCtx }) {
 }
 
 const ROLE_CHIP_TONE: Record<TeamRole, string> = {
-  owner: "bg-primary-soft text-primary",
-  admin: "bg-primary-soft text-primary",
+  owner: "bg-primary-soft text-primary-text",
+  admin: "bg-primary-soft text-primary-text",
   editor: "bg-success-soft text-success",
   member: "bg-surface-soft text-text-secondary",
   guest: "bg-warning-soft text-warning",
@@ -186,7 +186,7 @@ export function TeamMembersSection({ ctx }: { ctx: TeamCtx }) {
               aria-selected={view === v.key}
               onClick={() => setView(v.key)}
               data-members-view={v.key}
-              className={cn("inline-flex h-10 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-4 text-small transition-colors", view === v.key ? "border-primary bg-primary-soft font-semibold text-primary" : "border-border-soft bg-surface text-text-secondary hover:bg-surface-soft")}
+              className={cn("inline-flex h-10 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-4 text-small transition-colors", view === v.key ? "border-primary bg-primary-soft font-semibold text-primary-text" : "border-border-soft bg-surface text-text-secondary hover:bg-surface-soft")}
             >
               {v.label}
               {v.count !== null && <span className="tabular-nums">{v.count}</span>}
@@ -488,7 +488,7 @@ function RemoveMemberDialog({ ctx, member, onClose, onDone }: { ctx: TeamCtx; me
             }))}
           />
         </div>
-        <p className="rounded-lg bg-primary-soft px-4 py-2.5 text-caption text-primary">{t("tm.members.alwaysStays")}</p>
+        <p className="rounded-lg bg-primary-soft px-4 py-2.5 text-caption text-primary-text">{t("tm.members.alwaysStays")}</p>
         <label className="flex items-center gap-3 text-small text-text">
           <input type="checkbox" checked={notify} onChange={(event) => setNotify(event.target.checked)} className="h-5 w-5 accent-primary" />
           {t("tm.members.notifyName", { name })}

@@ -132,7 +132,7 @@ export function TeamApprovalsSection({ ctx }: { ctx: TeamCtx }) {
               onClick={() => setProject(entry.id)}
               aria-pressed={project === entry.id}
               data-board-project={entry.id}
-              className={cn("h-9 rounded-full border px-4 text-small font-semibold", project === entry.id ? "border-transparent bg-primary-soft text-primary" : "border-border-soft bg-surface text-text-secondary hover:bg-surface-soft")}
+              className={cn("h-9 rounded-full border px-4 text-small font-semibold", project === entry.id ? "border-transparent bg-primary-soft text-primary-text" : "border-border-soft bg-surface text-text-secondary hover:bg-surface-soft")}
             >
               {entry.title}
               {entry.count > 0 && <span className="ml-1.5 tabular-nums opacity-70">{entry.count}</span>}
@@ -197,7 +197,7 @@ function BoardCard({ teamId, card, state, busy, onApprove, onChanges }: { teamId
         <span className="block text-caption font-semibold text-text-muted">
           {t("tc.appr.proposal")} · {p.fileTitle ?? p.projectTitle}
         </span>
-        <Link href={p.fileId ? projectLink(teamId, p.projectId, { file: p.fileId, item: p.itemId }) : projectLink(teamId, p.projectId, { board: p.spaceId, item: p.itemId })} className="block text-body font-semibold text-text hover:text-primary">
+        <Link href={p.fileId ? projectLink(teamId, p.projectId, { file: p.fileId, item: p.itemId }) : projectLink(teamId, p.projectId, { board: p.spaceId, item: p.itemId })} className="block text-body font-semibold text-text hover:text-primary-text">
           {p.proposedTitle || p.currentTitle || t(kindKey(p.kind))}
         </Link>
         <p className="text-small text-text-secondary">{t("tp.review.proposedBy", { name: p.proposerName ?? "" })}</p>
@@ -213,7 +213,7 @@ function BoardCard({ teamId, card, state, busy, onApprove, onChanges }: { teamId
       <span className="block text-caption font-semibold text-text-muted">
         {item.unitCount > 1 ? t("tc.appr.package", { count: item.unitCount }) : t(kindKey(item.kind))} · {item.fileTitle ?? t("tp.area.projectWide")}
       </span>
-      <Link href={boardItemHref(teamId, item)} className="block text-body font-semibold text-text hover:text-primary" data-board-open>
+      <Link href={boardItemHref(teamId, item)} className="block text-body font-semibold text-text hover:text-primary-text" data-board-open>
         {item.title || t(kindKey(item.kind))}
       </Link>
       <p className="text-small text-text-secondary">

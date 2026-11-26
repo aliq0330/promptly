@@ -123,7 +123,7 @@ function ItemBody({ item, resolved, palette, attachedTitle, lowDetail }: { item:
     const text = item.isDraft ? item.body : (resolved.prompt?.promptText ?? "");
     return (
       <div className="flex h-full w-full flex-col overflow-hidden rounded-lg card-flat p-3 shadow-card">
-        <p className="flex items-center gap-1.5 text-caption font-semibold text-primary">
+        <p className="flex items-center gap-1.5 text-caption font-semibold text-primary-text">
           <SquareTerminal size={12} aria-hidden />
           {item.isDraft ? t("spaces.prompts.sourceDraft") : t("spaces.item.prompt")}
         </p>
@@ -239,7 +239,7 @@ function ContentCard({ item, resolved, reason, lowDetail }: { item: SpaceItem; r
   const Icon = item.contentType === "workflow" ? Workflow : item.contentType === "preset" ? SlidersHorizontal : item.contentType === "skill" ? GraduationCap : Sparkles;
   return (
     <div className="flex h-full w-full flex-col overflow-hidden rounded-lg card-flat p-3 shadow-card">
-      <p className="flex items-center gap-1.5 text-caption font-semibold text-primary">
+      <p className="flex items-center gap-1.5 text-caption font-semibold text-primary-text">
         <Icon size={12} aria-hidden />
         {t(item.contentType === "workflow" ? "spaces.content.workflow" : item.contentType === "preset" ? "spaces.content.preset" : item.contentType === "skill" ? "spaces.content.skill" : "spaces.content.request")}
       </p>

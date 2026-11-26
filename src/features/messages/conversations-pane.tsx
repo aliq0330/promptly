@@ -303,7 +303,7 @@ export function ConversationsPane({ embedded = false }: { embedded?: boolean }) 
                 data-kind-chip={key}
                 onClick={() => setKindFilter(key)}
                 className={cn(
-                  "shrink-0 rounded-full text-small transition-colors duration-200 ease-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+                  "shrink-0 rounded-full text-small transition-colors duration-200 ease-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus",
                   embedded ? "h-9 px-4" : "h-10 px-[18px]",
                   kindFilter === key ? "bg-primary font-semibold text-primary-foreground" : "border border-border-soft bg-surface font-medium text-text hover:border-border-strong",
                 )}
@@ -337,13 +337,13 @@ export function ConversationsPane({ embedded = false }: { embedded?: boolean }) 
             type="button"
             onClick={() => setView("requests")}
             data-message-requests-banner=""
-            className="mb-3 flex w-full items-center gap-3 rounded-lg border border-primary/25 bg-primary-soft/60 px-3 py-2.5 text-left transition-colors hover:bg-primary-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            className="mb-3 flex w-full items-center gap-3 rounded-lg border border-primary/25 bg-primary-soft/60 px-3 py-2.5 text-left transition-colors hover:bg-primary-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
           >
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface text-primary">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface text-primary-text">
               <Inbox size={16} aria-hidden />
             </span>
             <span className="min-w-0 flex-1 truncate text-small font-semibold text-text">{t("messages.requestsBanner", { count: buckets.requests.length })}</span>
-            <span className="shrink-0 text-small font-semibold text-primary">{t("messages.requestsOpen")}</span>
+            <span className="shrink-0 text-small font-semibold text-primary-text">{t("messages.requestsOpen")}</span>
           </button>
         )}
         {bulkError && (
@@ -433,7 +433,7 @@ export function ConversationsPane({ embedded = false }: { embedded?: boolean }) 
                   className={cn(
                     "mt-3 flex h-14 items-center justify-center gap-2 rounded-lg border-[1.5px] border-dashed text-small font-semibold transition-colors",
                     embedded && "mx-4",
-                    kindFilter === "team" ? "border-primary/30 text-primary hover:bg-primary-soft" : "border-success/40 text-success hover:bg-success-soft",
+                    kindFilter === "team" ? "border-primary/30 text-primary-text hover:bg-primary-soft" : "border-success/40 text-success hover:bg-success-soft",
                   )}
                 >
                   {kindFilter === "team" ? <Plus size={20} aria-hidden /> : <Search size={20} aria-hidden />}

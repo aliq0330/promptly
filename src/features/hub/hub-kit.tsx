@@ -26,11 +26,11 @@ import { usePhoneDuplicateClass } from "@/components/layout/phone-title";
 /** Sayfa kabuğu: telefonda 12, tablette 24, masaüstünde 32 px kenar boşluğu — üç alanda aynı genişlik. */
 export const HUB_PAGE_CLASS = `mx-auto w-full ${PAGE_WIDTH_CLASS.hub} ${PAGE_GUTTER_CLASS} pb-16 pt-4 sm:pt-6 lg:pt-7`;
 
-const HUB_BAND_TONE = { primary: "bg-primary-soft text-primary", secondary: "bg-secondary-soft text-secondary", neutral: "bg-surface-soft text-text" } as const;
+const HUB_BAND_TONE = { primary: "bg-primary-soft text-primary-text", secondary: "bg-secondary-soft text-secondary", neutral: "bg-surface-soft text-text" } as const;
 
 /** Detay bandındaki ⋮ düğmesi (docs/history/420-*): üç alanda aynı 40 px kenarlıklı yuvarlak; menüyü kendi bileşeni çizer. */
 export const HUB_BAND_MENU_BUTTON_CLASS =
-  "grid h-10 w-10 shrink-0 place-items-center rounded-full border border-border bg-surface/80 text-text transition-colors hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary";
+  "grid h-10 w-10 shrink-0 place-items-center rounded-full border border-border bg-surface/80 text-text transition-colors hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus";
 
 /** Ana sayfa bandı. Telefonda düğme kısa etiketle aynı satırda kalır. */
 export function HubBand({
@@ -156,7 +156,7 @@ export function HubGrid({ children, className, ...rest }: { children: ReactNode;
 /** Kartın sol üst tür etiketi / sağ üst eylem düğmesi (kapağın üstünde yüzer; kartın bağlantısının üstünde `relative z-10`). */
 export const HUB_CARD_CHIP_CLASS = "rounded-full bg-surface/90 px-2.5 py-0.5 text-caption font-semibold text-text shadow-xs";
 export const HUB_CARD_CORNER_BUTTON_CLASS =
-  "grid h-8 w-8 place-items-center rounded-full bg-surface/90 text-text-secondary shadow-xs transition-colors hover:bg-surface hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary";
+  "grid h-8 w-8 place-items-center rounded-full bg-surface/90 text-text-secondary shadow-xs transition-colors hover:bg-surface hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus";
 
 /** Kart gövdesinin sabit yüksekliği: üç alanda her kart aynı boyda olsun diye başlık + özet + alt satır bu kutuya sığar. */
 export const HUB_CARD_BODY_CLASS = "h-[6.5rem]";
@@ -313,7 +313,7 @@ export function HubDetailBand({
           <div className="col-span-full flex min-w-0 items-start justify-between gap-2" data-hub-band-top="">
             <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-caption text-text-secondary">
               {backHref && (
-                <Link href={backHref} aria-label={backLabel} className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface/70 text-text hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary" data-hub-back="" {...backAttrs}>
+                <Link href={backHref} aria-label={backLabel} className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface/70 text-text hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus" data-hub-back="" {...backAttrs}>
                   <ArrowLeft size={16} aria-hidden />
                 </Link>
               )}

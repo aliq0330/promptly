@@ -74,7 +74,7 @@ export function MessageInfoModal({ message, onClose }: { message: Message; onClo
           {readers.length > 0 && (
             <section aria-labelledby="receipts-read">
               <h3 id="receipts-read" className="mb-1.5 flex items-center gap-1.5 text-label font-semibold text-text">
-                <CheckCheck size={16} className="text-primary" aria-hidden /> {t("chat.msgInfo.readBy")} ({readers.length})
+                <CheckCheck size={16} className="text-primary-text" aria-hidden /> {t("chat.msgInfo.readBy")} ({readers.length})
               </h3>
               <ul className="space-y-1">
                 {readers.map((r) => (

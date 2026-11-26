@@ -165,7 +165,7 @@ export function CallScreen({
           {/* Üst şerit: küçült · (görüntü varken) ad + durum · bağlantı kalitesi. Avatar panelinde ad/durum zaten ortada durur. */}
           {live && (
             <div className={cn("absolute inset-x-0 top-0 z-10 flex items-center gap-3 px-4 pt-[max(0.75rem,env(safe-area-inset-top))]", showMainFeed ? "art-scrim-top pb-10" : "pb-2")}>
-              <button type="button" onClick={onMinimize} aria-label={t("calls.minimize")} title={t("calls.minimize")} data-call-minimize className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-art-chip text-on-art hover:bg-art-chip/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+              <button type="button" onClick={onMinimize} aria-label={t("calls.minimize")} title={t("calls.minimize")} data-call-minimize className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-art-chip text-on-art hover:bg-art-chip/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus">
                 <Minimize2 size={20} aria-hidden />
               </button>
               {showMainFeed ? (
@@ -221,7 +221,7 @@ export function CallScreen({
               data-pip-swapped={swapped ? "true" : "false"}
               aria-label={swapped ? t("calls.pip.ariaSwapped") : t("calls.pip.aria")}
               title={t("calls.pip.hint")}
-              className="absolute z-20 h-36 w-28 cursor-grab touch-none overflow-hidden rounded-md border-2 border-on-art/90 bg-call-stage shadow-card data-[dragging]:cursor-grabbing sm:h-48 sm:w-36 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              className="absolute z-20 h-36 w-28 cursor-grab touch-none overflow-hidden rounded-md border-2 border-on-art/90 bg-call-stage shadow-card data-[dragging]:cursor-grabbing sm:h-48 sm:w-36 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
               style={{ left: 0, top: 0 }}
             >
               {pipContent}

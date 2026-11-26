@@ -117,7 +117,7 @@ export function DnaConstellation({ sections, centerTitle, mapHref }: { sections:
                     opacity={focusId === null || active ? 1 : 0.3}
                     className={cn(
                       "animate-edge-draw stroke-current transition-[opacity,stroke-width,color] duration-200 ease-soft",
-                      active ? "text-primary" : "text-border-strong",
+                      active ? "text-primary-text" : "text-border-strong",
                     )}
                     style={{ animationDelay: `${120 + i * STAGGER_MS}ms` }}
                     data-dna-edge={section.type}
@@ -127,7 +127,7 @@ export function DnaConstellation({ sections, centerTitle, mapHref }: { sections:
             </svg>
 
             <div
-              className="absolute z-10 flex max-w-[11rem] -translate-x-1/2 -translate-y-1/2 animate-pop-in items-center gap-1.5 rounded-full border border-primary bg-primary-soft px-3 py-2 text-label font-semibold text-primary shadow-card"
+              className="absolute z-10 flex max-w-[11rem] -translate-x-1/2 -translate-y-1/2 animate-pop-in items-center gap-1.5 rounded-full border border-primary bg-primary-soft px-3 py-2 text-label font-semibold text-primary-text shadow-card"
               style={{ left: cx, top: cy }}
               data-dna-center
             >
@@ -161,7 +161,7 @@ export function DnaConstellation({ sections, centerTitle, mapHref }: { sections:
                       "grid place-items-center rounded-full border bg-surface text-text-secondary shadow-card animate-node-emerge",
                       "transition-[border-color,color,box-shadow,background-color,opacity] duration-200 ease-soft",
                       "group-focus-visible:ring-2 group-focus-visible:ring-primary group-focus-visible:ring-offset-2 group-focus-visible:ring-offset-surface",
-                      isSelected ? "border-primary bg-primary-soft text-primary ring-2 ring-primary/40" : isLit ? "border-primary text-primary" : "border-border-soft",
+                      isSelected ? "border-primary bg-primary-soft text-primary-text ring-2 ring-primary/40" : isLit ? "border-primary text-primary-text" : "border-border-soft",
                       focusId !== null && !isLit && !isSelected && "opacity-60",
                     )}
                     style={{
@@ -216,7 +216,7 @@ export function DnaConstellation({ sections, centerTitle, mapHref }: { sections:
       </div>
 
       {mapHref && (
-        <Link href={mapHref} className="inline-flex items-center gap-1.5 text-label font-medium text-primary hover:underline">
+        <Link href={mapHref} className="inline-flex items-center gap-1.5 text-label font-medium text-primary-text hover:underline">
           <Network size={16} aria-hidden />
           {t("dna.constellationOpenMap")}
         </Link>

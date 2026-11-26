@@ -44,7 +44,7 @@ export function SwitchRow({
         aria-hidden
         className={cn(
           "grid h-10 w-10 shrink-0 place-items-center rounded-full transition-colors duration-200",
-          checked ? "bg-primary-soft text-primary" : "bg-surface-soft text-text-secondary",
+          checked ? "bg-primary-soft text-primary-text" : "bg-surface-soft text-text-secondary",
         )}
       >
         {icon}

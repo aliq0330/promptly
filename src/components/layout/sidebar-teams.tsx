@@ -71,7 +71,7 @@ function MyTeams() {
                 aria-current={active ? "page" : undefined}
                 className={cn(
                   "flex h-10 items-center gap-3 rounded-xl px-3 text-small transition-colors",
-                  active ? "bg-primary-soft font-semibold text-primary" : "font-medium text-text-secondary hover:bg-surface-soft hover:text-text",
+                  active ? "bg-primary-soft font-semibold text-primary-text" : "font-medium text-text-secondary hover:bg-surface-soft hover:text-text",
                 )}
               >
                 <TeamMark name={team.name} tone={team.tone} size={24} />

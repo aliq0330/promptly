@@ -140,7 +140,7 @@ export function WorkflowRunner({ workflowId, steps }: { workflowId: string; step
                       current
                         ? "border-primary bg-primary text-primary-foreground"
                         : done
-                          ? "border-primary/40 bg-primary-soft text-primary"
+                          ? "border-primary/40 bg-primary-soft text-primary-text"
                           : "border-border-soft bg-surface text-text-secondary hover:border-border",
                     )}
                   >
@@ -298,11 +298,11 @@ function StepPanel({
       <header data-run-step-band className="relative rounded-t-xl px-4 pb-4 pt-4 sm:px-5 sm:pt-5">
         <CardBandBackdrop />
         <div className="relative flex items-start gap-4">
-          <span aria-hidden className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-surface text-primary shadow-pop">
+          <span aria-hidden className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-surface text-primary-text shadow-pop">
             <Icon size={24} />
           </span>
           <div className="min-w-0 flex-1 space-y-1">
-            <p className="flex items-center gap-1.5 text-caption font-semibold text-primary">
+            <p className="flex items-center gap-1.5 text-caption font-semibold text-primary-text">
               {t("workflow.run.stepOf", { n: String(index + 1), total: String(steps.length) })}
             </p>
             <h3 id={`run-step-${step.id}`} className="break-words font-display text-h2 font-extrabold leading-tight tracking-[-0.02em] text-text">
@@ -343,7 +343,7 @@ function StepPanel({
                       ) : (
                         <p className="text-small text-text-muted">
                           {t("workflow.run.linkedEmpty", { n: String(resolved.fromIndex + 1) })}{" "}
-                          <button type="button" onClick={() => onGo(resolved.fromIndex)} className="font-medium text-primary hover:underline">
+                          <button type="button" onClick={() => onGo(resolved.fromIndex)} className="font-medium text-primary-text hover:underline">
                             {t("workflow.stepN", { n: String(resolved.fromIndex + 1) })}
                           </button>
                         </p>

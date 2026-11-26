@@ -233,7 +233,7 @@ export function ContentCardPost({
     <>
       <div data-card-media className="relative overflow-hidden rounded-xl bg-primary-soft">
         {art ?? (
-          <div aria-hidden className="flex aspect-[4/3] w-full items-center justify-center text-primary/40">
+          <div aria-hidden className="flex aspect-[4/3] w-full items-center justify-center text-primary-text/40">
             {TypeIcon && <TypeIcon size={40} />}
           </div>
         )}
@@ -256,9 +256,9 @@ export function ContentCardPost({
       {children && <div className="space-y-2 px-0.5 pt-2 empty:hidden">{children}</div>}
       <div className="relative z-10 flex items-center gap-2 pt-1">
         {author ? (
-          <Link href={profileHref(author)} className="flex min-w-0 flex-1 items-center gap-2 rounded-full outline-none focus-visible:ring-2 focus-visible:ring-primary">
+          <Link href={profileHref(author)} className="flex min-w-0 flex-1 items-center gap-2 rounded-full outline-none focus-visible:ring-2 focus-visible:ring-focus">
             <Avatar src={author.avatarUrl} alt="" size={24} className="shrink-0" />
-            <span className="min-w-0 truncate text-small font-medium text-text hover:text-primary">{name}</span>
+            <span className="min-w-0 truncate text-small font-medium text-text hover:text-primary-text">{name}</span>
           </Link>
         ) : (
           <span className="flex min-w-0 flex-1 items-center gap-2">
@@ -300,7 +300,7 @@ export function ContentCardTitle({
         <Link
           href={href}
           data-card-link
-          className="relative z-10 rounded-xs outline-none decoration-primary/40 underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-primary"
+          className="relative z-10 rounded-xs outline-none decoration-primary/40 underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-focus"
         >
           {title}
         </Link>

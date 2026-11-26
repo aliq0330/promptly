@@ -216,7 +216,7 @@ export const PublishPanel = forwardRef<
                       title={item.closed ? t("communities.detail.closedNotice") : undefined}
                       className={cn(
                         "flex shrink-0 items-center gap-2 rounded-full border py-1 pl-1 pr-3 text-small font-semibold transition-colors disabled:opacity-50",
-                        on ? "border-primary/50 bg-primary-soft text-primary" : "border-border bg-background text-text-secondary hover:border-border-strong",
+                        on ? "border-primary/50 bg-primary-soft text-primary-text" : "border-border bg-background text-text-secondary hover:border-border-strong",
                       )}
                     >
                       <GroupAvatar name={item.name} avatarUrl={item.avatarUrl} size={24} />

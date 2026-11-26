@@ -108,14 +108,14 @@ export function WelcomeTour() {
           <button
             type="button"
             onClick={close}
-            className="rounded-md px-2 py-1 text-label font-medium text-text-muted hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            className="rounded-md px-2 py-1 text-label font-medium text-text-muted hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
           >
             {t("tour.skip")}
           </button>
         </div>
 
         <div key={step} className="animate-fade-in space-y-3 pb-1 pt-5">
-          <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary-soft text-primary">
+          <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary-soft text-primary-text">
             <Icon size={24} aria-hidden />
           </span>
           <h2 id="tour-title" className="font-display text-h2 text-text">

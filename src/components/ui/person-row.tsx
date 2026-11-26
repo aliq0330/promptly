@@ -46,7 +46,7 @@ export function PersonRow({
   return (
     <div className={cn("flex items-center gap-3 py-2.5", className)} {...rest}>
       {href ? (
-        <Link href={href} className="flex min-w-0 flex-1 items-center gap-3 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+        <Link href={href} className="flex min-w-0 flex-1 items-center gap-3 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus">
           {identity}
         </Link>
       ) : (

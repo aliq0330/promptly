@@ -35,7 +35,7 @@ export function Banner({
           type="button"
           onClick={onDismiss}
           aria-label={dismissLabel}
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-text-secondary transition-colors hover:bg-surface/60 hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-text-secondary transition-colors hover:bg-surface/60 hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
         >
           <X size={16} aria-hidden />
         </button>

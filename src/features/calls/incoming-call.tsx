@@ -62,7 +62,7 @@ export function IncomingCall({
         aria-label={t("calls.incoming.aria", { name })}
         data-incoming-call
         data-call-type={type}
-        className="flex w-full max-w-sm flex-col items-center gap-4 rounded-xl bg-surface px-6 py-8 text-center shadow-pop outline-none focus-visible:ring-2 focus-visible:ring-primary animate-pop-in"
+        className="flex w-full max-w-sm flex-col items-center gap-4 rounded-xl bg-surface px-6 py-8 text-center shadow-pop outline-none focus-visible:ring-2 focus-visible:ring-focus animate-pop-in"
       >
         <p className="text-label font-semibold text-text-muted">{t("calls.incoming.title")}</p>
         <Avatar src={peer.avatarUrl} alt="" size={96} />
@@ -80,7 +80,7 @@ export function IncomingCall({
             onClick={onReject}
             disabled={busy}
             data-incoming-reject
-            className="inline-flex h-12 min-w-32 flex-1 items-center justify-center gap-2 rounded-full bg-danger px-5 text-body font-semibold text-danger-foreground transition-colors hover:bg-danger/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface disabled:opacity-50"
+            className="inline-flex h-12 min-w-32 flex-1 items-center justify-center gap-2 rounded-full bg-danger px-5 text-body font-semibold text-danger-foreground transition-colors hover:bg-danger/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-surface disabled:opacity-50"
           >
             <PhoneOff size={20} aria-hidden /> {t("calls.incoming.reject")}
           </button>
@@ -89,7 +89,7 @@ export function IncomingCall({
             onClick={onAccept}
             disabled={busy}
             data-incoming-accept
-            className="inline-flex h-12 min-w-32 flex-1 items-center justify-center gap-2 rounded-full bg-success px-5 text-body font-semibold text-success-foreground transition-colors hover:bg-success/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface disabled:opacity-50"
+            className="inline-flex h-12 min-w-32 flex-1 items-center justify-center gap-2 rounded-full bg-success px-5 text-body font-semibold text-success-foreground transition-colors hover:bg-success/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-surface disabled:opacity-50"
           >
             {type === "video" ? <Video size={20} aria-hidden /> : <Phone size={20} aria-hidden />} {t("calls.incoming.accept")}
           </button>

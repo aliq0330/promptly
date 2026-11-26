@@ -98,7 +98,7 @@ export function ContentPane({
           {c.thumbnailUrl ? (
             <StorageImg src={c.thumbnailUrl} alt="" className="h-12 w-12 shrink-0 rounded-md object-cover" />
           ) : (
-            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-primary-soft text-primary">
+            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-primary-soft text-primary-text">
               <Icon size={20} />
             </span>
           )}
@@ -378,7 +378,7 @@ export function StepPreview({ step, steps, index }: Omit<PaneProps, "onChange">)
               {step.inputs.map((input) => (
                 <li key={input.id} className="truncate text-text">
                   • {input.label || "…"}
-                  {input.source && <ArrowRight size={12} className="ml-1 inline text-primary" aria-hidden />}
+                  {input.source && <ArrowRight size={12} className="ml-1 inline text-primary-text" aria-hidden />}
                 </li>
               ))}
             </ul>

@@ -114,7 +114,7 @@ export function MobileNav() {
           const label = t(item.labelKey);
           const itemClassName = cn(
             "relative flex flex-1 flex-col items-center justify-center gap-1 text-caption font-medium transition-colors",
-            active ? "text-primary" : "text-text-muted",
+            active ? "text-primary-text" : "text-text-muted",
           );
           const inner = (
             <>

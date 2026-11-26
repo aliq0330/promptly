@@ -332,7 +332,7 @@ export function VariableSpecEditor({
             type="button"
             disabled={spec.options.length >= MAX_OPTIONS}
             onClick={() => setOptions([...spec.options, { label: "", value: "" }])}
-            className="inline-flex items-center gap-1 text-label font-medium text-primary hover:underline disabled:opacity-50"
+            className="inline-flex items-center gap-1 text-label font-medium text-primary-text hover:underline disabled:opacity-50"
           >
             <Plus size={16} /> {t("variable.addOption")}
           </button>
@@ -436,7 +436,7 @@ function OptionMedia({
   onClear: () => void;
 }) {
   const { t } = useTranslation();
-  const linkButton = "inline-flex items-center gap-1 text-label font-medium text-primary hover:underline disabled:opacity-50";
+  const linkButton = "inline-flex items-center gap-1 text-label font-medium text-primary-text hover:underline disabled:opacity-50";
 
   if (option.image) {
     return (

@@ -231,7 +231,7 @@ function PeekAction({ item, fill }: { item: PostFeedItem; fill: PromptFill | nul
   const { t } = useTranslation();
   const { user } = useAuth();
   const action = focusFeedPrimaryAction(item, user?.id ?? null);
-  const pill = "inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-full bg-primary px-5 text-label font-semibold text-primary-foreground transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary";
+  const pill = "inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-full bg-primary px-5 text-label font-semibold text-primary-foreground transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus";
   const attr = { "data-focus-peek-action": action };
   switch (action) {
     case "copy":
@@ -375,7 +375,7 @@ function FocusPeek({ item, model, fill, textScene }: { item: PostFeedItem; model
           aria-haspopup="dialog"
           aria-label={t("focusFeed.openCard")}
           data-focus-peek-open=""
-          className="flex min-h-11 min-w-0 flex-1 flex-col items-stretch justify-center gap-1 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          className="flex min-h-11 min-w-0 flex-1 flex-col items-stretch justify-center gap-1 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
         >
           {label}
           {line}

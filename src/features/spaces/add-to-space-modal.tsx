@@ -248,7 +248,7 @@ export function AddToSpaceModal({
             )}
             <label className="flex items-center gap-2 text-small text-text">
               <input type="checkbox" checked={includePrompt} onChange={(event) => setIncludePrompt(event.target.checked)} className="accent-primary" />
-              <SquareTerminal size={16} className="text-primary" aria-hidden />
+              <SquareTerminal size={16} className="text-primary-text" aria-hidden />
               {t("spaces.add.promptCard")}
             </label>
             <p className="text-caption text-text-muted">{t("spaces.add.referenceNote")}</p>
@@ -288,7 +288,7 @@ export function AddToSpaceModal({
                         </span>
                       </span>
                       {already && <span className="shrink-0 rounded-full bg-warning-soft px-2 py-0.5 text-caption font-medium text-warning">{t("spaces.add.already")}</span>}
-                      {selected === space.id && <Check size={16} className="shrink-0 text-primary" aria-hidden />}
+                      {selected === space.id && <Check size={16} className="shrink-0 text-primary-text" aria-hidden />}
                     </button>
                   </li>
                 );

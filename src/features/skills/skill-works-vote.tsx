@@ -104,7 +104,7 @@ export function SkillWorksVote({ skillId, isOwn, justDownloaded }: { skillId: st
         </h3>
         <p className="flex flex-wrap items-center gap-2 text-caption text-text-secondary" data-skill-works-summary>
           {summary.tier === "proven" && (
-            <span title={t("prompt.works.provenHint")} className="inline-flex items-center gap-1 rounded-full bg-primary-soft px-2 py-0.5 font-semibold text-primary">
+            <span title={t("prompt.works.provenHint")} className="inline-flex items-center gap-1 rounded-full bg-primary-soft px-2 py-0.5 font-semibold text-primary-text">
               <BadgeCheck size={12} aria-hidden />
               {t("prompt.works.proven")}
             </span>

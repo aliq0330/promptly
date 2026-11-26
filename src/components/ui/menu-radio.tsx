@@ -63,7 +63,7 @@ export function MenuRadioGroup<K extends string>({
               tabIndex={radioTabIndex(index, selected, anyChecked)}
               onClick={() => onChange(item.key)}
               className={cn(
-                "flex w-full items-center gap-2 rounded-md px-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+                "flex w-full items-center gap-2 rounded-md px-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus",
                 size === "lg" ? "min-h-12 text-body" : "min-h-11 text-label",
                 selected ? "bg-primary-soft font-semibold text-text" : "text-text-secondary hover:bg-surface-soft",
               )}
@@ -77,7 +77,7 @@ export function MenuRadioGroup<K extends string>({
                 </span>
               ) : null}
               {item.count ? <span className="grid h-6 min-w-6 place-items-center rounded-full bg-primary px-1.5 text-caption font-semibold text-primary-foreground">{item.count}</span> : null}
-              {selected && <Check size={size === "lg" ? 20 : 16} aria-hidden className="shrink-0 text-primary" />}
+              {selected && <Check size={size === "lg" ? 20 : 16} aria-hidden className="shrink-0 text-primary-text" />}
             </button>
             {selected && item.below}
           </div>

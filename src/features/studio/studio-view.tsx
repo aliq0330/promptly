@@ -813,7 +813,7 @@ export function StudioView() {
                 </Button>
               )}
               {extra.length < MAX_EXTRA && (
-                <button type="button" onClick={addExtra} className="inline-flex min-h-9 items-center gap-1.5 text-small font-medium text-primary hover:underline">
+                <button type="button" onClick={addExtra} className="inline-flex min-h-9 items-center gap-1.5 text-small font-medium text-primary-text hover:underline">
                   <Plus size={16} aria-hidden /> {t("studio.compareAdd")}
                 </button>
               )}
@@ -914,10 +914,10 @@ function SourceSlot({ onClick, subtle = false, children }: { onClick: () => void
       className={cn(
         "flex min-h-14 w-full items-center gap-2 rounded-lg border border-dashed border-border px-4 text-left text-small font-semibold transition-colors",
         "hover:border-primary hover:bg-primary-soft",
-        subtle ? "text-text-secondary" : "text-primary",
+        subtle ? "text-text-secondary" : "text-primary-text",
       )}
     >
-      <span aria-hidden className="grid h-6 w-6 place-items-center rounded-full bg-primary-soft text-primary">
+      <span aria-hidden className="grid h-6 w-6 place-items-center rounded-full bg-primary-soft text-primary-text">
         <Plus size={16} />
       </span>
       {children}

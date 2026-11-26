@@ -412,7 +412,7 @@ export function SearchOverlay({
                   data-search-overlay-filter
                   aria-label={filterLabel}
                   onClick={() => setView(sections[0].key)}
-                  className={cn(iconButtonClassName(false, "relative h-9 w-9 shrink-0 bg-primary-soft text-primary hover:bg-primary-soft hover:text-primary"), "md:hidden")}
+                  className={cn(iconButtonClassName(false, "relative h-9 w-9 shrink-0 bg-primary-soft text-primary-text hover:bg-primary-soft hover:text-primary-text"), "md:hidden")}
                 >
                   <Filter size={20} aria-hidden />
                   {filters.count > 0 && (
@@ -439,7 +439,7 @@ export function SearchOverlay({
                 type="button"
                 onClick={filters.onClear}
                 disabled={filters.count === 0}
-                className="inline-flex h-10 items-center px-3 text-label font-semibold text-primary hover:text-primary-hover disabled:text-text-muted"
+                className="inline-flex h-10 items-center px-3 text-label font-semibold text-primary-text hover:text-primary-hover disabled:text-text-muted"
               >
                 {t("toolbar.clear")}
               </button>

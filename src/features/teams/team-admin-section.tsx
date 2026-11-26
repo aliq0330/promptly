@@ -140,9 +140,9 @@ export function TeamAdminSection({ ctx }: { ctx: TeamCtx }) {
               aria-current={active === item.key ? "page" : undefined}
               data-admin-nav-item={item.key}
               className={cn(
-                "inline-flex h-11 shrink-0 items-center rounded-full border px-4 text-small font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary md:h-9",
+                "inline-flex h-11 shrink-0 items-center rounded-full border px-4 text-small font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus md:h-9",
                 active === item.key
-                  ? "border-transparent bg-primary-soft text-primary"
+                  ? "border-transparent bg-primary-soft text-primary-text"
                   : item.key === "danger"
                     ? "border-border-soft bg-surface text-danger hover:bg-danger-soft"
                     : "border-border-soft bg-surface text-text hover:bg-surface-soft",
@@ -194,7 +194,7 @@ function AuditPreview({ ctx }: { ctx: TeamCtx }) {
     };
   }, [team.id]);
   return (
-    <Panel title={t("tm.admin.audit")} action={<Link href={teamLink(team.id, "admin", { section: "audit" })} className="text-small font-semibold text-primary" data-audit-all>{t("tc.admin.auditAll")}</Link>} className="rounded-xl">
+    <Panel title={t("tm.admin.audit")} action={<Link href={teamLink(team.id, "admin", { section: "audit" })} className="text-small font-semibold text-primary-text" data-audit-all>{t("tc.admin.auditAll")}</Link>} className="rounded-xl">
       <div data-testid="admin-audit-preview">
         {entries === null && <Skeleton className="h-20 w-full rounded-lg" />}
         {entries !== null && entries.length === 0 && <p className="py-2 text-small text-text-muted">{t("tm.admin.audit.empty")}</p>}
@@ -401,9 +401,9 @@ type AuditCategory = (typeof AUDIT_CATEGORIES)[number];
 
 const AUDIT_TAG_TONE: Record<string, string> = {
   approval: "bg-success-soft text-success",
-  role: "bg-primary-soft text-primary",
+  role: "bg-primary-soft text-primary-text",
   access: "bg-warning-soft text-warning",
-  member: "bg-primary-soft text-primary",
+  member: "bg-primary-soft text-primary-text",
   library: "bg-danger-soft text-danger",
   channel: "bg-surface-soft text-text-secondary",
   policy: "bg-surface-soft text-text-secondary",

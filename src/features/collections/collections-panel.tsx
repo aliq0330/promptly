@@ -60,7 +60,7 @@ export function CollectionsPanel({ ownerId, ownerProfile }: { ownerId: string; o
       <button
         type="button"
         onClick={() => setFormMode("create")}
-        className="flex w-full items-center justify-center gap-2 rounded-md border border-dashed border-border py-2.5 text-label font-medium text-text-secondary transition-colors hover:border-primary/40 hover:bg-surface-soft hover:text-primary"
+        className="flex w-full items-center justify-center gap-2 rounded-md border border-dashed border-border py-2.5 text-label font-medium text-text-secondary transition-colors hover:border-primary/40 hover:bg-surface-soft hover:text-primary-text"
       >
         <Plus size={16} />
         {t("collection.createButton")}
@@ -142,9 +142,9 @@ function SavedShortcutCard() {
   return (
     <Link
       href="/saved"
-      className="group block min-w-0 overflow-hidden rounded-lg card-flat shadow-card transition-[border-color,box-shadow] duration-200 hover:border-border hover:shadow-card-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+      className="group block min-w-0 overflow-hidden rounded-lg card-flat shadow-card transition-[border-color,box-shadow] duration-200 hover:border-border hover:shadow-card-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
     >
-      <div className="flex aspect-[4/3] w-full items-center justify-center bg-surface-soft text-primary">
+      <div className="flex aspect-[4/3] w-full items-center justify-center bg-surface-soft text-primary-text">
         <span className="flex h-12 w-12 items-center justify-center rounded-md bg-primary-soft">
           <Bookmark size={24} />
         </span>

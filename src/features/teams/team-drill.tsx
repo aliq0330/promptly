@@ -88,7 +88,7 @@ export function DrillHeader({
             <h1 className="truncate font-display text-h2 font-extrabold leading-tight text-text" data-drill-title>
               {title}
             </h1>
-            {sub && <div className="text-caption font-semibold text-primary">{sub}</div>}
+            {sub && <div className="text-caption font-semibold text-primary-text">{sub}</div>}
           </div>
         </div>
       ) : (

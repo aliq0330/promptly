@@ -155,7 +155,7 @@ export function PromptsTab({ onShowOnBoard, autoAdd }: { onShowOnBoard: (id: str
                 <div className="flex items-start gap-3">
                   {rowSource === "image" && <SpaceImage url={item.mediaUrl} alt="" available={!reason} className="h-14 w-14 shrink-0 rounded-md" />}
                   <div className="min-w-0 flex-1 space-y-1">
-                    <button type="button" onClick={() => setOpenId(item.id)} className="block max-w-full truncate text-left text-body font-semibold text-text hover:text-primary">
+                    <button type="button" onClick={() => setOpenId(item.id)} className="block max-w-full truncate text-left text-body font-semibold text-text hover:text-primary-text">
                       {rowSource === "image" ? (resolved.prompt?.title ?? itemTitle(item)) : itemTitle(item)}
                     </button>
                     <p className="text-caption text-text-muted">

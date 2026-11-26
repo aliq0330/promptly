@@ -111,7 +111,7 @@ function OptionCards({
             aria-pressed={multiple ? selected : undefined}
             onClick={() => onToggle(option)}
             className={cn(
-              "group relative flex min-w-0 flex-col gap-1 rounded-lg border p-1.5 text-left transition-[border-color,box-shadow] duration-200 ease-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+              "group relative flex min-w-0 flex-col gap-1 rounded-lg border p-1.5 text-left transition-[border-color,box-shadow] duration-200 ease-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus",
               selected ? "border-primary ring-2 ring-primary/40" : "border-border hover:border-border-strong",
             )}
           >

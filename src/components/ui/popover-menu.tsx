@@ -101,7 +101,7 @@ export function PopoverMenu({ items, label, align = "right", trigger, className,
           event.preventDefault();
           setOpen((value) => !value);
         }}
-        className={triggerClassName ?? "flex h-9 w-9 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-surface-soft hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"}
+        className={triggerClassName ?? "flex h-9 w-9 items-center justify-center rounded-sm text-text-muted transition-colors hover:bg-surface-soft hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"}
       >
         {trigger ?? <MoreVertical size={20} aria-hidden />}
       </button>

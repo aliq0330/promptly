@@ -271,7 +271,7 @@ function ReportCard({ report, onDone }: { report: ModerationReport; onDone: () =
               </p>
             )}
             {report.targetHref && (
-              <Link href={report.targetHref} className="mt-1 inline-flex items-center gap-1 text-caption font-medium text-primary hover:underline">
+              <Link href={report.targetHref} className="mt-1 inline-flex items-center gap-1 text-caption font-medium text-primary-text hover:underline">
                 <ArrowUpRight size={12} /> {t("moderation.open")}
               </Link>
             )}
