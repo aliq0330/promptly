@@ -7,8 +7,8 @@ import { createDb, installMock } from "./mock.mjs";
 import { setupCommunities } from "./mock-communities.mjs";
 import { setupSpaces } from "./mock-spaces.mjs";
 
-const BASE = `http://localhost:${process.env.PORT ?? 4197}/promptly`;
-const server = await serve(Number(process.env.PORT ?? 4197));
+const BASE = `http://localhost:${process.env.PORT ?? 4213}/promptly`;
+const server = await serve(Number(process.env.PORT ?? 4213));
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH ?? undefined, args: ["--no-sandbox"] });
 const results = [];
 const PHONE = { width: 390, height: 844 };
