@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { FolderOpen } from "@/components/icons/folder-open";
 import { Plus } from "@/components/icons/plus";
-import { Button } from "@/components/ui/button";
+import { Avatar } from "@/components/ui/avatar";
+import { Button, buttonClassName } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DescriptionField, FormError, SubmitButton, TitleField } from "@/features/spaces/space-forms";
@@ -23,7 +24,9 @@ import { ProjectAccessEditor } from "./project-access-editor";
 import { ProjectRoleChip } from "./project-ui";
 import { useTeamChannelList } from "./team-chat-data";
 import type { TeamCtx } from "./team-page";
-import { SectionError, Switch, toneClass } from "./team-ui";
+import { HUB_CARD_CHIP_CLASS, HubCard } from "@/features/hub/hub-kit";
+import { listTeamMembers, type TeamMember } from "@/lib/supabase/teams";
+import { SectionError, Switch, roleLabelKey, toneClass } from "./team-ui";
 import { ChoiceGroup } from "@/components/ui/choice-group";
 
 const KIND_KEY: Record<string, TranslationKey> = {
@@ -75,8 +78,8 @@ export function TeamProjectsSection({ ctx }: { ctx: TeamCtx }) {
         <WaitingStrip ctx={ctx} />
 
         <div className="flex flex-wrap items-center gap-3">
-          <h2 className="min-w-0 flex-1 font-display text-h2 font-bold text-text">
-            {t("tp.list.title")} <span className="font-sans text-body font-normal text-text-muted">· {active.length}</span>
+          <h2 className="min-w-0 flex-1 text-h3 font-semibold text-text md:text-h2 md:font-bold">
+            {t("tp.list.title")} <span className="text-body font-normal text-text-muted">· {active.length}</span>
           </h2>
           {archived.length > 0 && (
             <button type="button" onClick={() => setShowArchived((open) => !open)} aria-pressed={showArchived} className="text-small text-text-muted hover:text-text max-md:hidden" data-projects-archived-toggle>
@@ -84,7 +87,7 @@ export function TeamProjectsSection({ ctx }: { ctx: TeamCtx }) {
             </button>
           )}
           {canCreate && (
-            <Button type="button" onClick={() => setCreateOpen(true)} data-team-new-project>
+            <Button type="button" variant="outline" size="sm" onClick={() => setCreateOpen(true)} data-team-new-project>
               <Plus size={16} aria-hidden />
               {t("tp.list.new")}
             </Button>
@@ -107,31 +110,27 @@ export function TeamProjectsSection({ ctx }: { ctx: TeamCtx }) {
           />
         )}
         {active.length > 0 && (
-          <ul className="grid gap-3 md:grid-cols-2 md:gap-4" data-testid="team-project-list">
+          <ul className={PROJECT_GRID_CLASS} data-testid="team-project-list">
             {active.map((project) => (
-              <li key={project.id}>
-                <ProjectCard team={team.id} project={project} changes={changesByProject.get(project.id) ?? 0} />
-              </li>
+              <ProjectCard key={project.id} team={team.id} project={project} changes={changesByProject.get(project.id) ?? 0} />
             ))}
           </ul>
         )}
         {archived.length > 0 && (showArchived || active.length === 0) && (
           <div className="space-y-2" data-testid="team-projects-archived">
             <h3 className="text-small font-semibold text-text-muted">{t("tp.list.archived")}</h3>
-            <ul className="grid gap-3 md:grid-cols-2">
+            <ul className={PROJECT_GRID_CLASS}>
               {archived.map((project) => (
-                <li key={project.id}>
-                  <ProjectCard team={team.id} project={project} changes={0} />
-                </li>
+                <ProjectCard key={project.id} team={team.id} project={project} changes={0} />
               ))}
             </ul>
           </div>
         )}
       </section>
 
-      <aside className="min-w-0 space-y-4 max-md:hidden" data-testid="team-overview-aside">
+      <aside className="min-w-0 space-y-4 max-lg:hidden" data-testid="team-overview-aside">
+        <MembersCard ctx={ctx} />
         <ActivityCard ctx={ctx} />
-        <ChannelsCard ctx={ctx} />
       </aside>
 
       {createOpen && (
@@ -148,52 +147,66 @@ export function TeamProjectsSection({ ctx }: { ctx: TeamCtx }) {
   );
 }
 
+/** Proje kartlarının ızgarası (mockup): telefonda 1, tablette 2, masaüstünde (yan sütunla birlikte) 3 sütun. */
+const PROJECT_GRID_CLASS = "grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-3";
+
+/** Şeritteki tek kart (mockup): nokta + başlık/alt satır + küçük «Aç» düğmesi. */
+function StripCard({ href, title, sub, primary, testId, itemId }: { href: string; title: string; sub: string; primary: boolean; testId?: string; itemId?: string }) {
+  const { t } = useTranslation();
+  return (
+    <div className="flex min-w-0 items-center gap-3 rounded-lg card-flat px-4 py-3" data-strip-card={testId} data-waiting-item={itemId}>
+      <span aria-hidden className="h-2 w-2 shrink-0 rounded-full bg-heart" />
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-small font-semibold text-text">{title}</span>
+        <span className="block truncate text-caption text-text-secondary">{sub}</span>
+      </span>
+      <Link href={href} className={buttonClassName({ size: "sm", variant: primary ? "primary" : "outline", className: "shrink-0 px-3" })} data-waiting-open={testId === "waiting" ? "" : undefined}>
+        {t("tc.over.open")}
+      </Link>
+    </div>
+  );
+}
+
 /**
- * "Senden bekleyenler" şeridi (mockup B1): liderde bekleyen kararlar, diğerlerinde değişiklik istenen kendi öğeleri. Yalnız dolu olduğunda çizilir.
- * Masaüstünde sol kutu + üç kart, telefonda tek satır.
+ * "Senden bekleyenler" şeridi (mockup, Ekip · Genel bakış): bekleyen ilk karar ya da değişiklik istenen öğe tek kartta (başlık · proje/dosya · «Aç»),
+ * `md+`'da yanında okunmamış kanal kartı («# duyurular · 4 okunmamış» · Ekip sohbeti · «Aç»). Telefonda yalnız ilk kart ve üstünde küçük başlık.
+ * Yalnız dolu olduğunda çizilir.
  */
 function WaitingStrip({ ctx }: { ctx: TeamCtx }) {
-  const { t, language } = useTranslation();
+  const { t } = useTranslation();
   const { team, board } = ctx;
   const columns = useMemo(() => groupBoard(board?.items ?? []), [board]);
+  const { channels } = useTeamChannelList(team.id);
   const pending = columns[0].rows.filter((item) => item.canDecide);
   const changes = columns[1].rows.filter((item) => item.mine);
   const rows = pending.length > 0 ? pending : changes;
   const proposals = board?.proposals.length ?? 0;
   const count = rows.length + (pending.length > 0 ? proposals : 0);
-  if (count === 0) return null;
+  const unread = channels.find((channel) => channel.mode !== "project" && channel.unreadCount > 0 && !channel.muted);
+  if (count === 0 && !unread) return null;
+  const first = rows[0];
   const heading = pending.length > 0 || proposals > 0 ? t("tc.over.waiting") : t("tc.over.changesWaiting");
-  const target = teamLink(team.id, "approvals");
+  const itemTitle = first ? first.title || t(KIND_KEY[first.kind] ?? "tp.kind.content") : "";
   return (
-    <section data-testid="team-waiting" className="rounded-lg card-flat p-3 md:flex md:items-stretch md:gap-3 md:border-0 md:bg-transparent md:p-0">
-      <Link href={target} className="flex min-h-12 items-center gap-3 md:block md:w-52 md:shrink-0 md:rounded-lg md:border md:border-border-soft md:bg-surface md:p-4" data-waiting-open>
-        <span aria-hidden className="h-2 w-2 shrink-0 rounded-full bg-heart md:hidden" />
-        <span className="min-w-0 flex-1 md:block">
-          <span className="hidden items-center gap-2 font-display text-body font-bold text-text md:flex">
-            <span aria-hidden className="h-2 w-2 rounded-full bg-heart" />
-            {heading}
-          </span>
-          <span className="font-semibold text-text md:hidden">{t("tc.over.waitingPhone", { count })}</span>
-          <span className="mt-2 hidden text-small font-semibold text-primary-text md:block">{t("tc.over.waitingOpen", { count })}</span>
-        </span>
-        <span className="text-small font-semibold text-primary-text md:hidden">{t("tc.over.open")}</span>
-      </Link>
-      <ul className="hidden min-w-0 flex-1 gap-3 md:grid md:grid-cols-3">
-        {rows.slice(0, 3).map((item) => (
-          <li key={item.id} className="min-w-0">
-            <Link href={boardItemHref(team.id, item)} className="block h-full rounded-lg card-flat p-4 hover:shadow-card" data-waiting-item={item.id}>
-              <span className="block truncate text-caption font-semibold text-text-muted">
-                {t(KIND_KEY[item.kind] ?? "tp.kind.content")}
-                {item.fileTitle ? ` · ${item.fileTitle}` : ""}
-              </span>
-              <span className="mt-0.5 block truncate text-body font-semibold text-text">{item.title || t(KIND_KEY[item.kind] ?? "tp.kind.content")}</span>
-              <span className="block truncate text-small text-text-secondary">
-                {item.authorName ?? ""} · {formatRelativeTime(item.submittedAt ?? item.decidedAt ?? "", language)}
-              </span>
-            </Link>
-          </li>
-        ))}
-      </ul>
+    <section data-testid="team-waiting" className="space-y-2">
+      <h3 className="text-caption font-semibold text-text-secondary max-md:block md:sr-only">{heading}</h3>
+      <div className="grid gap-3 md:grid-cols-2">
+        {count > 0 && (
+          <StripCard
+            testId="waiting"
+            itemId={first?.id}
+            primary
+            href={first ? boardItemHref(team.id, first) : teamLink(team.id, "approvals")}
+            title={first ? t(pending.length > 0 ? "tc.over.itemAwaiting" : "tc.over.itemChanges", { title: itemTitle }) : t("tc.over.waitingPhone", { count })}
+            sub={[first?.fileTitle, count > 1 ? t("tc.over.moreWaiting", { count: count - 1 }) : null].filter(Boolean).join(" · ") || t("tc.tab.approvals")}
+          />
+        )}
+        {unread && (
+          <div className="max-md:hidden">
+            <StripCard testId="chat" primary={false} href={teamLink(team.id, "chat", { channel: unread.name })} title={t("tc.over.unreadLine", { name: unread.name, count: unread.unreadCount })} sub={t("tc.over.chatSub")} />
+          </div>
+        )}
+      </div>
     </section>
   );
 }
@@ -241,64 +254,81 @@ function ActivityCard({ ctx }: { ctx: TeamCtx }) {
   );
 }
 
-/** Kanallar (mockup B1): açık kanallar, okunmamış sayılı; dokununca Sohbet sekmesi o kanalla açılır. */
-function ChannelsCard({ ctx }: { ctx: TeamCtx }) {
+/** Üyeler (mockup, `lg+` yan sütun): ilk üç üye (avatar · ad · rol) ve «+ N üye»; dokununca Üyeler sekmesi. */
+function MembersCard({ ctx }: { ctx: TeamCtx }) {
   const { t } = useTranslation();
   const { team } = ctx;
-  const { channels, loaded } = useTeamChannelList(team.id);
-  const shown = channels.filter((channel) => channel.mode !== "project").slice(0, 5);
-  if (loaded && shown.length === 0) return null;
+  const [members, setMembers] = useState<TeamMember[] | null>(null);
+  useEffect(() => {
+    let alive = true;
+    void listTeamMembers(team.id, "", null, 0).then(
+      (page) => alive && setMembers(page.items),
+      () => alive && setMembers([]),
+    );
+    return () => {
+      alive = false;
+    };
+  }, [team.id]);
+  if (team.myRole === "guest" || (members !== null && members.length === 0)) return null;
+  const shown = (members ?? []).slice(0, 3);
+  const more = Math.max(0, team.memberCount - shown.length);
   return (
-    <section className="rounded-lg card-flat p-4" data-testid="team-overview-channels">
-      <h3 className="mb-2 font-display text-body font-bold text-text">{t("tc.over.channels")}</h3>
-      <ul>
-        {shown.map((channel) => (
-          <li key={channel.id}>
-            <Link href={teamLink(team.id, "chat", { channel: channel.name })} className="flex items-center py-1.5 text-small text-text hover:text-primary-text" data-overview-channel={channel.name}>
-              <span className="min-w-0 flex-1 truncate"># {channel.name}</span>
-              {channel.unreadCount > 0 && !channel.muted && <span className="text-caption font-semibold text-secondary">{t("tc.over.unread", { count: channel.unreadCount })}</span>}
-            </Link>
+    <section className="rounded-lg card-flat p-4" data-testid="team-overview-members">
+      <h3 className="mb-2 font-display text-body font-bold text-text">{t("tc.over.members", { count: team.memberCount })}</h3>
+      {members === null && <Skeleton className="h-20 rounded-lg" />}
+      <ul className="space-y-2">
+        {shown.map((member) => (
+          <li key={member.userId} className="flex items-center gap-2">
+            <Avatar src={member.avatarUrl} alt="" size={24} />
+            <span className="min-w-0 flex-1 truncate text-small text-text">{member.displayName || member.username}</span>
+            <span className={cn("shrink-0 rounded-xs px-2 py-0.5 text-caption font-semibold", member.role === "owner" ? "bg-primary-soft text-primary-text" : "bg-surface-soft text-text-secondary")}>{t(roleLabelKey(member.role))}</span>
           </li>
         ))}
       </ul>
+      {more > 0 && (
+        <Link href={teamLink(team.id, "members")} className="mt-3 block text-caption text-text-secondary hover:text-text">
+          {t("tc.over.moreMembers", { count: more })}
+        </Link>
+      )}
     </section>
   );
 }
 
-/** Proje kartı (mockup B1): üstte projenin tonunda küçük kolaj, altta ad · sayılar · durum çipleri · rolüm. */
+/** Proje kartı (mockup, Hub kartı): 16:9 kapak (projenin tonunda) + «Proje» etiketi, başlık, tek satır açıklama; alt satırda sayılar ve durum/rol etiketi. */
 function ProjectCard({ team, project, changes }: { team: string; project: ProjectSummary; changes: number }) {
   const { t } = useTranslation();
   const lead = project.myRole === "lead";
   const pending = lead ? (project.pendingCount ?? 0) : 0;
   return (
-    <Link
+    <HubCard
       href={projectLink(team, project.id)}
-      className={cn("flex h-full overflow-hidden rounded-lg card-flat transition-shadow hover:shadow-card-hover max-md:flex-row md:flex-col", project.archivedAt && "opacity-70")}
       data-project-card={project.id}
-    >
-      <span aria-hidden className={cn("grid shrink-0 grid-cols-2 gap-1.5 p-2.5 max-md:w-[5.25rem] md:h-[4.75rem] md:grid-cols-4", toneClass(project.tone))}>
-        <span className="rounded-lg bg-current md:col-span-1" />
-        <span className="rounded-lg bg-surface" />
-        <span className="rounded-lg bg-surface/60" />
-        <span className="rounded-lg bg-current opacity-45" />
-      </span>
-      <span className="flex min-w-0 flex-1 flex-col gap-2 p-4">
-        <span className="block min-w-0">
-          <span className="block truncate text-body font-semibold text-text">{project.title}</span>
-          <span className="block truncate text-small text-text-secondary">{t("tp.card.counts", { files: project.files.length, boards: project.boardCount, people: project.memberCount })}</span>
+      className={project.archivedAt ? "opacity-70" : undefined}
+      title={project.title}
+      description={project.description?.trim() || undefined}
+      cover={
+        <span aria-hidden className={cn("absolute inset-0 grid grid-cols-4 items-center gap-2 p-3", toneClass(project.tone))}>
+          <span className="h-3/4 rounded-lg bg-current" />
+          <span className="h-3/4 rounded-lg bg-surface" />
+          <span className="h-3/4 rounded-lg bg-surface/60" />
+          <span className="h-3/4 rounded-lg bg-current opacity-45" />
         </span>
-        <span className="flex flex-wrap items-center gap-1.5">
+      }
+      chip={<span className={HUB_CARD_CHIP_CLASS}>{t("tc.over.projectChip")}</span>}
+      badge={project.myRole ? <ProjectRoleChip role={project.myRole} /> : undefined}
+      footerStart={<span className="truncate">{t("tp.card.counts", { files: project.files.length, boards: project.boardCount, people: project.memberCount })}</span>}
+      footerEnd={
+        <>
           {project.archivedAt && <span className="inline-flex h-6 items-center rounded-xs bg-surface-soft px-2.5 text-caption font-semibold text-text-muted">{t("tp.card.archived")}</span>}
           {pending > 0 && (
-            <span className="inline-flex h-6 items-center rounded-xs bg-warning-soft px-2.5 text-caption font-semibold text-warning" data-project-pending={pending}>
+            <span className="inline-flex h-6 items-center rounded-xs bg-primary-soft px-2.5 text-caption font-semibold text-primary-text" data-project-pending={pending}>
               {t("tp.card.pending", { count: pending })}
             </span>
           )}
           {changes > 0 && <span className="inline-flex h-6 items-center rounded-xs bg-danger-soft px-2.5 text-caption font-semibold text-danger">{t("tc.over.changesChip", { count: changes })}</span>}
-          {project.myRole && <ProjectRoleChip role={project.myRole} />}
-        </span>
-      </span>
-    </Link>
+        </>
+      }
+    />
   );
 }
 

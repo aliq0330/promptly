@@ -12,9 +12,10 @@ import { Flag } from "@/components/icons/flag";
 import { Link2 } from "@/components/icons/link-2";
 import { DropdownMenu, MenuItem } from "@/components/ui/dropdown-menu";
 import { useReport } from "@/features/moderation/report-provider";
-import { absoluteUrl, formatCount } from "@/lib/utils";
+import { absoluteUrl, cn, formatCount } from "@/lib/utils";
+import { useMediaQuery } from "@/lib/use-media-query";
 import { Tabs, type TabItem } from "@/components/ui/tabs";
-import { HUB_BAND_MENU_BUTTON_CLASS, HUB_PAGE_CLASS, HubDetailBand, HubDetailLayout } from "@/features/hub/hub-kit";
+import { HUB_BAND_MENU_BUTTON_CLASS, HUB_BAND_MENU_BUTTON_LG_CLASS, HUB_PAGE_CLASS, HUB_PHONE_TABS_CLASS, HubDetailBand, HubDetailLayout } from "@/features/hub/hub-kit";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonClassName } from "@/components/ui/button";
 import { DetailSkeleton, NotFoundBlock } from "@/components/ui/detail-skeleton";
@@ -33,7 +34,7 @@ import { EventsTab } from "./events-tab";
 import { AboutTab } from "./about-tab";
 import { ManageTab } from "./manage-tab";
 import { useCommunity } from "./use-community";
-import { CommunityAside, MemberStack, useCommunityPeople } from "./community-aside";
+import { CommunityAside } from "./community-aside";
 import { CommunityStrip } from "./community-strip";
 import { OnlineCountText } from "@/features/presence/presence-ui";
 import { useCommunityPresenceCount } from "@/features/presence/community-presence";
@@ -87,6 +88,8 @@ function CommunityPageInner() {
   const { node: toastNode, show } = useToast();
   const { state, reload } = useCommunity(authLoading ? null : id, user?.id ?? null);
   const [actionsEl, setActionsEl] = useState<HTMLElement | null>(null);
+  // Telefonda bant etiket satırı yok (görünürlük alt satırdadır); aynı metin iki kez DOM'a girmesin diye JS ile ayrılır.
+  const phone = useMediaQuery("(max-width: 767.98px)");
 
   const role = state.status === "ready" ? (state.membership?.role ?? null) : null;
   const group = state.status === "ready" ? state.group : null;
@@ -95,7 +98,6 @@ function CommunityPageInner() {
   const { view, toChat } = resolveCommunityView(searchParams.get("tab"), searchParams.get("section"), allowed);
   const tab = view?.tab ?? null;
   const unread = conversations.find((c) => c.id === id)?.unreadCount ?? 0;
-  const people = useCommunityPeople(id ?? "", Boolean(id && role));
   const onlineCount = useCommunityPresenceCount(id);
   const { openReport } = useReport();
 
@@ -174,6 +176,8 @@ function CommunityPageInner() {
       rules={g.rules}
       onChange={(next) => void membershipChanged(next)}
       onToast={show}
+      size="lg"
+      phoneFill
     />
   );
 
@@ -183,8 +187,7 @@ function CommunityPageInner() {
       <HubDetailBand
         data-testid="community-header"
         backdrop={<CommunityCover coverUrl={g.coverUrl} coverColor={g.coverColor} avatarUrl={g.avatarUrl} className="h-full sm:h-full" />}
-        backHref="/communities"
-        backLabel={t("hub.back")}
+        artSize="lg"
         art={
           <>
             <CommunityCover coverUrl={g.coverUrl} coverColor={g.coverColor} avatarUrl={g.avatarUrl} className="absolute inset-0 h-full sm:h-full" />
@@ -194,21 +197,23 @@ function CommunityPageInner() {
           </>
         }
         kicker={
-          <>
-            <Eyebrow tone="primary">
-              <>{t("groups.page.eyebrow")} · <span>{categoryLabel}</span></>
-            </Eyebrow>
-            <VisibilityLabel visibility={g.visibility} />
-            {role && <RoleBadge role={role} />}
-            {g.closedAt && <Badge variant="warning">{t("communities.closedBadge")}</Badge>}
-            {g.origin === "legacy_group" && <Badge variant="outline">{t("communities.detail.legacyBadge")}</Badge>}
-          </>
+          phone ? undefined : (
+            <>
+              <Eyebrow tone="primary">
+                <>{t("groups.page.eyebrow")} · <span>{categoryLabel}</span></>
+              </Eyebrow>
+              <VisibilityLabel visibility={g.visibility} />
+              {role && <RoleBadge role={role} />}
+              {g.closedAt && <Badge variant="warning">{t("communities.closedBadge")}</Badge>}
+              {g.origin === "legacy_group" && <Badge variant="outline">{t("communities.detail.legacyBadge")}</Badge>}
+            </>
+          )
         }
         title={<h1>{g.name}</h1>}
         menu={
           // Topluluğun ⋮ menüsü (Space ve Ekip bandıyla aynı yer): bağlantı, bildirim tercihi (üye), şikâyet (sahibi hariç).
           <span data-community-menu="">
-            <DropdownMenu label={t("communities.menu.label")} triggerClassName={HUB_BAND_MENU_BUTTON_CLASS}>
+            <DropdownMenu label={t("communities.menu.label")} triggerClassName={cn(HUB_BAND_MENU_BUTTON_CLASS, HUB_BAND_MENU_BUTTON_LG_CLASS)}>
               {(close) => (
                 <>
                   <MenuItem
@@ -246,18 +251,25 @@ function CommunityPageInner() {
           </span>
         }
         byline={
-          <span className="flex flex-wrap items-center gap-2">
-            <MemberStack people={people} />
+          // Telefonda görünürlük ve «Kapatıldı» alt satırdadır (etiket satırı yalnız `md+`); mockup: «Herkese açık · 12,4 B üye · 38 çevrimiçi».
+          <span className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
+            {phone && (
+              <span className="inline-flex items-center gap-1.5">
+                <VisibilityLabel visibility={g.visibility} className="inline-flex items-center gap-1" />
+                {g.closedAt && <Badge variant="warning">{t("communities.closedBadge")}</Badge>}
+                <span aria-hidden>·</span>
+              </span>
+            )}
             <span>{memberCountText(t, g.memberCount)}</span>
-            <OnlineCountText count={onlineCount} />
-            {g.postCount > 0 && <span>{t("communities.aside.postCount", { count: formatCount(g.postCount) })}</span>}
+            <OnlineCountText count={onlineCount} className="before:content-['·']" />
+            {g.postCount > 0 && !phone && <span className="before:mr-1.5 before:content-['·']">{t("communities.aside.postCount", { count: formatCount(g.postCount) })}</span>}
           </span>
         }
         description={g.description ? <span data-community-description>{g.description}</span> : undefined}
         actions={
-          <div className="flex w-full flex-wrap items-center gap-2 xl:max-w-72" data-community-actions="">
+          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2" data-community-actions="">
             {role && (
-              <Link href={communityChatHref(g.id)} data-open-chat className={buttonClassName()}>
+              <Link href={communityChatHref(g.id)} data-open-chat className={buttonClassName({ size: "lg", className: "max-md:flex-1 max-md:justify-center" })}>
                 <MessagesSquare size={20} aria-hidden /> {t("communities.detail.openChat")}
                 {unread > 0 && <span className="ml-1 rounded-sm bg-primary-foreground px-1.5 text-caption text-primary-text">{unread}</span>}
               </Link>
@@ -279,12 +291,12 @@ function CommunityPageInner() {
         }
       />
 
-      <div className="mt-4 space-y-4 sm:mt-5">
+      <div className="mt-4 space-y-4 max-md:mt-0 sm:mt-5 max-md:[&>*:first-child]:mt-0">
         {!tab ? (
           <CommunityGate group={g} gate={ready.gate} onChanged={reload} onToast={show} />
         ) : (
           <>
-            <Tabs items={tabs} active={tab} onChange={goTab} ariaLabel={t("communities.detail.tabsAria")} />
+            <Tabs items={tabs} active={tab} onChange={goTab} ariaLabel={t("communities.detail.tabsAria")} className={HUB_PHONE_TABS_CLASS} />
             {!role && <CommunityGate group={g} gate={ready.gate} onChanged={reload} onToast={show} compact />}
             <HubDetailLayout
               aside={tab === "feed" || tab === "events" ? <CommunityAside group={g} isMember={Boolean(role)} onReadRules={() => goTab("about")} /> : undefined}
