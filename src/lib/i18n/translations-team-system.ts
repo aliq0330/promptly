@@ -552,6 +552,9 @@ export const teamSystemTranslations = {
   "tm.home.all": { tr: "Tümü", en: "All" },
   "tm.home.open": { tr: "Aç", en: "Open" },
   "tm.home.myTeams": { tr: "Ekiplerim", en: "My teams" },
+  "tm.todos.kind.chat": { tr: "Sohbet", en: "Chat" },
+  "tm.todos.kind.approval": { tr: "Onay", en: "Approval" },
+  "tm.home.invitesTab": { tr: "Davetler", en: "Invitations" },
   "tm.home.pendingApprovals": { tr: "{{count}} onay bekliyor", en: "{{count}} awaiting approval" },
   "tm.home.unreadMessages": { tr: "{{count}} yeni mesaj", en: "{{count}} new messages" },
 } as const;

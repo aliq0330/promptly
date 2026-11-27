@@ -18,10 +18,11 @@ import { ConfirmDialog } from "@/features/groups/confirm-dialog";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { formatCount, formatRelativeTime } from "@/lib/utils";
 import { removeSpaceMember, spaceFromSummary, summaryArt, updateSpace, type Space, type SpaceSummary } from "@/lib/supabase/spaces";
-import { SPACE_KIND_LABEL, spaceCapabilities, spaceHref } from "@/lib/spaces";
+import { SPACE_KIND_LABEL, SPACE_ROLE_LABEL, spaceCapabilities, spaceHref, spaceIsNew } from "@/lib/spaces";
 import { DeleteSpaceDialog, SpaceSettingsModal } from "./space-modals";
 import { PopoverMenu } from "@/components/ui/popover-menu";
-import { HUB_CARD_CHIP_CLASS, HubCard } from "@/features/hub/hub-kit";
+import { buttonClassName } from "@/components/ui/button";
+import { HUB_CARD_ACTION_CLASS, HUB_CARD_BADGE_CLASS, HUB_CARD_CHIP_CLASS, HubCard } from "@/features/hub/hub-kit";
 import { PaletteStrip, SpaceCoverArt } from "./space-visuals";
 
 /**
@@ -167,21 +168,28 @@ export function SpaceCard({
     );
   }
 
-  // Hub kartı (docs/history/379-*): üç alanda aynı `HubCard` — 16:9 kapak (yüklenen › seçilen › kolaj), sol üstte tür etiketi, sağ üstte ⋮,
-  // kapağın altında ilk paletin çizgisi; gövdede ad, sahip · son düzenleme ve sayılar.
+  // Hub kartı (Stil 2, docs/history/474-*): kapak (yüklenen › seçilen › kolaj), sol üstte tür etiketi, sağ üstte "Yeni" rozeti + ⋮, kapağın altında
+  // ilk paletin çizgisi; gövdede ad, açıklama, "N öğe · rol" ve tek "Aç" düğmesi.
+  const total = space.imageCount + space.promptCount + space.noteCount;
   return (
     <HubCard
       data-space-card={space.id}
       href={href}
       title={space.title}
+      description={space.description || owner}
       cover={<SpaceCoverArt urls={art} className="absolute inset-0 h-full w-full" iconSize={40} />}
       chip={<span className={HUB_CARD_CHIP_CLASS}>{t(SPACE_KIND_LABEL[space.kind])}</span>}
+      badge={spaceIsNew(space) ? <span data-space-new="" className={HUB_CARD_BADGE_CLASS}>{t("hub.badge.new")}</span> : undefined}
       corner={
         <span className="flex items-center gap-1.5 [&_button]:bg-surface/90 [&_button]:shadow-xs">{menu}</span>
       }
       coverOverlay={palette && palette.length > 0 ? <PaletteStrip colors={palette} className="h-1.5 flex-1 px-1" /> : undefined}
-      meta={owner}
-      footerStart={counts}
+      footerStart={[t("hub.items", { count: total }), space.myRole ? t(SPACE_ROLE_LABEL[space.myRole]) : null].filter(Boolean).join(" · ")}
+      footerEnd={
+        <Link href={href} className={buttonClassName({ size: "sm", className: HUB_CARD_ACTION_CLASS })} data-space-open="">
+          {t("hub.open")}
+        </Link>
+      }
       extra={
         <>
           {error && <p role="alert" className="px-4 pb-2 text-caption text-danger">{error}</p>}

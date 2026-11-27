@@ -126,17 +126,23 @@ await scenario("1. /teams: ekip kartı (üye + Space sayısı, rol), tek RPC; So
   await card.getByText("Atölye Mor").waitFor();
   await card.getByText("6 üye").waitFor();
   await card.getByText("2 proje").waitFor();
-  await card.locator("[data-team-avatars]").waitFor();
-  await card.getByText("Elif ekibe katıldı", { exact: false }).waitFor();
-  await card.locator("[data-team-open-chat]").getByText("3").waitFor();
+  // Açıklama varsa kartta o görünür; yoksa son etkinlik cümlesi (docs/history/474-*).
+  await card.getByText("Pazarlama ve tasarım").waitFor();
+  // Okunmamış sohbet sağ üstte "3 yeni" rozetidir (docs/history/474-*); sohbet kısayolu ve "Aç" kartın alt satırındadır.
+  await card.locator("[data-team-chip=unread]").getByText("3 yeni").waitFor();
+  await card.locator("[data-team-open-chat]").waitFor();
+  await card.locator("[data-team-open]").waitFor();
   assert.ok(called(db, "my_teams").length <= 2, "sayfa + kenar çubuğu en çok iki istek");
 });
 
 await scenario("2. Bekleyen davet: Katıl → team_respond_invitation(kabul) ve ekip sayfasına gider", async ({ page, db }) => {
   await page.goto(`${BASE}/teams`);
+  // Davetler sekmesi sayaçlıdır (docs/history/474-*); Ekiplerim'de dikkat şeridi oraya götürür.
+  await page.getByTestId("team-invites-strip").waitFor();
+  await page.getByRole("tab", { name: /Davetler/ }).click();
   const invites = page.getByTestId("team-invites");
   await invites.waitFor();
-  await invites.getByText("Yeni Ekip").waitFor();
+  await invites.getByRole("heading", { name: "Yeni Ekip" }).waitFor();
   await invites.locator("[data-invite-accept]").click();
   await page.waitForURL(/\/teams\/local\/?\?id=atolye-mor/);
   assert.equal(called(db, "team_respond_invitation")[0].body.p_accept, true);
@@ -688,10 +694,9 @@ await scenario("40. Telefon: Ekipler listesi (Hub düzeni, docs/history/379-*) �
   await band.locator("h1", { hasText: "Ekipler" }).waitFor({ state: "attached" });
   assert.equal(await band.locator("h1").isVisible(), false, "bant başlığı telefonda gizli (üst çubukta var)");
   await band.locator("[data-team-create-phone]").waitFor();
-  await page.locator("[data-teams-search]").waitFor();
+  await page.locator("[data-hub-search]").waitFor();
   await page.getByTestId("teams-list").locator(`[data-team-card="${TEAM}"]`).waitFor();
-  await page.locator("[data-teams-search]").click();
-  await page.getByPlaceholder("Ekip ara…").fill("zzz");
+  await page.getByRole("searchbox", { name: "Ekip ara…" }).fill("zzz");
   await page.waitForFunction(() => document.querySelectorAll("[data-team-card]").length === 0);
 }, { viewport: { width: 390, height: 800 } });
 

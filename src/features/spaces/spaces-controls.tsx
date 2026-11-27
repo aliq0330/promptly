@@ -3,12 +3,10 @@
 import { X } from "@/components/icons/x";
 import { Chip } from "@/components/ui/chip";
 import { Modal } from "@/components/ui/modal";
-import { ScrollRow } from "@/components/ui/scroll-row";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
 import { SPACE_KIND_LABEL, SPACE_KINDS, SPACE_SORTS, type SpaceKind, type SpaceSort } from "@/lib/spaces";
 import type { TranslationKey } from "@/lib/i18n/translations";
-import { SPACE_KIND_ICON, SPACE_KIND_TINT } from "./space-visuals";
 import { DialogShell } from "@/components/ui/dialog-shell";
 import { iconButtonClassName } from "@/components/ui/icon-button";
 
@@ -91,29 +89,40 @@ export function SpacesFilterSheet({
   );
 }
 
-/** "Yeni bir Space başlatın" (docs/history/231-*): tür başına renkli karo; dokununca Yeni Space penceresi o türle açılır. */
+/** Karo işaretinin dolgusu: tür başına bir renk (düz blok, simge yok; ad yanında yazılıdır). */
+const KIND_SWATCH: Record<SpaceKind, string> = {
+  moodboard: "bg-primary-text",
+  character: "bg-text",
+  brand: "bg-primary",
+  game_world: "bg-text-muted",
+  interior: "bg-primary-soft",
+  free: "bg-border",
+  team_area: "bg-border",
+};
+
+/** "Yeni bir Space başlatın" (Stil 2, docs/history/474-*): tür başına tek satırlık karo (renk işareti + ad); dokununca Yeni Space penceresi o türle açılır. */
 export function SpaceTemplates({ onPick }: { onPick: (kind: SpaceKind) => void }) {
   const { t } = useTranslation();
   return (
-    <section aria-labelledby="spaces-templates" className="space-y-3" data-testid="space-templates">
-      <h2 id="spaces-templates" className="text-small text-text-muted">
+    <section aria-labelledby="spaces-templates" className="mb-5" data-testid="space-templates">
+      <h2 id="spaces-templates" className="mb-2 text-caption font-semibold text-text-muted">
         {t("spaces.home.startNew")}
       </h2>
-      <ScrollRow as="ul" className="-mx-3 gap-3 px-3 sm:mx-0 sm:px-0">
-        {SPACE_KINDS.map((kind) => {
-          const Icon = SPACE_KIND_ICON[kind];
-          return (
-            <li key={kind} className="w-36 shrink-0 sm:w-40">
-              <button type="button" onClick={() => onPick(kind)} data-space-template={kind} className="group block w-full space-y-2 text-left focus-visible:outline-none">
-                <span className={cn("grid h-24 w-full place-items-center rounded-xl transition-transform duration-200 ease-soft group-active:scale-[0.97] group-focus-visible:ring-2 group-focus-visible:ring-primary", SPACE_KIND_TINT[kind])}>
-                  <Icon size={36} aria-hidden />
-                </span>
-                <span className="block truncate text-small font-medium text-text">{t(SPACE_KIND_LABEL[kind])}</span>
-              </button>
-            </li>
-          );
-        })}
-      </ScrollRow>
+      <ul className="grid grid-cols-2 gap-[0.625rem] sm:grid-cols-3">
+        {SPACE_KINDS.map((kind) => (
+          <li key={kind} className="min-w-0">
+            <button
+              type="button"
+              onClick={() => onPick(kind)}
+              data-space-template={kind}
+              className="flex h-14 w-full items-center gap-[0.625rem] rounded-md card-flat px-[0.875rem] text-left text-small font-semibold text-text transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+            >
+              <span aria-hidden className={cn("h-6 w-6 shrink-0 rounded-sm", KIND_SWATCH[kind])} />
+              <span className="min-w-0 truncate">{t(SPACE_KIND_LABEL[kind])}</span>
+            </button>
+          </li>
+        ))}
+      </ul>
     </section>
   );
 }

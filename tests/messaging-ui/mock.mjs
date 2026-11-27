@@ -190,7 +190,7 @@ export async function installMock(context, db, opts = {}) {
       })));
     }
     if (table === "rpc/following_activity_summary" || table === "rpc/follow_feed_visit") return json(200, null);
-    if (table === "rpc/follow_feed_settings_get" || table === "rpc/list_spaces" || table === "rpc/discover_trending_topics" || table === "rpc/discover_rising_tools") return json(200, []);
+    if (table === "rpc/follow_feed_settings_get" || table === "rpc/discover_trending_topics" || table === "rpc/discover_rising_tools") return json(200, []);
     // Topluluk uçları (docs/history/175-*): mock-communities.mjs `db.extraRoutes`'u kurar.
     if (db.extraRoutes) {
       let used = false;
@@ -198,6 +198,8 @@ export async function installMock(context, db, opts = {}) {
       const result = await db.extraRoutes({ table, method, q, body, sel, signedIn, json: flag(json), rows: flag(rows), err: flag(err), route });
       if (used || result) return;
     }
+    // Space listesi: `mock-spaces.mjs` kendi `list_spaces`'ini kurduysa o yanıtlar (yukarıdaki boş yanıt onu eziyordu); kurmayan paketlerde boş liste.
+    if (table === "rpc/list_spaces") return json(200, []);
     if (table === "rpc/conversation_last_messages") {
       const out = [];
       for (const cid of body.p_conversation_ids ?? []) {
