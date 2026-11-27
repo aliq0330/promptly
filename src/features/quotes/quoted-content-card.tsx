@@ -8,7 +8,7 @@ import { summarizeContent } from "@/features/communities/content-summary";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { skillHref } from "@/lib/utils";
 import type { Quote } from "@/lib/supabase/quotes";
-import { QuotedArt, QuotedKicker, quotedTitleInArt, quotedTypeIcon } from "./quoted-parts";
+import { QuotedArt, QuotedKicker, quotedTypeIcon } from "./quoted-parts";
 
 /**
  * Alıntı SAYFASINDA alıntılanan gönderi: içeriğin detay sayfası yerine yalnız normal görsel kartı (`ContentCardPost`, akıştaki gönderi kartıyla aynı).
@@ -24,7 +24,7 @@ export function QuotedContentCard({ quote }: { quote: Quote }) {
 
   if (!href || !title) {
     return (
-      <div data-quoted-card="" data-card-media className="relative max-w-md overflow-hidden rounded-xl bg-primary-soft">
+      <div data-quoted-card="" data-card-media className="relative max-w-md overflow-hidden rounded-md bg-primary-soft">
         <QuotedArt quote={quote} summary={summary} />
       </div>
     );
@@ -37,7 +37,6 @@ export function QuotedContentCard({ quote }: { quote: Quote }) {
           author={summary?.author ?? skill?.creator ?? null}
           meta=""
           typeIcon={quotedTypeIcon(quote, summary)}
-          titleInArt={quotedTitleInArt(summary)}
           badges={<QuotedKicker quote={quote} summary={summary} />}
           art={<QuotedArt quote={quote} summary={summary} />}
           title={<ContentCardTitle href={href} title={title} />}

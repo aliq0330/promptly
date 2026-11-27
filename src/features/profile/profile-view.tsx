@@ -50,7 +50,7 @@ import { GraduationCap } from "@/components/icons/graduation-cap";
 import { SKILLS_MENU_ENABLED } from "@/lib/skills/flag";
 import { fetchProfileSkillCount } from "@/lib/supabase/skills";
 import type { Collection, Prompt, PromptContentType, UserProfile } from "@/types";
-import { CONTENT_GRID_ITEM_CLASS, ContentGrid, ContentGridColumns, GRID_COLUMNS_ASIDE } from "@/features/content/content-card";
+import { CONTENT_GRID_ITEM_CLASS, ContentGrid, ContentGridColumns, ContentRowsScope, GRID_COLUMNS_ASIDE } from "@/features/content/content-card";
 import { ProfileQuotesPanel } from "@/features/quotes/profile-quotes-panel";
 import { ProfileResultsPanel } from "./profile-results-panel";
 import { fetchProfileResultCount } from "@/lib/supabase/prompt-results";
@@ -320,6 +320,7 @@ export function ProfileView({
             />
           )}
 
+          <ContentRowsScope author={activeTab === "liked"}>
           <div className="mt-4 space-y-4">
             {activeTab === "about" ? (
               // The side column is gone (docs/history/243-*): the tab carries the details and the contribution map.
@@ -421,6 +422,7 @@ export function ProfileView({
               </>
             )}
           </div>
+          </ContentRowsScope>
         </div>
       </div>
     </ContentGridColumns>

@@ -8,19 +8,20 @@ import { Paperclip } from "@/components/icons/paperclip";
 import { X } from "@/components/icons/x";
 import { Button } from "@/components/ui/button";
 import { OptionRowGroup } from "@/components/ui/option-group";
+import { ContentRowKicker, ContentThumb } from "@/features/content/content-row";
+import { usePickerCards } from "@/features/content/use-picker-cards";
 import { ChoiceGroup } from "@/components/ui/choice-group";
 import { SearchField } from "@/components/ui/search-field";
 import { SectionMenu } from "@/features/content/section-menu";
-import { StorageImage } from "@/components/ui/storage-media";
 import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { Modal } from "@/components/ui/modal";
-import { CompactContentCard, ATTACHMENT_ICONS, type AttachmentState } from "@/features/content/compact-content-card";
+import { CompactContentCard, type AttachmentState } from "@/features/content/compact-content-card";
 import { CHAT_LIBRARY_TYPES, useChatShareable, type ChatLibraryType } from "@/features/messages/chat-attach";
 import { GifPicker } from "@/features/gif/gif-picker";
 import { LoadMore } from "@/features/feed/load-more";
 import { useGrowingList } from "@/features/content/use-growing-list";
 import { getCachedCommentMediaUrl, removeCommentPhotos, resolveCommentMediaUrls, uploadCommentPhoto } from "@/lib/supabase/comment-media";
-import { attachmentKey, fetchAttachmentCards, fetchSavedPickableWindow, SAVED_SOURCE_TYPES, type AttachmentCard, type PickableContent } from "@/lib/supabase/comment-attachments";
+import { attachmentKey, fetchSavedPickableWindow, SAVED_SOURCE_TYPES, type PickableContent } from "@/lib/supabase/comment-attachments";
 import { ALLOWED_IMAGE_MIME, MessageImageError, prepareMessageImage, sniffImageMime, type PreparedMessageImage } from "@/lib/supabase/message-images";
 import { giphyUrl, type GifItem } from "@/lib/giphy";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -443,49 +444,6 @@ function CommentPhoto({ path, width, height, className }: { path: string; width:
 
 type Source = "mine" | "saved";
 
-/** Seçici satırlarının küçük resimleri: görünen içerikler için TEK sorgu (`fetchAttachmentCards`), her kimlik bir kez sorulur; hata olursa tür simgesi kalır. */
-function usePickerCards(items: PickableContent[] | null) {
-  const [cards, setCards] = useState<Map<string, AttachmentCard>>(new Map());
-  const asked = useRef<Set<string>>(new Set());
-  const mounted = useRef(true);
-  useEffect(() => {
-    mounted.current = true;
-    return () => {
-      mounted.current = false;
-    };
-  }, []);
-  const key = items === null ? "" : items.map(attachmentKey).join("|");
-  useEffect(() => {
-    if (!items) return;
-    const todo = items.filter((item) => !asked.current.has(attachmentKey(item)));
-    if (todo.length === 0) return;
-    for (const item of todo) asked.current.add(attachmentKey(item));
-    fetchAttachmentCards(todo.map(({ type, id }) => ({ type, id })))
-      .then(({ cards: got }) => {
-        if (!mounted.current || got.size === 0) return;
-        setCards((prev) => new Map([...prev, ...got]));
-      })
-      .catch((err) => console.error("usePickerCards", err));
-    // `key` kimlik listesinin özeti: `items` her çizimde yeni dizidir.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key]);
-  return cards;
-}
-
-/** Satırın küçük resmi: prompt/istek/workflow/ayar paketi görseli; yoksa tür simgesi. */
-function PickerThumb({ item, card }: { item: PickableContent; card: AttachmentCard | undefined }) {
-  const Icon = ATTACHMENT_ICONS[item.type];
-  return (
-    <span className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-md bg-primary-soft text-primary-text">
-      {card?.thumbnailUrl ? (
-        <StorageImage src={card.thumbnailUrl} alt="" fill sizes="48px" className="object-cover" />
-      ) : (
-        <Icon size={24} aria-hidden />
-      )}
-    </span>
-  );
-}
-
 /**
  * Yoruma içerik ekle (docs/history/457-*, "Tek şerit"): tek satırda tür menüsü + arama, altında "Benimkiler / Kaydettiklerim", küçük resimli satırlar,
  * altbilgide Vazgeç + Ekle ve her zaman görünen yardım metni. Yalnız yayında + herkese açık + topluluğa özgü olmayan içerik listelenir (yorumu okuyan
@@ -596,7 +554,8 @@ export function CommentContentPicker({ userId, onPick, onClose }: { userId: stri
                 const card = cards.get(attachmentKey(item));
                 return {
                   key: item.id,
-                  leading: <PickerThumb item={item} card={card} />,
+                  leading: <ContentThumb type={item.type} src={card?.thumbnailUrl} />,
+                  kicker: <ContentRowKicker type={item.type} />,
                   label: item.title || t("communities.feed.untitled"),
                   description: card?.stepCount ? t("commentExtras.stepCount", { count: card.stepCount }) : activeSource === "saved" ? card?.ownerName : undefined,
                   attrs: { "data-comment-content-item": item.id },

@@ -18,10 +18,10 @@ import { shareLinkForHref } from "@/lib/share-link";
 import { DropdownMenu, MenuItem } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/features/groups/use-toast";
 import { postMeta } from "@/features/prompts/post-header";
-import { TextArt, TextArtTitle } from "@/features/content/text-art";
+import { TextArt } from "@/features/content/text-art";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { SKILL_COMPAT_LABEL, skillCategoryName, skillLabelText } from "@/lib/skills/categories";
-import { absoluteUrl, skillHref } from "@/lib/utils";
+import { absoluteUrl, formatRelativeTime, skillHref } from "@/lib/utils";
 import { usePostMenuExtras } from "@/features/prompts/post-menu-extras";
 import { useSkillCategories } from "./use-skill-categories";
 import { SkillCoverCard } from "./skill-cover-card";
@@ -106,23 +106,22 @@ export function SkillCard({ skill, collectionRemoval }: { skill: Skill; collecti
       <ContentCardPost
         author={skill.creator}
         meta={postMeta(skill.creator.username, skill.createdAt, language)}
+        time={formatRelativeTime(skill.createdAt, language)}
+        editHref={`/skills/create?edit=${skill.id}`}
         typeIcon={GraduationCap}
         status={
           skill.status === "draft" ? <Badge variant="warning">{t("skill.draftBadge")}</Badge> : skill.visibility === "private" ? <Badge variant="neutral">{t("skill.privateBadge")}</Badge> : undefined
         }
         badges={<ContentTypePill icon={GraduationCap} label={t("skill.singular")} detail={category} />}
-        titleInArt={!skill.coverPath}
         art={
           skill.coverPath ? (
-            <SkillCoverCard path={skill.coverPath} fallback={<TextArt seed={skill.id}><TextArtTitle>{skill.title || t("skill.untitled")}</TextArtTitle></TextArt>} />
+            <SkillCoverCard path={skill.coverPath} fallback={<TextArt seed={skill.id}><span aria-hidden className="grid h-12 w-12 place-items-center rounded-md bg-primary text-primary-foreground"><GraduationCap size={24} /></span></TextArt>} />
           ) : (
           <TextArt seed={skill.id}>
             {/* Akış 2.1 (docs/history/451-*): paket kimliği — simge karosu başlığın üstünde. */}
             <span aria-hidden className="grid h-12 w-12 place-items-center rounded-md bg-primary text-primary-foreground">
               <GraduationCap size={24} />
             </span>
-            <TextArtTitle>{skill.title || t("skill.untitled")}</TextArtTitle>
-            {skill.summary && <p className="line-clamp-3 break-words font-sans text-small leading-relaxed opacity-90">{skill.summary}</p>}
             <p className="truncate text-caption opacity-70">
               {t("skill.cardVersion", { version: skill.version })}
               {tools ? ` · ${tools}` : ""}
@@ -130,7 +129,7 @@ export function SkillCard({ skill, collectionRemoval }: { skill: Skill; collecti
           </TextArt>
           )
         }
-        title={<ContentCardTitle href={href} title={skill.title || t("skill.untitled")} />}
+        title={<ContentCardTitle href={href} title={skill.title || t("skill.untitled")} description={skill.summary} />}
         menu={menu}
         footer={
           skill.status === "published" && skill.visibility === "public" ? (

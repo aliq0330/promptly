@@ -346,6 +346,7 @@ await scenario("5b. Panodan Prompt seç: iki sekmeli seçici; Ekle → team_atta
   await picker.getByRole("tab", { name: "Paylaştıklarım" }).waitFor();
   await picker.getByRole("tab", { name: "Başkalarının paylaştıkları" }).waitFor();
   await picker.locator("[data-picker-add]").first().click();
+  await page.locator("[data-picker-add-selected]").click();
   await picker.locator("[data-picker-added]").first().waitFor();
   const [attach] = called(db, "team_attach_content");
   assert.deepEqual({ f: attach.body.p_file, t: attach.body.p_type, b: attach.body.p_board }, { f: FILE, t: "prompt", b: BOARD });

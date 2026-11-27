@@ -22,16 +22,7 @@ export function textArtTone(seed: string): string {
 }
 
 export function TextArt({ seed, className, children }: { seed: string; className?: string; children: React.ReactNode }) {
-  return <div className={cn("flex min-h-28 w-full flex-col gap-3 overflow-hidden py-4 pl-4 pr-14 text-text", textArtTone(seed), className)}>{children}</div>;
-}
-
-/** A title set big inside a text surface (the real title link stays in the card's hidden hover layer, so this is decoration for assistive tech). */
-export function TextArtTitle({ children }: { children: React.ReactNode }) {
-  return (
-    <p aria-hidden className="line-clamp-2 break-words font-display text-h3 font-extrabold leading-[1.1]">
-      {children}
-    </p>
-  );
+  return <div className={cn("flex min-h-28 w-full flex-col gap-3 overflow-hidden p-4 text-text", textArtTone(seed), className)}>{children}</div>;
 }
 
 /** A mono excerpt: as many lines as the text has, up to 8, then an ellipsis. */
@@ -43,12 +34,11 @@ export function TextArtExcerpt({ children, className }: { children: React.ReactN
   );
 }
 
-/** The text surface of a quoted / applied post whose content has no picture: its title and the most telling text it has. */
+/** The text surface of a quoted / applied post whose content has no picture: the most telling text it has (the title is drawn below the picture, docs/history/476-*). */
 export function SummaryTextArt({ summary, seed }: { summary: ContentSummary; seed: string }) {
   const text = summary.promptText ?? summary.description ?? "";
   return (
     <TextArt seed={seed}>
-      {summary.promptText ? null : <TextArtTitle>{summary.title}</TextArtTitle>}
       {text.trim() ? <TextArtExcerpt className={summary.promptText ? undefined : "line-clamp-4 font-sans text-small leading-relaxed"}>{text}</TextArtExcerpt> : null}
       {summary.creativeDirection && <p className="line-clamp-1 text-caption opacity-75">{summary.creativeDirection}</p>}
     </TextArt>

@@ -19,7 +19,7 @@ export function SkillDetailCover({ path, fallback }: { path: string; fallback: R
   const url = useSkillCoverUrl(path);
   if (!url) return <>{fallback}</>;
   return (
-    <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl bg-surface-soft" data-skill-detail-cover="">
+    <div className="relative aspect-[4/3] w-full overflow-hidden rounded-md bg-surface-soft" data-skill-detail-cover="">
       <SkillCoverImage path={path} className="absolute inset-0 h-full w-full object-cover" />
     </div>
   );

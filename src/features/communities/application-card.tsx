@@ -52,8 +52,8 @@ export function ApplicationCard({
       <ContentCardPost
         author={post.author}
         meta={`${t(SHARED_LABEL[post.contentType])} · ${formatRelativeTime(post.createdAt, language)}`}
+        time={formatRelativeTime(post.createdAt, language)}
         typeIcon={summary?.typeIcon}
-        titleInArt={Boolean(summary && summary.media.length === 0 && !summary.promptText)}
         status={
           <>
             {post.kind !== "legacy" && <Badge variant="default">{t("communities.post.badge.application")}</Badge>}
@@ -91,7 +91,7 @@ export function ApplicationCard({
           </div>
         }
       >
-        {post.note && <p data-post-note className="whitespace-pre-wrap break-words rounded-lg bg-surface/80 px-3 py-2.5 text-small text-text-secondary">{post.note}</p>}
+        {post.note && <p data-post-note className="line-clamp-3 whitespace-pre-wrap break-words font-serif text-body leading-[1.45] text-text-secondary">{post.note}</p>}
       </ContentCardPost>
     </ContentCard>
   );

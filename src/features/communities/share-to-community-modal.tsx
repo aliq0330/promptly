@@ -4,7 +4,10 @@ import { useState } from "react";
 import { Loader2 } from "@/components/icons/loader-2";
 import { X } from "@/components/icons/x";
 import { Button } from "@/components/ui/button";
-import { OptionGroup } from "@/components/ui/option-group";
+import { OptionRowGroup } from "@/components/ui/option-group";
+import { ContentRowKicker, ContentThumb } from "@/features/content/content-row";
+import { usePickerCards } from "@/features/content/use-picker-cards";
+import { attachmentKey } from "@/lib/supabase/comment-attachments";
 import { fieldControlClassName, fieldLabelClassName } from "@/components/ui/field";
 import { Modal } from "@/components/ui/modal";
 import { Tabs } from "@/components/ui/tabs";
@@ -34,6 +37,7 @@ export function ShareToCommunityModal({ communityId, userId, onClose, onShared }
   const [type, setType] = useState<CommunityPostType>("prompt");
   const { search, setSearch, list } = useShareableContent(userId, type);
   const items = list.items;
+  const cards = usePickerCards(items ? items.map((item) => ({ type, id: item.id, title: item.title })) : null);
   const loadError = list.failed && items !== null && items.length === 0;
   const [selected, setSelected] = useState<{ id: string; title: string } | null>(null);
   const [noteOpen, setNoteOpen] = useState(false);
@@ -82,7 +86,7 @@ export function ShareToCommunityModal({ communityId, userId, onClose, onShared }
             ) : items.length === 0 ? (
               <p className="rounded-lg border border-dashed border-border px-4 py-6 text-center text-small text-text-muted">{t("communities.feed.pickEmpty")}</p>
             ) : (
-              <OptionGroup<string>
+              <OptionRowGroup<string>
                 ariaLabel={t("communities.feed.pickAria")}
                 value={selected?.id ?? null}
                 reselect
@@ -92,7 +96,13 @@ export function ShareToCommunityModal({ communityId, userId, onClose, onShared }
                   setSelected({ id: item.id, title: item.title || t("communities.feed.untitled") });
                   setNoteOpen(true);
                 }}
-                options={items.map((item) => ({ key: item.id, label: <span className="break-words">{item.title || t("communities.feed.untitled")}</span>, attrs: { "data-share-item": item.id } }))}
+                options={items.map((item) => ({
+                  key: item.id,
+                  leading: <ContentThumb type={type} src={cards.get(attachmentKey({ type, id: item.id }))?.thumbnailUrl} />,
+                  kicker: <ContentRowKicker type={type} />,
+                  label: item.title || t("communities.feed.untitled"),
+                  attrs: { "data-share-item": item.id },
+                }))}
               />
             )}
             {items !== null && items.length > 0 && (

@@ -28,7 +28,7 @@ import { normalizeTagLabel } from "@/lib/tag-normalize";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { CollectionEntry } from "@/lib/supabase/collections";
 import type { TranslationKey } from "@/lib/i18n/translations";
-import { CONTENT_GRID_ITEM_CLASS, ContentGrid } from "@/features/content/content-card";
+import { CONTENT_GRID_ITEM_CLASS, ContentGrid, RowNoteContext } from "@/features/content/content-card";
 
 export type EntryRemoval = { onRemove: () => Promise<void> };
 
@@ -147,7 +147,7 @@ export function CollectionEntryList({
       ) : items.length === 0 ? (
         <EmptyState icon={FolderOpen} scene={emptyScene} title={t(emptyTitleKey)} description={t(emptyDescriptionKey)} action={{ label: t("feed.goToDiscover"), href: "/discover" }} />
       ) : (
-        <ContentGrid>
+        <ContentGrid layout="rows">
           {visibleItems.map((entry) => (
             <EntryCell key={`${entry.type}:${entry.data.id}`} entry={entry} removal={removalFor?.(entry)} dropWhenUnsaved={dropWhenUnsaved} adder={addedBy && entry.addedBy ? addedBy.get(entry.addedBy) : undefined} />
           ))}
@@ -189,8 +189,15 @@ function EntryCell({ entry, removal, dropWhenUnsaved, adder }: { entry: Collecti
   // Seeded with the real count so reading the shared entry first can't pin it at 0 for the card's own bookmark.
   const save = useEngagementEntry("save", entry.type, entry.data.id, entry.data.saveCount);
   if (dropWhenUnsaved && save.activeChecked && !save.active) return null;
+  const adderLine = adder ? (
+    <p className="flex items-center gap-1.5 text-caption text-text-muted" data-collection-added-by="">
+      <Avatar src={adder.avatarUrl} alt="" size={20} />
+      <span className="min-w-0 truncate">{t("collab.addedBy", { name: adder.name })}</span>
+    </p>
+  ) : null;
   return (
     <div className={CONTENT_GRID_ITEM_CLASS}>
+      <RowNoteContext.Provider value={adderLine}>
       {entry.type === "community_post" ? (
         <SavedPostCard post={entry.data} collectionRemoval={removal} />
       ) : entry.type === "prompt" ? (
@@ -202,12 +209,7 @@ function EntryCell({ entry, removal, dropWhenUnsaved, adder }: { entry: Collecti
       ) : (
         <WorkflowCard workflow={entry.data} collectionRemoval={removal} />
       )}
-      {adder && (
-        <p className="mt-1.5 flex items-center gap-1.5 px-1 text-caption text-text-muted" data-collection-added-by="">
-          <Avatar src={adder.avatarUrl} alt="" size={20} />
-          <span className="min-w-0 truncate">{t("collab.addedBy", { name: adder.name })}</span>
-        </p>
-      )}
+      </RowNoteContext.Provider>
     </div>
   );
 }

@@ -45,7 +45,7 @@ import type { PostSearchKind, SearchCursor } from "@/lib/supabase/search";
 import { categoryHref, cn, formatCount, profileHref, tagHref, toolHref } from "@/lib/utils";
 import { Eyebrow } from "@/features/content/detail-parts";
 import type { Prompt, PromptRequest, Preset, Tag, UserProfile, Workflow } from "@/types";
-import { CONTENT_GRID_ITEM_CLASS, ContentGrid } from "@/features/content/content-card";
+import { CONTENT_GRID_ITEM_CLASS, ContentGrid, ContentRowsScope } from "@/features/content/content-card";
 import { CommunityCard } from "@/features/communities/community-card";
 import { HUB_GRID_CLASS } from "@/features/hub/hub-kit";
 import { applyJoinState, ErrorBox } from "@/features/communities/home-shared";
@@ -467,6 +467,7 @@ export function SearchView({ idle, scope }: { idle?: ReactNode; scope?: SearchSc
             <p className="py-6 text-center text-small text-text-muted">{t("common.noResults")}</p>
           )
         ) : (
+          <ContentRowsScope highlight={normalized.split(/\s+/).filter((word) => word.length >= 2)}>
           <div className="space-y-8">
             {tab === "all" && textOnly && tags.length > 0 && (
               <section className="space-y-3">
@@ -571,6 +572,7 @@ export function SearchView({ idle, scope }: { idle?: ReactNode; scope?: SearchSc
               </div>
             )}
           </div>
+          </ContentRowsScope>
         )
       )}
       {toastNode}
