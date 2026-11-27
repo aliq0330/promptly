@@ -17,3 +17,6 @@ Kaynak: `docs/design-references/substack-tasarim-dili.md` (ölçümler), tuval U
 
 ## Bilinçli sapma
 Beyaz üstü `#ff6719` düğme metni 2.9:1 (AA 4.5 altı): referansla birebir; test bunu belgeler, başka hiçbir küçük metin çifti 4.5'in altına düşmez.
+
+## Ek (474): ayar sayfası düzeni (referans "Settings" sayfası)
+Kullanıcının paylaştığı yayıncı ayarlar sayfasındaki desen ortak parçalara alındı (`features/settings/settings-ui.tsx`): bölüm kartı = başlık (+ soluk açıklama) + ince ayırıcı + aralıklı gövde (`SettingsCard`, `SettingsSectionHead`, `SETTINGS_SECTION_*`), satır metni = kalın başlık + soluk açıklama (`SettingText`), düz anahtar satırı (`SETTING_SWITCH_ROW_CLASS`), bağlı alt ayar = sol çizgiyle girintili (`SettingNested`), alan etiketi kalın (`settingsLabelClassName`). Uygulandı: tüm `/settings/*` sayfaları (kart başlığı), Bildirimler ve Aramalar'da düz anahtar satırları, Aramalar'da girintili tarayıcı bildirimi izni + cihaz seçici etiketleri, Topluluk → Yönetim → Ayarlar kartları, Ekip → Yönetim ilke kartları. Yapı (kategori listesi + alt sayfalar, 318) DEĞİŞMEDİ: tek uzun sayfa + sayfa içi arama yapılmadı.

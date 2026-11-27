@@ -80,7 +80,7 @@ export function CommunitySettingsSection({ group, onChanged, onToast }: { group:
     <div className="space-y-6">
       {(canSettings || canRules) && (
         <section aria-labelledby="community-settings-title" className="space-y-4">
-          <h3 id="community-settings-title" className="text-label font-semibold text-text">
+          <h3 id="community-settings-title" className="text-h3 font-bold text-text">
             {t("communities.settings.title")}
           </h3>
           {canSettings && (
@@ -132,7 +132,7 @@ export function CommunitySettingsSection({ group, onChanged, onToast }: { group:
 
       {isOwner && (
         <section aria-labelledby="community-close-title" className="space-y-2 border-t border-border-soft pt-5">
-          <h3 id="community-close-title" className="text-label font-semibold text-text">
+          <h3 id="community-close-title" className="text-h3 font-bold text-text">
             {group.closedAt ? t("communities.settings.reopenTitle") : t("communities.settings.closeTitle")}
           </h3>
           <p className="text-small text-text-secondary">{group.closedAt ? t("communities.settings.reopenHelp") : t("communities.settings.closeHelp")}</p>
