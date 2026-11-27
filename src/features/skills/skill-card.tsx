@@ -28,6 +28,8 @@ import { absoluteUrl, formatRelativeTime, skillHref } from "@/lib/utils";
 import { usePostMenuExtras } from "@/features/prompts/post-menu-extras";
 import { useSkillCategories } from "./use-skill-categories";
 import { SkillCoverCard } from "./skill-cover-card";
+import { SkillCoverImage } from "./skill-cover";
+import { SkillPackageArt } from "@/features/content/card-art";
 import type { Skill } from "@/types";
 
 /**
@@ -125,6 +127,10 @@ export function SkillCard({ skill, collectionRemoval }: { skill: Skill; collecti
         }
         badges={<ContentTypePill icon={GraduationCap} label={t("skill.singular")} detail={category} />}
         art={
+          <SkillPackageArt
+            skillId={skill.id}
+            cover={skill.coverPath ? <SkillCoverImage path={skill.coverPath} className="absolute inset-0 h-full w-full object-cover" /> : null}
+            plain={
           skill.coverPath ? (
             <SkillCoverCard path={skill.coverPath} fallback={<TextArt seed={skill.id}><span aria-hidden className="grid h-12 w-12 place-items-center rounded-md bg-primary text-primary-foreground"><GraduationCap size={24} /></span></TextArt>} />
           ) : (
@@ -139,6 +145,8 @@ export function SkillCard({ skill, collectionRemoval }: { skill: Skill; collecti
             </p>
           </TextArt>
           )
+            }
+          />
         }
         title={<ContentCardTitle href={href} title={skill.title || t("skill.untitled")} description={skill.summary} />}
         menu={menu}

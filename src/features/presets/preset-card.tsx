@@ -3,7 +3,7 @@
 import { SlidersHorizontal } from "@/components/icons/sliders-horizontal";
 import { formatRelativeTime, presetHref } from "@/lib/utils";
 import { taxonomyPathLabel } from "@/lib/content-taxonomy";
-import { presetParameterEntries } from "@/lib/preset-utils";
+import { presetArtParts, presetParameterEntries } from "@/lib/preset-utils";
 import { resolveToolRefs } from "@/lib/ai-tool-catalog";
 import { ContentCard, ContentCardPost, ContentCardTitle } from "@/features/content/content-card";
 import { Bookmark } from "@/components/icons/bookmark";
@@ -15,6 +15,7 @@ import { PostTargetMenu, postMeta } from "@/features/prompts/post-header";
 import { PromptCardFooter } from "@/features/prompts/prompt-card-footer";
 import { Badge } from "@/components/ui/badge";
 import { TextArt } from "@/features/content/text-art";
+import { PresetParamsArt } from "@/features/content/card-art";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Preset } from "@/types";
 
@@ -36,6 +37,7 @@ export function PresetCard({
   const href = presetHref(preset);
   const entries = presetParameterEntries(preset, language);
   const shown = entries.slice(0, 4);
+  const art = presetArtParts(preset, language);
   const category = taxonomyPathLabel(preset, language, true);
   const toolLabel = resolveToolRefs(preset.tools)[0]?.label ?? null;
 
@@ -70,6 +72,9 @@ export function PresetCard({
         }
         menu={<PostTargetMenu preset={preset} onDeleted={onDeleted} collectionRemoval={collectionRemoval} />}
         art={
+          preset.coverUrl ? (
+            <PresetParamsArt cover={preset.coverUrl} entries={entries} bars={art.bars} swatches={art.swatches} count={entries.length} />
+          ) : (
           <TextArt seed={preset.id}>
             {shown.length > 0 && (
               <ul aria-label={t("preset.contentsTitle")}>
@@ -85,6 +90,7 @@ export function PresetCard({
               {t("preset.paramCount", { count: entries.length })} · {toolLabel ?? t("preset.generalTool")}
             </p>
           </TextArt>
+          )
         }
         title={<ContentCardTitle href={href} title={preset.title} description={preset.description} />}
         footer={<PromptCardFooter preset={preset} />}

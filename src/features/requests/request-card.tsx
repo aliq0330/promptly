@@ -6,7 +6,8 @@ import { Reply } from "@/components/icons/reply";
 import { Sparkles } from "@/components/icons/sparkles";
 import { Badge } from "@/components/ui/badge";
 import { TextArt } from "@/features/content/text-art";
-import { ContentCard, ContentCardPost, ContentCardTitle } from "@/features/content/content-card";
+import { ContentCard, ContentCardPost, ContentCardTitle, useRowsLayout } from "@/features/content/content-card";
+import { RequestArt } from "@/features/content/card-art";
 import { ContentTypePill } from "@/features/content/content-type-label";
 import { RowMetrics } from "@/features/content/row-metrics";
 import { CommunityOnlyBadge } from "@/features/content/community-only-badge";
@@ -52,6 +53,14 @@ export function RequestCard({ request, onDeleted }: { request: PromptRequest; on
   const href = requestHref(request);
   const typeMeta = request.contentType ? CONTENT_TYPE_META[request.contentType] : null;
   const picture = request.referenceImage ?? request.media[0];
+  const rows = useRowsLayout();
+  const statusBadge = (
+    <Badge variant={STATUS_VARIANTS[request.status]}>
+      <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-current" />
+      {t(STATUS_LABELS[request.status])}
+      {request.responseCount > 0 && ` · ${t("request.cardAnswers", { count: formatCount(request.responseCount) })}`}
+    </Badge>
+  );
 
   return (
     <ContentCard variant="visual" href={href}>
@@ -69,13 +78,7 @@ export function RequestCard({ request, onDeleted }: { request: PromptRequest; on
           />
         }
         typeIcon={Sparkles}
-        status={
-          <Badge variant={STATUS_VARIANTS[request.status]}>
-            <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-current" />
-            {t(STATUS_LABELS[request.status])}
-            {request.responseCount > 0 && ` · ${t("request.cardAnswers", { count: formatCount(request.responseCount) })}`}
-          </Badge>
-        }
+        status={rows || !picture ? statusBadge : undefined}
         badges={
           <>
             <ContentTypePill icon={Sparkles} label={t("request.title")} detail={typeMeta ? t(typeMeta.labelKey) : null} />
@@ -85,9 +88,13 @@ export function RequestCard({ request, onDeleted }: { request: PromptRequest; on
         menu={<PostMenu requestId={request.id} communityId={request.communityId} authorId={request.author.id} onDeleted={onDeleted} />}
         art={
           picture ? (
-            <figure className="relative w-full overflow-hidden bg-surface-soft" style={{ aspectRatio: clampedAspectRatio(picture.width, picture.height) }}>
-              <StorageImage src={picture.url} alt={picture.alt} fill sizes="(min-width: 1280px) 30vw, (min-width: 640px) 45vw, 100vw" className="object-cover" />
-            </figure>
+            <RequestArt
+              requestId={request.id}
+              aspectRatio={clampedAspectRatio(picture.width, picture.height)}
+              open={request.status === "open"}
+              chip={statusBadge}
+              picture={<StorageImage src={picture.url} alt={picture.alt} fill sizes="(min-width: 1280px) 30vw, (min-width: 640px) 45vw, 100vw" className="object-cover" />}
+            />
           ) : (
             <TextArt seed={request.id}>
               {/* Resimsiz istek: yazı yüzeyi kısa açıklama + yanıt sayısı gösterir; başlık görselin altındadır (docs/history/477-*). */}

@@ -5,7 +5,8 @@ import { Bookmark } from "@/components/icons/bookmark";
 import { Heart } from "@/components/icons/heart";
 import { Workflow as WorkflowIcon } from "@/components/icons/workflow";
 import { formatRelativeTime, workflowHref } from "@/lib/utils";
-import { ContentCard, ContentCardPost, ContentCardTitle } from "@/features/content/content-card";
+import { ContentCard, ContentCardPost, ContentCardTitle, useRowsLayout } from "@/features/content/content-card";
+import { WorkflowGraphArt } from "@/features/content/card-art";
 import { ContentTypePill } from "@/features/content/content-type-label";
 import { RowMetrics } from "@/features/content/row-metrics";
 import { CommunityOnlyBadge } from "@/features/content/community-only-badge";
@@ -35,6 +36,7 @@ export function WorkflowCard({
   const { t, language } = useTranslation();
   const href = workflowHref(workflow);
   const category = categoryLabel(workflow.contentTypes, workflow.category, language);
+  const rows = useRowsLayout();
 
   return (
     <ContentCard variant="visual" href={href}>
@@ -72,6 +74,7 @@ export function WorkflowCard({
               )}
             </figure>
           ) : (
+            <WorkflowGraphArt workflowId={workflow.id} square={rows} fallback={
             <TextArt seed={workflow.id}>
               <span className="flex flex-wrap items-center gap-1.5">
                 {workflow.contentTypes.map((type, index) => {
@@ -106,6 +109,7 @@ export function WorkflowCard({
               </span>
               <span className="text-caption opacity-70">{t("workflow.stepCount", { count: String(workflow.stepCount) })}</span>
             </TextArt>
+            } />
           )
         }
         title={<ContentCardTitle href={href} title={workflow.title} description={workflow.description} />}

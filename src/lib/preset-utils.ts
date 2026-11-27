@@ -1,5 +1,5 @@
 import { getCatalogField } from "@/lib/prompt-extra-settings";
-import { fieldName, formatNumber, newId, optionLabel, selectionEntries, type PresetField, type PresetSelection, type PresetValue } from "@/lib/preset-fields";
+import { fieldName, formatNumber, newId, optionLabel, sanitizeSelection, selectionEntries, type PresetField, type PresetSelection, type PresetValue } from "@/lib/preset-fields";
 import type { Language } from "@/lib/i18n/translations";
 
 export interface PresetParameterEntry {
@@ -154,4 +154,35 @@ export function toStoredValue(field: PresetField, value: PresetValue): PresetVal
 }
 export function fromStoredValue(field: PresetField, value: PresetValue | undefined): PresetValue | undefined {
   return field.type === "multi_select" && Array.isArray(value) ? value[0] : value;
+}
+
+export interface PresetArtBar {
+  fieldId: string;
+  fieldLabel: string;
+  /** "70%" — the value as the field formats it. */
+  valueLabel: string;
+  /** Where the value sits between the field's min and max, 0–1 (the bar's fill). */
+  fraction: number;
+}
+
+/**
+ * The parts of a preset a picture can show HONESTLY (docs/history/479-*): sliders as bars filled to their real value, colour fields as swatches
+ * (the real chosen hex). Everything else stays a text row (`presetParameterEntries`). No value is invented: a slider with no value has no bar.
+ */
+export function presetArtParts(preset: { fields: PresetField[]; selection: PresetSelection }, language: Language): { bars: PresetArtBar[]; swatches: string[] } {
+  const fields = resolvePresetFields(preset);
+  const clean = sanitizeSelection(preset.selection, fields);
+  const bars: PresetArtBar[] = [];
+  const swatches: string[] = [];
+  for (const field of fields) {
+    const value = clean[field.id];
+    if (field.type === "slider" && typeof value === "number") {
+      const min = field.config.min ?? 0;
+      const max = field.config.max ?? 100;
+      if (max > min) bars.push({ fieldId: field.id, fieldLabel: fieldName(field, language), valueLabel: formatNumber(field, value), fraction: Math.min(1, Math.max(0, (value - min) / (max - min))) });
+    } else if (field.type === "color" && typeof value === "string") {
+      swatches.push(value);
+    }
+  }
+  return { bars, swatches };
 }

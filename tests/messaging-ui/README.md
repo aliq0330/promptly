@@ -518,3 +518,6 @@ CHROMIUM_PATH=/opt/pw-browsers/chromium-1243/chrome-linux64/chrome node tests/me
 CHROMIUM_PATH=/opt/pw-browsers/chromium node tests/messaging-ui/run-calls.mjs   # 38/38 beklenir
 ONLY="24" node tests/messaging-ui/run-calls.mjs
 ```
+
+`run-card-art.mjs` (6 senaryo, port 4320; `docs/history/479-*`): Ana Sayfa kartlarında zengin sanat — İstek yanıt küçük resimleri + "+" kutusu + sol alt durum çipi, Workflow adım düğümleri + oklar, Ayar paketi gerçek slider çubukları/renk (önce/sonra kaydırıcısı yok), Skill paket kutusu (en yeni sürüm), veri yokken eski sanat, telefonda taşma yok. Ağ taklitli; gerçek cihaza KARŞI DENENMEDİ.
+CHROMIUM_PATH=/opt/pw-browsers/chromium node tests/messaging-ui/run-card-art.mjs   # 6/6 beklenir
