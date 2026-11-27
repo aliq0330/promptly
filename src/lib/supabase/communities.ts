@@ -669,19 +669,32 @@ async function mapPostRows(rows: PostRow[]): Promise<CommunityPost[]> {
 export const POST_PAGE_SIZE = 12;
 
 /** Akış sayfası: yeniden eskiye keyset (`created_at`, `id`). Sabit gönderiler ayrıca `fetchPinnedPosts` ile başa konur. */
+/** Topluluk akışının sırası (docs/history/474-*): en yeni (varsayılan) ya da en çok beğenilen. İkisi de keyset sayfalar. */
+export type CommunityFeedOrder = "new" | "top";
+
+export interface CommunityPostCursor {
+  createdAt: string;
+  id: string;
+  /** `top` sırasında imlecin beğeni sayısı (sıra beğeniye göre olduğu için keyset onu da taşır). */
+  likeCount?: number;
+}
+
 export async function fetchCommunityPosts(
   communityId: string,
-  cursor: { createdAt: string; id: string } | null,
+  cursor: CommunityPostCursor | null,
+  order: CommunityFeedOrder = "new",
 ): Promise<{ posts: CommunityPost[]; hasMore: boolean }> {
-  let query = supabase
-    .from("community_posts")
-    .select(POST_SELECT)
-    .eq("community_id", communityId)
-    .is("pinned_at", null)
-    .order("created_at", { ascending: false })
-    .order("id", { ascending: false })
-    .limit(POST_PAGE_SIZE + 1);
-  if (cursor) query = query.or(`created_at.lt.${cursor.createdAt},and(created_at.eq.${cursor.createdAt},id.lt.${cursor.id})`);
+  let query = supabase.from("community_posts").select(POST_SELECT).eq("community_id", communityId).is("pinned_at", null);
+  if (order === "top") query = query.order("like_count", { ascending: false });
+  query = query.order("created_at", { ascending: false }).order("id", { ascending: false }).limit(POST_PAGE_SIZE + 1);
+  if (cursor) {
+    if (order === "top" && typeof cursor.likeCount === "number") {
+      const likes = cursor.likeCount;
+      query = query.or(`like_count.lt.${likes},and(like_count.eq.${likes},created_at.lt.${cursor.createdAt}),and(like_count.eq.${likes},created_at.eq.${cursor.createdAt},id.lt.${cursor.id})`);
+    } else {
+      query = query.or(`created_at.lt.${cursor.createdAt},and(created_at.eq.${cursor.createdAt},id.lt.${cursor.id})`);
+    }
+  }
   const { data, error } = await query;
   if (error) throw toGroupError(error);
   const rows = (data ?? []) as unknown as PostRow[];

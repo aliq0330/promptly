@@ -12,7 +12,7 @@ import { Flag } from "@/components/icons/flag";
 import { Link2 } from "@/components/icons/link-2";
 import { DropdownMenu, MenuItem } from "@/components/ui/dropdown-menu";
 import { useReport } from "@/features/moderation/report-provider";
-import { absoluteUrl } from "@/lib/utils";
+import { absoluteUrl, formatCount } from "@/lib/utils";
 import { Tabs, type TabItem } from "@/components/ui/tabs";
 import { HUB_BAND_MENU_BUTTON_CLASS, HUB_PAGE_CLASS, HubDetailBand, HubDetailLayout } from "@/features/hub/hub-kit";
 import { Badge } from "@/components/ui/badge";
@@ -34,6 +34,9 @@ import { AboutTab } from "./about-tab";
 import { ManageTab } from "./manage-tab";
 import { useCommunity } from "./use-community";
 import { CommunityAside, MemberStack, useCommunityPeople } from "./community-aside";
+import { CommunityStrip } from "./community-strip";
+import { OnlineCountText } from "@/features/presence/presence-ui";
+import { useCommunityPresenceCount } from "@/features/presence/community-presence";
 import { CommunityCover } from "./community-cover";
 import { Eyebrow } from "@/features/content/detail-parts";
 import { accessibleTabs, communityChatHref, communityHref, communityTopicLabelKey, resolveCommunityView, type CommunityTab } from "@/lib/communities";
@@ -93,6 +96,7 @@ function CommunityPageInner() {
   const tab = view?.tab ?? null;
   const unread = conversations.find((c) => c.id === id)?.unreadCount ?? 0;
   const people = useCommunityPeople(id ?? "", Boolean(id && role));
+  const onlineCount = useCommunityPresenceCount(id);
   const { openReport } = useReport();
 
   function goTab(next: CommunityTab, section?: string) {
@@ -245,6 +249,8 @@ function CommunityPageInner() {
           <span className="flex flex-wrap items-center gap-2">
             <MemberStack people={people} />
             <span>{memberCountText(t, g.memberCount)}</span>
+            <OnlineCountText count={onlineCount} />
+            {g.postCount > 0 && <span>{t("communities.aside.postCount", { count: formatCount(g.postCount) })}</span>}
           </span>
         }
         description={g.description ? <span data-community-description>{g.description}</span> : undefined}
@@ -279,13 +285,15 @@ function CommunityPageInner() {
         ) : (
           <>
             <Tabs items={tabs} active={tab} onChange={goTab} ariaLabel={t("communities.detail.tabsAria")} />
-            {/* Sekmenin kendi eylem yuvası (Akış'ta "Gönderi oluştur" simgesi buraya portal edilir). */}
-            <div ref={setActionsEl} className="flex items-center justify-end gap-1.5 empty:hidden" data-community-actions-slot />
             {!role && <CommunityGate group={g} gate={ready.gate} onChanged={reload} onToast={show} compact />}
             <HubDetailLayout
-              aside={tab === "feed" || tab === "events" ? <CommunityAside group={g} people={people} onReadRules={() => goTab("about")} /> : undefined}
+              aside={tab === "feed" || tab === "events" ? <CommunityAside group={g} isMember={Boolean(role)} onReadRules={() => goTab("about")} /> : undefined}
               asideLabel={t("communities.aside.pageLabel")}
             >
+              {/* Odalar ve etkinlik şeridi (docs/history/474-*): yalnız Akış'ta, sekmelerin hemen altında (yan sütun şeritle aynı hizadan başlar). */}
+              {tab === "feed" && <CommunityStrip group={g} role={role} viewerId={user?.id ?? null} goTab={goTab} />}
+              {/* Sekmenin kendi eylem yuvası (Akış'ta "Gönderi oluştur" + sıralama menüsü buraya portal edilir). */}
+              <div ref={setActionsEl} className="flex items-center justify-between gap-1.5 empty:hidden" data-community-actions-slot />
               <div role="tabpanel" aria-label={tabLabels[tab]}>
                 {tab === "feed" && <FeedTab {...common} />}
                 {tab !== "feed" && (

@@ -166,6 +166,67 @@ await scenario("4b. sahip: Space sayfasında Yorumlar/Etkinlik sekmesi, Paylaş,
   assert.equal(await page.getByRole("menuitem", { name: "Paylaş" }).count(), 0, "menüde Paylaş yok");
 }, { setup: (db) => boardWith(db, 1) });
 
+// ---------------------------------------------------------------- Genel bakış duvarı (docs/history/474-*)
+
+const wallWorld = (db) => {
+  db.addSpace(1, { title: "Kış koleksiyonu moodboard", kind: "moodboard", description: "Aralık kampanyası için ışık, renk ve kadraj referansları.", members: [[U.bob, "editor"], [U.carol, "viewer"]] });
+  db.spaceGroups.push({ id: "g1", space_id: SID(1), name: "Ana tema", color: "primary", position: 0, created_at: "2026-09-20T10:00:00Z" });
+  [["#2c3e50", "#a9c5e8"], ["#b5532a", "#f2e6d9"], ["#3f6b5a", "#e4eadf"], ["#1f3a5f", "#c0562a"]].forEach(([a, b], i) =>
+    db.addItem(SID(1), { id: `bbbbbbbb-0000-4000-8000-00000000000${i + 1}`, kind: "image", media_url: svg(a, b, 900, i % 2 ? 700 : 1200), media_width: 900, media_height: i % 2 ? 700 : 1200, title: `Görsel ${i + 1}`, x: i * 200, y: 0, w: 180, h: 240, z: i, group_id: "g1" }));
+  db.addItem(SID(1), { id: "bbbbbbbb-0000-4000-8000-000000000010", kind: "prompt", is_draft: true, title: "Kış sokağı promptu", body: "Snowy street at blue hour, soft haze", x: 0, y: 300, w: 280, h: 200, z: 6 });
+  db.addItem(SID(1), { id: "bbbbbbbb-0000-4000-8000-000000000011", kind: "note", title: "Renk notu", body: "Mavi tonları ışıkta soğuk kalsın", color: "warning", x: 320, y: 300, w: 220, h: 180, z: 7 });
+  db.spacePalettes.push({ id: "p1", space_id: SID(1), name: "Kış paleti", description: "", colors: ["#1f3a5f", "#a9c5e8", "#f2e6d9", "#c0562a", "#2b2b2b"], source: "manual", source_item_id: null, position: 0, created_by: null, created_at: "2026-09-20T10:00:00Z", updated_at: "2026-09-21T10:00:00Z" });
+  db.addItem(SID(1), { id: "bbbbbbbb-0000-4000-8000-000000000012", kind: "palette", palette_id: "p1", x: 820, y: 300, w: 280, h: 150, z: 9 });
+};
+for (const [w, cols, aside] of [[1440, 3, true], [820, 2, false], [390, 2, false]]) {
+  await scenario(`33. Genel bakış (${w}): tam bant (etiketler, serif açıklama, palet şeridi, Panoyu aç + Davet et), simgesiz sekmeler, ${cols} sütunlu karışık duvar, yan sütun ${aside ? "var" : "yok"}`, async ({ page }) => {
+    await page.goto(`${BASE}/spaces/local?id=${SID(1)}`);
+    const band = page.locator("[data-space-band]");
+    await band.waitFor();
+    await band.getByRole("heading", { level: 1, name: "Kış koleksiyonu moodboard" }).waitFor();
+    for (const tag of ["Moodboard", "Özel", "7 öğe"]) assert.ok(await band.getByText(tag, { exact: true }).isVisible(), `etiket ${tag}`);
+    assert.equal(await band.locator("[data-space-band-palette] button").count(), 5, "bandın alt kenarında ilk palet şeridi");
+    const strip = await band.locator("[data-space-band-palette]").evaluate((el) => ({ h: Math.round(el.getBoundingClientRect().height), w: Math.round(el.getBoundingClientRect().width), bw: Math.round(el.parentElement.getBoundingClientRect().width) }));
+    assert.ok(strip.h <= 12 && strip.w >= strip.bw - 2, `palet şeridi ince ve bant genişliğinde ${JSON.stringify(strip)}`);
+    assert.equal(await spaceTabs(page).locator("svg").count(), 0, "sekmelerde simge yok");
+    assert.deepEqual(await spaceTabNames(page), ["Genel bakış", "Pano", "Görseller", "Promptlar", "Palet", "Notlar", "Üyeler"]);
+    await page.locator("[data-space-actions]").getByRole("button", { name: "Panoyu aç" }).waitFor();
+    await page.locator("[data-space-invite]").waitFor();
+    const wall = page.getByTestId("space-overview-wall");
+    assert.equal(await wall.getByRole("listitem").count(), 7, "4 görsel + prompt + not + palet");
+    const lefts = await wall.getByRole("listitem").evaluateAll((els) => [...new Set(els.map((e) => Math.round(e.getBoundingClientRect().left)))]);
+    assert.equal(lefts.length, cols, `${cols} sütun ${JSON.stringify(lefts)}`);
+    assert.equal(await page.getByTestId("space-overview-aside").isVisible(), aside, "yan sütun");
+    if (aside) {
+      const asideBox = page.getByTestId("space-overview-aside");
+      await asideBox.getByRole("heading", { name: "Üyeler" }).waitFor();
+      await asideBox.getByText("Sahip").waitFor();
+      await asideBox.getByRole("heading", { name: "Gruplar" }).waitFor();
+    }
+    assert.equal(await page.getByTestId("space-overview-stats").isVisible(), w < 768, "sayı çipleri yalnız telefonda");
+    assert.ok(await overflowFree(page), "yatay taşma yok");
+    // Kutu → ilgili sekme; «Davet et» → Üyeler.
+    await wall.getByRole("listitem").filter({ hasText: "Renk notu" }).getByRole("button").click();
+    await page.waitForURL(/tab=notes/);
+    await page.goto(`${BASE}/spaces/local?id=${SID(1)}`);
+    await page.locator("[data-space-invite]").click();
+    await page.waitForURL(/tab=members/);
+  }, { viewport: { width: w, height: 900 }, setup: wallWorld });
+}
+
+await scenario("33b. Pano: başlık tek satır (kompakt), tuval kalan alanı alır ve ekran dışına taşmaz; diğer sekmelerde de tek satır", async ({ page }) => {
+  await page.goto(`${BASE}/spaces/local?id=${SID(1)}&tab=board`);
+  await page.locator("[data-space-compact]").waitFor();
+  assert.equal(await page.locator("[data-hub-detail-band]").count(), 0, "tam bant yok");
+  assert.equal(await page.locator("[data-space-band-palette]").count(), 0, "palet şeridi yalnız Genel bakışta");
+  const board = page.getByTestId("space-board");
+  const box = await board.evaluate((el) => { const r = el.getBoundingClientRect(); return { top: Math.round(r.top), bottom: Math.round(r.bottom) }; }).catch(() => null);
+  if (box) assert.ok(box.bottom <= 900, `tuval görünür alana sığar (${JSON.stringify(box)})`);
+  await pickSpaceTab(page, "Görseller");
+  await page.locator("[data-space-compact]").waitFor();
+  assert.ok(await overflowFree(page));
+}, { setup: wallWorld, viewport: { width: 1440, height: 900 } });
+
 // ---------------------------------------------------------------- Space sayfası
 
 await scenario("5. erişilemeyen Space: tek tip 'erişemiyorsun' bloğu (varlık sızmaz)", async ({ page }) => {

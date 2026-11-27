@@ -6,6 +6,7 @@ import assert from "node:assert/strict";
 import { serve } from "./server.mjs";
 import { createDb, installMock, ME, U } from "./mock.mjs";
 import { setupCommunities } from "./mock-communities.mjs";
+import { setupRooms } from "./mock-rooms.mjs";
 
 const BASE = "http://localhost:4176/promptly";
 const server = await serve(4176);
@@ -442,7 +443,75 @@ for (const [label, width, aside, columns] of [["1440", 1440, false, 3], ["1280",
     assert.equal(await overflowFree(page), true, "no horizontal overflow");
   }, { viewport: { width, height: 900 }, setup: layoutWorld });
 }
-await scenario("26b. Topluluk sayfası: başlık kompakt, akış ızgarası (+ xl'de Hakkında/Kurallar/Yöneticiler sütunu), Yönetim ayarları kartlara bölünür; taşma yok", async ({ page }) => {
+/** docs/history/474-*: «Odalar ve etkinlik» şeridi (oda kartları + en yakın etkinlik), «Hakkında ve kurallar» yan sütunu, sıralama menüsü. */
+const stripWorld = (db) => {
+  setupRooms(db);
+  db.addCommunity(id(7), { name: "Sinematik Işık", myRole: "member", members: [[U.bob, "owner"]], rules: "1. Kendi ürettiğini paylaş\n2. Kritik nazik olsun" });
+  const general = db.addRoom(id(7), { name: "Genel", is_default: true });
+  const critique = db.addRoom(id(7), { name: "Prompt kritiği" });
+  db.addRoom(id(7), { name: "Lens ve kadraj" });
+  db.addRoom(id(7), { name: "Dördüncü oda" });
+  db.addRoom(id(7), { name: "Arşiv odası", archived_at: "2026-01-01T00:00:00Z" });
+  db.addRoomMessage(id(7), critique.id, U.bob.id, "kritik bir");
+  db.addRoomMessage(id(7), critique.id, U.bob.id, "kritik iki");
+  db.addRoomMessage(id(7), general.id, U.bob.id, "genel mesaj");
+  db.events.push({ id: "ev1", community_id: id(7), title: "Canlı kritik", description: null, starts_at: new Date(Date.now() + 3 * 86400000).toISOString(), ends_at: null, timezone: "Europe/Istanbul", location: null, online_url: null, status: "scheduled", going_count: 64, maybe_count: 0, rsvps: {} });
+  db.addPost(id(7), { title: "Az beğenilen", likeCount: 1 });
+  db.addPost(id(7), { title: "Çok beğenilen", likeCount: 50 });
+  db.addPost(id(7), { title: "En yeni gönderi", likeCount: 0 });
+};
+for (const [w, cols] of [[1440, 4], [820, 4], [390, 0]]) {
+  await scenario(`26c. Odalar ve etkinlik şeridi (${w}): ilk 3 oda + etkinlik, okunmamış sayısı, arşivdeki yok; kart odayı Mesajlar'da açar; yan sütun «Hakkında ve kurallar»`, async ({ page }) => {
+    await page.goto(`${BASE}/communities/local?id=${id(7)}`);
+    const strip = page.getByTestId("community-strip");
+    await strip.waitFor();
+    assert.equal(await strip.locator("[data-strip-room]").count(), 3, "en çok 3 oda");
+    assert.equal(await strip.getByText("Arşiv odası").count(), 0, "arşivdeki oda yok");
+    assert.equal(await strip.locator("[data-feed-next-event]").count(), 1, "en yakın etkinlik");
+    assert.equal(await strip.locator("[data-feed-next-event]").innerText().then((x) => x.includes("64 katılıyor")), true);
+    // Varsayılan oda başta; «Prompt kritiği» okunmamış 2.
+    const names = await strip.locator("[data-strip-room]").allInnerTexts();
+    assert.ok(names[0].includes("Genel"), names[0]);
+    if (w >= 768) {
+      const boxes = await strip.locator("li").evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().top)));
+      assert.equal(new Set(boxes).size, 1, `${w}: tek satır`);
+      assert.equal(boxes.length, cols);
+    } else {
+      assert.equal(await strip.locator("[data-scroll-row]").evaluate((el) => el.scrollWidth >= el.clientWidth), true, "telefonda yatay kayan şerit");
+    }
+    // Şerit sekmelerin ALTINDA, yan sütun şeritle aynı hizadan başlar (xl).
+    const tabsBottom = await page.getByRole("tablist").first().evaluate((el) => el.getBoundingClientRect().bottom);
+    const stripTop = await strip.evaluate((el) => el.getBoundingClientRect().top);
+    assert.ok(stripTop >= tabsBottom - 1, "şerit sekmelerin altında");
+    if (w >= 1280) {
+      const asideTop = await page.getByTestId("hub-aside").evaluate((el) => el.getBoundingClientRect().top);
+      assert.ok(Math.abs(asideTop - stripTop) <= 4, `yan sütun şeritle aynı hizada (${asideTop} vs ${stripTop})`);
+      assert.deepEqual(await page.locator("[data-community-aside]").evaluateAll((els) => els.map((e) => e.getAttribute("data-community-aside"))), ["about", "rules"]);
+      await page.getByTestId("hub-aside").getByRole("heading", { name: "Hakkında ve kurallar" }).waitFor();
+    }
+    await strip.locator("[data-strip-room]").nth(1).click();
+    await page.waitForURL(/\/messages\/local\/?\?id=.*&room=/);
+    assert.ok(await overflowFree(page));
+  }, { viewport: { width: w, height: 900 }, setup: stripWorld });
+}
+
+await scenario("26d. Akış sıralaması: En yeni (varsayılan) ↔ Popüler (like_count); menü seçili sırayı gösterir; ziyaretçi ve üye için aynı", async ({ page, db }) => {
+  await page.goto(`${BASE}/communities/local?id=${id(7)}`);
+  await page.locator("[data-community-post]").first().waitFor();
+  const titles = async () => page.locator("[data-community-post]").evaluateAll((els) => els.map((e) => e.textContent ?? ""));
+  assert.ok((await titles())[0].includes("En yeni gönderi"), "varsayılan: en yeni");
+  const sort = page.locator("[data-feed-sort]");
+  await sort.getByRole("button", { name: "Gönderileri sırala" }).click();
+  await page.getByRole("menuitem", { name: "Popüler" }).click();
+  await page.waitForFunction(() => document.querySelector("[data-community-post]")?.textContent?.includes("Çok beğenilen"));
+  await sort.getByText("Popüler").waitFor();
+  assert.ok(db.calls.length > 0);
+  await sort.getByRole("button", { name: "Gönderileri sırala" }).click();
+  await page.getByRole("menuitem", { name: "En yeni" }).click();
+  await page.waitForFunction(() => document.querySelector("[data-community-post]")?.textContent?.includes("En yeni gönderi"));
+}, { setup: stripWorld });
+
+await scenario("26b. Topluluk sayfası: başlık kompakt, akış ızgarası (+ xl'de Hakkında ve kurallar / Çevrimiçi sütunu), Yönetim ayarları kartlara bölünür; taşma yok", async ({ page }) => {
   for (const [w, cols] of [[1440, 2], [820, 2], [390, 1]]) {
     await page.setViewportSize({ width: w, height: 900 });
     await page.goto(`${BASE}/communities/local?id=${id(1)}`);
@@ -452,7 +521,8 @@ await scenario("26b. Topluluk sayfası: başlık kompakt, akış ızgarası (+ x
     assert.ok(posts.every((b) => b.width <= CARD_MAX), `${w}: card too wide ${JSON.stringify(posts)}`);
     if (w >= 1280) {
       const asides = await page.locator("[data-community-aside]").evaluateAll((els) => els.map((e) => e.getAttribute("data-community-aside")));
-      assert.deepEqual(asides, ["about", "rules", "staff"], `${w}: community aside sections`);
+      // docs/history/474-*: «Hakkında ve kurallar» tek kart (kurallar listesi içinde); «Çevrimiçi» yalnız görünen çevrimiçi üye varken çizilir.
+      assert.deepEqual(asides, ["about", "rules"], `${w}: community aside sections`);
     }
     assert.equal(new Set(posts.map((b) => b.left)).size, Math.min(cols, posts.length), `${w}: columns`);
     // Albüm (docs/history/203-*): the band + the actions row are taller on purpose (big art, big title, one big action); together

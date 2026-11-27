@@ -1,22 +1,25 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Fragment, useMemo, useState, type ReactNode } from "react";
+import { ArrowLeft } from "@/components/icons/arrow-left";
 import { Check } from "@/components/icons/check";
 import { ListChecks } from "@/components/icons/list-checks";
-import { Button } from "@/components/ui/button";
+import { Avatar } from "@/components/ui/avatar";
+import { Button, buttonClassName } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StorageImg } from "@/components/ui/storage-media";
 import { useToast } from "@/features/groups/use-toast";
-import { SpaceDialog } from "@/features/spaces/space-modals";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
-import type { BoardItem, BoardProposal, BoardState } from "@/lib/supabase/team-center";
+import type { BoardItem, BoardProposal } from "@/lib/supabase/team-center";
 import { decideProposal, decideReview } from "@/lib/supabase/team-projects";
 import type { TeamActionError } from "@/lib/supabase/teams";
-import { boardItemHref, boardProjects, groupBoard } from "@/lib/team-center";
+import { APPROVAL_SEGMENTS, approvalRows, boardItemHref, findApprovalRow, type ApprovalRow, type ApprovalSegment } from "@/lib/team-center";
 import { projectLink } from "@/lib/team-projects";
+import { teamLink } from "@/lib/teams";
 import { useMediaQuery } from "@/lib/use-media-query";
 import { cn, formatRelativeTime } from "@/lib/utils";
 import type { TeamCtx } from "./team-page";
@@ -31,37 +34,52 @@ const KIND_KEY: Record<string, TranslationKey> = {
 };
 const kindKey = (kind: string): TranslationKey => KIND_KEY[kind] ?? "tp.kind.content";
 
-const COLUMN: Record<BoardState, { dot: string; label: TranslationKey; short: TranslationKey }> = {
-  pending: { dot: "bg-warning", label: "tc.appr.pending", short: "tc.appr.pendingShort" },
-  changes: { dot: "bg-danger", label: "tc.appr.changes", short: "tc.appr.changesShort" },
-  approved: { dot: "bg-success", label: "tc.appr.approved", short: "tc.appr.approvedShort" },
+const STATE_LABEL: Record<BoardItem["state"], TranslationKey> = {
+  pending: "tc.appr.state.pending",
+  changes: "tc.appr.state.changes",
+  approved: "tc.appr.state.approved",
 };
+const SEGMENT_LABEL: Record<ApprovalSegment, TranslationKey> = { inbox: "tc.appr.seg.inbox", sent: "tc.appr.seg.sent", decided: "tc.appr.seg.decided" };
 
-/** Karar bekleyen kart: öğe ya da değişiklik önerisi (ikisi de aynı sütunda). */
-type Card = { type: "item"; item: BoardItem } | { type: "proposal"; proposal: BoardProposal };
+/** Prompt metnindeki `{değişken}` adları (tekrarsız, görünme sırasıyla). */
+const variablesOf = (text: string): string[] => [...new Set([...text.matchAll(/\{([^{}\s]{1,40})\}/g)].map((match) => match[1]))];
 
 /**
- * Onaylar (`tab=approvals`; docs/history/366-*, mockup B5): ekibin onay panosu. Masaüstünde üç sütun (Senden bekleyen · Değişiklik istenen · Bugün onaylanan),
- * tablet ve telefonda segmentli tek liste. Lider kendi projelerinin her şeyini görür ve karar verir; diğerleri yalnız KENDİ öğelerinin durumunu görür.
- * Karar sunucudadır (`team_review_decide` / `team_review_decide_proposal`): burada yalnız çağrılır, başarısız olursa hata yazılır.
+ * Onaylar (`tab=approvals`; docs/history/366-*, 474-*): ekibin onay kuyruğu, «liste + ayrıntı» düzeninde. Solda üç bölümlü liste (Bana bekleyen ·
+ * Gönderdiklerim · Karar verilen), sağda seçilen öğenin ayrıntısı ve karar düğmeleri. Tablette liste 300 px, masaüstünde 420 px; TELEFONDA yalnız
+ * liste açılır, satıra dokununca ayrıntı tam ekran sayfa olur (`&decision=<satır>`, Geri listeye döner) ve karar düğmeleri altta sabit durur.
+ * Lider kendi projelerinin her şeyini görür ve karar verir; diğerleri yalnız KENDİ öğelerinin durumunu görür. Karar sunucudadır
+ * (`team_review_decide` / `team_review_decide_proposal`): burada yalnız çağrılır, başarısız olursa hata yazılır.
  */
 export function TeamApprovalsSection({ ctx }: { ctx: TeamCtx }) {
   const { t } = useTranslation();
   const { team, board, reloadBoard } = ctx;
-  const wide = useMediaQuery("(min-width: 1024px)");
-  const [project, setProject] = useState<string>("all");
-  const [segment, setSegment] = useState<BoardState>("pending");
+  const router = useRouter();
+  const params = useSearchParams();
+  const phone = useMediaQuery("(max-width: 767.98px)");
+  const [segment, setSegment] = useState<ApprovalSegment>("inbox");
+  const [noteState, setNoteState] = useState<{ key: string; text: string }>({ key: "", text: "" });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [changing, setChanging] = useState<Card | null>(null);
   const { node: toastNode, show } = useToast();
 
-  const columns = useMemo(() => groupBoard(board?.items ?? [], project), [board, project]);
-  const projects = useMemo(() => boardProjects(board?.items ?? []), [board]);
-  const proposals = useMemo(() => (board?.proposals ?? []).filter((proposal) => project === "all" || proposal.projectId === project), [board, project]);
-  const pendingCards: Card[] = [...columns[0].rows.map((item): Card => ({ type: "item", item })), ...proposals.map((proposal): Card => ({ type: "proposal", proposal }))];
-  const cardsOf = (state: BoardState): Card[] => (state === "pending" ? pendingCards : columns[state === "changes" ? 1 : 2].rows.map((item): Card => ({ type: "item", item })));
-  const decidable = columns[0].rows.filter((item) => item.canDecide);
+  const items = board?.items;
+  const proposals = board?.proposals;
+  const rows = useMemo(() => approvalRows(items ?? [], proposals ?? [], segment), [items, proposals, segment]);
+  const requestedKey = params.get("decision");
+  const requested = useMemo(() => findApprovalRow(items ?? [], proposals ?? [], requestedKey), [items, proposals, requestedKey]);
+  // Masaüstü/tablette her zaman bir satır seçilidir (adresteki ya da bölümün ilki); telefonda yalnız adreste istenen açılır.
+  const selected: ApprovalRow | null = phone ? requested : (requested ?? rows[0] ?? null);
+  const noteText = selected && noteState.key === selected.key ? noteState.text : "";
+  const decidable = rows.filter((row) => row.type === "item" && row.item.state === "pending" && row.item.canDecide);
+
+  const listHref = teamLink(team.id, "approvals");
+  const rowHref = (row: ApprovalRow) => teamLink(team.id, "approvals", { decision: row.key });
+  const open = (row: ApprovalRow) => {
+    setError(null);
+    if (phone) router.push(rowHref(row));
+    else router.replace(rowHref(row), { scroll: false });
+  };
 
   if (!board) {
     return (
@@ -86,208 +104,319 @@ export function TeamApprovalsSection({ ctx }: { ctx: TeamCtx }) {
       setBusy(false);
     }
   };
-  const approve = (card: Card) =>
-    void run(() => (card.type === "item" ? decideReview([card.item.id], "approve", "") : decideProposal(card.proposal.itemId, "approve", "")), "tp.review.approvedToast");
-  const requestChanges = async (card: Card, note: string) => {
-    const done = await run(() => (card.type === "item" ? decideReview([card.item.id], "changes", note) : decideProposal(card.proposal.itemId, "changes", note)), "tp.review.changesToast");
-    if (done) setChanging(null);
+  const afterDecision = (done: boolean) => {
+    if (!done) return;
+    setNoteState({ key: "", text: "" });
+    if (phone) router.replace(listHref, { scroll: false });
+  };
+  const approve = async (row: ApprovalRow) =>
+    afterDecision(await run(() => (row.type === "item" ? decideReview([row.item.id], "approve", "") : decideProposal(row.proposal.itemId, "approve", "")), "tp.review.approvedToast"));
+  const requestChanges = async (row: ApprovalRow) => {
+    if (!noteText.trim()) {
+      setError(t("tp.review.noteRequired"));
+      return;
+    }
+    afterDecision(
+      await run(() => (row.type === "item" ? decideReview([row.item.id], "changes", noteText.trim()) : decideProposal(row.proposal.itemId, "changes", noteText.trim())), "tp.review.changesToast"),
+    );
   };
   const empty = board.items.length === 0 && board.proposals.length === 0;
 
-  const renderColumn = (state: BoardState) => {
-    const cards = cardsOf(state);
-    return (
-      <ul className="space-y-3" data-board-column={state}>
-        {cards.length === 0 && <li className="rounded-lg border border-dashed border-border bg-surface/60 px-4 py-6 text-center text-small text-text-muted">{t("tc.appr.columnEmpty")}</li>}
-        {cards.map((card) => (
-          <li key={card.type === "item" ? card.item.id : `p-${card.proposal.itemId}`}>
-            <BoardCard teamId={team.id} card={card} state={state} busy={busy} onApprove={() => approve(card)} onChanges={() => setChanging(card)} />
-          </li>
-        ))}
-      </ul>
-    );
-  };
+  const detail = selected && (
+    <ApprovalDetail
+      key={selected.key}
+      teamId={team.id}
+      row={selected}
+      busy={busy}
+      error={error}
+      note={noteText}
+      onNote={(text) => setNoteState({ key: selected.key, text })}
+      onApprove={() => void approve(selected)}
+      onChanges={() => void requestChanges(selected)}
+      phone={phone}
+    />
+  );
 
-  return (
-    <section className="space-y-4" data-testid="team-approvals">
-      <header className="flex flex-wrap items-center gap-3">
-        <div className="min-w-0 flex-1">
-          <h2 className="font-display text-h2 font-bold text-text">{t("tc.appr.title")}</h2>
-          <p className="text-small text-text-secondary">{t("tc.appr.subtitle")}</p>
+  // Telefonda açık bir satır: bant/sekmeler gizlidir (team-page), ayrıntı tam ekran sayfadır; geri listeye döner.
+  if (phone && selected) {
+    return (
+      <section data-testid="team-approvals" data-board-layout="detail" className="-mx-3">
+        <div className="flex h-14 items-center gap-1 border-b border-border-soft bg-surface px-2">
+          <Link href={listHref} aria-label={t("common.back")} className="grid h-10 w-10 shrink-0 place-items-center rounded-sm text-text hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus" data-phone-back="">
+            <ArrowLeft size={20} aria-hidden />
+          </Link>
+          <div className="min-w-0 flex-1 leading-tight">
+            <span className="block truncate text-small font-semibold text-text">{rowTitle(selected, t)}</span>
+            <span className="block truncate text-caption text-text-secondary">{team.name} › {t("tc.tab.approvals")}</span>
+          </div>
+        </div>
+        <div className="px-3 pb-44 pt-4">{detail}</div>
+        {toastNode}
+      </section>
+    );
+  }
+
+  const list = (
+    <div className="flex min-w-0 flex-col" data-board-list="">
+      <div className="space-y-2 px-3 py-3 md:px-4">
+        <div role="group" aria-label={t("tc.appr.statusAria")} className="flex rounded-sm bg-surface-soft p-1 text-label font-semibold">
+          {APPROVAL_SEGMENTS.map((key) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setSegment(key)}
+              aria-pressed={segment === key}
+              data-board-segment={key}
+              className={cn("h-9 flex-1 truncate rounded-sm px-2", segment === key ? "bg-surface text-text shadow-xs" : "text-text-muted hover:text-text")}
+            >
+              {t(SEGMENT_LABEL[key])}
+            </button>
+          ))}
         </div>
         {decidable.length > 1 && (
-          <Button type="button" variant="outline" disabled={busy} onClick={() => void run(() => decideReview(decidable.map((item) => item.id), "approve"), "tp.review.approvedToast")} data-board-approve-all>
+          <Button type="button" variant="ghost" size="sm" disabled={busy} data-board-approve-all onClick={() => void run(() => decideReview(decidable.flatMap((row) => (row.type === "item" ? [row.item.id] : [])), "approve"), "tp.review.approvedToast")}>
             <Check size={16} aria-hidden />
             {t("tp.review.approveAll", { count: decidable.length })}
           </Button>
         )}
+      </div>
+      {rows.length === 0 ? (
+        <p className="px-4 py-8 text-center text-small text-text-muted" data-board-column={segment}>
+          {t("tc.appr.columnEmpty")}
+        </p>
+      ) : (
+        <ul aria-label={t("tc.appr.listAria")} data-board-column={segment}>
+          {rows.map((row) => (
+            <li key={row.key}>
+              <ApprovalListRow row={row} selected={selected?.key === row.key} onOpen={() => open(row)} />
+            </li>
+          ))}
+        </ul>
+      )}
+      <p className="px-4 py-3 text-caption text-text-muted">{t("tc.appr.leadsSeeAll")}</p>
+    </div>
+  );
+
+  return (
+    <section className="space-y-3" data-testid="team-approvals">
+      {empty ? (
+        <EmptyState scene="inbox" icon={ListChecks} title={t("tc.appr.empty")} description={t("tc.appr.emptyBody")} />
+      ) : phone ? (
+        <div data-board-layout="list">{list}</div>
+      ) : (
+        <div className="grid border-t border-border-soft md:grid-cols-[300px_minmax(0,1fr)] xl:grid-cols-[420px_minmax(0,1fr)]" data-board-layout="split">
+          <div className="min-w-0 border-border-soft md:border-r md:max-h-[calc(100dvh-16rem)] md:overflow-y-auto">{list}</div>
+          <div className="min-w-0 px-4 py-5 md:px-6 xl:px-9 xl:py-6">{detail ?? <p className="py-8 text-center text-small text-text-muted">{t("tc.appr.columnEmpty")}</p>}</div>
+        </div>
+      )}
+      {toastNode}
+    </section>
+  );
+}
+
+function rowTitle(row: ApprovalRow, t: (key: TranslationKey) => string): string {
+  if (row.type === "proposal") return row.proposal.proposedTitle || row.proposal.currentTitle || t(kindKey(row.proposal.kind));
+  return row.item.title || t(kindKey(row.item.kind));
+}
+
+function rowWhere(row: ApprovalRow, t: (key: TranslationKey) => string): string {
+  if (row.type === "proposal") return [row.proposal.proposerName, row.proposal.fileTitle ? `${row.proposal.projectTitle} › ${row.proposal.fileTitle}` : row.proposal.projectTitle].filter(Boolean).join(" · ");
+  const place = row.item.fileTitle ? `${row.item.projectTitle} › ${row.item.fileTitle}` : `${row.item.projectTitle} › ${t("tp.area.projectWide")}`;
+  return [row.item.authorName, place].filter(Boolean).join(" · ");
+}
+
+function ApprovalListRow({ row, selected, onOpen }: { row: ApprovalRow; selected: boolean; onOpen: () => void }) {
+  const { t, language } = useTranslation();
+  const isProposal = row.type === "proposal";
+  const state = row.type === "item" ? row.item.state : "pending";
+  const waiting = state === "pending" && (isProposal || row.item.canDecide);
+  const when = row.type === "item" ? (row.item.decidedAt ?? row.item.submittedAt) : row.proposal.proposedAt;
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      aria-current={selected ? "true" : undefined}
+      data-board-card={row.type === "item" ? row.item.id : undefined}
+      data-board-proposal={row.type === "proposal" ? row.proposal.itemId : undefined}
+      data-board-state={state}
+      className={cn(
+        "flex w-full min-w-0 flex-col gap-0.5 border-b border-border-soft px-4 py-3 text-left transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-focus",
+        selected && "bg-surface-soft",
+      )}
+    >
+      <span className="flex items-center gap-2 text-caption font-semibold text-text-muted">
+        {waiting && <span aria-hidden className="h-2 w-2 shrink-0 rounded-full bg-primary" />}
+        <span className="truncate">{isProposal ? t("tc.appr.proposal") : t(STATE_LABEL[state])}</span>
+        {when && <span className="ml-auto shrink-0 font-normal">{formatRelativeTime(when, language)}</span>}
+      </span>
+      <span className="truncate text-body font-semibold text-text">{rowTitle(row, t)}</span>
+      <span className="truncate text-small text-text-muted">{rowWhere(row, t)}</span>
+    </button>
+  );
+}
+
+/** Seçilen satırın ayrıntısı: durum etiketi, başlık, yazar/yer, içerik, karar notu + düğmeler, geçmiş. */
+function ApprovalDetail({
+  teamId,
+  row,
+  busy,
+  error,
+  note,
+  onNote,
+  onApprove,
+  onChanges,
+  phone,
+}: {
+  teamId: string;
+  row: ApprovalRow;
+  busy: boolean;
+  error: string | null;
+  note: string;
+  onNote: (text: string) => void;
+  onApprove: () => void;
+  onChanges: () => void;
+  phone: boolean;
+}) {
+  const { t, language } = useTranslation();
+  const isProposal = row.type === "proposal";
+  const item: BoardItem | null = row.type === "item" ? row.item : null;
+  const proposal: BoardProposal | null = row.type === "proposal" ? row.proposal : null;
+  const state = item?.state ?? "pending";
+  const canDecide = isProposal || Boolean(item?.canDecide && item.state === "pending");
+  const body = proposal ? proposal.proposedBody : (item?.body ?? "");
+  const when = item ? (item.decidedAt ?? item.submittedAt) : proposal?.proposedAt ?? null;
+  const author = item?.authorName ?? proposal?.proposerName ?? "";
+  const href = item
+    ? boardItemHref(teamId, item)
+    : proposal && (proposal.fileId ? projectLink(teamId, proposal.projectId, { file: proposal.fileId, item: proposal.itemId }) : projectLink(teamId, proposal.projectId, { board: proposal.spaceId, item: proposal.itemId }));
+  const noteId = "board-decision-note";
+  const kind = item?.kind ?? proposal?.kind ?? "content";
+  const variables = kind === "prompt" ? variablesOf(body) : [];
+  const history: string[] = [];
+  if (proposal) history.push(t("tc.appr.history.proposed", { name: author, time: formatRelativeTime(proposal.proposedAt, language) }));
+  if (item?.submittedAt) history.push(t("tc.appr.history.submitted", { name: author, time: formatRelativeTime(item.submittedAt, language) }));
+  if (item?.decidedAt && item.state === "approved") history.push(t("tc.appr.history.approved", { time: formatRelativeTime(item.decidedAt, language) }));
+  if (item?.decidedAt && item.state === "changes") history.push(t("tc.appr.history.changes", { time: formatRelativeTime(item.decidedAt, language) }));
+
+  const actions = canDecide ? (
+    <div className="flex flex-wrap items-center gap-2">
+      <Button type="button" size={phone ? "lg" : "md"} className={cn("xl:h-12 xl:px-6", phone && "order-2 flex-1")} disabled={busy} onClick={onApprove} data-board-approve>
+        {t("tp.review.approve")}
+      </Button>
+      <Button type="button" variant="outline" size={phone ? "lg" : "md"} className={cn("xl:h-12 xl:px-6", phone && "order-1 flex-1")} disabled={busy} onClick={onChanges} data-board-changes>
+        {t("tp.review.requestChanges")}
+      </Button>
+      {href && !phone && (
+        <Link href={href} className={buttonClassName({ variant: "ghost", className: "xl:h-12 xl:px-6" })} data-board-open="">
+          {t("tc.appr.openItem")}
+        </Link>
+      )}
+    </div>
+  ) : (
+    <div className="flex flex-wrap items-center gap-3">
+      {state === "pending" && <p className="text-caption text-text-muted">{t("tc.appr.leadOnly")}</p>}
+      {state === "changes" && item && <p className="text-caption font-semibold text-danger">{item.mine ? t("tc.appr.fixIt") : t("tc.appr.waitingAuthor", { name: item.authorName ?? "" })}</p>}
+      {href && (
+        <Link href={href} className={buttonClassName({ variant: "outline" })} data-board-open="">
+          {t("tc.appr.openItem")}
+        </Link>
+      )}
+    </div>
+  );
+
+  return (
+    <article className="space-y-5" data-board-detail={row.key}>
+      <header className="space-y-2">
+        <span className={cn("inline-flex items-center rounded-xs px-2 py-0.5 text-caption font-semibold", state === "approved" ? "bg-success-soft text-success" : state === "changes" ? "bg-danger-soft text-danger" : "bg-primary-soft text-primary-text")}>
+          {isProposal ? t("tc.appr.proposal") : t(STATE_LABEL[state])}
+        </span>
+        <h2 className="break-words font-display text-h2 font-bold text-text xl:text-h1">{rowTitle(row, t)}</h2>
+        <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-caption text-text-secondary">
+          <Avatar src={null} alt={author} size={24} className="rounded-full" />
+          <span>
+            {[author, rowWhere(row, t).split(" · ").slice(1).join(" · "), when ? formatRelativeTime(when, language) : null, t(kindKey(kind))].filter(Boolean).join(" · ")}
+          </span>
+        </p>
+        {item && item.unitCount > 1 && <p className="text-caption text-text-muted">{t("tc.appr.packageNote", { count: item.unitCount })}</p>}
       </header>
 
-      {projects.length > 1 && (
-        <div className="flex flex-wrap gap-2" role="group" aria-label={t("tp.review.filterAria")}>
-          {[{ id: "all", title: t("tc.appr.allProjects"), count: 0 }, ...projects].map((entry) => (
-            <button
-              key={entry.id}
-              type="button"
-              onClick={() => setProject(entry.id)}
-              aria-pressed={project === entry.id}
-              data-board-project={entry.id}
-              className={cn("h-9 rounded-sm border px-4 text-small font-semibold", project === entry.id ? "border-transparent bg-primary-soft text-primary-text" : "border-border-soft bg-surface text-text-secondary hover:bg-surface-soft")}
-            >
-              {entry.title}
-              {entry.count > 0 && <span className="ml-1.5 tabular-nums opacity-70">{entry.count}</span>}
-            </button>
+      <Content item={item} proposal={proposal} body={body} />
+      {variables.length > 0 && (
+        <div className="flex flex-wrap gap-2" data-board-variables="">
+          {variables.map((name) => (
+            <span key={name} className="inline-flex h-8 items-center rounded-sm bg-surface-soft px-3 text-label font-semibold text-text">{`{${name}}`}</span>
           ))}
         </div>
       )}
+      {item?.state === "changes" && item.note && <p className="rounded-lg bg-danger-soft px-3 py-2.5 text-small text-danger">{t("tc.appr.leadNote", { note: item.note })}</p>}
+      {proposal?.note && <p className="rounded-lg bg-surface-soft px-3 py-2.5 text-small text-text-secondary">{proposal.note}</p>}
 
+      {canDecide && (
+        <div className="space-y-2">
+          <label htmlFor={noteId} className="sr-only">
+            {t("tp.review.noteLabel")}
+          </label>
+          <textarea
+            id={noteId}
+            value={note}
+            onChange={(event) => onNote(event.target.value)}
+            maxLength={500}
+            rows={3}
+            placeholder={t("tc.appr.notePlaceholder")}
+            className="w-full rounded-sm border border-[var(--p-control-border,var(--color-border-strong))] bg-surface px-3 py-3 text-body text-text shadow-xs placeholder:text-text-muted focus:border-focus focus:outline-none focus:shadow-focus"
+          />
+        </div>
+      )}
       {error && (
         <p role="alert" className="text-small text-danger">
           {error}
         </p>
       )}
 
-      {empty ? (
-        <EmptyState scene="inbox" icon={ListChecks} title={t("tc.appr.empty")} description={t("tc.appr.emptyBody")} />
-      ) : wide ? (
-        <div className="grid grid-cols-3 gap-4" data-board-layout="columns">
-          {(["pending", "changes", "approved"] as const).map((state) => (
-            <div key={state} className="rounded-xl bg-surface-soft p-3">
-              <h3 className="mb-2.5 flex items-center gap-2 px-1.5 font-display text-body font-bold text-text">
-                <span aria-hidden className={cn("h-2.5 w-2.5 rounded-full", COLUMN[state].dot)} />
-                {t(COLUMN[state].label)}
-                <span className="ml-auto font-sans text-small font-semibold text-text-muted">{cardsOf(state).length}</span>
-              </h3>
-              {renderColumn(state)}
-            </div>
-          ))}
+      {phone ? (
+        // Telefon: karar düğmeleri alt menünün üstünde sabit durur; klavye açılınca gizlenir (data-keyboard-hide).
+        <div data-keyboard-hide="" className="fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-20 border-t border-border-soft bg-surface px-3 py-2.5">
+          {actions}
         </div>
       ) : (
-        <div className="space-y-3" data-board-layout="segments">
-          <div role="group" aria-label={t("tc.appr.statusAria")} className="flex rounded-sm bg-surface-soft p-[3px] text-small font-semibold">
-            {(["pending", "changes", "approved"] as const).map((state) => (
-              <button
-                key={state}
-                type="button"
-                onClick={() => setSegment(state)}
-                aria-pressed={segment === state}
-                data-board-segment={state}
-                className={cn("h-11 flex-1 rounded-sm px-2", segment === state ? "bg-surface text-text shadow-xs" : "text-text-muted")}
-              >
-                {t(COLUMN[state].short)} {cardsOf(state).length}
-              </button>
-            ))}
-          </div>
-          {renderColumn(segment)}
-        </div>
+        actions
       )}
 
-      {changing && <ChangesDialog busy={busy} onClose={() => setChanging(null)} onSubmit={(note) => void requestChanges(changing, note)} />}
-      {toastNode}
-    </section>
-  );
-}
-
-function BoardCard({ teamId, card, state, busy, onApprove, onChanges }: { teamId: string; card: Card; state: BoardState; busy: boolean; onApprove: () => void; onChanges: () => void }) {
-  const { t, language } = useTranslation();
-  if (card.type === "proposal") {
-    const p = card.proposal;
-    return (
-      <article className="space-y-2 rounded-lg bg-surface p-4" data-board-proposal={p.itemId}>
-        <span className="block text-caption font-semibold text-text-muted">
-          {t("tc.appr.proposal")} · {p.fileTitle ?? p.projectTitle}
-        </span>
-        <Link href={p.fileId ? projectLink(teamId, p.projectId, { file: p.fileId, item: p.itemId }) : projectLink(teamId, p.projectId, { board: p.spaceId, item: p.itemId })} className="block text-body font-semibold text-text hover:text-primary-text">
-          {p.proposedTitle || p.currentTitle || t(kindKey(p.kind))}
-        </Link>
-        <p className="text-small text-text-secondary">{t("tp.review.proposedBy", { name: p.proposerName ?? "" })}</p>
-        {p.proposedBody && <p className="line-clamp-3 whitespace-pre-wrap break-words rounded-lg bg-surface-soft p-2.5 font-mono text-caption text-text">{p.proposedBody}</p>}
-        <Actions busy={busy} onApprove={onApprove} onChanges={onChanges} />
-      </article>
-    );
-  }
-  const item = card.item;
-  const when = item.decidedAt ?? item.submittedAt;
-  return (
-    <article className="space-y-2 rounded-lg bg-surface p-4" data-board-card={item.id} data-board-state={item.state}>
-      <span className="block text-caption font-semibold text-text-muted">
-        {item.unitCount > 1 ? t("tc.appr.package", { count: item.unitCount }) : t(kindKey(item.kind))} · {item.fileTitle ?? t("tp.area.projectWide")}
-      </span>
-      <Link href={boardItemHref(teamId, item)} className="block text-body font-semibold text-text hover:text-primary-text" data-board-open>
-        {item.title || t(kindKey(item.kind))}
-      </Link>
-      <p className="text-small text-text-secondary">
-        {[state === "approved" ? t("tc.appr.approvedAt") : item.authorName, when ? formatRelativeTime(when, language) : null].filter(Boolean).join(" · ")}
-      </p>
-      {item.unitCount > 1 && <p className="text-caption text-text-muted">{t("tp.review.packageHint", { count: item.unitCount })}</p>}
-      <Preview item={item} />
-      {state === "changes" && item.note && <p className="rounded-lg bg-danger-soft px-2.5 py-2 text-small text-danger">{t("tc.appr.leadNote", { note: item.note })}</p>}
-      {state === "changes" && <p className="text-caption font-semibold text-danger">{item.mine ? t("tc.appr.fixIt") : t("tc.appr.waitingAuthor", { name: item.authorName ?? "" })}</p>}
-      {state === "pending" && item.canDecide && <Actions busy={busy} onApprove={onApprove} onChanges={onChanges} />}
-      {state === "pending" && !item.canDecide && <p className="text-caption text-text-muted">{t("tc.appr.leadOnly")}</p>}
+      {history.length > 0 && (
+        <section className="space-y-1.5 border-t border-border-soft pt-4" aria-label={t("tc.appr.history")}>
+          <h3 className="text-label font-semibold text-text-muted">{t("tc.appr.history")}</h3>
+          <ul className="space-y-1 text-small text-text">
+            {history.map((line) => (
+              <li key={line}>{line}</li>
+            ))}
+          </ul>
+        </section>
+      )}
     </article>
   );
 }
 
-function Preview({ item }: { item: BoardItem }) {
-  if (item.kind === "image" && item.mediaUrl) return <StorageImg src={item.mediaUrl} alt={item.title} className="h-24 w-full rounded-lg object-cover" />;
-  if (item.body) return <p className="line-clamp-3 whitespace-pre-wrap break-words rounded-lg bg-surface-soft p-2.5 font-mono text-caption text-text">{item.body}</p>;
-  return null;
-}
-
-function Actions({ busy, onApprove, onChanges }: { busy: boolean; onApprove: () => void; onChanges: () => void }) {
+/** Öğenin içeriği: görsel büyük, prompt koyu mono blokta (`{değişken}`ler vurgulu), diğerleri sade metin. */
+function Content({ item, proposal, body }: { item: BoardItem | null; proposal: BoardProposal | null; body: string }): ReactNode {
   const { t } = useTranslation();
+  if (item?.kind === "image" && item.mediaUrl) return <StorageImg src={item.mediaUrl} alt={item.title} className="max-h-[28rem] w-full rounded-lg object-cover" />;
+  if (!body) return null;
+  const kind = item?.kind ?? proposal?.kind;
+  if (kind === "prompt") {
+    const parts = body.split(/(\{[^{}\s]{1,40}\})/g);
+    return (
+      <div className="whitespace-pre-wrap break-words rounded-lg bg-text p-4 text-background prompt-text" data-board-body="">
+        {proposal && <span className="mb-2 block font-sans text-caption font-semibold opacity-80">{t("tc.appr.proposalFrom")}</span>}
+        {parts.map((part, index) => (
+          <Fragment key={index}>{/^\{[^{}\s]{1,40}\}$/.test(part) ? <span className="font-semibold text-primary">{part}</span> : part}</Fragment>
+        ))}
+      </div>
+    );
+  }
   return (
-    <div className="flex gap-2 pt-1">
-      <Button type="button" variant="outline" size="sm" className="h-11 flex-1 md:h-9" disabled={busy} onClick={onChanges} data-board-changes>
-        {t("tp.review.requestChanges")}
-      </Button>
-      <Button type="button" size="sm" className="h-11 flex-1 bg-success hover:bg-success/90 md:h-9" disabled={busy} onClick={onApprove} data-board-approve>
-        {t("tp.review.approve")}
-      </Button>
+    <div className="whitespace-pre-wrap break-words rounded-lg bg-surface-soft p-4 text-small text-text" data-board-body="">
+      {proposal && <span className="mb-2 block text-caption font-semibold text-text-muted">{t("tc.appr.proposalFrom")}</span>}
+      {body}
     </div>
-  );
-}
-
-/** "Değişiklik iste": not ZORUNLUDUR (sunucu da ister). */
-function ChangesDialog({ busy, onClose, onSubmit }: { busy: boolean; onClose: () => void; onSubmit: (note: string) => void }) {
-  const { t } = useTranslation();
-  const [note, setNote] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  return (
-    <SpaceDialog
-      title={t("tp.review.requestChanges")}
-      onClose={onClose}
-      busy={busy}
-      formTestId="board-changes-form"
-      onSubmit={(event) => {
-        event.preventDefault();
-        if (!note.trim()) {
-          setError(t("tp.review.noteRequired"));
-          return;
-        }
-        onSubmit(note.trim());
-      }}
-      footer={
-        <>
-          <Button type="button" variant="ghost" onClick={onClose} disabled={busy}>
-            {t("common.cancel")}
-          </Button>
-          <Button type="submit" disabled={busy}>
-            {t("tp.review.send")}
-          </Button>
-        </>
-      }
-    >
-      <label className="block text-small font-semibold text-text" htmlFor="board-changes-note">
-        {t("tp.review.noteLabel")}
-      </label>
-      <textarea id="board-changes-note" value={note} onChange={(event) => setNote(event.target.value)} maxLength={500} rows={4} placeholder={t("tp.review.notePlaceholder")} className="mt-2 w-full rounded-sm card-inset px-3 py-2 text-small" />
-      {error && (
-        <p role="alert" className="mt-2 text-small text-danger">
-          {error}
-        </p>
-      )}
-    </SpaceDialog>
   );
 }

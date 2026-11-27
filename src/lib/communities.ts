@@ -485,6 +485,11 @@ export function communityChatHref(id: string): string {
   return `/messages/local?id=${encodeURIComponent(id)}`;
 }
 
+/** Topluluğun bir sohbet odası (docs/history/474-*): oda adresteki `?room=`dur (paylaşılabilir, Geri çalışır). */
+export function communityRoomHref(id: string, roomId: string): string {
+  return `${communityChatHref(id)}&room=${encodeURIComponent(roomId)}`;
+}
+
 // ---------------------------------------------------------------------------------------------
 // Denetim kaydı eylem adları → çeviri anahtarı
 // ---------------------------------------------------------------------------------------------

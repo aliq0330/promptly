@@ -737,47 +737,75 @@ const boardSetup = (items) => (db) => {
   db.rpc.team_review_decide = (b) => { db.teamCalls.push({ name: "team_review_decide", body: b }); return { body: (b.p_item_ids ?? []).length }; };
 };
 
-await scenario("43. Onaylar (masaüstü): üç sütun; Onayla → team_review_decide(approve); Değişiklik iste not zorunlu → changes + not", async ({ page, db }) => {
+await scenario("43. Onaylar (masaüstü): liste + ayrıntı; Onayla → team_review_decide(approve); Değişiklik iste not zorunlu → changes + not (docs/history/474-*)", async ({ page, db }) => {
   await page.goto(`${BASE}/teams/local?id=atolye-mor&tab=approvals`);
   const board = page.getByTestId("team-approvals");
   await board.waitFor();
-  await board.locator("[data-board-layout=columns]").waitFor();
-  assert.equal(await board.locator('[data-board-column="pending"] [data-board-card]').count(), 2);
-  assert.equal(await board.locator('[data-board-column="changes"] [data-board-card]').count(), 1);
-  assert.equal(await board.locator('[data-board-column="approved"] [data-board-card]').count(), 1);
-  await board.locator('[data-board-card="p1"] [data-board-approve]').click();
-  await page.waitForFunction(() => true);
+  await board.locator("[data-board-layout=split]").waitFor();
+  // Bana bekleyen: kararı bekleyen iki öğe; ilk satırın ayrıntısı açık gelir.
+  assert.equal(await board.locator('[data-board-column="inbox"] [data-board-card]').count(), 2);
+  await board.locator('[data-board-detail="p1"]').waitFor();
+  await board.locator('[data-board-detail="p1"] [data-board-approve]').click();
   await page.waitForTimeout(300);
   const approve = db.teamCalls.filter((c) => c.name === "team_review_decide").at(-1)?.body;
   assert.deepEqual([approve.p_item_ids, approve.p_decision], [["p1"], "approve"]);
-  await board.locator('[data-board-card="p2"] [data-board-changes]').click();
-  const form = page.getByTestId("board-changes-form");
-  await form.waitFor();
-  await form.getByRole("button", { name: "Gönder" }).click();
-  await form.getByText("Değişiklik isterken bir not yaz.").waitFor();
-  await form.getByRole("textbox").fill("Daha kısa yaz");
-  await form.getByRole("button", { name: "Gönder" }).click();
+  // İkinci satır: not yazmadan «Değişiklik iste» hata verir, notla gider.
+  await board.locator('[data-board-card="p2"]').click();
+  await board.locator('[data-board-detail="p2"]').waitFor();
+  await board.locator('[data-board-detail="p2"] [data-board-changes]').click();
+  await board.getByText("Değişiklik isterken bir not yaz.").waitFor();
+  await board.getByRole("textbox").fill("Daha kısa yaz");
+  await board.locator('[data-board-detail="p2"] [data-board-changes]').click();
   await page.waitForTimeout(300);
   const changes = db.teamCalls.filter((c) => c.name === "team_review_decide").at(-1)?.body;
   assert.deepEqual([changes.p_item_ids, changes.p_decision, changes.p_note], [["p2"], "changes", "Daha kısa yaz"]);
+  // Karar verilen: değişiklik istenen öğe liderin notuyla görünür.
+  await board.locator("[data-board-segment=decided]").click();
+  assert.equal(await board.locator('[data-board-column="decided"] [data-board-card]').count(), 2);
+  await board.locator('[data-board-card="c1"]').click();
   await board.getByText("Liderin notu: Ölçüleri yaz").waitFor();
+  assert.ok(await overflowFree(page));
 }, { setup: boardSetup([boardItem("p1", "pending"), boardItem("p2", "pending"), boardItem("c1", "changes", { note: "Ölçüleri yaz" }), boardItem("a1", "approved")]) });
 
-await scenario("44. Onaylar (tablet): segmentli tek liste; sekme sayacı bekleyen karar sayısı; kart öğe çekmecesine gider", async ({ page }) => {
+await scenario("44. Onaylar (tablet): liste 300 + ayrıntı; sekme sayacı bekleyen karar sayısı; «Öğeyi aç» öğe çekmecesine gider", async ({ page }) => {
   await page.goto(`${BASE}/teams/local?id=atolye-mor&tab=approvals`);
-  await page.locator("[data-board-layout=segments]").waitFor();
+  await page.locator("[data-board-layout=split]").waitFor();
   await page.locator("[data-team-tab-link=approvals]").getByText("2").waitFor();
-  await page.locator("[data-board-segment=changes]").click();
-  await page.getByText("Liderin notu: Ölçüleri yaz").waitFor();
-  await page.locator("[data-board-segment=pending]").click();
-  const href = await page.locator('[data-board-card="p1"] [data-board-open]').getAttribute("href");
+  const list = await page.locator("[data-board-list]").evaluate((el) => Math.round(el.getBoundingClientRect().width));
+  assert.ok(list >= 290 && list <= 310, `list width ${list}`);
+  const href = await page.locator('[data-board-detail="p1"] [data-board-open]').getAttribute("href");
   assert.ok(href.includes("project=") && href.includes("file=f1") && href.includes("item=p1"), href);
   assert.ok(await overflowFree(page));
 }, { viewport: { width: 834, height: 1000 }, setup: boardSetup([boardItem("p1", "pending"), boardItem("p2", "pending"), boardItem("c1", "changes", { note: "Ölçüleri yaz" })]) });
 
-await scenario("45. Onaylar: üye yalnız kendi öğesini görür, karar düğmesi yok", async ({ page }) => {
+await scenario("44b. Onaylar (telefon): önce liste; satıra dokununca tam ekran ayrıntı (bant/sekmeler gizli, alt sabit karar çubuğu); Geri listeye döner", async ({ page, db }) => {
+  await page.goto(`${BASE}/teams/local?id=atolye-mor&tab=approvals`);
+  await page.locator("[data-board-layout=list]").waitFor();
+  assert.equal(await page.locator("[data-board-detail]").count(), 0, "liste açıkken ayrıntı yok");
+  await page.locator('[data-board-card="p1"]').click();
+  await page.locator("[data-board-layout=detail]").waitFor();
+  assert.ok(page.url().includes("decision=p1"), page.url());
+  if (process.env.SHOT) await page.screenshot({ path: `${process.env.SHOT}/44b_detail.png` }).catch(() => undefined);
+  assert.equal(await page.locator("[data-team-chrome]").count(), 0, "bant ve sekmeler gizli");
+  const bar = await page.locator("[data-keyboard-hide]").filter({ has: page.locator("[data-board-approve]") }).evaluate((el) => getComputedStyle(el).position);
+  assert.equal(bar, "fixed");
+  await page.locator("[data-board-approve]").click();
+  await page.waitForTimeout(300);
+  const approve = db.teamCalls.filter((c) => c.name === "team_review_decide").at(-1)?.body;
+  assert.deepEqual([approve.p_item_ids, approve.p_decision], [["p1"], "approve"]);
+  await page.locator("[data-board-layout=list]").waitFor();
+  assert.ok(await overflowFree(page));
+  await page.locator('[data-board-card="p2"]').click();
+  await page.locator("[data-board-layout=detail]").waitFor();
+  await page.locator("[data-phone-back]").click();
+  await page.locator("[data-board-layout=list]").waitFor();
+}, { viewport: { width: 390, height: 800 }, setup: boardSetup([boardItem("p1", "pending"), boardItem("p2", "pending")]) });
+
+await scenario("45. Onaylar: üye yalnız kendi öğesini görür (Gönderdiklerim), karar düğmesi yok", async ({ page }) => {
   await page.goto(`${BASE}/teams/local?id=atolye-mor&tab=approvals`);
   await page.getByTestId("team-approvals").waitFor();
+  await page.locator("[data-board-segment=sent]").click();
+  await page.locator('[data-board-card="m1"]').click();
   await page.getByText("Kararı projenin lideri verir.").first().waitFor();
   assert.equal(await page.locator("[data-board-approve]").count(), 0);
 }, { role: "member", setup: boardSetup([boardItem("m1", "pending", { can_decide: false, mine: true })]) });

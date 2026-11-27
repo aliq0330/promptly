@@ -559,4 +559,12 @@ export const spaceTranslations = {
   "spaces.error.upload": { tr: "Görsel yüklenemedi.", en: "The image couldn't be uploaded." },
   // Puan + yorum (docs/history/242-*)
   // Etkinlik geçmişi (docs/history/242-*)
+
+  // ---- Başlık + Genel bakış duvarı (docs/history/474-*) ----
+  "spaces.header.itemsTag": { tr: "{{count}} öğe", en: "{{count}} items" },
+  "spaces.header.kindMembers": { tr: "{{kind}} · {{count}} üye", en: "{{kind}} · {{count}} members" },
+  "spaces.overview.tagImage": { tr: "Görsel", en: "Image" },
+  "spaces.overview.moreMembers": { tr: "+ {{count}} üye", en: "+ {{count}} more" },
+  "spaces.overview.moreOnBoard": { tr: "Tümünü panoda gör ({{count}})", en: "See all on the board ({{count}})" },
+  "spaces.overview.wallAria": { tr: "Space içeriği", en: "Space contents" },
 } as const;

@@ -89,4 +89,23 @@ export const teamCenterTranslations = {
   // --- Yönetim ---
   "tc.admin.overview": { tr: "Genel", en: "General" },
   "tc.admin.auditAll": { tr: "Tümü", en: "See all" },
+
+  // --- Onaylar sekmesi: liste + ayrıntı (docs/history/474-*) ---
+  "tc.appr.seg.inbox": { tr: "Bana bekleyen", en: "Waiting for me" },
+  "tc.appr.seg.sent": { tr: "Gönderdiklerim", en: "Sent by me" },
+  "tc.appr.seg.decided": { tr: "Karar verilen", en: "Decided" },
+  "tc.appr.listAria": { tr: "Onay listesi", en: "Review list" },
+  "tc.appr.state.pending": { tr: "ONAY BEKLİYOR", en: "WAITING FOR REVIEW" },
+  "tc.appr.state.changes": { tr: "DEĞİŞİKLİK İSTENDİ", en: "CHANGES REQUESTED" },
+  "tc.appr.state.approved": { tr: "ONAYLANDI", en: "APPROVED" },
+  "tc.appr.notePlaceholder": { tr: "Karar notu (değişiklik isterken zorunlu)", en: "Decision note (required when requesting changes)" },
+  "tc.appr.openItem": { tr: "Öğeyi aç", en: "Open item" },
+  "tc.appr.history": { tr: "Geçmiş", en: "History" },
+  "tc.appr.history.submitted": { tr: "{{name}} onaya gönderdi · {{time}}", en: "{{name}} submitted for review · {{time}}" },
+  "tc.appr.history.proposed": { tr: "{{name}} değişiklik önerdi · {{time}}", en: "{{name}} proposed a change · {{time}}" },
+  "tc.appr.history.approved": { tr: "Onaylandı · {{time}}", en: "Approved · {{time}}" },
+  "tc.appr.history.changes": { tr: "Değişiklik istendi · {{time}}", en: "Changes requested · {{time}}" },
+  "tc.appr.leadsSeeAll": { tr: "Liderler tüm kuyruğu görür; diğer üyeler yalnız kendi öğelerini görür.", en: "Leads see the whole queue; other members only see their own items." },
+  "tc.appr.proposalFrom": { tr: "Önerilen değişiklik", en: "Proposed change" },
+  "tc.appr.packageNote": { tr: "Paket · {{count}} öğe birlikte karar görür.", en: "Package · its {{count}} items are decided together." },
 } as const;

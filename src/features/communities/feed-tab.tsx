@@ -5,6 +5,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { LoadMoreButton } from "@/features/feed/load-more";
 import { createPortal } from "react-dom";
 import { useRouter, useSearchParams } from "next/navigation";
+import { Check } from "@/components/icons/check";
+import { ChevronDown } from "@/components/icons/chevron-down";
 import { Flag } from "@/components/icons/flag";
 import { Pencil } from "@/components/icons/pencil";
 import { Pin } from "@/components/icons/pin";
@@ -42,6 +44,7 @@ import {
   moderateCommunityPost,
   setCommunityPostPinned,
   updateCommunityPostNote,
+  type CommunityFeedOrder,
   type CommunityPost,
 } from "@/lib/supabase/communities";
 import { can, isGroupStaff } from "@/lib/chat-groups";
@@ -75,6 +78,7 @@ export function FeedTab(props: CommunityTabProps) {
   const [pinned, setPinned] = useState<CommunityPost[] | null>(null);
   const [posts, setPosts] = useState<CommunityPost[] | null>(null);
   const [hasMore, setHasMore] = useState(false);
+  const [order, setOrder] = useState<CommunityFeedOrder>("new");
   const [loadError, setLoadError] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
@@ -93,7 +97,7 @@ export function FeedTab(props: CommunityTabProps) {
 
   const load = useCallback(async () => {
     try {
-      const [pins, page] = await Promise.all([fetchPinnedPosts(group.id), fetchCommunityPosts(group.id, null)]);
+      const [pins, page] = await Promise.all([fetchPinnedPosts(group.id), fetchCommunityPosts(group.id, null, order)]);
       setPinned(pins);
       setPosts(page.posts);
       setHasMore(page.hasMore);
@@ -102,7 +106,7 @@ export function FeedTab(props: CommunityTabProps) {
       console.error("community feed", err);
       setLoadError(true);
     }
-  }, [group.id]);
+  }, [group.id, order]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- ilk yükleme
@@ -140,7 +144,7 @@ export function FeedTab(props: CommunityTabProps) {
     const last = posts[posts.length - 1];
     setLoadingMore(true);
     try {
-      const page = await fetchCommunityPosts(group.id, { createdAt: last.createdAt, id: last.id });
+      const page = await fetchCommunityPosts(group.id, { createdAt: last.createdAt, id: last.id, likeCount: last.likeCount }, order);
       setPosts([...posts, ...page.posts]);
       setHasMore(page.hasMore);
     } catch (err) {
@@ -200,6 +204,38 @@ export function FeedTab(props: CommunityTabProps) {
                 {t("communities.feed.share")}
               </Button>
             )}
+            {/* Sıralama (docs/history/474-*): en yeni (varsayılan) ya da en çok beğenilen; sabitlenenler her zaman üstte kalır. */}
+            <span className="ml-auto" data-feed-sort="">
+              <DropdownMenu
+                label={t("communities.feed.sort.aria")}
+                triggerClassName="inline-flex h-9 items-center gap-2 rounded-sm border border-border bg-surface px-3 text-label font-semibold text-text shadow-xs hover:border-border-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+                trigger={
+                  <>
+                    {t(order === "new" ? "communities.feed.sort.new" : "communities.feed.sort.top")}
+                    <ChevronDown size={16} aria-hidden />
+                  </>
+                }
+              >
+                {(close) => (
+                  <>
+                    {(["new", "top"] as const).map((key) => (
+                      <MenuItem
+                        key={key}
+                        icon={order === key ? <Check size={16} /> : <span className="inline-block h-4 w-4" />}
+                        label={t(key === "new" ? "communities.feed.sort.new" : "communities.feed.sort.top")}
+                        onClick={() => {
+                          close();
+                          if (key !== order) {
+                            setPosts(null);
+                            setOrder(key);
+                          }
+                        }}
+                      />
+                    ))}
+                  </>
+                )}
+              </DropdownMenu>
+            </span>
           </>,
           actionsEl,
         )}

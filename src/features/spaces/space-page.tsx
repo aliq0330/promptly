@@ -3,33 +3,20 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import type { IconComponent } from "@/components/icons/icon";
 import { Archive } from "@/components/icons/archive";
 import { ArchiveRestore } from "@/components/icons/archive-restore";
-import { Eye } from "@/components/icons/eye";
-import { LayoutDashboard } from "@/components/icons/layout-dashboard";
 import { LogOut } from "@/components/icons/log-out";
-import { Palette } from "@/components/icons/palette";
-import { Presentation } from "@/components/icons/presentation";
 import { Settings } from "@/components/icons/settings";
-import { SquareTerminal } from "@/components/icons/square-terminal";
-import { StickyNote } from "@/components/icons/sticky-note";
 import { Trash2 } from "@/components/icons/trash-2";
-import { ImageIcon } from "@/components/icons/image-icon";
-import { UsersRound } from "@/components/icons/users-round";
-import { Avatar } from "@/components/ui/avatar";
 import { Button, buttonClassName } from "@/components/ui/button";
+import { HUB_PAGE_CLASS } from "@/features/hub/hub-kit";
 import { DetailSkeleton, NotFoundBlock } from "@/components/ui/detail-skeleton";
-import { StorageImg } from "@/components/ui/storage-media";
 import { usePageTitle } from "@/components/layout/page-title";
 import { Tabs } from "@/components/ui/tabs";
-import { PhoneSubBar } from "@/features/content/phone-sections";
-import { useMediaQuery } from "@/lib/use-media-query";
-import { HUB_BAND_MENU_BUTTON_CLASS, HUB_PAGE_CLASS, HubDetailBand } from "@/features/hub/hub-kit";
 import { useAuth } from "@/features/auth/auth-provider";
 import { ConfirmDialog } from "@/features/groups/confirm-dialog";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import { cn, formatRelativeTime, profileHref } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import {
   fetchMyRole,
   fetchSpace,
@@ -37,19 +24,18 @@ import {
   fetchSpaceGroups,
   fetchSpaceItems,
   fetchSpacePalettes,
-  fetchSpacePerson,
   removeSpaceMember,
   touchSpace,
   updateSpace,
-  type SpacePerson,
 } from "@/lib/supabase/spaces";
 import { fetchAreaInfo } from "@/lib/supabase/team-projects";
 import { projectLink } from "@/lib/team-projects";
-import { isSpaceTab, SPACE_KIND_LABEL, SPACE_TAB_LABEL, SPACE_TABS, spaceHref, type SpaceTab } from "@/lib/spaces";
+import { isSpaceTab, SPACE_TAB_LABEL, SPACE_TABS, spaceHref, type SpaceTab } from "@/lib/spaces";
 import { SpaceProvider, useSpaceContext, type SpaceData } from "./space-provider";
 import { DeleteSpaceDialog, SpaceSettingsModal } from "./space-modals";
-import { PopoverMenu, type PopoverMenuItem } from "@/components/ui/popover-menu";
-import { PaletteStrip, SpaceCoverArt, SpacesIcon } from "./space-visuals";
+import type { PopoverMenuItem } from "@/components/ui/popover-menu";
+import { SpaceHeader } from "./space-header";
+import { useSpaceMembers } from "./use-space-members";
 import { OverviewTab } from "./tabs/overview-tab";
 import { ImagesTab } from "./tabs/images-tab";
 import { PromptsTab } from "./tabs/prompts-tab";
@@ -59,9 +45,8 @@ import { MembersTab } from "./tabs/members-tab";
 import { SpaceBoard } from "./board/space-board";
 import { CopyItemsDialog } from "./copy-items-dialog";
 import { Copy as CopyIcon } from "@/components/icons/copy";
-import { SaveIndicator } from "./save-indicator";
 
-type LoadState = { status: "loading" } | { status: "missing" } | { status: "error" } | { status: "ready"; data: SpaceData; owner: SpacePerson | null };
+type LoadState = { status: "loading" } | { status: "missing" } | { status: "error" } | { status: "ready"; data: SpaceData };
 
 /**
  * `/spaces/local?id=&tab=` (docs/history/213-*). Space her zaman özeldir (docs/history/459-*): üye olmayan (yok, engel dahil) tek tip
@@ -93,16 +78,15 @@ export function SpacePage() {
           if (alive) setState({ status: "missing" });
           return;
         }
-        const [role, items, groups, palettes, connections, owner] = await Promise.all([
+        const [role, items, groups, palettes, connections] = await Promise.all([
           fetchMyRole(id, userId),
           fetchSpaceItems(id),
           fetchSpaceGroups(id),
           fetchSpacePalettes(id),
           fetchSpaceConnections(id),
-          fetchSpacePerson(space.ownerId),
         ]);
         if (!alive) return;
-        setState({ status: "ready", data: { space, role, items, groups, palettes, connections }, owner });
+        setState({ status: "ready", data: { space, role, items, groups, palettes, connections } });
         if (userId) touchSpace(id);
       } catch {
         if (alive) setState({ status: "error" });
@@ -155,28 +139,17 @@ export function SpacePage() {
   }
   return (
     <SpaceProvider key={state.data.space.id} initial={state.data} userId={user?.id ?? null}>
-      <SpaceView owner={state.owner} />
+      <SpaceView />
     </SpaceProvider>
   );
 }
 
-const SPACE_TAB_ICON: Record<SpaceTab, IconComponent> = {
-  overview: LayoutDashboard,
-  board: Presentation,
-  images: ImageIcon,
-  prompts: SquareTerminal,
-  palette: Palette,
-  notes: StickyNote,
-  members: UsersRound,
-};
-
-function SpaceView({ owner }: { owner: SpacePerson | null }) {
-  const { t, language } = useTranslation();
+function SpaceView() {
+  const { t } = useTranslation();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { space, setSpace, caps, items, palettes, userId, layoutStatus, flushLayout, role } = useSpaceContext();
+  const { space, setSpace, caps, items, userId, flushLayout, role } = useSpaceContext();
   usePageTitle(space.title);
-  const phone = useMediaQuery("(max-width: 767.98px)");
   const tabParam = searchParams.get("tab");
   const noteCount = items.filter((item) => item.kind === "note").length;
   // Space özeldir (docs/history/459-*): sayfayı yalnız üyeler görür; sekmeler hep açık, Notlar yalnız not varken görünmez kalmaz.
@@ -200,7 +173,6 @@ function SpaceView({ owner }: { owner: SpacePerson | null }) {
   const coverItem = items.find((item) => item.id === space.coverItemId);
   const coverUrls = space.coverUrl ? [space.coverUrl] : coverItem?.mediaUrl ? [coverItem.mediaUrl] : images.slice(-4).map((item) => item.mediaUrl!).reverse();
 
-  const leadPalette = palettes.find((palette) => palette.colors.length > 0) ?? null;
   /** Kopyalama penceresi kaynağı arşivleyince sayfa kendini tazeler (üstteki arşiv şeridi görünsün). */
   async function refreshSpace() {
     try {
@@ -227,87 +199,12 @@ function SpaceView({ owner }: { owner: SpacePerson | null }) {
     { key: "leave", label: t("spaces.card.leave"), icon: LogOut, onSelect: () => setDialog("leave"), danger: true, hidden: !caps.leave },
     { key: "delete", label: t("spaces.card.delete"), icon: Trash2, onSelect: () => setDialog("delete"), danger: true, hidden: !caps.delete },
   ];
-  // Telefonda Genel bakış dışındaki sekmeler bandın yerine tek üst çubukla açılır (docs/history/371-*; ekip projesindeki iç sayfalarla aynı kalıp).
-  const compactPhone = phone && tab !== "overview" && tab !== "board";
+  const members = useSpaceMembers(space.id);
 
   return (
     <div className={cn(HUB_PAGE_CLASS, "animate-rise-in")} data-space-page={space.id} data-space-role={role ?? "none"}>
-      {/* Hub düzeni (docs/history/379-*): bant kapak kolajından renk alır; eylemler (panoyu aç · kayıt durumu · paylaş) ve ⋮ bandın içindedir. */}
-      {compactPhone ? (
-        <PhoneSubBar
-          parent={t(SPACE_KIND_LABEL[space.kind])}
-          title={space.title}
-          backHref="/spaces"
-          className="mx-0 mb-0"
-          testId="space-phone-bar"
-          right={
-            <>
-              <PopoverMenu items={menuItems} />
-            </>
-          }
-        />
-      ) : (
-        <HubDetailBand
-          data-space-band=""
-          backdrop={coverUrls[0] ? <StorageImg src={coverUrls[0]} alt="" className="h-full w-full object-cover" /> : undefined}
-          backHref="/spaces"
-          backLabel={t("hub.back")}
-          art={<SpaceCoverArt urls={coverUrls} className="absolute inset-0 h-full w-full" iconSize={40} />}
-          kicker={
-            <>
-              <span className="inline-flex items-center gap-1.5 rounded-sm bg-surface/80 px-2.5 py-0.5 font-semibold text-text">
-                <SpacesIcon size={16} aria-hidden />
-                Space · {t(SPACE_KIND_LABEL[space.kind])}
-              </span>
-              {space.archivedAt && <span className="rounded-sm bg-warning-soft px-2 py-0.5 text-warning">{t("spaces.page.archivedBadge")}</span>}
-            </>
-          }
-          title={<h1>{space.title}</h1>}
-          description={space.description || undefined}
-          byline={
-            <div className="space-y-2">
-              {owner && (
-                <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-caption text-text-secondary">
-                  <Link href={profileHref(owner)} className="inline-flex items-center gap-1.5 font-semibold text-text hover:text-primary-text">
-                    <Avatar src={owner.avatarUrl} alt="" size={24} />
-                    {owner.displayName}
-                  </Link>
-                  <span aria-hidden>·</span>
-                  <span>{t("spaces.card.edited", { time: formatRelativeTime(space.updatedAt, language) })}</span>
-                </p>
-              )}
-              {leadPalette && (
-                <div className="flex max-w-xl items-center gap-3 pt-1" data-space-band-palette="">
-                  <span className="inline-flex min-w-0 max-w-[40%] shrink-0 items-center gap-1.5 text-caption font-semibold text-text-secondary">
-                    <Palette size={16} aria-hidden />
-                    <span className="truncate">{leadPalette.name || t("spaces.tab.palette")}</span>
-                  </span>
-                  <PaletteStrip colors={leadPalette.colors} copyable className="min-w-0 flex-1" />
-                </div>
-              )}
-            </div>
-          }
-          actions={
-            // Panoda bu satır yok (pano kendi araç çubuğunu ve kayıt göstergesini taşır; yer panoya kalır) — Paylaş ⋮ menüsünde de var.
-            tab !== "board" ? (
-              <div className="flex w-full flex-wrap items-center gap-2" data-space-actions="">
-                <Button className="max-sm:flex-1" onClick={() => goTo("board")}>
-                  {caps.edit ? <LayoutDashboard size={20} aria-hidden /> : <Eye size={20} aria-hidden />}
-                  {caps.edit ? t("spaces.page.openBoard") : t("spaces.page.viewBoard")}
-                </Button>
-                <SaveIndicator status={layoutStatus} onRetry={() => void flushLayout()} />
-                <span data-detail-menu="">
-                  <PopoverMenu items={menuItems} triggerClassName={HUB_BAND_MENU_BUTTON_CLASS} />
-                </span>
-              </div>
-            ) : (
-              <span data-detail-menu="">
-                <PopoverMenu items={menuItems} triggerClassName={HUB_BAND_MENU_BUTTON_CLASS} />
-              </span>
-            )
-          }
-        />
-      )}
+      {/* Başlık (docs/history/474-*): Genel bakışta tam bant (palet şeridi bandın alt kenarında), diğer sekmelerde tek satır; Pano'da tuval kalan alanı alır. */}
+      <SpaceHeader variant={tab === "overview" ? "full" : "compact"} members={members} backdropUrl={coverUrls[0] ?? null} menuItems={menuItems} goTo={goTo} />
 
       <div className="w-full">
         {space.archivedAt && (
@@ -327,7 +224,7 @@ function SpaceView({ owner }: { owner: SpacePerson | null }) {
           </p>
         )}
 
-        {/* Altı çizgili sekmeler (docs/history/371-*; ekip projesiyle aynı kalıp): simge + ad + sayı, dar ekranda kaydırılır. */}
+        {/* Altı çizgili sekmeler (docs/history/371-*, 474-*): yalnız yazı + sayı (simgesiz); sayılar görseller, promptlar, notlar ve üyeler. */}
         <div className="mt-4" data-space-tabs="">
           <Tabs
             ariaLabel={t("spaces.page.tabsAria")}
@@ -336,14 +233,13 @@ function SpaceView({ owner }: { owner: SpacePerson | null }) {
             items={visibleTabs.map((key) => ({
               key,
               label: t(SPACE_TAB_LABEL[key]),
-              icon: SPACE_TAB_ICON[key],
-              count: key === "images" ? images.length : key === "prompts" ? items.filter((i) => i.kind === "prompt").length : key === "notes" ? noteCount : key === "palette" ? palettes.length : undefined,
+              count: key === "images" ? images.length : key === "prompts" ? items.filter((i) => i.kind === "prompt").length : key === "notes" ? noteCount : key === "members" ? (members?.length ?? undefined) : undefined,
             }))}
           />
         </div>
 
         <div className="pt-5" role="tabpanel" aria-label={t(SPACE_TAB_LABEL[tab])}>
-          {tab === "overview" && <OverviewTab onNavigate={goTo} />}
+          {tab === "overview" && <OverviewTab onNavigate={goTo} members={members} />}
           {tab === "board" && <SpaceBoard focusId={focusId} openComment={searchParams.get("comment")} />}
           {tab === "images" && <ImagesTab focusId={focusId} onShowOnBoard={(itemId) => goTo("board", itemId)} />}
           {tab === "prompts" && <PromptsTab onShowOnBoard={(itemId) => goTo("board", itemId)} />}
