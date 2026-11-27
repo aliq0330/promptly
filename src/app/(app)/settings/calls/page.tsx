@@ -8,7 +8,7 @@ import { SwitchRow } from "@/components/ui/switch";
 import { useAuth } from "@/features/auth/auth-provider";
 import { setCallDevices, useCallDevices, useCallPrefs } from "@/features/calls/call-prefs-store";
 import { canPickSpeaker, deviceLabel, useMediaDevices } from "@/features/calls/use-media-devices";
-import { SettingsCard, SettingsSubpage } from "@/features/settings/settings-ui";
+import { SettingsCard, SettingsSubpage, SETTING_SWITCH_ROW_CLASS, SettingNested, SettingText } from "@/features/settings/settings-ui";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { DEFAULT_CALL_SETTINGS, fetchMyCallSettings, saveMyCallSettings, type MyCallSettings } from "@/lib/supabase/calls";
 
@@ -69,12 +69,12 @@ export default function CallSettingsPage() {
 
   if (loading || !user) return null;
   const current = settings ?? DEFAULT_CALL_SETTINGS;
-  const select = "h-11 w-full rounded-sm border border-(--p-control-border) bg-surface px-3 text-small text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus";
+  const select = "h-10 w-full rounded-sm border border-(--p-control-border) bg-surface px-3 text-small text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus";
   const labelsKnown = [...mics, ...cameras, ...speakers].some((d) => d.label);
   const picker = (id: string, title: string, list: MediaDeviceInfo[], value: string | null, kind: "mic" | "camera" | "speaker", fallback: string) =>
     list.length > 0 && (
       <label key={id} className="block">
-        <span className="mb-1.5 block text-small text-text-secondary">{title}</span>
+        <span className="mb-1.5 block text-body font-semibold text-text">{title}</span>
         <select className={select} value={value && list.some((d) => d.deviceId === value) ? value : ""} onChange={(e) => setCallDevices({ [kind]: e.target.value || null })} data-call-device={kind}>
           <option value="">{t("calls.settings.default")}</option>
           {list.map((device, index) => (
@@ -107,38 +107,30 @@ export default function CallSettingsPage() {
           options={WHO.map((option) => ({ key: option.key, label: t(option.label), description: t(option.hint), attrs: { "data-call-privacy": option.key } }))}
         />
         <SwitchRow checked={current.notifyMissed} disabled={!settings || saving} onChange={(next) => void save({ ...current, notifyMissed: next })} data-call-notify-missed="">
-          <span className="min-w-0 flex-1">
-            <span className="block text-small font-medium text-text">{t("calls.settings.notifyMissed")}</span>
-            <span className="block text-caption text-text-muted">{t("calls.settings.notifyMissedHint")}</span>
-          </span>
+          <SettingText title={t("calls.settings.notifyMissed")} hint={t("calls.settings.notifyMissedHint")} />
         </SwitchRow>
       </SettingsCard>
 
       <SettingsCard title={t("calls.settings.thisDevice")} hint={t("calls.settings.thisDeviceHint")}>
         <SwitchRow checked={prefs.ringSound} onChange={(next) => setPrefs({ ringSound: next })} data-call-pref="ring">
-          <span className="min-w-0 flex-1">
-            <span className="block text-small font-medium text-text">{t("calls.settings.ring")}</span>
-            <span className="block text-caption text-text-muted">{t("calls.settings.ringHint")}</span>
-          </span>
+          <SettingText title={t("calls.settings.ring")} hint={t("calls.settings.ringHint")} />
         </SwitchRow>
         <SwitchRow checked={prefs.respectQuietHours} onChange={(next) => setPrefs({ respectQuietHours: next })} data-call-pref="quiet">
-          <span className="min-w-0 flex-1">
-            <span className="block text-small font-medium text-text">{t("calls.settings.quiet")}</span>
-            <span className="block text-caption text-text-muted">{t("calls.settings.quietHint")}</span>
-          </span>
+          <SettingText title={t("calls.settings.quiet")} hint={t("calls.settings.quietHint")} />
         </SwitchRow>
         <SwitchRow checked={prefs.browserNotify} onChange={(next) => setPrefs({ browserNotify: next })} data-call-pref="browser">
-          <span className="min-w-0 flex-1">
-            <span className="block text-small font-medium text-text">{t("calls.settings.browser")}</span>
-            <span className="block text-caption text-text-muted">{t("calls.settings.browserHint")}</span>
-          </span>
+          <SettingText title={t("calls.settings.browser")} hint={t("calls.settings.browserHint")} />
         </SwitchRow>
-        {prefs.browserNotify && permission === "default" && (
-          <Button type="button" variant="outline" size="sm" onClick={() => void askNotifications()} data-call-notify-allow>
-            {t("calls.settings.browserAllow")}
-          </Button>
+        {prefs.browserNotify && (permission === "default" || permission === "denied") && (
+          <SettingNested>
+            {permission === "default" && (
+              <Button type="button" variant="outline" size="sm" onClick={() => void askNotifications()} data-call-notify-allow>
+                {t("calls.settings.browserAllow")}
+              </Button>
+            )}
+            {permission === "denied" && <InlineAlert tone="warning">{t("calls.settings.browserBlocked")}</InlineAlert>}
+          </SettingNested>
         )}
-        {prefs.browserNotify && permission === "denied" && <InlineAlert tone="warning">{t("calls.settings.browserBlocked")}</InlineAlert>}
       </SettingsCard>
 
       <SettingsCard title={t("calls.settings.devices")} hint={t("calls.settings.devicesHint")}>

@@ -7,7 +7,7 @@ import { BellOff } from "@/components/icons/bell-off";
 import { Clock } from "@/components/icons/clock";
 import { UserRound } from "@/components/icons/user-round";
 import { Button } from "@/components/ui/button";
-import { SettingsCard } from "@/features/settings/settings-ui";
+import { SettingsCard, SETTING_SWITCH_ROW_CLASS, SettingText } from "@/features/settings/settings-ui";
 import { useNotifications } from "@/features/notifications/notifications-provider";
 import { fetchDisabledNotificationPrefs, fetchNotificationMutes, setNotificationTypePref } from "@/lib/supabase/notifications";
 import { NOTIFICATION_PREF_KEYS, type NotificationPrefKeyName } from "@/lib/notification-mirror";
@@ -122,12 +122,9 @@ export function NotificationSettings() {
           checked={liveToasts}
           onChange={() => setLiveToastsEnabled(!liveToasts)}
           data-pref="live-toasts"
-          className="min-h-14 rounded-lg border border-border-soft px-3 py-2.5 transition-colors hover:border-border-strong hover:bg-surface-soft"
+          className={SETTING_SWITCH_ROW_CLASS}
         >
-          <span className="min-w-0 flex-1">
-            <span className="block text-small font-medium text-text">{t("nc.settings.liveTitle")}</span>
-            <span className="block text-caption text-text-muted">{t("nc.settings.liveRowHint")}</span>
-          </span>
+          <SettingText title={t("nc.settings.liveTitle")} hint={t("nc.settings.liveRowHint")} />
         </SwitchRow>
 
         {liveToasts && (
@@ -143,12 +140,9 @@ export function NotificationSettings() {
                     checked={livePrefs.types[group]}
                     onChange={() => updateLiveNotifyPrefs({ types: { [group]: !livePrefs.types[group] } })}
                     data-live-group={group}
-                    className="min-h-14 rounded-lg border border-border-soft px-3 py-2.5 transition-colors hover:border-border-strong hover:bg-surface-soft"
+                    className={SETTING_SWITCH_ROW_CLASS}
                   >
-                    <span className="min-w-0 flex-1">
-                      <span className="block text-small font-medium text-text">{t(`nc.settings.liveType.${group}` as const)}</span>
-                      <span className="block text-caption text-text-muted">{t(`nc.settings.liveType.${group}Hint` as const)}</span>
-                    </span>
+                    <SettingText title={t(`nc.settings.liveType.${group}` as const)} hint={t(`nc.settings.liveType.${group}Hint` as const)} />
                   </SwitchRow>
                 </li>
               ))}
@@ -158,12 +152,9 @@ export function NotificationSettings() {
               checked={livePrefs.sound}
               onChange={() => updateLiveNotifyPrefs({ sound: !livePrefs.sound })}
               data-pref="live-sound"
-              className="min-h-14 rounded-lg border border-border-soft px-3 py-2.5 transition-colors hover:border-border-strong hover:bg-surface-soft"
+              className={SETTING_SWITCH_ROW_CLASS}
             >
-              <span className="min-w-0 flex-1">
-                <span className="block text-small font-medium text-text">{t("nc.settings.liveSound")}</span>
-                <span className="block text-caption text-text-muted">{t("nc.settings.liveSoundHint")}</span>
-              </span>
+              <SettingText title={t("nc.settings.liveSound")} hint={t("nc.settings.liveSoundHint")} />
             </SwitchRow>
             {livePrefs.sound && (
               <Button variant="outline" size="sm" data-action="sound-test" onClick={() => playNotificationChime()}>
@@ -179,11 +170,9 @@ export function NotificationSettings() {
           checked={livePrefs.tabBadge}
           onChange={() => updateLiveNotifyPrefs({ tabBadge: !livePrefs.tabBadge })}
           data-pref="tab-badge"
-          className="min-h-14 rounded-lg border border-border-soft px-3 py-2.5 transition-colors hover:border-border-strong hover:bg-surface-soft"
+          className={SETTING_SWITCH_ROW_CLASS}
         >
-          <span className="min-w-0 flex-1">
-            <span className="block text-small font-medium text-text">{t("nc.settings.liveTabBadgeRow")}</span>
-          </span>
+          <SettingText title={t("nc.settings.liveTabBadgeRow")} />
         </SwitchRow>
       </SettingsCard>
 
@@ -196,12 +185,9 @@ export function NotificationSettings() {
               checked={quiet.enabled}
               onChange={() => void changeQuiet({ enabled: !quiet.enabled })}
               data-pref="quiet-hours"
-              className="min-h-14 rounded-lg border border-border-soft px-3 py-2.5 transition-colors hover:border-border-strong hover:bg-surface-soft"
+              className={SETTING_SWITCH_ROW_CLASS}
             >
-              <span className="min-w-0 flex-1">
-                <span className="block text-small font-medium text-text">{t("nc.settings.quietEnable")}</span>
-                <span className="block text-caption text-text-muted">{t("nc.settings.quietEnableHint")}</span>
-              </span>
+              <SettingText title={t("nc.settings.quietEnable")} hint={t("nc.settings.quietEnableHint")} />
             </SwitchRow>
             <div className="grid grid-cols-2 gap-3">
               <label className="space-y-1">
@@ -264,12 +250,9 @@ export function NotificationSettings() {
                   onChange={() => void toggle(key)}
                   disabled={busyKey === key}
                   data-pref={key}
-                  className="min-h-14 rounded-lg border border-border-soft px-3 py-2.5 transition-colors hover:border-border-strong hover:bg-surface-soft"
+                  className={SETTING_SWITCH_ROW_CLASS}
                 >
-                  <span className="min-w-0 flex-1">
-                    <span className="block text-small font-medium text-text">{t(`nc.pref.${key}.title` as const)}</span>
-                    <span className="block text-caption text-text-muted">{t(`nc.pref.${key}.hint` as const)}</span>
-                  </span>
+                  <SettingText title={t(`nc.pref.${key}.title` as const)} hint={t(`nc.pref.${key}.hint` as const)} />
                 </SwitchRow>
               </li>
             );

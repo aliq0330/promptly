@@ -55,6 +55,8 @@ for (const [kind, href, title] of KINDS) {
     await page.waitForURL(new RegExp(`/promptly/${kind}/?(\\?.*)?$`));
     await page.locator("[role=dialog]").first().waitFor();
     assert.equal(await page.locator("[data-create-page]").count(), 0, "tam ekran sayfa yok");
+    // Space listesi parametreyi `router.replace` ile siler (asenkron): kısa süre içinde adresten kalkmalı.
+    await page.waitForURL((url) => !url.search.includes("new=1"));
     assert.ok(!page.url().includes("new=1"), "parametre adresten silindi");
   }, DESKTOP);
 }

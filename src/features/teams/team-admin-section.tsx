@@ -1,5 +1,6 @@
 "use client";
 
+import { SETTINGS_SECTION_CLASS, SettingsSectionHead } from "@/features/settings/settings-ui";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { Download } from "@/components/icons/download";
@@ -333,8 +334,7 @@ function PoliciesSection({ ctx, stacked = false }: { ctx: TeamCtx; stacked?: boo
   };
   const num = (key: "inviteLinkTtlDays") => String(value(key));
   const roleOptions = <R extends "owner" | "admin" | "editor">(keys: R[]) => keys.map((key) => ({ key, label: t(`tm.role.${key}` as "tm.role.owner") }));
-  const card = "rounded-lg card-flat px-4 pb-1 pt-3";
-  const cardTitle = "mb-1 border-b border-border-soft pb-2 text-body font-semibold text-text";
+  const card = SETTINGS_SECTION_CLASS;
   return (
     <div className="space-y-4" data-testid="team-policies">
       <div className="flex items-start gap-3">
@@ -349,8 +349,8 @@ function PoliciesSection({ ctx, stacked = false }: { ctx: TeamCtx; stacked?: boo
       <div className={cn("grid gap-4", !stacked && "lg:grid-cols-2 lg:items-start")}>
         <div className="space-y-4">
           <section className={card}>
-            <h3 className={cardTitle}>{t("tm.admin.policy.sharing")}</h3>
-            <div className="divide-y divide-border-soft">
+            <SettingsSectionHead title={t("tm.admin.policy.sharing")} />
+            <div className="divide-y divide-border-soft px-5 sm:px-6">
               <PolicyRow label={t("tm.admin.policy.publishExternal")} hint={t("tm.admin.policy.publishExternalHint")}>
                 <PillSelect label={t("tm.admin.policy.publishExternal")} value={value("publishExternalRole")} options={roleOptions(["owner", "admin", "editor"])} onChange={(k) => edit("publishExternalRole", k)} />
               </PolicyRow>
@@ -365,8 +365,8 @@ function PoliciesSection({ ctx, stacked = false }: { ctx: TeamCtx; stacked?: boo
         </div>
         <div className="space-y-4">
           <section className={card}>
-            <h3 className={cardTitle}>{t("tm.admin.policy.ownership")}</h3>
-            <div className="divide-y divide-border-soft">
+            <SettingsSectionHead title={t("tm.admin.policy.ownership")} />
+            <div className="divide-y divide-border-soft px-5 sm:px-6">
               <PolicyRow label={t("tm.admin.policy.contentOwner")} hint={t("tm.admin.policy.contentOwnerHint")}>
                 <PillSelect label={t("tm.admin.policy.contentOwner")} value={value("contentOwner")} options={[{ key: "team", label: t("tm.admin.policy.owner.team") }, { key: "author", label: t("tm.admin.policy.owner.author") }]} onChange={(k) => edit("contentOwner", k)} />
               </PolicyRow>
@@ -376,8 +376,8 @@ function PoliciesSection({ ctx, stacked = false }: { ctx: TeamCtx; stacked?: boo
             </div>
           </section>
           <section className={card}>
-            <h3 className={cardTitle}>{t("tm.admin.policy.joining")}</h3>
-            <div className="divide-y divide-border-soft">
+            <SettingsSectionHead title={t("tm.admin.policy.joining")} />
+            <div className="divide-y divide-border-soft px-5 sm:px-6">
               <PolicyRow label={t("tm.admin.policy.defaultRole")} hint={t("tm.admin.policy.defaultRoleHint")}>
                 <PillSelect label={t("tm.admin.policy.defaultRole")} value={value("defaultMemberRole")} options={[{ key: "member", label: t("tm.role.member") }, { key: "editor", label: t("tm.role.editor") }]} onChange={(k) => edit("defaultMemberRole", k)} />
               </PolicyRow>
