@@ -72,7 +72,7 @@ export function OptionGroup<K extends string>({
   columns?: 1 | 2 | 3;
   className?: string;
   /** `sx`: the option cards of the settings pages (`app/ayar-kit.css`, mockup "opt"). */
-  variant?: "default" | "sx" | "sx-list";
+  variant?: "default" | "sx" | "sx-list" | "sx-tail";
 }) {
   const anyChecked = options.some((option) => option.key === value);
   if (variant === "sx-list") {
@@ -103,7 +103,8 @@ export function OptionGroup<K extends string>({
       </div>
     );
   }
-  if (variant === "sx") {
+  if (variant === "sx" || variant === "sx-tail") {
+    const tail = variant === "sx-tail";
     return (
       <div role="radiogroup" aria-label={ariaLabel} aria-labelledby={labelledBy} onKeyDown={radioGroupKeyDown} className={cn("opts", className)}>
         {options.map((option, index) => {
@@ -118,15 +119,16 @@ export function OptionGroup<K extends string>({
               disabled={disabled || option.disabled}
               data-option={option.key}
               onClick={() => (!checked || reselect) && onChange(option.key)}
-              className={cn("opt focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:opacity-50", checked && "on")}
+              className={cn("opt focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:opacity-50", tail && "tail", checked && "on")}
               {...option.attrs}
             >
               {option.leading}
-              <span className="rd" aria-hidden />
+              {!tail && <span className="rd" aria-hidden />}
               <span className="rt">
                 <span className="t">{option.label}</span>
                 {option.description && <span className="s">{option.description}</span>}
               </span>
+              {tail && <span className="rd" aria-hidden />}
             </button>
           );
         })}

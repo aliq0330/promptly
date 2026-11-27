@@ -14,6 +14,7 @@ const BASE = process.env.BASE ?? "http://localhost:3100/promptly";
 const OUT = process.env.OUT ?? "/tmp/ayar-out";
 const MOCK_DIR = path.resolve("docs/mockups/ayar-sayfalari");
 const TOL = Number(process.env.TOL ?? 1.5);
+const TEXTLEN = Number(process.env.TEXTLEN ?? 60);
 const THEMES = (process.env.THEMES ?? "dark,light").split(",");
 fs.mkdirSync(OUT, { recursive: true });
 
@@ -47,7 +48,7 @@ function standaloneHtml(file, theme) {
   return html;
 }
 
-function compare(mock, real, normalize = (x) => x, ignore = []) {
+function compare(mock, real, normalize = (x) => x, ignore = [], textIgnore = []) {
   const lines = [];
   let bad = 0;
   if (mock.error || real.error) return { bad: 1, lines: [mock.error ?? real.error] };
@@ -73,10 +74,10 @@ function compare(mock, real, normalize = (x) => x, ignore = []) {
       const r = rb[i];
       const d = { x: r.x - m.x, y: r.y - m.y, w: r.w - m.w, h: r.h - m.h };
       const geo = Object.entries(d).filter(([, v]) => Math.abs(v) > TOL);
-      const textBad = normalize(m.text).replace(/\s+/g, "") !== normalize(r.text).replace(/\s+/g, "");
+      const textBad = !textIgnore.includes(kind) && normalize(m.text).replace(/\s+/g, "") !== normalize(r.text).replace(/\s+/g, "");
       if (geo.length || textBad) {
         bad += 1;
-        lines.push(`✘ ${kind}#${i} ${geo.map(([k, v]) => `${k}${v > 0 ? "+" : ""}${v.toFixed(1)}`).join(" ")}${textBad ? `  metin: ${JSON.stringify(m.text.slice(0, 60))} ≠ ${JSON.stringify(r.text.slice(0, 60))}` : ""}`);
+        lines.push(`✘ ${kind}#${i} ${geo.map(([k, v]) => `${k}${v > 0 ? "+" : ""}${v.toFixed(1)}`).join(" ")}${textBad ? `  metin: ${JSON.stringify(m.text.slice(0, TEXTLEN))} ≠ ${JSON.stringify(r.text.slice(0, TEXTLEN))}` : ""}`);
       }
     });
   }
@@ -128,7 +129,7 @@ for (const spec of selected) {
       real = { error: `gerçek sayfa çizilemedi: ${String(e.message).split("\n")[0]}` };
       await page.screenshot({ path: path.join(OUT, `${spec.id}-${theme}-real-fail.png`) }).catch(() => {});
     }
-    const { bad, lines } = compare(mock, real, spec.normalize, spec.ignore);
+    const { bad, lines } = compare(mock, real, spec.normalize, spec.ignore, spec.textIgnore);
     // yan yana
     try {
       const a = fs.readFileSync(path.join(OUT, `${spec.id}-${theme}-mock.png`)).toString("base64");

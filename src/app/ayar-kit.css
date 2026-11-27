@@ -59,6 +59,7 @@
 .sx .rt { flex: 1; min-width: 0; }
 .sx .t { font-weight: 600; font-size: 15px; line-height: 20px; }
 .sx .s { color: var(--ds); font-size: 14px; line-height: 20px; margin-top: 3px; }
+.sx .mt10 { margin-top: 10px; }
 .sx .nav::after { content: ""; flex: none; width: 9px; height: 9px; border-right: 2px solid var(--tx); border-top: 2px solid var(--tx); transform: rotate(45deg); margin: 0 5px 0 4px; }
 .sx .on-ck::after { content: ""; flex: none; width: 8px; height: 15px; border-right: 3px solid var(--or); border-bottom: 3px solid var(--or); transform: rotate(45deg); margin: 0 8px 4px 4px; }
 .sx .val { color: var(--ds); font-size: 15px; margin-right: -4px; }
@@ -103,6 +104,7 @@
 .sx .opt { display: flex; gap: 12px; align-items: flex-start; padding: 14px; border: 1px solid var(--bd); border-radius: 14px; background: none; width: 100%; text-align: left; font: inherit; }
 .sx .opt.on { border-color: var(--or); background: var(--sel); }
 .sx .opt .t, .sx .opt .s { display: block; }
+.sx .opt.tail .t { line-height: 36px; }
 .sx .rd { flex: none; width: 22px; height: 22px; border: 2px solid var(--bd2); border-radius: 50%; margin-top: 1px; position: relative; }
 .sx .opt.on .rd { border-color: var(--or); }
 .sx .opt.on .rd::after { content: ""; position: absolute; inset: 3px; border-radius: 50%; background: var(--or); }

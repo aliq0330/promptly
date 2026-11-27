@@ -39,6 +39,57 @@ function community(db, extra = {}) {
 
 const norm = (text) => text.replace(/Sinema ve video|Video & Animasyon/g, "<alan>").replace(/\d+ (\/ \d+ )?karakter/g, "<n> karakter");
 
+
+// ---------------------------------------------------------------------------------------------
+// Ekip: "Ürün Tasarım Ekibi", 18 üye, 6 proje, sahip sensin.
+// ---------------------------------------------------------------------------------------------
+const TEAM = "e1000000-0000-4000-8000-000000000001";
+function team(db, { role = "owner" } = {}) {
+  const calls = (db.teamCalls = []);
+  const reply = (name, fn) => { db.rpc[name] = (body) => { calls.push({ name, body }); return { body: fn(body) }; }; };
+  const row = { id: TEAM, slug: "urun-tasarim", name: "Ürün Tasarım Ekibi", description: "Ürün tasarımı, prompt kütüphanesi ve ortak proje panoları.", tone: "primary", my_role: role, member_count: 18, guest_count: 3, space_count: 6, channel_count: 3, unread_count: 0, last_activity_at: "2026-11-08T10:00:00Z", library_space_id: null, guest_until: null };
+  reply("my_teams", () => [row]);
+  reply("my_teams_preview", () => []);
+  reply("my_team_invitations", () => []);
+  reply("my_team_todos", () => []);
+  reply("team_project_todos", () => []);
+  reply("team_review_board", () => ({ items: [], proposals: [] }));
+  reply("team_recent_activity", () => []);
+  reply("team_projects_list", () => []);
+  reply("team_my_can", () => true);
+  reply("team_list_members", () => [
+    { user_id: U.bob.id, username: "mert.demir", display_name: "Mert Demir", avatar_url: null, role: "member", joined_at: "2026-03-12T00:00:00Z", guest_org: null, guest_until: null, group_ids: null, group_names: null },
+    { user_id: U.carol.id, username: "can.yildiz", display_name: "Can Yıldız", avatar_url: null, role: "editor", joined_at: "2026-03-12T00:00:00Z", guest_org: null, guest_until: null, group_ids: null, group_names: ["Tasarım"] },
+  ]);
+  reply("team_list_invitations", () => [
+    { id: "i1", invitee_id: U.dave.id, invitee_username: "mert.demir", invitee_name: "Mert Demir", invitee_avatar_url: null, role: "member", guest_days: null, guest_org: null, invited_by_name: "Sen", created_at: new Date(Date.now() - 3 * 86400000).toISOString() },
+    { id: "i2", invitee_id: U.erin.id, invitee_username: "zeynep.y", invitee_name: "Zeynep Yılmaz", invitee_avatar_url: null, role: "editor", guest_days: null, guest_org: null, invited_by_name: "Sen", created_at: new Date(Date.now() - 86400000).toISOString() },
+  ]);
+  reply("team_list_invite_links", () => [
+    { id: "k7p0mwaa", role: "member", created_by: ME, created_by_name: "Sen", expires_at: "2027-12-21T00:00:00Z", revoked_at: null, max_uses: 20, use_count: 3, created_at: "2026-11-01T00:00:00Z" },
+    { id: "x92qabbb", role: "member", created_by: ME, created_by_name: "Sen", expires_at: "2026-12-21T00:00:00Z", revoked_at: "2026-11-10T00:00:00Z", max_uses: null, use_count: 0, created_at: "2026-10-01T00:00:00Z" },
+  ]);
+  const day = 86400000;
+  const guest = (id, name, un, days, role, joinedAgo) => ({ user_id: id, username: un, display_name: name, avatar_url: null, guest_org: null, guest_until: new Date(Date.now() + days * day + 3600000).toISOString(), joined_at: new Date(Date.now() - joinedAgo * day).toISOString(), expired: false, spaces: role === "edit" ? [{ space_id: "s1", title: "A", role: "editor" }] : [{ space_id: "s1", title: "A", role: "viewer" }, { space_id: "s2", title: "B", role: "viewer" }], channels: [] });
+  reply("team_list_guests", () => [guest("g1", "Selin Kara", "selin", 12, "view", 1), guest("g2", "Onur Tan", "onur", 5, "edit", 0), guest("g3", "Deniz Aksoy", "deniz", 30, "view", 3)]);
+  reply("team_list_groups", () => []);
+  reply("team_audit_stats", () => ({ total: 128, roleAccess: 14, deletes: 3 }));
+  const now = new Date();
+  const at = (h, m, back = 0) => { const d = new Date(now); d.setDate(d.getDate() - back); d.setHours(h, m, 0, 0); return d.toISOString(); };
+  reply("team_audit_list", () => [
+    { id: "a1", created_at: at(10, 18), category: "role", action: "role_changed", target_label: "Can Yıldız", details: { from: "member", to: "editor" }, actor_id: ME, actor_username: "ayse", actor_name: "Ayşe Yılmaz", actor_avatar_url: null },
+    { id: "a2", created_at: at(9, 42), category: "approval", action: "item_approved", target_label: "Onboarding", details: null, actor_id: U.carol.id, actor_username: "can", actor_name: "Can Yıldız", actor_avatar_url: null },
+    { id: "a3", created_at: at(17, 42, 1), category: "access", action: "guest_extended", target_label: "Selin Kara'nın konuk erişimi 12 gün sonra sona erecek", details: null, actor_id: null, actor_username: null, actor_name: null, actor_avatar_url: null },
+    { id: "a4", created_at: at(11, 5, 1), category: "member", action: "invite_link_created", target_label: null, details: null, actor_id: ME, actor_username: "ayse", actor_name: "Ayşe Yılmaz", actor_avatar_url: null },
+    { id: "a5", created_at: at(9, 20, 1), category: "library", action: "channel_deleted", target_label: "Eski", details: null, actor_id: ME, actor_username: "ayse", actor_name: "Ayşe Yılmaz", actor_avatar_url: null },
+  ]);
+  const prev = db.extraRoutes;
+  db.extraRoutes = async (ctx) => {
+    if (ctx.table === "teams" && ctx.method === "GET") return ctx.rows([{ content_owner: "team", offboard_default: "ask", default_member_role: "member", invite_link_ttl_days: 7, publish_external_role: "editor", guest_invite_role: "admin", export_role: "admin" }]);
+    return prev ? prev(ctx) : null;
+  };
+}
+
 export const PAGES = [
   { id: "A1", mock: "A1-yonetim-listesi", height: 1290, url: `/communities/local?id=${C1}&tab=manage`, setup: (db) => { community(db); db.groups.find((g) => g.id === C1).pending_request_count = 3; } },
   { id: "A2", mock: "A2-topluluk-ayarlari", height: 1470, ignore: ["btn#4", "rt#4"], url: `/communities/local?id=${C1}&tab=manage&section=settings`, setup: (db) => community(db), normalize: norm, before: async (page) => { await page.locator("[data-sx-page] .seg").nth(1).getByText("Yönetim").click(); await page.locator("[data-sx-page] .tg").first().click(); } },
@@ -59,4 +110,13 @@ export const PAGES = [
     setup: (db) => { community(db); const g = db.groups.find((x) => x.id === C1); g.myRole = "member"; const m = db.member(C1, ME); m.role = "member"; m.notify_muted_until = new Date(Date.now() + 86400000).toISOString(); db.acceptances.push({ community_id: C1, user_id: ME, rules_version: 3 }); } },
   { id: "B5", mock: "B5-topluluk-tehlike", height: 960, url: `/communities/local?id=${C1}&tab=manage&section=danger`, setup: (db) => community(db) },
   { id: "B6", mock: "B6-topluluk-silme", height: 860, url: `/communities/local?id=${C1}&tab=manage&section=danger&sub=delete`, setup: (db) => community(db) },
+  { id: "C1", mock: "C1-ekip-yonetim", height: 1200, url: `/teams/local?id=${TEAM}&tab=admin`, setup: (db) => team(db) },
+  { id: "C2", mock: "C2-ekip-profili", height: 1100, url: `/teams/local?id=${TEAM}&tab=admin&section=profile`, setup: (db) => team(db), before: async (page) => { await page.locator("[data-sx-page] #ek-ad").fill("Ürün Tasarım Ekibi!"); }, normalize: (x) => x.replace(/\d+ \/ 500/g, "<n>").replace(/Ürün Tasarım Ekibi!?/g, "<ad>") },
+  { id: "C3", mock: "C3-ekip-politikalar", height: 1220, ignore: ["rt#6", "btn#6"], url: `/teams/local?id=${TEAM}&tab=admin&section=policies`, setup: (db) => team(db), normalize: (x) => x.replace(/\d+ gün/g, "<g>"), before: async (page) => { await page.locator("[data-sx-page] .btn.sel").last().click(); await page.getByRole("radio", { name: /14 gün/ }).click(); await page.getByRole("button", { name: "Seç" }).click(); await page.waitForTimeout(300); } },
+  { id: "C4", mock: "C4-rol-secici", height: 820, url: `/teams/local?id=${TEAM}&tab=admin&section=policies&sub=pick&key=publishExternalRole`, setup: (db) => team(db) },
+  { id: "C5", mock: "C5-ekip-davetler", height: 1220, url: `/teams/local?id=${TEAM}&tab=admin&section=invites`, setup: (db) => team(db), normalize: (x) => x.replace(/…\/team-join#\w+/g, "<l>").replace(/@[\w.]+/g, "@u").replace(/(Üye|Düzenleyici) · .*?(?=İptal)/g, "<rol> · <zaman>").replace(/[Dd]ün/g, "<d>").replace(/^[A-ZÇĞİÖŞÜ]{1,3}(?=@u)/, "<av>").replace(/^[A-ZÇĞİÖŞÜ]{1,3}$/, "<av>").replace(/\d+ \/ \d+ kullanım.*?(?=İptal)/g, "<k>") },
+  { id: "C6", mock: "C6-konuklar", height: 1180, ignore: ["tag#2"], url: `/teams/local?id=${TEAM}&tab=admin&section=guests`, setup: (db) => team(db), normalize: (x) => x.replace(/Katıldı: .*$/, "<s>").replace(/Son giriş: .*$/, "<s>").replace(/(Dün|Bugün|\d+ gün önce)$/, "<s>").replace(/ (Selin Kara|Onur Tan|Deniz Aksoy)/, "").replace(/^[A-ZÇĞİÖŞÜ]{2}(?=[A-ZÇĞİÖŞÜ][a-zçğıöşü])/, "").replace(/\d+ gün kaldı/g, "<g>").replace(/\d+ proje · (Görüntüleyici|Düzenleyici)/g, "<p>") },
+  { id: "D2", mock: "D2-ekip-tehlike", height: 1000, url: `/teams/local?id=${TEAM}&tab=admin&section=danger`, setup: (db) => team(db) },
+  { id: "D3", mock: "D3-ekip-silme", height: 900, url: `/teams/local?id=${TEAM}&tab=admin&section=danger&sub=delete`, setup: (db) => team(db) },
+  { id: "E3", mock: "E3-denetim-gunlugu", height: 1240, textIgnore: ["row", "rt", "av", "tag"], ignore: ["tag#4"], url: `/teams/local?id=${TEAM}&tab=admin&section=audit`, setup: (db) => team(db) },
 ];
