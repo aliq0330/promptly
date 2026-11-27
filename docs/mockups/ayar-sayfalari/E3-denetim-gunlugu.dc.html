@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>Denetim günlüğü</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ayar.css">
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<div class="ay {{themeClass}}" style="width:390px;height:1240px">
+<div class="bar"><button type="button" class="back" aria-label="Geri"></button><div class="bt"><small>Yönetim</small><b>Denetim günlüğü</b></div><button type="button" class="bact">CSV</button></div>
+<div class="body">
+<div class="chips" style="margin-top:10px"><button type="button" class="chip on">Tüm olaylar</button><button type="button" class="chip">Rol</button><button type="button" class="chip">Erişim</button><button type="button" class="chip">Silme</button></div>
+<div style="height:12px"></div>
+<div class="chips"><a class="btn sel" href="#">Son 30 gün</a></div>
+<div style="height:14px"></div>
+<div class="stats"><div class="stat"><b>128</b><span>Olay</span></div><div class="stat"><b>14</b><span>Rol ve erişim</span></div><div class="stat"><b>3</b><span>Silme</span></div></div>
+
+<div class="lab">Bugün</div>
+<div class="card">
+<div class="row top"><span class="av" style="background:#3b5be2">AY</span><div class="rt"><div class="t">Ayşe Yılmaz</div><div class="s">Can Yıldız'ın rolünü değiştirdi · Üye → Düzenleyici</div><div class="s"><span class="tag or">Rol</span> 10:18</div></div></div>
+<div class="row top"><span class="av" style="background:#0f766e">CY</span><div class="rt"><div class="t">Can Yıldız</div><div class="s">«Onboarding akışı» dosyasını onayladı</div><div class="s"><span class="tag ok">Onay</span> 09:42</div></div></div>
+</div>
+
+<div class="lab">Dün</div>
+<div class="card">
+<div class="row top"><span class="av" style="background:#7c3aed">SK</span><div class="rt"><div class="t">Sistem</div><div class="s">Selin Kara'nın konuk erişimi 12 gün sonra sona erecek</div><div class="s"><span class="tag">Erişim</span> 17:42</div></div></div>
+<div class="row top"><span class="av" style="background:#b45309">AY</span><div class="rt"><div class="t">Ayşe Yılmaz</div><div class="s">Davet bağlantısı oluşturdu</div><div class="s"><span class="tag">Üye</span> 11:05</div></div></div>
+<div class="row top"><span class="av" style="background:#3b5be2">AY</span><div class="rt"><div class="t">Ayşe Yılmaz</div><div class="s">«Eski kampanya» dosyasını sildi</div><div class="s"><span class="tag dg">Silme</span> 09:20</div></div></div>
+</div>
+<div style="height:16px"></div>
+<div style="padding:0 16px"><button type="button" class="btn out full" style="height:46px">Daha fazla yükle</button></div>
+<div style="height:16px"></div>
+<div class="note">CSV, seçili süzgeç ve aralıktaki <b>tüm kayıtları</b> indirir (en çok 2000 satır); ekranda yüklenenle sınırlı değildir.</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":true},"$preview":{"width":390,"height":1240}}'>
+class Component extends DCLogic {
+renderVals() { return { themeClass: this.props.dark === false ? 'light' : 'dark' }; }
+}
+</script>
+</body>
+</html>

@@ -10,6 +10,7 @@ import { PageTitle } from "@/components/layout/page-title";
 import { TaxonomyHydrator } from "@/features/content/taxonomy-hydrator";
 import "./fonts.css";
 import "./globals.css";
+import "./ayar-kit.css";
 
 // Yazı tipleri kendi dosyalarımızdan gelir (`fonts.css`, docs/history/405-*): gövde DM Sans (Meydan, docs/history/190-*), başlıklar ve wordmark
 // Bricolage Grotesque, prompt metni JetBrains Mono. Derleme Google Fonts'a gitmez.

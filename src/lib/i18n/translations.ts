@@ -40,6 +40,7 @@ import { commentFollowTranslations } from "./translations-comment-follow";
 import { sharePeopleTranslations } from "./translations-share-people";
 import { apiKeysTranslations } from "./translations-api-keys";
 import { telegramTranslations } from "./translations-telegram";
+import { ayarTranslations } from "./translations-ayar";
 import { firstRunTranslations } from "./translations-first-run";
 import { settingsTranslations } from "./translations-settings";
 import { connectGuideTranslations } from "./translations-connect-guide";
@@ -3346,6 +3347,7 @@ export const translations = {
   ...sharePeopleTranslations,
   ...apiKeysTranslations,
   ...telegramTranslations,
+  ...ayarTranslations,
   ...firstRunTranslations,
   ...settingsTranslations,
   ...connectGuideTranslations,

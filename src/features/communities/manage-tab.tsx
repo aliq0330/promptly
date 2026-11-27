@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { BarChart3 } from "@/components/icons/bar-chart-3";
 import { History } from "@/components/icons/history";
 import { Megaphone } from "@/components/icons/megaphone";
@@ -14,6 +14,7 @@ import { useMediaQuery } from "@/lib/use-media-query";
 import { GroupSettingsSection } from "@/features/groups/group-settings-section";
 import { useRealMessages } from "@/features/messages/real-messages-provider";
 import { AnnouncementsSection } from "./announcements-section";
+import { CommunitySettingsPage, ManageListPage } from "./manage-sx";
 import { AuditSection } from "./audit-section";
 import { CommunitySettingsSection } from "./community-settings-section";
 import { ModerationSection } from "./moderation-section";
@@ -36,6 +37,7 @@ const SETTINGS_CARD = "rounded-lg card-flat p-5 shadow-card empty:hidden sm:p-6"
 export function ManageTab({ group, role, onToast, reload, section }: CommunityTabProps) {
   const { t } = useTranslation();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { refresh } = useRealMessages();
   const perms = group.rolePermissions;
   const phone = useMediaQuery("(max-width: 767.98px)");
@@ -90,6 +92,11 @@ export function ManageTab({ group, role, onToast, reload, section }: CommunityTa
 
   // Telefon (docs/history/357-*, Yön C): Yönetim = bölüm listesi; satır alt sayfayı açar, alt sayfa kendi geri çubuğunu çizer.
   if (phone) {
+    const rawSection = searchParams.get("section");
+    const sub = searchParams.get("sub");
+    const setSub = (next: string | null) => router.replace(`${communityHref(group.id, "manage", rawSection ?? undefined)}${next ? `&sub=${next}` : ""}`);
+    if (!rawSection) return <ManageListPage group={group} role={role} />;
+    if (rawSection === "settings") return <CommunitySettingsPage group={group} onChanged={reload} onToast={onToast} sub={sub} setSub={setSub} parent={`${group.name} · ${t("ay.manage.title")}`} />;
     const ICONS: Record<ManageSection, PhoneSectionItem["icon"]> = { stats: BarChart3, settings: Settings, rooms: MessagesSquare, announcements: Megaphone, moderation: ShieldCheck, history: History };
     const chosen = sections.find((item) => item.key === section)?.key ?? null;
     if (!chosen) {

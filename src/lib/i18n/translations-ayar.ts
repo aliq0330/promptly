@@ -1,0 +1,82 @@
+/**
+ * Ayar / yönetim sayfaları (mobil mockup: docs/mockups/ayar-sayfalari) — TR/EN metinleri. Metinler mockup'tan birebirdir.
+ * `translations.ts` bu nesneyi açar. Kullanıcı verisi (topluluk/ekip/Space adı, kullanıcı adı) çevrilmez.
+ */
+export const ayarTranslations = {
+  // Ortak
+  "ay.changes": { tr: "{{count}} değişiklik", en: "{{count}} changes" },
+  "ay.edit": { tr: "Düzenle", en: "Edit" },
+  "ay.change": { tr: "Değiştir", en: "Change" },
+  "ay.pick": { tr: "Seç", en: "Select" },
+  "ay.pickLabel": { tr: "Seçenekler", en: "Options" },
+  "ay.everyone": { tr: "Herkes", en: "Everyone" },
+  "ay.staff": { tr: "Yönetim", en: "Staff" },
+  "ay.basics": { tr: "Temel bilgiler", en: "Basics" },
+  "ay.imageHint": { tr: "JPEG, PNG veya WebP", en: "JPEG, PNG or WebP" },
+  "ay.cover": { tr: "Kapak", en: "Cover" },
+  "ay.danger.label": { tr: "Tehlikeli bölge", en: "Danger zone" },
+
+  // Topluluk · A1 yönetim listesi
+  "ay.manage.title": { tr: "Yönetim", en: "Management" },
+  "ay.role.owner": { tr: "Sahip", en: "Owner" },
+  "ay.role.admin": { tr: "Yönetici", en: "Admin" },
+  "ay.role.moderator": { tr: "Moderatör", en: "Moderator" },
+  "ay.role.member": { tr: "Üye", en: "Member" },
+  "ay.manage.people": { tr: "Kişiler", en: "People" },
+  "ay.manage.members": { tr: "Üyeler ve katılım istekleri", en: "Members and join requests" },
+  "ay.manage.membersDesc": { tr: "{{members}} üye · {{pending}} bekleyen istek", en: "{{members}} members · {{pending}} pending requests" },
+  "ay.manage.invites": { tr: "Davetler ve bağlantılar", en: "Invites and links" },
+  "ay.manage.invitesDesc": { tr: "{{count}} etkin davet bağlantısı", en: "{{count}} active invite links" },
+  "ay.manage.config": { tr: "Yapılandırma", en: "Configuration" },
+  "ay.settings.title": { tr: "Topluluk ayarları", en: "Community settings" },
+  "ay.manage.settingsDesc": { tr: "Ad, görsel, görünürlük, kurallar", en: "Name, image, visibility, rules" },
+  "ay.manage.permissions": { tr: "Yönetici ve moderatör yetkileri", en: "Admin and moderator permissions" },
+  "ay.manage.permissionsDesc": { tr: "Rol başına açma / kapama", en: "Turn on / off per role" },
+  "ay.chat.title": { tr: "Sohbet ayarları", en: "Chat settings" },
+  "ay.manage.chatDesc": { tr: "Kim yazar, geçmiş, sabitleme", en: "Who writes, history, pinning" },
+  "ay.rooms.title": { tr: "Sohbet odaları", en: "Chat rooms" },
+  "ay.manage.roomsDesc": { tr: "{{count}} / {{max}} etkin oda", en: "{{count}} / {{max}} active rooms" },
+  "ay.manage.content": { tr: "İçerik ve moderasyon", en: "Content and moderation" },
+  "ay.manage.announceDesc": { tr: "Yayınla, düzenle, sabitle", en: "Publish, edit, pin" },
+  "ay.manage.moderationDesc": { tr: "Şikâyetler ve kaldırılan gönderiler", en: "Reports and removed posts" },
+  "ay.manage.openReports": { tr: "{{count}} açık", en: "{{count}} open" },
+  "ay.manage.stats": { tr: "Topluluk özeti", en: "Community summary" },
+  "ay.manage.statsDesc": { tr: "Üye, paylaşım ve sohbet sayıları", en: "Member, post and chat counts" },
+  "ay.manage.historyDesc": { tr: "Yönetimin yaptığı değişiklikler", en: "Changes made by staff" },
+  "ay.manage.dangerRow": { tr: "Kapat veya sil", en: "Close or delete" },
+  "ay.manage.dangerDesc": { tr: "Yalnız topluluk sahibi görür", en: "Only the community owner sees this" },
+
+  // Topluluk · A2 ayarlar
+  "ay.memberNow": { tr: "Şu an {{count}} üye var", en: "{{count}} members right now" },
+  "ay.topicPurpose": { tr: "Konu ve amaç", en: "Topic and purpose" },
+  "ay.domainHint": { tr: "Keşifte bu konuyla süzülür", en: "Used to filter this community in Discover" },
+  "ay.purposeHint": { tr: "Topluluğun ne için olduğu", en: "What the community is for" },
+  "ay.visHint": { tr: "Kimlerin bulup okuyabileceği", en: "Who can find and read it" },
+  "ay.chatFeed": { tr: "Sohbet ve akış", en: "Chat and feed" },
+  "ay.feedHint": { tr: "Paylaşım, herkese açık bir içeriğin alıntılanmasıdır; özel içerik açılmaz.", en: "Sharing quotes a public item; private content is never opened." },
+  "ay.rules.section": { tr: "Kurallar", en: "Rules" },
+  "ay.rules.title": { tr: "Topluluk kuralları", en: "Community rules" },
+  "ay.rules.meta": { tr: "Sürüm {{version}} · {{count}} karakter", en: "Version {{version}} · {{count}} characters" },
+  "ay.rules.required": { tr: "Katılmadan önce kabul zorunlu", en: "Must be accepted before joining" },
+  "ay.rules.requiredHint": { tr: "Yeni üyeler kuralları işaretlemeden katılamaz. Mevcut üyeler çıkarılmaz.", en: "New members cannot join without ticking the rules. Existing members are not removed." },
+
+  // Topluluk · A3 görünürlük
+  "ay.vis.public": { tr: "Herkese açık", en: "Public" },
+  "ay.vis.restricted": { tr: "Kapalı", en: "Closed" },
+  "ay.vis.private": { tr: "Tamamen kapalı", en: "Fully closed" },
+  "ay.vis.publicHelp": { tr: "Herkes topluluğu keşfedebilir ve gönderileri okuyabilir. Katılım doğrudandır.", en: "Anyone can discover the community and read its posts. Joining is direct." },
+  "ay.vis.restrictedHelp": { tr: "Aramada bulunur; gönderileri yalnız üyeler görür. Katılmak için istek gönderilir.", en: "Appears in search; only members see the posts. You request to join." },
+  "ay.vis.privateHelp": { tr: "Gizlidir; erişim davetledir. Hiçbir listede, aramada ya da öneride görünmez.", en: "Hidden; access is by invitation. It never shows in lists, search or suggestions." },
+  "ay.vis.intro": { tr: "Topluluğu kimlerin bulabileceğini ve içeriğini okuyabileceğini seç.", en: "Choose who can find the community and read its content." },
+  "ay.vis.current": { tr: "Şu anki: {{value}}", en: "Current: {{value}}" },
+  "ay.vis.noteTitle": { tr: "Geçişte ne olur?", en: "What happens when it changes?" },
+  "ay.vis.note": { tr: "Kapalıdan herkese açığa geçince bekleyen başvurular toplu kabul edilir; üye sınırı dolarsa kalanlar bekler.", en: "Going from closed to public accepts pending requests in bulk; if the member limit fills, the rest wait." },
+
+  // Topluluk · A4 kurallar
+  "ay.rules.text": { tr: "Kural metni", en: "Rule text" },
+  "ay.rules.version": { tr: "Sürüm {{version}}", en: "Version {{version}}" },
+  "ay.rules.count": { tr: "{{count}} / {{max}} karakter", en: "{{count}} / {{max}} characters" },
+  "ay.rules.accept": { tr: "Kabul", en: "Acceptance" },
+  "ay.rules.requiredHelp": { tr: "Katılma, davet kabulü ve başvuruda kurallar işaretlenir. Mevcut üyeler çıkarılmaz.", en: "Rules are ticked when joining, accepting an invite or applying. Existing members are not removed." },
+  "ay.rules.note": { tr: "Kural metni değişince sürüm artar; kabul zorunluysa üyeler haberdar edilir ve yeniden kabul etmesi istenir. Üyelik düşmez.", en: "When the rule text changes the version goes up; if acceptance is required, members are notified and asked to accept again. Membership is kept." },
+} as const;

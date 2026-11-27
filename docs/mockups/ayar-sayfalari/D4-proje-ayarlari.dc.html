@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>Proje ayarları</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ayar.css">
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<div class="ay {{themeClass}}" style="width:390px;height:1120px">
+<div class="bar"><button type="button" class="back" aria-label="Geri"></button><div class="bt"><small>Ürün Tasarım Ekibi</small><b>Proje ayarları</b></div></div>
+<div class="body">
+<div class="lab">Proje</div>
+<div class="card">
+<div class="row"><div class="rt"><div class="t">Proje adı</div><div class="s">Mobil uygulama yenileme</div></div><button type="button" class="btn">Düzenle</button></div>
+<div class="row top"><div class="rt"><div class="t">Açıklama</div><div class="s">2027 ilk çeyrek tasarım dili ve prompt setleri.</div></div><button type="button" class="btn">Düzenle</button></div>
+</div>
+
+<div class="lab">Kişiler</div>
+<div class="card">
+<a class="row nav" href="#"><div class="rt"><div class="t">Proje erişimi</div><div class="s">Yalnız seçilenler · 6 kişi</div></div></a>
+<a class="row nav" href="#"><div class="rt"><div class="t">Kişiler ve roller</div><div class="s">Lider · Düzenleyici · Görüntüleyici</div></div></a>
+</div>
+
+<div class="lab">Onay</div>
+<div class="card">
+<div class="row top"><div class="rt"><div class="t">Yeni dosyalarda lider onayı</div><div class="s">Lider olmayanın eklediği öğe taslak başlar, onaya gönderilir.</div></div><button type="button" class="tg on" role="switch" aria-checked="true" aria-label="Lider onayı"><i></i></button></div>
+</div>
+
+<div class="lab">Arşiv</div>
+<div class="card">
+<div class="row col"><div class="t">Projeyi arşivle</div><div class="s">Arşivdeki proje salt okunurdur; sohbeti de arşivlenir. İstediğin zaman geri alabilirsin.</div><button type="button" class="btn out">Projeyi arşivle</button></div>
+</div>
+
+<div class="lab">Tehlikeli bölge</div>
+<div class="card">
+<div class="row col"><div class="t">Projeyi sil</div><div class="s">Proje, dosyaları ve panolarıyla kalıcı olarak silinir.</div><button type="button" class="btn dng">Projeyi sil…</button></div>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":true},"$preview":{"width":390,"height":1120}}'>
+class Component extends DCLogic {
+renderVals() { return { themeClass: this.props.dark === false ? 'light' : 'dark' }; }
+}
+</script>
+</body>
+</html>

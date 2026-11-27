@@ -59,6 +59,7 @@ export function OptionGroup<K extends string>({
   columns = 1,
   reselect,
   className,
+  variant,
 }: {
   value: K | null;
   options: OptionItem<K>[];
@@ -70,8 +71,68 @@ export function OptionGroup<K extends string>({
   disabled?: boolean;
   columns?: 1 | 2 | 3;
   className?: string;
+  /** `sx`: the option cards of the settings pages (`app/ayar-kit.css`, mockup "opt"). */
+  variant?: "default" | "sx" | "sx-list";
 }) {
   const anyChecked = options.some((option) => option.key === value);
+  if (variant === "sx-list") {
+    return (
+      <div role="radiogroup" aria-label={ariaLabel} aria-labelledby={labelledBy} onKeyDown={radioGroupKeyDown} className={className}>
+        {options.map((option, index) => {
+          const checked = option.key === value;
+          return (
+            <button
+              key={option.key}
+              type="button"
+              role="radio"
+              aria-checked={checked}
+              tabIndex={radioTabIndex(index, checked, anyChecked)}
+              disabled={disabled || option.disabled}
+              data-option={option.key}
+              onClick={() => onChange(option.key)}
+              className={cn("row focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-focus", checked && "on-ck")}
+              {...option.attrs}
+            >
+              <span className="rt">
+                <span className="t" style={{ display: "block" }}>{option.label}</span>
+                {option.description && <span className="s" style={{ display: "block" }}>{option.description}</span>}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    );
+  }
+  if (variant === "sx") {
+    return (
+      <div role="radiogroup" aria-label={ariaLabel} aria-labelledby={labelledBy} onKeyDown={radioGroupKeyDown} className={cn("opts", className)}>
+        {options.map((option, index) => {
+          const checked = option.key === value;
+          return (
+            <button
+              key={option.key}
+              type="button"
+              role="radio"
+              aria-checked={checked}
+              tabIndex={radioTabIndex(index, checked, anyChecked)}
+              disabled={disabled || option.disabled}
+              data-option={option.key}
+              onClick={() => (!checked || reselect) && onChange(option.key)}
+              className={cn("opt focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:opacity-50", checked && "on")}
+              {...option.attrs}
+            >
+              {option.leading}
+              <span className="rd" aria-hidden />
+              <span className="rt">
+                <span className="t">{option.label}</span>
+                {option.description && <span className="s">{option.description}</span>}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    );
+  }
   return (
     <div role="radiogroup" aria-label={ariaLabel} aria-labelledby={labelledBy} onKeyDown={radioGroupKeyDown} className={cn(columns === 3 ? "grid gap-2 md:grid-cols-3" : columns === 2 ? "grid gap-2 sm:grid-cols-2" : "space-y-2", className)}>
       {options.map((option, index) => {

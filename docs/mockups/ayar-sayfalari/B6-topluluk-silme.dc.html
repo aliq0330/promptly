@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>Topluluğu silme onayı</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ayar.css">
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<div class="ay {{themeClass}}" style="width:390px;height:860px">
+<div class="bar"><button type="button" class="close" aria-label="Kapat"></button><div class="bt"><small>Kapat veya sil</small><b>Topluluk silinsin mi?</b></div></div>
+<div class="body">
+<div style="padding:18px 20px 0"><p style="font-size:16px;line-height:24px">«Sinematik Prompt Atölyesi» ve tüm mesajları herkes için kalıcı olarak silinecek.</p></div>
+<div class="lab">Silinecekler</div>
+<div class="card">
+<div class="row"><div class="rt"><div class="t">412 üyelik</div></div></div>
+<div class="row"><div class="rt"><div class="t">Tüm sohbet mesajları ve 5 oda</div></div></div>
+<div class="row"><div class="rt"><div class="t">Gönderiler, duyurular, etkinlikler</div></div></div>
+<div class="row"><div class="rt"><div class="t">Bekleyen istek ve davetler</div></div></div>
+</div>
+<div class="lab">Onay</div>
+<div class="card" style="padding-top:14px;padding-bottom:6px">
+<label class="fl" for="sil-ad">Onaylamak için topluluk adını yaz</label>
+<input id="sil-ad" class="inp" placeholder="Sinematik Prompt Atölyesi">
+<p class="hint">Sinematik Prompt Atölyesi</p>
+</div>
+</div>
+<div class="foot"><button type="button" class="btn out full" style="flex:0 0 120px">Vazgeç</button><button type="button" class="btn dng full" style="opacity:.45">Topluluğu sil</button></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":true},"$preview":{"width":390,"height":860}}'>
+class Component extends DCLogic {
+renderVals() { return { themeClass: this.props.dark === false ? 'light' : 'dark' }; }
+}
+</script>
+</body>
+</html>

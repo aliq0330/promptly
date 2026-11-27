@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>Topluluk ayarları</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ayar.css">
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<div class="ay {{themeClass}}" style="width:390px;height:1470px">
+<div class="bar"><button type="button" class="back" aria-label="Geri"></button><div class="bt"><small>Sinematik Prompt Atölyesi · Yönetim</small><b>Topluluk ayarları</b></div></div>
+<div class="body">
+<div class="lab">Temel bilgiler</div>
+<div class="card">
+<div class="row"><span class="cov" style="background:#3b5be2">SP</span><div class="rt"><div class="t">Topluluk görseli</div><div class="s">JPEG, PNG veya WebP</div></div><button type="button" class="btn">Değiştir</button></div>
+<div class="row"><div class="rt"><div class="t">Topluluk adı</div><div class="s">Sinematik Prompt Atölyesi</div></div><button type="button" class="btn">Düzenle</button></div>
+<div class="row top"><div class="rt"><div class="t">Açıklama</div><div class="s">Sinema dilinden ilham alan görsel ve video promptları üzerine çalışan açık bir atölye.</div></div><button type="button" class="btn">Düzenle</button></div>
+<div class="row"><div class="rt"><div class="t">Üye sınırı</div><div class="s">Şu an 412 üye var</div></div><button type="button" class="btn">1000</button></div>
+</div>
+
+<div class="lab">Konu ve amaç</div>
+<div class="card">
+<div class="row"><div class="rt"><div class="t">Konu</div><div class="s">Keşifte bu konuyla süzülür</div></div><button type="button" class="btn sel">Sinema ve video</button></div>
+<div class="row"><div class="rt"><div class="t">Amaç</div><div class="s">Topluluğun ne için olduğu</div></div><button type="button" class="btn sel">Vitrin</button></div>
+</div>
+
+<div class="lab">Görünürlük</div>
+<div class="card">
+<a class="row nav" href="#"><div class="rt"><div class="t">Görünürlük</div><div class="s">Kimlerin bulup okuyabileceği</div></div><span class="val">Herkese açık</span></a>
+</div>
+
+<div class="lab">Sohbet ve akış</div>
+<div class="card">
+<div class="fld"><div class="fl">Sohbette kim yazabilir?</div><div class="seg"><button type="button" class="on">Herkes</button><button type="button">Yönetim</button></div></div>
+<div class="sep"></div>
+<div class="fld"><div class="fl">Akışta kim içerik paylaşabilir?</div><div class="seg"><button type="button" class="on">Herkes</button><button type="button">Yönetim</button></div><p class="hint">Paylaşım, herkese açık bir içeriğin alıntılanmasıdır; özel içerik açılmaz.</p></div>
+</div>
+
+<div class="lab">Kurallar</div>
+<div class="card">
+<a class="row nav" href="#"><div class="rt"><div class="t">Topluluk kuralları</div><div class="s">Sürüm 3 · 842 karakter</div></div></a>
+<div class="row top"><div class="rt"><div class="t">Katılmadan önce kabul zorunlu</div><div class="s">Yeni üyeler kuralları işaretlemeden katılamaz. Mevcut üyeler çıkarılmaz.</div></div><button type="button" class="tg on" role="switch" aria-checked="true" aria-label="Kural kabulü zorunlu"><i></i></button></div>
+</div>
+</div>
+<div class="foot"><span class="meta">2 değişiklik</span><button type="button" class="btn pri full" style="width:auto;flex:1">Kaydet</button></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":true},"$preview":{"width":390,"height":1470}}'>
+class Component extends DCLogic {
+renderVals() { return { themeClass: this.props.dark === false ? 'light' : 'dark' }; }
+}
+</script>
+</body>
+</html>

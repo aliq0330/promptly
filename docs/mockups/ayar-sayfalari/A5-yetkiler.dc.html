@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>Yönetici ve moderatör yetkileri</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ayar.css">
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<div class="ay {{themeClass}}" style="width:390px;height:1800px">
+<div class="bar"><button type="button" class="back" aria-label="Geri"></button><div class="bt"><small>Yönetim</small><b>Yetkiler</b></div><button type="button" class="bact">Kaydet</button></div>
+<div class="body">
+<div class="card" style="padding:12px;margin-top:8px"><div class="seg"><button type="button" class="on">Yönetici</button><button type="button">Moderatör</button></div></div>
+<p class="s" style="margin:12px 20px 0">Sahip her zaman tüm yetkilere sahiptir. Değişiklik o roldeki herkes için geçerlidir ve onlara bildirilir.</p>
+
+<div class="lab">Üyeler</div>
+<div class="card">
+<div class="row"><div class="rt"><div class="t">Üye çıkarma</div><div class="s">Altındaki rütbeyi çıkarır</div></div><button type="button" class="tg on" role="switch" aria-checked="true" aria-label="Üye çıkarma"><i></i></button></div>
+<div class="row"><div class="rt"><div class="t">Üye yasaklama</div><div class="s">Yasaklama ve yasağı kaldırma</div></div><button type="button" class="tg on" role="switch" aria-checked="true" aria-label="Üye yasaklama"><i></i></button></div>
+<div class="row"><div class="rt"><div class="t">Rol atama</div><div class="s">Moderatör yapma / alma</div></div><button type="button" class="tg on" role="switch" aria-checked="true" aria-label="Rol atama"><i></i></button></div>
+<div class="row"><div class="rt"><div class="t">Katılım istekleri</div><div class="s">Görme, kabul ve reddetme</div></div><button type="button" class="tg on" role="switch" aria-checked="true" aria-label="Katılım istekleri"><i></i></button></div>
+<div class="row"><div class="rt"><div class="t">Davet ve bağlantılar</div><div class="s">Davet etme, bağlantı oluşturma</div></div><button type="button" class="tg on" role="switch" aria-checked="true" aria-label="Davet ve bağlantılar"><i></i></button></div>
+</div>
+
+<div class="lab">Sohbet</div>
+<div class="card">
+<div class="row"><div class="rt"><div class="t">Mesaj silme</div><div class="s">Altındaki rütbenin mesajını siler</div></div><button type="button" class="tg on" role="switch" aria-checked="true" aria-label="Mesaj silme"><i></i></button></div>
+<div class="row"><div class="rt"><div class="t">Mesaj sabitleme</div><div class="s">Sabitleme ve kaldırma</div></div><button type="button" class="tg on" role="switch" aria-checked="true" aria-label="Mesaj sabitleme"><i></i></button></div>
+<div class="row"><div class="rt"><div class="t">Sohbet odalarını yönetme</div><div class="s">Oluşturma, sıralama, arşivleme</div></div><button type="button" class="tg" role="switch" aria-checked="false" aria-label="Sohbet odalarını yönetme"><i></i></button></div>
+</div>
+
+<div class="lab">İçerik</div>
+<div class="card">
+<div class="row"><div class="rt"><div class="t">Akış gönderilerini kaldırma</div><div class="s">Raporları karara bağlar</div></div><button type="button" class="tg on" role="switch" aria-checked="true" aria-label="Akış gönderilerini kaldırma"><i></i></button></div>
+<div class="row"><div class="rt"><div class="t">Gönderi sabitleme</div><div class="s">Akışın başına en çok 3</div></div><button type="button" class="tg on" role="switch" aria-checked="true" aria-label="Gönderi sabitleme"><i></i></button></div>
+<div class="row"><div class="rt"><div class="t">Duyuru yönetimi</div><div class="s">Yayınlama, düzenleme, sabitleme</div></div><button type="button" class="tg on" role="switch" aria-checked="true" aria-label="Duyuru yönetimi"><i></i></button></div>
+<div class="row"><div class="rt"><div class="t">Etkinlik yönetimi</div><div class="s">Oluşturma, iptal, silme</div></div><button type="button" class="tg on" role="switch" aria-checked="true" aria-label="Etkinlik yönetimi"><i></i></button></div>
+</div>
+
+<div class="lab">Topluluk</div>
+<div class="card">
+<div class="row"><div class="rt"><div class="t">Topluluk ayarlarını düzenleme</div><div class="s">Ad, açıklama, görsel, sınır</div></div><button type="button" class="tg on" role="switch" aria-checked="true" aria-label="Topluluk ayarlarını düzenleme"><i></i></button></div>
+<div class="row"><div class="rt"><div class="t">Görünürlüğü değiştirme</div><div class="s">Açık / kapalı geçişi</div></div><button type="button" class="tg" role="switch" aria-checked="false" aria-label="Görünürlüğü değiştirme"><i></i></button></div>
+<div class="row"><div class="rt"><div class="t">Kuralları düzenleme</div><div class="s">Metin ve kabul zorunluluğu</div></div><button type="button" class="tg on" role="switch" aria-checked="true" aria-label="Kuralları düzenleme"><i></i></button></div>
+<div class="row"><div class="rt"><div class="t">İstatistikleri görme</div><div class="s">Toplulaştırılmış özet</div></div><button type="button" class="tg on" role="switch" aria-checked="true" aria-label="İstatistikleri görme"><i></i></button></div>
+</div>
+
+<div style="height:18px"></div>
+<div class="card"><button type="button" class="row nav"><div class="rt"><div class="t">Varsayılan yetkilere dön</div><div class="s">Yalnız bu rol için</div></div></button></div>
+</div>
+<div class="foot"><span class="meta">2 değişiklik</span><button type="button" class="btn pri full" style="width:auto;flex:1">Kaydet</button></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":true},"$preview":{"width":390,"height":1800}}'>
+class Component extends DCLogic {
+renderVals() { return { themeClass: this.props.dark === false ? 'light' : 'dark' }; }
+}
+</script>
+</body>
+</html>

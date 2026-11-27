@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>Rol seçici</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ayar.css">
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<div class="ay {{themeClass}}" style="width:390px;height:820px">
+<div class="bar"><button type="button" class="back" aria-label="Geri"></button><div class="bt"><small>Politikalar</small><b>Dışarıya yayınlama</b></div></div>
+<div class="body">
+<p class="s" style="margin:8px 20px 0">Ekip içeriğini dışarıya kimin açabileceğini seç.</p>
+<div class="lab">Kim yapabilir</div>
+<div class="card">
+<button type="button" class="row"><div class="rt"><div class="t">Sahip</div><div class="s">Yalnız ekip sahibi</div></div></button>
+<button type="button" class="row"><div class="rt"><div class="t">Yönetici</div><div class="s">Sahip ve yöneticiler</div></div></button>
+<button type="button" class="row on-ck"><div class="rt"><div class="t">Düzenleyici</div><div class="s">Düzenleyiciler ve üstü</div></div></button>
+</div>
+<div style="height:16px"></div>
+<div class="note">Üye ve konuk rolleri bu yetkiyi alamaz. Değişiklik, politikalar sayfasında Kaydet'e basınca yazılır.</div>
+</div>
+<div class="foot"><button type="button" class="btn pri full">Seç</button></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":true},"$preview":{"width":390,"height":820}}'>
+class Component extends DCLogic {
+renderVals() { return { themeClass: this.props.dark === false ? 'light' : 'dark' }; }
+}
+</script>
+</body>
+</html>

@@ -32,13 +32,22 @@ type ControlProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, "onChange" | "
   /** Accessible name (omit when `labelledBy` or the row's own text names it). */
   label?: string;
   labelledBy?: string;
+  /** `sx`: the 52×30 track of the settings pages (`app/ayar-kit.css`, mockup "tg"). */
+  variant?: "default" | "sx";
   [data: `data-${string}`]: string | boolean | undefined;
 };
 
 const FOCUS_CLASS = "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-background";
 
 /** A standalone switch. */
-export const Switch = forwardRef<HTMLButtonElement, ControlProps>(function Switch({ checked, onChange, label, labelledBy, disabled, className, ...rest }, ref) {
+export const Switch = forwardRef<HTMLButtonElement, ControlProps>(function Switch({ checked, onChange, label, labelledBy, disabled, className, variant, ...rest }, ref) {
+  if (variant === "sx") {
+    return (
+      <button ref={ref} type="button" role="switch" aria-checked={checked} aria-label={label} aria-labelledby={labelledBy} disabled={disabled} onClick={() => onChange(!checked)} className={cn("tg", checked && "on", className)} {...rest}>
+        <i />
+      </button>
+    );
+  }
   return (
     <button
       ref={ref}
@@ -67,6 +76,7 @@ export function SwitchRow({
   className,
   trackPosition = "end",
   children,
+  variant: _variant,
   ...rest
 }: ControlProps & { trackPosition?: "start" | "end"; children: ReactNode }) {
   const track = <SwitchTrack on={checked} />;
