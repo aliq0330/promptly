@@ -74,6 +74,7 @@ function team(db, { role = "owner" } = {}) {
   const guest = (id, name, un, days, role, joinedAgo) => ({ user_id: id, username: un, display_name: name, avatar_url: null, guest_org: null, guest_until: new Date(Date.now() + days * day + 3600000).toISOString(), joined_at: new Date(Date.now() - joinedAgo * day).toISOString(), expired: false, spaces: role === "edit" ? [{ space_id: "s1", title: "A", role: "editor" }] : [{ space_id: "s1", title: "A", role: "viewer" }, { space_id: "s2", title: "B", role: "viewer" }], channels: [] });
   reply("team_list_guests", () => [guest(U.dave.id, "Selin Kara", "selin", 12, "view", 1), guest("g2", "Onur Tan", "onur", 5, "edit", 0), guest("g3", "Deniz Aksoy", "deniz", 30, "view", 3)]);
   reply("team_list_groups", () => []);
+  reply("team_member_project_roles", () => [{ user_id: U.carol.id, lead_count: 0, edit_count: 3, view_count: 1 }]);
   reply("team_audit_stats", () => ({ total: 128, roleAccess: 14, deletes: 3 }));
   const now = new Date();
   const at = (h, m, back = 0) => { const d = new Date(now); d.setDate(d.getDate() - back); d.setHours(h, m, 0, 0); return d.toISOString(); };
@@ -140,6 +141,28 @@ const SPACE_URL = `/spaces/local?id=${SID(1)}`;
 const openMenu = async (page) => { await page.getByRole("button", { name: "Daha fazla işlem" }).first().click(); await page.getByRole("menuitem", { name: /Ayarlar/ }).first().click(); await page.waitForTimeout(500); };
 const spaceNorm = (x) => x.replace(/!$/, "").replace(/\d+ üye · \d+ bekleyen davet/, "<m>").replace(/@[\w.]+/g, "@u");
 
+const CH = "e1000000-0000-4000-8000-0000000000a9";
+function teamChannels(db) {
+  teamProject(db);
+  const calls = db.teamCalls;
+  const reply = (name, fn) => { db.rpc[name] = (body) => { calls.push({ name, body }); return { body: fn(body) }; }; };
+  const channel = (id, name, mode, extra = {}) => ({ id, name, description: null, mode, space_id: null, space_title: null, posting_policy: "members", notify_default: "mentions", is_default: false, position: 0, archived_at: null, unread_count: 0, muted: false, notify_level: "mentions", last_message_at: "2026-11-08T09:00:00Z", member_count: 4, can_post: true, ...extra });
+  const list = () => [
+    channel("e1000000-0000-4000-8000-0000000000aa", "genel", "project", { project_id: PROJECT, project_title: "Mobil uygulama yenileme", project_main: true, muted: true, mute_scope: "project", notify_level: "none" }),
+    channel(CH, "tasarim-kritikleri", "project", { description: "Haftalık kritik ve geri bildirim toplantısı notları.", project_id: PROJECT, project_title: "Mobil uygulama yenileme", file_id: null, project_main: false, notify_level: "mentions" }),
+    channel("e1000000-0000-4000-8000-0000000000ab", "duyurular", "open", { is_default: true, notify_level: "all" }),
+  ];
+  reply("team_channels_overview", list);
+  reply("team_list_channels", list);
+  reply("team_channel_members", () => []);
+  reply("team_update_channel", () => null);
+  reply("team_set_channel_notify", () => null);
+  reply("team_my_mutes", () => [{ team_id: TEAM, project_id: PROJECT }]);
+  const second = { id: "e1000000-0000-4000-8000-0000000000b9", title: "Marka rehberi", description: "", tone: "primary", archived_at: null, review_default: true, access_mode: "selected", base_role: "view", my_role: "lead", main_area_id: null, channel_id: null, member_count: 3, board_count: 0, item_count: 0, pending_count: 0, files: [] };
+  const prevList = db.rpc.team_projects_list;
+  reply("team_projects_list", () => [...prevList({}).body, second]);
+}
+
 export const PAGES = [
   { id: "A1", mock: "A1-yonetim-listesi", height: 1290, url: `/communities/local?id=${C1}&tab=manage`, setup: (db) => { community(db); db.groups.find((g) => g.id === C1).pending_request_count = 3; } },
   { id: "A2", mock: "A2-topluluk-ayarlari", height: 1470, ignore: ["btn#4", "rt#4"], url: `/communities/local?id=${C1}&tab=manage&section=settings`, setup: (db) => community(db), normalize: norm, before: async (page) => { await page.locator("[data-sx-page] .seg").nth(1).getByText("Yönetim").click(); await page.locator("[data-sx-page] .tg").first().click(); } },
@@ -178,4 +201,7 @@ export const PAGES = [
   { id: "F4", mock: "F4-space-uye-rol", height: 960, url: `${SPACE_URL}&tab=members`, setup: space, normalize: (x) => x.replace(/@[\w.]+/g, "@u"), textIgnore: ["rt", "hd", "av", "card", "row", "btn", "bar", "bt"], before: async (page) => { await page.locator("[data-sx-page] .btn.sel").first().click(); await page.waitForTimeout(400); }, ignore: ["hd#0"] },
   { id: "F5", mock: "F5-space-tehlike", height: 900, url: SPACE_URL, setup: space, before: async (page) => { await openMenu(page); await page.getByText("Arşivle veya sil").first().click(); await page.waitForTimeout(400); } },
   { id: "F6", mock: "F6-space-silme", height: 860, url: SPACE_URL, setup: space, normalize: (x) => x.replace(/\d+ görsel, \d+ prompt, \d+ not/, "<g>").replace(/\d+ üyelik ve \d+ bekleyen davet/, "<u>"), before: async (page) => { await openMenu(page); await page.getByText("Arşivle veya sil").first().click(); await page.getByRole("button", { name: "Space'i sil" }).first().click(); await page.waitForTimeout(500); } },
+  { id: "D1", mock: "D1-uye-ayrinti", height: 1120, url: `/teams/local?id=${TEAM}&tab=members`, setup: (db) => team(db), normalize: (x) => x.replace(/[\d]+ projede rolü var/, "<p>").replace(/\d+ (\w+) (\d{4})$/, "<d>").replace(/Tasarım grubu|Tasarım/g, "<g>").replace(/\d+ \w+ \d{4}/, "<d>"), before: async (page) => { await page.locator("[data-member='can.yildiz']").click({ position: { x: 24, y: 24 } }); await page.waitForTimeout(500); await page.getByRole("radio", { name: /Yönetici/ }).first().click(); } },
+  { id: "D6", mock: "D6-kanal-ayarlari", height: 1360, url: `/teams/local?id=${TEAM}&tab=chat&channel=${CH}&settings=1`, setup: (db) => teamChannels(db), normalize: (x) => x.replace(/Ekip sessizde( değil)?, proje sessizde( değil)?/, "<m>"), ignore: [] },
+  { id: "E1", mock: "E1-ekip-sessize-alma", height: 1160, url: `/teams/local?id=${TEAM}&tab=chat&notify=1`, setup: (db) => teamChannels(db) },
 ];

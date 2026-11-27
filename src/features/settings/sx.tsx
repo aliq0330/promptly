@@ -251,7 +251,7 @@ export function SxNote({ children, className, style }: { children: ReactNode; cl
   );
 }
 
-const PALETTE = ["#3b5be2", "#0f766e", "#7c3aed", "#b45309", "#8a2b5c", "#2563eb"];
+const PALETTE = ["var(--color-primary)", "var(--color-success)", "var(--color-secondary)", "var(--color-warning)", "var(--color-danger)", "var(--color-primary-hover)"];
 function hashColor(seed: string): string {
   let h = 0;
   for (let i = 0; i < seed.length; i += 1) h = (h * 31 + seed.charCodeAt(i)) >>> 0;

@@ -30,18 +30,14 @@ import {
   NewBoardDialog,
   NewFileDialog,
   RenameFileDialog,
-  ReviewSwitchRow,
   VariableDialog,
 } from "./project-dialogs";
 import type { PathCrumb } from "./project-path-bar";
 import { InviteDialog } from "./team-invites";
 import type { TeamBoardConfig } from "./board/board-types";
-import { CopyItemsDialog } from "@/features/spaces/copy-items-dialog";
-import { Send } from "@/components/icons/send";
 import { boardGroupPagesOf, boardPageHref, fileBoardEntries } from "@/lib/team-board";
 import { ProjectPeopleList } from "./project-people";
 import { ProjectRoleChip, projectRoleLabelKey } from "./project-ui";
-import { ProjectVariablesPanel } from "./project-variables";
 import { TeamAreaView, type AreaBoardRow, type AreaTab } from "./team-area-view";
 import type { AreaItemContext } from "./team-item-detail";
 import type { BoardChoice } from "./team-add-to-board";
@@ -49,7 +45,7 @@ import { TeamReviewInbox } from "./team-review-inbox";
 import type { TeamCtx } from "./team-page";
 import { SectionError, TeamMark, toneClass } from "./team-ui";
 import { addProjectChannel, type TeamActionError } from "@/lib/supabase/teams";
-import { MuteCard, MuteChip } from "./mute-card";
+import { MuteCard } from "./mute-card";
 import { FileSettingsSx, ProjectAccessSx, ProjectSettingsSx } from "./project-sx";
 import { useTeamChannelList, useTeamMutes } from "./team-chat-data";
 
@@ -280,7 +276,6 @@ function FileInfoSheet({
   const lead = canReview(myRole);
   const { node: toastNode, show } = useToast();
   const [busy, setBusy] = useState(false);
-  const [copyOpen, setCopyOpen] = useState(false);
   // Dosya sohbeti (docs/history/369-*): kendiliğinden açılmaz; lider sonradan buradan açar. Sessizliği kanalın KENDİ ayarıdır (kanal bilgisinden), burada yalnız durumu görünür.
   const channelsState = useTeamChannelList(teamId);
   const fileChannel = channelsState.channels.find((channel) => channel.fileId === file.id) ?? null;
@@ -289,18 +284,6 @@ function FileInfoSheet({
     try {
       await addProjectChannel(project.id, { file: file.id });
       channelsState.reload();
-    } catch (e) {
-      show((e as TeamActionError).message);
-    } finally {
-      setBusy(false);
-    }
-  };
-  const toggleReview = async (on: boolean) => {
-    setBusy(true);
-    try {
-      const left = await setFileReview(file.id, on);
-      if (!on && left > 0) show(t("tp.review.turnedOffLeft", { count: left }));
-      onChanged();
     } catch (e) {
       show((e as TeamActionError).message);
     } finally {

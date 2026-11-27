@@ -102,7 +102,7 @@ export function SpaceSettingsSx({ space, images, onClose, onSaved, onDeleted }: 
         <SxLabel>{t("ay.basics")}</SxLabel>
         <SxCard>
           <SxRow
-            lead={<span className="cov" style={{ background: "linear-gradient(135deg,#7c3aed,#ff6719)", overflow: "hidden" }} aria-hidden>{coverItemId && imageItems.find((i) => i.id === coverItemId) ? <SpaceImage url={imageItems.find((i) => i.id === coverItemId)!.mediaUrl} alt="" className="h-full w-full" /> : null}</span>}
+            lead={<span className="cov" style={{ background: "linear-gradient(135deg, var(--color-secondary), var(--color-primary))", overflow: "hidden" }} aria-hidden>{coverItemId && imageItems.find((i) => i.id === coverItemId) ? <SpaceImage url={imageItems.find((i) => i.id === coverItemId)!.mediaUrl} alt="" className="h-full w-full" /> : null}</span>}
             title={t("spaces.form.cover")}
             desc={coverLabel}
             trailing={<SxBtn onClick={() => setSub("cover")}>{t("ay.change")}</SxBtn>}
@@ -153,7 +153,7 @@ export function SpaceSettingsSx({ space, images, onClose, onSaved, onDeleted }: 
         <SxSub open onClose={() => setSub(null)} parent={t("spaces.settings.title")} title={t("ay.space.coverTitle")} testId="space-cover-picker" footer={<SxBtn tone="pri" full onClick={() => setSub(null)}>{t("ay.space.saveCover")}</SxBtn>}>
           <SxLabel>{t("ay.space.current")}</SxLabel>
           <div style={{ padding: "0 16px" }}>
-            <div style={{ height: 150, borderRadius: 16, background: "linear-gradient(135deg,#7c3aed,#ff6719)", overflow: "hidden" }}>
+            <div style={{ height: 150, borderRadius: 16, background: "linear-gradient(135deg, var(--color-secondary), var(--color-primary))", overflow: "hidden" }}>
               {coverItemId && imageItems.find((i) => i.id === coverItemId) ? <SpaceImage url={imageItems.find((i) => i.id === coverItemId)!.mediaUrl} alt="" className="h-full w-full" /> : null}
             </div>
           </div>

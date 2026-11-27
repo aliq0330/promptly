@@ -76,7 +76,6 @@ export function SwitchRow({
   className,
   trackPosition = "end",
   children,
-  variant: _variant,
   ...rest
 }: ControlProps & { trackPosition?: "start" | "end"; children: ReactNode }) {
   const track = <SwitchTrack on={checked} />;

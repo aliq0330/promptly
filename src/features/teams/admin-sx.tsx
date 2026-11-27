@@ -34,11 +34,12 @@ import { formatRelativeTime } from "@/lib/utils";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import type { TeamCtx } from "./team-page";
 import { auditSentence } from "./team-admin-section";
+import { LoadMoreButton } from "@/features/feed/load-more";
 import { TEAM_TONES, resolveTeamTone, roleLabelKey } from "./team-ui";
 
 /** Ekip yönetimi — mobil mockup sayfaları (docs/mockups/ayar-sayfalari: C1–C6, D2, D3, E3). */
 
-const TONE_COLOR: Record<string, string> = { primary: "#3b5be2", sky: "#8a93a8", plum: "#5b5c60" };
+const TONE_COLOR: Record<string, string> = { primary: "var(--color-primary)", sky: "var(--color-secondary)", plum: "var(--color-text-muted)" };
 const TONE_LABEL: Record<string, TranslationKey> = { primary: "ay.team.toneBlue", sky: "ay.team.toneSky", plum: "ay.team.toneNeutral" };
 export const teamColor = (tone: string | null | undefined) => TONE_COLOR[resolveTeamTone(tone)] ?? TONE_COLOR.primary;
 
@@ -625,14 +626,7 @@ function AuditPage({ ctx }: { ctx: TeamCtx }) {
           </SxCard>
         </Fragment>
       ))}
-      {more && (
-        <>
-          <SxGap h={16} />
-          <div style={{ padding: "0 16px" }}>
-            <SxBtn tone="out" full style={{ height: 46 }} onClick={() => void loadMore()}>{t("common.loadMore")}</SxBtn>
-          </div>
-        </>
-      )}
+      {more && <LoadMoreButton onLoadMore={() => void loadMore()} label={t("common.loadMore")} />}
       <SxGap h={16} />
       <SxNote>{t("ay.team.csvNoteA")} <b>{t("ay.team.csvNoteB")}</b> {t("ay.team.csvNoteC")}</SxNote>
       <SxPicker<string>

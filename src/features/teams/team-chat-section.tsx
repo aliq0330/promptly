@@ -15,20 +15,15 @@ import { fieldLabelClassName, Input, Select } from "@/components/ui/field";
 import { LocalConversationView, type EmbeddedChatControls } from "@/features/messages/local-conversation-view";
 import { PresenceAvatar } from "@/features/presence/presence-ui";
 import { useOnlineIds } from "@/features/presence/use-presence";
-import { ConfirmDialog } from "@/features/groups/confirm-dialog";
 import { SpaceDialog } from "@/features/spaces/space-modals";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { useMediaQuery } from "@/lib/use-media-query";
 import {
   archiveTeamChannel,
   createTeamChannel,
-  deleteTeamChannel,
-  fetchChannelAccess,
   listChannelMembers,
   listTeamChannels,
   listTeamSpaces,
-  setChannelAccess,
-  updateTeamChannel,
   type AccessEntry,
   type ChannelMember,
   type TeamActionError,
@@ -40,6 +35,8 @@ import { teamLink } from "@/lib/teams";
 import { cn, formatUnread } from "@/lib/utils";
 import { AccessEditor } from "./access-editor";
 import { MuteCard, MuteChip } from "./mute-card";
+import { ChannelSettingsSx, TeamNotifySx } from "./notify-sx";
+import { SxCard, SxRow } from "@/features/settings/sx";
 import { useTeamMutes } from "./team-chat-data";
 import type { TeamCtx } from "./team-page";
 import { ChoiceGroup } from "@/components/ui/choice-group";
@@ -110,7 +107,9 @@ export function TeamChatSection({ ctx }: { ctx: TeamCtx }) {
     const current = active?.id === channel.id;
     const unread = channel.unreadCount > 0 && !channel.muted;
     const isProject = channel.mode === "project";
-    return (
+    if (phone && params.get("notify") === "1") return <TeamNotifySx ctx={ctx} backHref={teamLink(team.id, "chat")} />;
+
+  return (
       <li key={channel.id}>
         <button
           type="button"
@@ -139,7 +138,11 @@ export function TeamChatSection({ ctx }: { ctx: TeamCtx }) {
     <section className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_16.25rem]" data-testid="team-chat">
       {/* Masaüstü (Seçenek 1, "çalışma alanı"): solda kanal kartı, sağda sohbet kartı. Tablette kanallar sohbet kartının çip satırındadır; telefonda yalnız bu liste. */}
       <aside className="space-y-3 md:hidden" data-testid="team-channel-list-phone">
-        <MuteCard scope="team" muted={mutes.teamMuted} busy={mutes.busy || !mutes.loaded} error={mutes.error} onToggle={(next) => void mutes.setTeamMuted(next)} />
+        <div className="sx">
+          <SxCard style={{ margin: 0 }}>
+            <SxRow href={teamLink(team.id, "chat", { notify: "1" })} title={t("ay.notify.title")} desc={t("ay.notify.entryDesc")} testId="team-notify-entry" />
+          </SxCard>
+        </div>
         <div className="flex items-center">
           <h2 className="flex-1 text-label font-semibold text-text-muted">{t("tm.chat.channels")}</h2>
           {can("manage_channels") && (
@@ -209,7 +212,7 @@ export function TeamChatSection({ ctx }: { ctx: TeamCtx }) {
         />
       )}
       {settingsTarget && (
-        <ChannelSettingsDialog
+        <ChannelSettingsSx
           ctx={ctx}
           channel={settingsTarget}
           onClose={() => {
@@ -524,117 +527,3 @@ function NewChannelDialog({ ctx, onClose, onCreated }: { ctx: TeamCtx; onClose: 
   );
 }
 
-function ChannelSettingsDialog({ ctx, channel, onClose, onChanged }: { ctx: TeamCtx; channel: TeamChannel; onClose: () => void; onChanged: () => void }) {
-  const { t } = useTranslation();
-  const [description, setDescription] = useState(channel.description ?? "");
-  const [posting, setPosting] = useState(channel.postingPolicy);
-  const [entries, setEntries] = useState<AccessEntry[]>([]);
-  const [loaded, setLoaded] = useState(channel.mode !== "private");
-  const [confirmDelete, setConfirmDelete] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (channel.mode !== "private") return;
-    void fetchChannelAccess(channel.id).then(
-      (access) => {
-        setEntries(access.entries);
-        setLoaded(true);
-      },
-      (e: TeamActionError) => setError(e.message),
-    );
-  }, [channel.id, channel.mode]);
-
-  const save = async (event: React.FormEvent) => {
-    event.preventDefault();
-    setBusy(true);
-    setError(null);
-    try {
-      await updateTeamChannel(channel.id, { description: description.trim(), posting_policy: posting });
-      if (channel.mode === "private") await setChannelAccess(channel.id, entries);
-      onChanged();
-    } catch (e) {
-      setError((e as TeamActionError).message);
-      setBusy(false);
-    }
-  };
-
-  const run = async (fn: () => Promise<unknown>) => {
-    setBusy(true);
-    try {
-      await fn();
-      onChanged();
-    } catch (e) {
-      setError((e as TeamActionError).message);
-      setBusy(false);
-    }
-  };
-
-  return (
-    <>
-      <SpaceDialog
-        title={t("tm.chat.settingsTitle", { name: channel.name })}
-        onClose={onClose}
-        busy={busy}
-        wide
-        onSubmit={(event) => void save(event)}
-        formTestId="team-channel-settings"
-        footer={
-          <>
-            {!channel.isDefault && (
-              <>
-                <Button type="button" variant="ghost" onClick={() => void run(() => archiveTeamChannel(channel.id, true))} disabled={busy}>
-                  {t("tm.chat.archive")}
-                </Button>
-                <Button type="button" variant="danger" onClick={() => setConfirmDelete(true)} disabled={busy}>
-                  {t("common.delete")}
-                </Button>
-              </>
-            )}
-            <Button type="submit" disabled={busy || !loaded}>
-              {t("common.save")}
-            </Button>
-          </>
-        }
-      >
-        <div className="space-y-4">
-          <div>
-            <label htmlFor="channel-set-desc" className={fieldLabelClassName}>
-              {t("tm.chat.channelDescription")}
-            </label>
-            <Input id="channel-set-desc" value={description} onChange={(e) => setDescription(e.target.value)} maxLength={200} />
-          </div>
-          <div>
-            <span className={fieldLabelClassName}>{t("tm.chat.posting")}</span>
-            <ChoiceGroup<"members" | "admins"> ariaLabel={t("tm.chat.posting")} variant="segmented" value={posting} onChange={setPosting} options={[{ key: "members", label: t("tm.chat.posting.members") }, { key: "admins", label: t("tm.chat.posting.admins") }]} />
-          </div>
-          {channel.mode === "private" && loaded && (
-            <div>
-              <span className={fieldLabelClassName}>{t("tm.chat.channelMembers")}</span>
-              <AccessEditor teamId={ctx.team.id} entries={entries} onChange={setEntries} levels={false} />
-            </div>
-          )}
-          {error && (
-            <p role="alert" className="text-small text-danger">
-              {error}
-            </p>
-          )}
-        </div>
-      </SpaceDialog>
-      {confirmDelete && (
-        <ConfirmDialog
-          id="team-channel-delete"
-          title={t("tm.chat.deleteTitle", { name: channel.name })}
-          body={t("tm.chat.deleteBody")}
-          confirmLabel={t("common.delete")}
-          danger
-          busy={busy}
-          error={error}
-          overLayers
-          onCancel={() => setConfirmDelete(false)}
-          onConfirm={() => void run(() => deleteTeamChannel(channel.id))}
-        />
-      )}
-    </>
-  );
-}

@@ -48,7 +48,7 @@ export function GroupCover({ group, previewUrl }: { group: Pick<ChatGroup, "name
   const { src } = useStorageSrc(previewUrl ? null : group.avatarUrl);
   const shown = previewUrl ?? src;
   return (
-    <SxCover name={group.name} color="#3b5be2">
+    <SxCover name={group.name} color="var(--color-primary)">
       {/* eslint-disable-next-line @next/next/no-img-element -- imzalı özel bucket adresi */}
       {shown ? <img src={shown} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : initialsOf(group.name)}
     </SxCover>
