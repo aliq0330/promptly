@@ -1,7 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useMediaQuery } from "@/lib/use-media-query";
+import { PrefsPage } from "./manage-sx-people";
+import { SxCard, SxRow } from "@/features/settings/sx";
+import { communityHref } from "@/lib/communities";
 import { Bell } from "@/components/icons/bell";
 import { BellOff } from "@/components/icons/bell-off";
 import { Check } from "@/components/icons/check";
@@ -30,6 +34,8 @@ import type { CommunityNotifyLevel } from "@/types";
 export function AboutTab({ group, role, viewerId, membership, reload, onToast, goTab }: CommunityTabProps) {
   const { t } = useTranslation();
   const router = useRouter();
+  const phone = useMediaQuery("(max-width: 767px)");
+  const searchParams = useSearchParams();
   const { refresh, patchConversation } = useRealMessages();
   const accept = useAsyncAction();
   const prefs = useAsyncAction();
@@ -68,6 +74,11 @@ export function AboutTab({ group, role, viewerId, membership, reload, onToast, g
     onToast(t("communities.notify.savedToast"));
     await reload();
     setPendingLevel(null);
+  }
+
+  if (phone && role && searchParams.get("section") === "prefs") {
+    const sub = searchParams.get("sub");
+    return <PrefsPage group={group} membership={membership} viewerId={viewerId} reload={reload} onToast={onToast} sub={sub} setSub={(next) => router.replace(`${communityHref(group.id, "about", "prefs")}${next ? `&sub=${next}` : ""}`)} />;
   }
 
   return (
@@ -145,7 +156,13 @@ export function AboutTab({ group, role, viewerId, membership, reload, onToast, g
         )}
       </section>
 
-      {role ? (
+      {role && phone ? (
+        <div className="sx">
+          <SxCard style={{ margin: 0 }}>
+            <SxRow href={communityHref(group.id, "about", "prefs")} title={t("ay.prefs.title")} desc={t("ay.prefs.entryDesc")} testId="about-prefs-entry" />
+          </SxCard>
+        </div>
+      ) : role ? (
         <>
           <section aria-labelledby="about-notify-title" className="space-y-3">
             <h2 id="about-notify-title" className="flex items-center gap-1.5 text-label font-semibold text-text">

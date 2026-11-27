@@ -431,6 +431,33 @@ export async function fetchGroupLinks(groupId: string): Promise<GroupLinkInfo[]>
   }));
 }
 
+export interface GroupLinkRow extends GroupLinkInfo {
+  createdBy: string | null;
+  expired: boolean;
+}
+
+/** Yönetim ekranı listesi: iptal edilmemiş bağlantılar, süresi dolanlar dahil (dolanlar "Süresi doldu" işaretiyle gösterilir). */
+export async function fetchGroupLinkList(groupId: string): Promise<GroupLinkRow[]> {
+  const { data, error } = await supabase
+    .from("chat_group_links")
+    .select("id, created_at, expires_at, revoked_at, max_uses, use_count, created_by")
+    .eq("group_id", groupId)
+    .is("revoked_at", null)
+    .order("created_at", { ascending: false })
+    .limit(30);
+  if (error) throw toGroupError(error);
+  const now = Date.now();
+  return (data ?? []).map((row) => ({
+    id: row.id as string,
+    createdAt: row.created_at as string,
+    expiresAt: row.expires_at as string,
+    maxUses: (row.max_uses as number | null) ?? null,
+    useCount: row.use_count as number,
+    createdBy: (row.created_by as string | null) ?? null,
+    expired: new Date(row.expires_at as string).getTime() <= now,
+  }));
+}
+
 // ---------------------------------------------------------------------------------------------
 // Üyelik yönetimi
 // ---------------------------------------------------------------------------------------------

@@ -377,20 +377,11 @@ export interface SxPickerOption<K extends string> {
 }
 
 /** Seçici sayfa (mockup C4): açılır liste yerine seçili değeri gösteren tam ekran liste; altta "Seç". */
-export function SxPicker<K extends string>({
-  open,
-  onClose,
-  parent,
-  title,
-  intro,
-  label,
-  options,
-  value,
-  onPick,
-  note,
-  pickLabel,
-  testId,
-}: {
+export function SxPicker<K extends string>(props: SxPickerProps<K>) {
+  return props.open ? <SxPickerInner {...props} /> : null;
+}
+
+interface SxPickerProps<K extends string> {
   open: boolean;
   onClose: () => void;
   parent?: string;
@@ -403,11 +394,23 @@ export function SxPicker<K extends string>({
   note?: ReactNode;
   pickLabel: string;
   testId?: string;
-}) {
+}
+
+function SxPickerInner<K extends string>({
+  open,
+  onClose,
+  parent,
+  title,
+  intro,
+  label,
+  options,
+  value,
+  onPick,
+  note,
+  pickLabel,
+  testId,
+}: SxPickerProps<K>) {
   const [draft, setDraft] = useState<K | null>(value);
-  useEffect(() => {
-    if (open) setDraft(value);
-  }, [open, value]);
   return (
     <SxSub
       open={open}
@@ -441,4 +444,122 @@ export function SxPicker<K extends string>({
       )}
     </SxSub>
   );
+}
+
+/**
+ * Onay sayfası (mockup B6 · D3 · F6): ✕ + başlık, bir cümle, "Silinecekler" listesi, isteğe bağlı ek kart (`extra`), adı yazdırma alanı,
+ * altta Vazgeç + kırmızı eylem. Geri alınamaz işlemlerin tek onay yüzeyi; telefonda tam ekran, md+'da pencere (`SxSub`).
+ */
+export function SxConfirmPage({
+  parent,
+  title,
+  lead,
+  listLabel,
+  items,
+  extra,
+  typeLabel,
+  typePlaceholder,
+  typeValue,
+  onTypeChange,
+  note,
+  cancelLabel,
+  confirmLabel,
+  confirmTone = "dng",
+  disabled,
+  busy,
+  error,
+  onConfirm,
+  onClose,
+  testId,
+}: {
+  parent?: string;
+  title: string;
+  lead: ReactNode;
+  listLabel?: string;
+  items?: string[];
+  extra?: ReactNode;
+  typeLabel?: string;
+  typePlaceholder?: string;
+  typeValue?: string;
+  onTypeChange?: (value: string) => void;
+  note?: ReactNode;
+  cancelLabel: string;
+  confirmLabel: string;
+  confirmTone?: "dng" | "pri";
+  disabled?: boolean;
+  busy?: boolean;
+  error?: string | null;
+  onConfirm: () => void;
+  onClose: () => void;
+  testId?: string;
+}) {
+  const { t } = useTranslation();
+  const off = disabled || busy;
+  return (
+    <SxSubClose
+      onClose={onClose}
+      parent={parent}
+      title={title}
+      testId={testId}
+      footer={
+        <SxFootPair cancelLabel={cancelLabel} onCancel={onClose}>
+          <SxBtn tone={confirmTone} full disabled={off} style={disabled ? { opacity: 0.45 } : undefined} onClick={onConfirm}>
+            {busy ? t("common.loading") : confirmLabel}
+          </SxBtn>
+        </SxFootPair>
+      }
+    >
+      <div style={{ padding: "18px 20px 0" }}>
+        <p style={{ fontSize: 16, lineHeight: "24px" }}>{lead}</p>
+      </div>
+      {items && listLabel && (
+        <>
+          <SxLabel>{listLabel}</SxLabel>
+          <SxCard>
+            {items.map((item) => (
+              <div className="row" key={item}>
+                <div className="rt">
+                  <div className="t">{item}</div>
+                </div>
+              </div>
+            ))}
+          </SxCard>
+        </>
+      )}
+      {extra}
+      {typeLabel && (
+        <>
+          <SxLabel>{t("ay.confirm.label")}</SxLabel>
+          <SxCard style={{ paddingTop: 14, paddingBottom: 6 }}>
+            <label className="fl" htmlFor="sx-confirm-input">
+              {typeLabel}
+            </label>
+            <input id="sx-confirm-input" className="inp" placeholder={typePlaceholder} value={typeValue ?? ""} onChange={(e) => onTypeChange?.(e.target.value)} autoComplete="off" />
+            <p className="hint">{typePlaceholder}</p>
+          </SxCard>
+        </>
+      )}
+      {note && (
+        <>
+          <SxGap h={16} />
+          <SxNote>{note}</SxNote>
+        </>
+      )}
+      {error && (
+        <>
+          <SxGap h={12} />
+          <SxNote>
+            <span className="dgt">{error}</span>
+          </SxNote>
+        </>
+      )}
+    </SxSubClose>
+  );
+}
+
+/** `SxSub`'ın ✕'li (kapat) hâli: telefonda ✕ başlıklı tam ekran sayfa. */
+function SxSubClose({ onClose, ...page }: Omit<SxPageProps, "close" | "onBack"> & { onClose: () => void }) {
+  const phone = useSxPhone();
+  if (phone) return <SxPage {...page} close onBack={onClose} />;
+  return <SxSub open onClose={onClose} {...page} />;
 }

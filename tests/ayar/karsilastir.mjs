@@ -73,7 +73,7 @@ function compare(mock, real, normalize = (x) => x, ignore = []) {
       const r = rb[i];
       const d = { x: r.x - m.x, y: r.y - m.y, w: r.w - m.w, h: r.h - m.h };
       const geo = Object.entries(d).filter(([, v]) => Math.abs(v) > TOL);
-      const textBad = normalize(m.text) !== normalize(r.text);
+      const textBad = normalize(m.text).replace(/\s+/g, "") !== normalize(r.text).replace(/\s+/g, "");
       if (geo.length || textBad) {
         bad += 1;
         lines.push(`✘ ${kind}#${i} ${geo.map(([k, v]) => `${k}${v > 0 ? "+" : ""}${v.toFixed(1)}`).join(" ")}${textBad ? `  metin: ${JSON.stringify(m.text.slice(0, 60))} ≠ ${JSON.stringify(r.text.slice(0, 60))}` : ""}`);

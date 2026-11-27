@@ -1,16 +1,17 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { useStorageSrc } from "@/components/ui/storage-media";
 import { ChoiceGroup } from "@/components/ui/choice-group";
 import { OptionGroup } from "@/components/ui/option-group";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useAsyncAction } from "@/features/groups/use-async-action";
 import { ACCEPTED_COVER_TYPES, CommunityCoverPicker } from "@/features/groups/community-cover-picker";
-import { SxBarAction, SxBtn, SxCard, SxCover, SxField, SxFoot, SxFootPair, SxGap, SxLabel, SxNote, SxPage, SxPicker, SxRow, SxRowCol, SxSep, SxSub, SxSwitch, SxTag, SxVal, initialsOf } from "@/features/settings/sx";
+import { SxBarAction, SxBtn, SxCard, SxCover, SxField, SxFoot, SxFootPair, SxGap, SxLabel, SxNote, SxPage, SxPicker, SxRow, SxSep, SxSub, SxSwitch, SxTag, SxVal, initialsOf } from "@/features/settings/sx";
 import {
   can,
+  capabilitiesFor,
+  DEFAULT_ROLE_PERMISSIONS,
   clampMemberLimit,
   GROUP_DESCRIPTION_MAX,
   GROUP_MEMBER_LIMIT_MAX,
@@ -31,9 +32,9 @@ import { memberCountText } from "@/lib/group-labels";
 import type { GroupRole } from "@/types";
 
 import type { TranslationKey } from "@/lib/i18n/translations";
-import { setChatGroupVisibility, updateChatGroup, uploadGroupAvatar, uploadGroupCover, type UpdateChatGroupPatch } from "@/lib/supabase/chat-groups";
+import { setChatGroupVisibility, updateChatGroup, updateChatGroupOwnerSettings, uploadGroupAvatar, uploadGroupCover, type UpdateChatGroupPatch } from "@/lib/supabase/chat-groups";
 import { updateCommunity, type UpdateCommunityPatch } from "@/lib/supabase/communities";
-import type { ChatGroup, CommunityCategory, CommunityFeedPolicy, GroupVisibility } from "@/types";
+import type { ChatGroup, CommunityCategory, CommunityFeedPolicy, GroupCapability, GroupPostingPolicy, GroupVisibility, RolePermissions } from "@/types";
 
 /**
  * Topluluk yönetimi — mobil mockup sayfaları (docs/mockups/ayar-sayfalari: A1–A6, B1–B6). Telefonda her biri tam ekran sayfadır
@@ -357,13 +358,14 @@ function PostingSeg({ group, onChanged, onToast }: { group: ChatGroup; onChanged
 }
 
 /** A3 · Görünürlük (seçici sayfa). */
-function VisibilityPage({ group, open, onClose, onChanged, onToast }: { group: ChatGroup; open: boolean; onClose: () => void; onChanged: () => void | Promise<void>; onToast: (message: string) => void }) {
+function VisibilityPage(props: { group: ChatGroup; open: boolean; onClose: () => void; onChanged: () => void | Promise<void>; onToast: (message: string) => void }) {
+  return props.open ? <VisibilityInner {...props} /> : null;
+}
+
+function VisibilityInner({ group, open, onClose, onChanged, onToast }: { group: ChatGroup; open: boolean; onClose: () => void; onChanged: () => void | Promise<void>; onToast: (message: string) => void }) {
   const { t } = useTranslation();
   const action = useAsyncAction();
   const [target, setTarget] = useState<GroupVisibility>(group.visibility);
-  useEffect(() => {
-    if (open) setTarget(group.visibility);
-  }, [open, group.visibility]);
   const changed = target !== group.visibility;
   const effectKey = changed ? (`communities.visibility.change.${group.visibility}_${target}` as TranslationKey) : null;
   const current = t(group.visibility === "public" ? "ay.vis.public" : group.visibility === "restricted" ? "ay.vis.restricted" : "ay.vis.private");
@@ -597,6 +599,171 @@ export function ManageListPage({ group, role }: { group: ChatGroup; role: GroupR
           </SxCard>
         </>
       )}
+    </SxPage>
+  );
+}
+
+// ---------------------------------------------------------------------------------------------
+// A5 · Yönetici ve moderatör yetkileri
+// ---------------------------------------------------------------------------------------------
+
+const CAP_GROUPS: { label: TranslationKey; caps: GroupCapability[] }[] = [
+  { label: "ay.perm.members", caps: ["remove_members", "ban_members", "manage_roles", "manage_requests", "manage_invites"] },
+  { label: "ay.perm.chat", caps: ["delete_messages", "pin_messages", "manage_rooms"] },
+  { label: "ay.perm.content", caps: ["moderate_posts", "pin_posts", "manage_announcements", "manage_events"] },
+  { label: "ay.perm.community", caps: ["edit_settings", "change_visibility", "edit_rules", "view_stats"] },
+];
+
+export function PermissionsPage({ group, onChanged, onToast }: { group: ChatGroup; onChanged: () => void | Promise<void>; onToast: (message: string) => void }) {
+  const { t } = useTranslation();
+  const save = useAsyncAction();
+  const [role, setRole] = useState<"admin" | "moderator">("admin");
+  const [perms, setPerms] = useState<RolePermissions>(group.rolePermissions);
+  const roles = ["admin", "moderator"] as const;
+  const changed: Partial<Record<(typeof roles)[number], Partial<Record<GroupCapability, boolean>>>> = {};
+  let count = 0;
+  for (const r of roles) {
+    for (const cap of capabilitiesFor(r)) {
+      if (perms[r][cap] !== group.rolePermissions[r][cap]) {
+        changed[r] = { ...changed[r], [cap]: perms[r][cap] };
+        count += 1;
+      }
+    }
+  }
+  const dirty = count > 0;
+  const allowed = new Set(capabilitiesFor(role));
+  const toggle = (cap: GroupCapability) => setPerms((prev) => ({ ...prev, [role]: { ...prev[role], [cap]: !prev[role][cap] } }));
+  const resetRole = () => setPerms((prev) => ({ ...prev, [role]: { ...DEFAULT_ROLE_PERMISSIONS[role] } }));
+  async function submit() {
+    const done = await save.run(async () => {
+      await updateChatGroupOwnerSettings(group.id, { rolePermissions: changed });
+      return true;
+    });
+    if (!done) return;
+    onToast(t("groups.owner.savedToast"));
+    await onChanged();
+  }
+  return (
+    <SxPage
+      parent={t("ay.manage.title")}
+      title={t("ay.perm.title")}
+      backHref={communityHref(group.id, "manage")}
+      testId="community-permissions-page"
+      action={<SxBarAction off={!dirty} disabled={!dirty || save.busy} onClick={() => void submit()}>{t("common.save")}</SxBarAction>}
+      footer={
+        <SxFoot meta={dirty ? t("ay.changes", { count }) : undefined}>
+          <SxBtn tone={dirty ? "pri" : "off"} full style={{ width: "auto", flex: 1 }} disabled={!dirty || save.busy} onClick={() => void submit()}>
+            {save.busy ? t("common.saving") : t("common.save")}
+          </SxBtn>
+        </SxFoot>
+      }
+    >
+      <SxCard style={{ padding: 12, marginTop: 8 }}>
+        <ChoiceGroup<"admin" | "moderator"> variant="sx-seg" ariaLabel={t("ay.perm.title")} value={role} onChange={setRole} options={[{ key: "admin", label: t("ay.role.admin") }, { key: "moderator", label: t("ay.role.moderator") }]} />
+      </SxCard>
+      <p className="s" style={{ margin: "12px 20px 0" }}>{t("ay.perm.intro")}</p>
+      {CAP_GROUPS.map((g) => (
+        <Fragment key={g.label}>
+          <SxLabel>{t(g.label)}</SxLabel>
+          <SxCard>
+            {g.caps.filter((cap) => allowed.has(cap)).map((cap) => (
+              <SxRow key={cap} title={t(`ay.cap.${cap}` as TranslationKey)} desc={t(`ay.cap.${cap}Desc` as TranslationKey)} trailing={<SxSwitch checked={perms[role][cap]} onChange={() => toggle(cap)} label={t(`ay.cap.${cap}` as TranslationKey)} />} />
+            ))}
+          </SxCard>
+        </Fragment>
+      ))}
+      <SxGap h={18} />
+      <SxCard>
+        <SxRow nav title={t("ay.perm.reset")} desc={t("ay.perm.resetDesc")} onClick={resetRole} />
+      </SxCard>
+      {save.error && (
+        <>
+          <SxGap h={12} />
+          <SxNote>{save.error}</SxNote>
+        </>
+      )}
+    </SxPage>
+  );
+}
+
+// ---------------------------------------------------------------------------------------------
+// A6 · Sohbet ayarları
+// ---------------------------------------------------------------------------------------------
+
+export function ChatSettingsPage({ group, onChanged, onToast }: { group: ChatGroup; onChanged: () => void | Promise<void>; onToast: (message: string) => void }) {
+  const { t } = useTranslation();
+  const save = useAsyncAction();
+  const canPosting = can(group.myRole, "edit_settings", group.rolePermissions);
+  const isOwner = group.myRole === "owner";
+  const [posting, setPosting] = useState<GroupPostingPolicy>(group.postingPolicy);
+  const [history, setHistory] = useState(group.historyVisible);
+  const [membersCanPin, setMembersCanPin] = useState(group.membersCanPin);
+  const postingChanged = canPosting && posting !== group.postingPolicy;
+  const historyChanged = isOwner && history !== group.historyVisible;
+  const pinChanged = isOwner && membersCanPin !== group.membersCanPin;
+  const dirty = postingChanged || historyChanged || pinChanged;
+  async function submit() {
+    const done = await save.run(async () => {
+      if (postingChanged) await updateChatGroup(group.id, { postingPolicy: posting });
+      if (historyChanged || pinChanged) await updateChatGroupOwnerSettings(group.id, { ...(historyChanged ? { historyVisible: history } : {}), ...(pinChanged ? { membersCanPin } : {}) });
+      return true;
+    });
+    if (!done) return;
+    onToast(t("groups.settings.savedToast"));
+    await onChanged();
+  }
+  return (
+    <SxPage
+      parent={group.name}
+      title={t("ay.chat.title")}
+      backHref={communityHref(group.id, "manage")}
+      testId="community-chat-settings-page"
+      action={<SxBarAction off={!dirty} disabled={!dirty || save.busy} onClick={() => void submit()}>{t("common.save")}</SxBarAction>}
+      footer={
+        <SxBtn tone={dirty ? "pri" : "off"} full disabled={!dirty || save.busy} onClick={() => void submit()}>
+          {save.busy ? t("common.saving") : t("common.save")}
+        </SxBtn>
+      }
+    >
+      {canPosting && (
+        <>
+          <SxLabel>{t("ay.chat.posting")}</SxLabel>
+          <OptionGroup<GroupPostingPolicy>
+            variant="sx"
+            ariaLabel={t("ay.chat.posting")}
+            value={posting}
+            onChange={setPosting}
+            options={[
+              { key: "members", label: t("ay.chat.postingMembers"), description: t("ay.chat.postingMembersHelp") },
+              { key: "admins", label: t("ay.chat.postingAdmins"), description: t("ay.chat.postingAdminsHelp") },
+            ]}
+          />
+        </>
+      )}
+      {isOwner && (
+        <>
+          <SxLabel>{t("ay.chat.history")}</SxLabel>
+          <OptionGroup<"hidden" | "visible">
+            variant="sx"
+            ariaLabel={t("ay.chat.history")}
+            value={history ? "visible" : "hidden"}
+            onChange={(key) => setHistory(key === "visible")}
+            options={[
+              { key: "hidden", label: t("ay.chat.historyHidden"), description: t("ay.chat.historyHiddenHelp") },
+              { key: "visible", label: t("ay.chat.historyVisible"), description: t("ay.chat.historyVisibleHelp") },
+            ]}
+          />
+          <SxLabel>{t("ay.chat.pinning")}</SxLabel>
+          <SxCard>
+            <SxRow top title={t("ay.chat.membersPin")} desc={t("ay.chat.membersPinHelp")} trailing={<SxSwitch checked={membersCanPin} onChange={setMembersCanPin} label={t("ay.chat.membersPin")} />} />
+          </SxCard>
+        </>
+      )}
+      <SxGap h={16} />
+      <SxNote>
+        <b>{t("ay.chat.noteTitle")}</b> {t("ay.chat.note")}
+        {save.error && <span className="dgt"> {save.error}</span>}
+      </SxNote>
     </SxPage>
   );
 }

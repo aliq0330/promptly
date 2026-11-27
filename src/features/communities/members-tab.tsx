@@ -12,6 +12,9 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import type { GroupRole } from "@/types";
 import { ScrollRow } from "@/components/ui/scroll-row";
 import { Chip } from "@/components/ui/chip";
+import { useMediaQuery } from "@/lib/use-media-query";
+import { InvitesPage } from "./manage-sx-people";
+import { useSearchParams } from "next/navigation";
 
 /** "online" = şu an çevrimiçi üyeler (docs/history/329-*; kişi başına gizlilik sunucuda). */
 type MemberFilter = GroupRole | null | "online";
@@ -27,9 +30,15 @@ export function MembersTab({ group, role, viewerId, reload, onToast, section }: 
   const { t } = useTranslation();
   const router = useRouter();
   const [filter, setFilter] = useState<MemberFilter>(null);
+  const phone = useMediaQuery("(max-width: 767px)");
+  const searchParams = useSearchParams();
   const available = membersSections(role, group.rolePermissions);
   const active: MembersSection = (available.find((key) => key === section) ?? "list") as MembersSection;
   if (!viewerId) return null;
+  if (phone && section === "invites" && available.includes("invites")) {
+    const sub = searchParams.get("sub");
+    return <InvitesPage group={group} onChanged={reload} onToast={onToast} sub={sub} setSub={(next) => router.replace(`${communityHref(group.id, "members", "invites")}${next ? `&sub=${next}` : ""}`)} />;
+  }
 
   const items: TabItem<MembersSection>[] = available.map((key) => ({
     key,

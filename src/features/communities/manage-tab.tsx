@@ -14,14 +14,16 @@ import { useMediaQuery } from "@/lib/use-media-query";
 import { GroupSettingsSection } from "@/features/groups/group-settings-section";
 import { useRealMessages } from "@/features/messages/real-messages-provider";
 import { AnnouncementsSection } from "./announcements-section";
-import { CommunitySettingsPage, ManageListPage } from "./manage-sx";
+import { RoomsPage } from "./manage-sx-rooms";
+import { DangerPage } from "./manage-sx-people";
+import { ChatSettingsPage, CommunitySettingsPage, ManageListPage, PermissionsPage } from "./manage-sx";
 import { AuditSection } from "./audit-section";
 import { CommunitySettingsSection } from "./community-settings-section";
 import { ModerationSection } from "./moderation-section";
 import { StatsSection } from "./stats-section";
 import { RoomsManageSection } from "@/features/messages/rooms/rooms-manage-section";
 import type { CommunityTabProps } from "./community-page";
-import { canSeeSettingsTab } from "@/lib/chat-groups";
+import { can, canSeeSettingsTab } from "@/lib/chat-groups";
 import { communityHref, manageSections, type ManageSection } from "@/lib/communities";
 import { useTranslation } from "@/lib/i18n/language-provider";
 
@@ -97,6 +99,10 @@ export function ManageTab({ group, role, onToast, reload, section }: CommunityTa
     const setSub = (next: string | null) => router.replace(`${communityHref(group.id, "manage", rawSection ?? undefined)}${next ? `&sub=${next}` : ""}`);
     if (!rawSection) return <ManageListPage group={group} role={role} />;
     if (rawSection === "settings") return <CommunitySettingsPage group={group} onChanged={reload} onToast={onToast} sub={sub} setSub={setSub} parent={`${group.name} · ${t("ay.manage.title")}`} />;
+    if (rawSection === "permissions" && role === "owner") return <PermissionsPage group={group} onChanged={reload} onToast={onToast} />;
+    if (rawSection === "rooms" && can(role, "manage_rooms", perms)) return <RoomsPage group={group} sub={sub} room={searchParams.get("room")} onToast={onToast} />;
+    if (rawSection === "danger" && role === "owner") return <DangerPage group={group} onChanged={reload} onToast={onToast} sub={sub} setSub={setSub} />;
+    if (rawSection === "chat") return <ChatSettingsPage group={group} onChanged={reload} onToast={onToast} />;
     const ICONS: Record<ManageSection, PhoneSectionItem["icon"]> = { stats: BarChart3, settings: Settings, rooms: MessagesSquare, announcements: Megaphone, moderation: ShieldCheck, history: History };
     const chosen = sections.find((item) => item.key === section)?.key ?? null;
     if (!chosen) {
