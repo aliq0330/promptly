@@ -56,6 +56,8 @@ interface Row {
   by: string;
   /** The post's first picture (docs/history/477-*: the small row shows it); none = the type's icon. */
   image: string | null;
+  /** A Skill's cover path (`skill-files`). */
+  skillCover?: string | null;
 }
 
 interface Keyset {
@@ -78,12 +80,12 @@ async function fetchPage(kind: PickerKind, text: string, filters: ContentSearchF
     // Skill de aynı arama motorundan geçer (`search_content` p_kind='skill'); kartlar kimlik sırasıyla okunur.
     const { ids, nextCursor } = await searchContentIds("skill", text, filters, PAGE, cursor);
     const byId = new Map((await fetchSkillsByIds(ids)).map((skill) => [skill.id, skill]));
-    return { nextCursor, items: ids.flatMap((id) => byId.get(id) ?? []).map((skill) => ({ id: skill.id, title: skill.title, by: skill.creator.username, image: null })) };
+    return { nextCursor, items: ids.flatMap((id) => byId.get(id) ?? []).map((skill) => ({ id: skill.id, title: skill.title, by: skill.creator.username, image: null, skillCover: skill.coverPath ?? null })) };
   }
   if (kind === "prompt") return map(await searchPromptsPage(text, filters, PAGE, cursor), (item) => item.author.username, (item) => item.media[0]?.url ?? null);
   if (kind === "request") return map(await searchRequestsPage(text, filters, PAGE, cursor), (item) => item.author.username, (item) => (item.referenceImage ?? item.media[0])?.url ?? null);
   if (kind === "workflow") return map(await searchWorkflowsPage(text, filters, PAGE, cursor), (item) => item.creator.username, (item) => item.coverUrl ?? null);
-  return map(await searchPresetsPage(text, filters, PAGE, cursor), (item) => item.creator.username, () => null);
+  return map(await searchPresetsPage(text, filters, PAGE, cursor), (item) => item.creator.username, (item) => item.coverUrl ?? null);
 }
 
 export function ContentPickerDialog({
@@ -293,6 +295,7 @@ export function ContentPickerDialog({
                   <ContentRowSmall
                     type={kind}
                     image={row.image}
+                    skillCover={row.skillCover}
                     title={row.title}
                     meta={meta}
                     trailing={
@@ -306,6 +309,7 @@ export function ContentPickerDialog({
                   <ContentRowSmall
                     type={kind}
                     image={row.image}
+                    skillCover={row.skillCover}
                     title={row.title}
                     meta={meta}
                     select="check"

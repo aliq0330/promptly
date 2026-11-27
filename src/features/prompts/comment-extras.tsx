@@ -554,7 +554,7 @@ export function CommentContentPicker({ userId, onPick, onClose }: { userId: stri
                 const card = cards.get(attachmentKey(item));
                 return {
                   key: item.id,
-                  leading: <ContentThumb type={item.type} src={card?.thumbnailUrl} />,
+                  leading: <ContentThumb type={item.type} src={card?.thumbnailUrl} skillCover={card?.skillCoverPath} />,
                   kicker: <ContentRowKicker type={item.type} />,
                   label: item.title || t("communities.feed.untitled"),
                   description: card?.stepCount ? t("commentExtras.stepCount", { count: card.stepCount }) : activeSource === "saved" ? card?.ownerName : undefined,

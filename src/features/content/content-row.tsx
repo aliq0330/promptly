@@ -4,6 +4,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import type { IconComponent } from "@/components/icons/icon";
 import { SelectMark } from "@/components/ui/option-group";
+import { SkillCoverImage, useSkillCoverUrl } from "@/features/skills/skill-cover";
 import { StorageImage } from "@/components/ui/storage-media";
 import { ATTACHMENT_ICONS } from "@/features/content/compact-content-card";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -24,13 +25,14 @@ export type ContentRowSize = "sm" | "xs";
 
 const THUMB_SIZE: Record<ContentRowSize, string> = { sm: "h-18 w-18", xs: "h-14 w-14" };
 
-export function ContentThumb({ type, icon, src, size = "sm", className }: { type?: CommentAttachmentType; icon?: IconComponent; src?: string | null; size?: ContentRowSize; className?: string }) {
+export function ContentThumb({ type, icon, src, skillCover, size = "sm", className }: { type?: CommentAttachmentType; icon?: IconComponent; src?: string | null; /** A Skill's cover (`skill-files` path, signed on the fly). */ skillCover?: string | null; size?: ContentRowSize; className?: string }) {
   const Icon = icon ?? ATTACHMENT_ICONS[type ?? "prompt"];
+  const skillUrl = useSkillCoverUrl(skillCover);
   return (
     <span className={cn("relative z-2 flex shrink-0 items-center justify-center overflow-hidden rounded-sm bg-primary-soft text-primary-text", THUMB_SIZE[size], className)}>
-      {src ? (
+      {src || skillUrl ? (
         <>
-          <StorageImage src={src} alt="" fill sizes={size === "sm" ? "72px" : "56px"} className="object-cover" />
+          {src ? <StorageImage src={src} alt="" fill sizes={size === "sm" ? "72px" : "56px"} className="object-cover" /> : <SkillCoverImage path={skillCover} className="absolute inset-0 h-full w-full object-cover" />}
           <span aria-hidden className="absolute bottom-1 right-1 grid h-5 w-5 place-items-center rounded-xs bg-art-chip text-on-art">
             <Icon size={12} />
           </span>
@@ -75,6 +77,7 @@ export function ContentRowSmall({
   type,
   icon,
   image,
+  skillCover,
   title,
   meta,
   size = "sm",
@@ -91,6 +94,7 @@ export function ContentRowSmall({
   type?: CommentAttachmentType;
   icon?: IconComponent;
   image?: string | null;
+  skillCover?: string | null;
   title: ReactNode;
   meta?: ReactNode;
   size?: ContentRowSize;
@@ -106,7 +110,7 @@ export function ContentRowSmall({
 }) {
   const body = (
     <>
-      <ContentThumb type={type} icon={icon} src={image} size={size} />
+      <ContentThumb type={type} icon={icon} src={image} skillCover={skillCover} size={size} />
       <ContentRowText type={type} title={title} meta={meta} size={size} selected={selected} />
       {select && <SelectMark kind="check" selected={selected} />}
       {trailing}

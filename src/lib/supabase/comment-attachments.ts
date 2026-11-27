@@ -15,6 +15,8 @@ export interface AttachmentCard {
   ownerName: string | null;
   /** İlk görsel (prompt/istek/workflow/hazır ayar); yoksa tür simgesi çizilir. */
   thumbnailUrl: string | null;
+  /** Yalnız Skill: kapağın `skill-files` yolu (imzalı adresi `SkillCoverImage` çözer); yoksa tür simgesi çizilir. */
+  skillCoverPath?: string | null;
   /** Yalnız istek: açık/kapalı rozeti. */
   requestStatus?: "open" | "answered" | "closed";
   /** Yalnız workflow: adım sayısı. */
@@ -43,7 +45,7 @@ interface PromptCardRow { id: string; title: string; status: string; visibility:
 interface RequestCardRow { id: string; title: string; status: "open" | "answered" | "closed"; is_draft: boolean; visibility: string; community_id: string | null; deleted_at: string | null; profiles: ProfileEmbed; prompt_request_media: { url: string; position: number }[] | null }
 interface WorkflowCardRow { id: string; title: string; cover_url: string | null; status: string; visibility: string; community_id: string | null; profiles: ProfileEmbed; workflow_steps: { count: number }[] | null; workflow_media: { url: string; position: number }[] | null }
 interface PresetCardRow { id: string; title: string; cover_url: string | null; status: string; visibility: string; community_id: string | null; profiles: ProfileEmbed }
-interface SkillCardRow { id: string; title: string; status: string; visibility: string; profiles: ProfileEmbed }
+interface SkillCardRow { id: string; title: string; cover_path: string | null; status: string; visibility: string; profiles: ProfileEmbed }
 
 /**
  * Verilen eklerin kartları; anahtar `tür:kimlik`. Okunamayan / halka açık olmayan / silinmiş içerik haritada YOKTUR (arayüz "gizli veya
@@ -88,10 +90,10 @@ export async function fetchAttachmentCards(items: CommentAttachment[]): Promise<
             put({ type, id: row.id, title: row.title, ownerName: ownerOf(row.profiles), thumbnailUrl: row.cover_url });
           }
         } else if (type === "skill") {
-          const rows = await fetchRows<SkillCardRow>("skills", "id, title, status, visibility, profiles:author_id ( display_name )", ids);
+          const rows = await fetchRows<SkillCardRow>("skills", "id, title, cover_path, status, visibility, profiles:author_id ( display_name )", ids);
           for (const row of rows) {
             if (row.status !== "published" || row.visibility !== "public") continue;
-            put({ type, id: row.id, title: row.title, ownerName: ownerOf(row.profiles), thumbnailUrl: null });
+            put({ type, id: row.id, title: row.title, ownerName: ownerOf(row.profiles), thumbnailUrl: null, skillCoverPath: row.cover_path });
           }
         }
       } catch (err) {

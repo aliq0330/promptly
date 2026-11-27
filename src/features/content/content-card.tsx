@@ -61,6 +61,15 @@ export function ContentRowsScope({ author = true, own = false, highlight, childr
   const value = useMemo<CardLayout>(() => ({ author, own, highlight }), [author, own, key]);
   return <ContentRowsScopeContext.Provider value={value}>{children}</ContentRowsScopeContext.Provider>;
 }
+/**
+ * Narrow strips (Keşfet's horizontal `ScrollRow`s, docs/history/478-*): the cards below draw WITHOUT the two-line summary, so a 232 px card stays
+ * about as tall as its picture plus a title. Same card, one density.
+ */
+const CardCompactContext = createContext(false);
+export function CompactCards({ children }: { children: React.ReactNode }) {
+  return <CardCompactContext.Provider value>{children}</CardCompactContext.Provider>;
+}
+
 /** One extra small line a list puts under a row's author (a shared collection's "Ekleyen …"); rows only, nothing is drawn on a card. */
 export const RowNoteContext = createContext<React.ReactNode>(null);
 /** Is the surrounding list a row list? (Skeletons and empty states follow it.) */
@@ -259,6 +268,7 @@ export function ContentCardPost({
   badges,
   menu,
   editHref,
+  ownMetrics,
   art,
   title,
   footer,
@@ -279,6 +289,8 @@ export function ContentCardPost({
   menu?: React.ReactNode;
   /** Where the author edits this post; a row in the viewer's own library (`ContentRowsScope own`) shows an "Düzenle" button to it. */
   editHref?: string;
+  /** Counters shown INSTEAD of `footer` on a row of the viewer's own library (`ContentRowsScope own`): `RowMetrics` — copies + saves. */
+  ownMetrics?: React.ReactNode;
   /** What fills the picture: the output, a prompt box, the steps… It sets the picture's height. */
   art?: React.ReactNode;
   /** `ContentCardTitle` (title + optional two-line summary). */
@@ -341,7 +353,7 @@ export function ContentCardPost({
           {rowNote}
           {(footer || menu || canEdit) && (
             <div data-card-actions className="relative z-10 -ml-2 flex items-center">
-              {footer}
+              {rows.own && ownMetrics ? ownMetrics : footer}
               {canEdit && editHref && (
                 <>
                   <span className="flex-1" />
@@ -442,7 +454,8 @@ export function ContentCardTitle({
   title: string;
   description?: string;
 }) {
-  const cardBody = splitSourceNotes(description).body.trim();
+  const compact = useContext(CardCompactContext);
+  const cardBody = compact ? "" : splitSourceNotes(description).body.trim();
   const words = useContext(CardLayoutContext)?.highlight;
   return (
     <>

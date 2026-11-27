@@ -54,17 +54,21 @@ export function ApplicationCard({
         meta={`${t(SHARED_LABEL[post.contentType])} · ${formatRelativeTime(post.createdAt, language)}`}
         time={formatRelativeTime(post.createdAt, language)}
         typeIcon={summary?.typeIcon}
-        status={
+        badges={
           <>
-            {post.kind !== "legacy" && <Badge variant="default">{t("communities.post.badge.application")}</Badge>}
+            {summary && <ContentTypePill icon={summary.typeIcon} label={t(summary.typeLabelKey)} detail={summary.tools.length > 0 ? null : summary.detail} />}
+            {post.kind !== "legacy" && (
+              <Badge variant="default" className="shrink-0">
+                {t("communities.post.badge.application")}
+              </Badge>
+            )}
             {post.pinnedAt && (
-              <Badge variant="default">
+              <Badge variant="default" className="shrink-0">
                 <Pin size={12} aria-hidden /> {t("communities.announcements.pinned")}
               </Badge>
             )}
           </>
         }
-        badges={summary && <ContentTypePill icon={summary.typeIcon} label={t(summary.typeLabelKey)} detail={summary.tools.length > 0 ? null : summary.detail} />}
         menu={menu}
         art={
           summary ? (

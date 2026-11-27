@@ -1,12 +1,15 @@
 "use client";
 
 import Link from "next/link";
+import { MessageCircle } from "@/components/icons/message-circle";
 import { Reply } from "@/components/icons/reply";
 import { Sparkles } from "@/components/icons/sparkles";
 import { Badge } from "@/components/ui/badge";
 import { TextArt } from "@/features/content/text-art";
 import { ContentCard, ContentCardPost, ContentCardTitle } from "@/features/content/content-card";
 import { ContentTypePill } from "@/features/content/content-type-label";
+import { RowMetrics } from "@/features/content/row-metrics";
+import { CommunityOnlyBadge } from "@/features/content/community-only-badge";
 import { StorageImage } from "@/components/ui/storage-media";
 import { clampedAspectRatio } from "@/lib/placeholder-image";
 import { contentActionClassName } from "@/features/content/action-styles";
@@ -57,6 +60,14 @@ export function RequestCard({ request, onDeleted }: { request: PromptRequest; on
         meta={postMeta(request.author.username, request.createdAt, language)}
         time={formatRelativeTime(request.createdAt, language)}
         editHref={`/requests/new?edit=${request.id}`}
+        ownMetrics={
+          <RowMetrics
+            items={[
+              { icon: Reply, label: t("card.row.replies"), value: request.responseCount },
+              { icon: MessageCircle, label: t("card.row.comments"), value: request.commentCount },
+            ]}
+          />
+        }
         typeIcon={Sparkles}
         status={
           <Badge variant={STATUS_VARIANTS[request.status]}>
@@ -68,6 +79,7 @@ export function RequestCard({ request, onDeleted }: { request: PromptRequest; on
         badges={
           <>
             <ContentTypePill icon={Sparkles} label={t("request.title")} detail={typeMeta ? t(typeMeta.labelKey) : null} />
+            <CommunityOnlyBadge communityId={request.communityId} />
           </>
         }
         menu={<PostMenu requestId={request.id} communityId={request.communityId} authorId={request.author.id} onDeleted={onDeleted} />}

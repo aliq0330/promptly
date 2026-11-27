@@ -100,7 +100,7 @@ export function ShareExistingModal({ userId, onClose }: { userId: string; onClos
                 }}
                 options={items.map((item) => ({
                   key: item.id,
-                  leading: <ContentThumb type={type} src={cards.get(attachmentKey({ type, id: item.id }))?.thumbnailUrl} />,
+                  leading: <ContentThumb type={type} src={cards.get(attachmentKey({ type, id: item.id }))?.thumbnailUrl} skillCover={cards.get(attachmentKey({ type, id: item.id }))?.skillCoverPath} />,
                   kicker: <ContentRowKicker type={type} />,
                   label: item.title || t("communities.feed.untitled"),
                   attrs: { "data-share-existing-item": item.id },

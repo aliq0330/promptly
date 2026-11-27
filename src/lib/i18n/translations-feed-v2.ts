@@ -107,6 +107,12 @@ export const feedV2Translations = {
 
   // Kart görselleri
   // docs/history/477-*: satır düzeni (D) ve seçici pencereler.
+  "card.row.communityOnly": { tr: "Topluluğa özel", en: "Community only" },
+  "card.row.copies": { tr: "Kopyalama", en: "Copies" },
+  "card.row.saves": { tr: "Kaydedilme", en: "Saves" },
+  "card.row.likes": { tr: "Beğeni", en: "Likes" },
+  "card.row.comments": { tr: "Yorum", en: "Comments" },
+  "card.row.replies": { tr: "Yanıt", en: "Replies" },
   "card.row.published": { tr: "Yayında", en: "Published" },
   "prompt.privateBadge": { tr: "Sadece ben", en: "Only me" },
   "tf.pick.addSelected": { tr: "Ekle ({{count}})", en: "Add ({{count}})" },

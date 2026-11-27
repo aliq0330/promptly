@@ -26,6 +26,7 @@ import { fetchCreatorsPage } from "@/lib/supabase/profiles";
 import { fetchRecentSkills } from "@/lib/supabase/skills";
 import { cn, formatCount, promptHref, tagHref, toolHref } from "@/lib/utils";
 import type { Prompt, UserProfile } from "@/types";
+import { CompactCards } from "@/features/content/content-card";
 import { FeedItemCard } from "./feed-grid";
 
 /**
@@ -443,22 +444,30 @@ export function DiscoverEditorial({ onSeeAllCreators }: { onSeeAllCreators: () =
       {data.media.length > 0 && (
         <Section label={t("discover.ed.media")}>
           <SectionHead title={t("discover.ed.media")} hint={t("discover.ed.mediaHint")} />
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            {data.media.map((item) => (
-              <FeedItemCard key={`${item.kind}-${item.data.id}`} item={item} />
-            ))}
-          </div>
+          <CompactCards>
+            <ScrollRow className="items-start gap-4" data-discover-strip="media">
+              {data.media.map((item) => (
+                <div key={`${item.kind}-${item.data.id}`} className="w-58 shrink-0">
+                  <FeedItemCard item={item} />
+                </div>
+              ))}
+            </ScrollRow>
+          </CompactCards>
         </Section>
       )}
 
       {(data.workflows.length > 0 || data.requests.length > 0) && (
         <Section label={t("discover.ed.workflows")}>
           <SectionHead title={t("discover.ed.workflows")} hint={t("discover.ed.workflowsHint")} />
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {[...data.workflows, ...data.requests].map((item) => (
-              <FeedItemCard key={`${item.kind}-${item.data.id}`} item={item} />
-            ))}
-          </div>
+          <CompactCards>
+            <ScrollRow className="items-start gap-4" data-discover-strip="workflows">
+              {[...data.workflows, ...data.requests].map((item) => (
+                <div key={`${item.kind}-${item.data.id}`} className="w-58 shrink-0">
+                  <FeedItemCard item={item} />
+                </div>
+              ))}
+            </ScrollRow>
+          </CompactCards>
         </Section>
       )}
 
@@ -554,11 +563,15 @@ function EditorialExtraSections({ onSeeAllCreators }: { onSeeAllCreators: () => 
           {data.skills.length > 0 && (
             <Section label={t("discover.ed.skills")}>
               <SectionHead title={t("discover.ed.skills")} hint={t("discover.ed.skillsHint")} href="/discover?section=skills" />
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                {data.skills.map((item) => (
-                  <FeedItemCard key={`${item.kind}-${item.data.id}`} item={item} />
-                ))}
-              </div>
+              <CompactCards>
+                <ScrollRow className="items-start gap-4" data-discover-strip="skills">
+                  {data.skills.map((item) => (
+                    <div key={`${item.kind}-${item.data.id}`} className="w-58 shrink-0">
+                      <FeedItemCard item={item} />
+                    </div>
+                  ))}
+                </ScrollRow>
+              </CompactCards>
             </Section>
           )}
         </>

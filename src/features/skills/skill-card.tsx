@@ -4,7 +4,10 @@ import { useState } from "react";
 import { GraduationCap } from "@/components/icons/graduation-cap";
 import { Badge } from "@/components/ui/badge";
 import { ContentCard, ContentCardPost, ContentCardTitle } from "@/features/content/content-card";
+import { Bookmark } from "@/components/icons/bookmark";
+import { Heart } from "@/components/icons/heart";
 import { ContentTypePill } from "@/features/content/content-type-label";
+import { RowMetrics } from "@/features/content/row-metrics";
 import { CommentCountLink } from "@/features/prompts/comment-count-link";
 import { LikeButton } from "@/features/prompts/like-button";
 import { SaveButton } from "@/features/prompts/save-button";
@@ -108,6 +111,14 @@ export function SkillCard({ skill, collectionRemoval }: { skill: Skill; collecti
         meta={postMeta(skill.creator.username, skill.createdAt, language)}
         time={formatRelativeTime(skill.createdAt, language)}
         editHref={`/skills/create?edit=${skill.id}`}
+        ownMetrics={
+          <RowMetrics
+            items={[
+              { icon: Heart, label: t("card.row.likes"), value: skill.likeCount },
+              { icon: Bookmark, label: t("card.row.saves"), value: skill.saveCount },
+            ]}
+          />
+        }
         typeIcon={GraduationCap}
         status={
           skill.status === "draft" ? <Badge variant="warning">{t("skill.draftBadge")}</Badge> : skill.visibility === "private" ? <Badge variant="neutral">{t("skill.privateBadge")}</Badge> : undefined

@@ -6,7 +6,11 @@ import { taxonomyPathLabel } from "@/lib/content-taxonomy";
 import { presetParameterEntries } from "@/lib/preset-utils";
 import { resolveToolRefs } from "@/lib/ai-tool-catalog";
 import { ContentCard, ContentCardPost, ContentCardTitle } from "@/features/content/content-card";
+import { Bookmark } from "@/components/icons/bookmark";
+import { Heart } from "@/components/icons/heart";
 import { ContentTypePill } from "@/features/content/content-type-label";
+import { RowMetrics } from "@/features/content/row-metrics";
+import { CommunityOnlyBadge } from "@/features/content/community-only-badge";
 import { PostTargetMenu, postMeta } from "@/features/prompts/post-header";
 import { PromptCardFooter } from "@/features/prompts/prompt-card-footer";
 import { Badge } from "@/components/ui/badge";
@@ -42,6 +46,14 @@ export function PresetCard({
         meta={postMeta(preset.creator.username, preset.createdAt, language)}
         time={formatRelativeTime(preset.createdAt, language)}
         editHref={`/presets/create?edit=${preset.id}`}
+        ownMetrics={
+          <RowMetrics
+            items={[
+              { icon: Heart, label: t("card.row.likes"), value: preset.likeCount },
+              { icon: Bookmark, label: t("card.row.saves"), value: preset.saveCount },
+            ]}
+          />
+        }
         typeIcon={SlidersHorizontal}
         status={
           preset.status === "draft" ? (
@@ -53,6 +65,7 @@ export function PresetCard({
         badges={
           <>
             <ContentTypePill icon={SlidersHorizontal} label={t("preset.singular")} detail={category} />
+            <CommunityOnlyBadge communityId={preset.communityId} />
           </>
         }
         menu={<PostTargetMenu preset={preset} onDeleted={onDeleted} collectionRemoval={collectionRemoval} />}
