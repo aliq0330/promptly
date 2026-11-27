@@ -655,4 +655,16 @@ export const communityTranslations = {
   "communities.home.goingCount": { tr: "{{count}} kişi katılıyor", en: "{{count}} going" },
   "communities.home.comments": { tr: "{{count}} yorum", en: "{{count}} comments" },
   "communities.home.untitledPost": { tr: "Gönderi", en: "Post" },
+
+  // ---- Odalar ve etkinlik şeridi (docs/history/475-*) ----
+  "communities.strip.label": { tr: "Odalar ve etkinlik", en: "Rooms and events" },
+  "communities.strip.openChat": { tr: "Sohbeti aç", en: "Open chat" },
+  "communities.strip.unread": { tr: "{{count}} yeni", en: "{{count}} new" },
+  "communities.strip.muted": { tr: "sessiz", en: "muted" },
+  "communities.strip.eventMeta": { tr: "{{title}} · {{count}} katılıyor", en: "{{title}} · {{count}} going" },
+  "communities.feed.sort.aria": { tr: "Gönderileri sırala", en: "Sort posts" },
+  "communities.feed.sort.new": { tr: "En yeni", en: "Newest" },
+  "communities.feed.sort.top": { tr: "Popüler", en: "Popular" },
+  "communities.aside.aboutRules": { tr: "Hakkında ve kurallar", en: "About and rules" },
+  "communities.aside.online": { tr: "Çevrimiçi", en: "Online" },
 } as const satisfies Record<string, { tr: string; en: string }>;

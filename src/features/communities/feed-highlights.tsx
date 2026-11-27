@@ -1,39 +1,22 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { ScrollText } from "@/components/icons/scroll-text";
 import { Button } from "@/components/ui/button";
 import { useAsyncAction } from "@/features/groups/use-async-action";
 import { AnnouncementsSection } from "./announcements-section";
 import type { CommunityTabProps } from "./community-page";
-import { acceptCommunityRules, fetchCommunityEvents, type CommunityEvent } from "@/lib/supabase/communities";
-import { eventDateParts, formatEventRange } from "@/lib/communities";
+import { acceptCommunityRules } from "@/lib/supabase/communities";
 import { useTranslation } from "@/lib/i18n/language-provider";
 
 /**
- * Akışın üstündeki ince özet: (varsa) güncel kuralları kabul uyarısı, kapatılmış topluluk notu, son duyurular ve en yakın etkinlik.
+ * Akışın üstündeki ince özet: (varsa) güncel kuralları kabul uyarısı, kapatılmış topluluk notu ve son duyurular (en yakın etkinlik artık
+ * sekmelerin altındaki «Odalar ve etkinlik» şeridindedir, docs/history/475-*).
  * Bunların hiçbiri yoksa HİÇBİR ŞEY çizilmez — akış ilk açılış ekranıdır, özet onu itmez. Yönetim (duyuru yayınlama vb.) "Yönet" sekmesindedir.
  */
-export function FeedHighlights({ group, role, viewerId, membership, reload, onToast, goTab }: CommunityTabProps) {
+export function FeedHighlights({ group, role, membership, reload, onToast, goTab }: CommunityTabProps) {
   const { t } = useTranslation();
-  const [next, setNext] = useState<CommunityEvent | null>(null);
   const accept = useAsyncAction();
   const needsRulesAck = Boolean(role) && group.rulesRequired && Boolean(group.rules) && (membership?.acceptedRulesVersion ?? 0) < group.rulesVersion;
-
-  useEffect(() => {
-    let cancelled = false;
-    fetchCommunityEvents(group.id, role ? viewerId : null, "upcoming")
-      .then((list) => {
-        if (!cancelled) setNext(list.find((event) => event.status === "scheduled") ?? null);
-      })
-      .catch((err) => {
-        console.error("feed highlights events", err);
-        if (!cancelled) setNext(null);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [group.id, role, viewerId]);
 
   async function acknowledge() {
     const ok = await accept.run(async () => {
@@ -78,32 +61,6 @@ export function FeedHighlights({ group, role, viewerId, membership, reload, onTo
 
       <AnnouncementsSection group={group} role={role} limit={3} onToast={onToast} highlight />
 
-      {next && <NextEventCard event={next} onOpen={() => goTab("events")} />}
     </div>
-  );
-}
-
-/** The nearest event as a date-tile card (Meydan, docs/history/190-* Faz 6); opens the Events tab. */
-function NextEventCard({ event, onOpen }: { event: CommunityEvent; onOpen: () => void }) {
-  const { t, language } = useTranslation();
-  const date = eventDateParts(event.startsAt, event.timezone, language);
-  return (
-    <button
-      type="button"
-      data-feed-next-event
-      onClick={onOpen}
-      className="flex w-full items-center gap-4 rounded-lg card-flat px-4 py-3 text-left shadow-xs transition-colors hover:border-border-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
-    >
-      <span aria-hidden className="flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-md bg-primary-soft leading-none text-primary-text">
-        <span className="text-caption font-semibold">{date.month}</span>
-        <span className="mt-0.5 font-display text-h2 font-bold">{date.day}</span>
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="block text-caption text-text-muted">{t("communities.feed.nextEvent")}</span>
-        <span className="block break-words text-small font-semibold text-text">{event.title}</span>
-        <span className="block text-caption text-text-muted">{formatEventRange(event.startsAt, event.endsAt, event.timezone, language)}</span>
-      </span>
-      <span className="shrink-0 rounded-sm bg-text px-3 py-1.5 text-caption font-semibold text-background">{t("communities.overview.allEvents")}</span>
-    </button>
   );
 }

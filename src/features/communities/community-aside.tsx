@@ -4,11 +4,12 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowRight } from "@/components/icons/arrow-right";
 import { Avatar } from "@/components/ui/avatar";
-import { RoleBadge } from "@/features/groups/role-badge";
+import { useCommunityOnlineMembers } from "@/features/presence/community-presence";
+import { PresenceAvatar } from "@/features/presence/presence-ui";
 import { fetchCommunityMembers, type CommunityMember } from "@/lib/supabase/communities";
-import { formatCount, profileHref } from "@/lib/utils";
+import { profileHref } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import type { ChatGroup, GroupRole } from "@/types";
+import type { ChatGroup } from "@/types";
 
 const ASIDE_CARD = "rounded-xl bg-surface-soft p-4";
 const ASIDE_TITLE = "font-display text-h3 font-bold text-text";
@@ -46,59 +47,52 @@ export function ruleLines(rules: string | null): string[] {
 }
 
 /**
- * Topluluk sayfasının sağ yardımcı sütunu (Meydan, docs/history/190-* Faz 6; yalnız `xl`+ ve Akış sekmesinde): Hakkında (açıklama + üye ve
- * gönderi sayısı), Kurallar (ilk satırlar, tamamı "Hakkında ve kurallar" sekmesinde) ve — yalnız üyeye — Yöneticiler. Yeni veri kaynağı yok:
- * topluluk satırı sayfada zaten var, yönetici listesi üye listesinin ilk sayfasıdır.
+ * Topluluk sayfasının sağ yardımcı sütunu (Meydan, docs/history/190-* Faz 6; yalnız `xl`+ ve Akış/Etkinlikler sekmesinde): «Hakkında ve kurallar»
+ * (kuruluş tarihi + kuralların ilk satırları, tamamı "Hakkında ve kurallar" sekmesinde) ve — yalnız üyeye ve durumu görünen kişiler varsa —
+ * «Çevrimiçi» (avatar yığını). Etkinlik sekmelerin altındaki şeritte, yöneticiler Üyeler sekmesindedir (docs/history/475-*). Yeni veri
+ * kaynağı yok: topluluk satırı sayfada zaten var, çevrimiçi üyeler sunucuda kişi başına gizlilikle süzülür.
  */
-export function CommunityAside({ group, people, onReadRules }: { group: ChatGroup; people: CommunityMember[]; onReadRules: () => void }) {
+export function CommunityAside({ group, isMember, onReadRules }: { group: ChatGroup; isMember: boolean; onReadRules: () => void }) {
   const { t, language } = useTranslation();
   const rules = ruleLines(group.rules);
-  const staff = people.filter((person) => person.role !== "member");
+  const online = useCommunityOnlineMembers(group.id, { limit: 8, enabled: isMember });
 
   return (
     <>
       <section className={ASIDE_CARD} aria-labelledby="community-aside-about" data-community-aside="about">
         <h2 id="community-aside-about" className={ASIDE_TITLE}>
-          {t("communities.aside.about")}
+          {t("communities.aside.aboutRules")}
         </h2>
-        {/* Açıklama ve üye sayısı başlık bandında zaten var (tekrar etmez): burada yalnız bandın vermediği özet durur. */}
-        <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-small text-text-secondary">
-          <span>{t("communities.aside.postCount", { count: formatCount(group.postCount) })}</span>
-          <span>{t("communities.aside.since", { date: new Date(group.createdAt).toLocaleDateString(language) })}</span>
-        </p>
-      </section>
-
-      {rules.length > 0 && (
-        <section className={ASIDE_CARD} aria-labelledby="community-aside-rules" data-community-aside="rules">
-          <h2 id="community-aside-rules" className={ASIDE_TITLE}>
-            {t("communities.aside.rules")}
-          </h2>
-          <ol className="mt-2 list-decimal space-y-1 pl-5 text-small text-text-secondary marker:text-text-muted">
+        {rules.length > 0 && (
+          <ol className="mt-2 list-decimal space-y-1 pl-5 font-serif text-small text-text-secondary marker:text-text-muted" data-community-aside="rules">
             {rules.slice(0, RULES_PREVIEW).map((line, index) => (
               <li key={index} className="break-words">
                 {line}
               </li>
             ))}
           </ol>
+        )}
+        {rules.length > 0 && (
           <button type="button" onClick={onReadRules} className="mt-2.5 flex items-center gap-1 rounded-sm text-caption font-semibold text-primary-text hover:text-primary-hover">
             {t("communities.aside.readRules")} <ArrowRight size={12} aria-hidden />
           </button>
-        </section>
-      )}
+        )}
+        <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-caption text-text-muted">
+          <span>{t("communities.aside.since", { date: new Date(group.createdAt).toLocaleDateString(language) })}</span>
+        </p>
+      </section>
 
-      {staff.length > 0 && (
-        <section className={ASIDE_CARD} aria-labelledby="community-aside-staff" data-community-aside="staff">
-          <h2 id="community-aside-staff" className={ASIDE_TITLE}>
-            {t("communities.aside.staff")}
+      {online.enabled && online.members.length > 0 && (
+        <section className={ASIDE_CARD} aria-labelledby="community-aside-online" data-community-aside="online">
+          <h2 id="community-aside-online" className={ASIDE_TITLE}>
+            {t("communities.aside.online")} · {online.members.length >= 8 ? "8+" : online.members.length}
           </h2>
-          <ul className="mt-2.5 space-y-2">
-            {staff.slice(0, 6).map((person) => (
-              <li key={person.userId} className="flex items-center gap-3">
-                <Avatar src={person.avatarUrl} alt={person.displayName} size={32} />
-                <Link href={profileHref(person)} className="min-w-0 flex-1 truncate text-small font-semibold text-text hover:text-primary-text">
-                  {person.displayName}
+          <ul className="mt-3 flex -space-x-2">
+            {online.members.map((member) => (
+              <li key={member.userId} className="inline-flex rounded-full ring-2 ring-surface-soft">
+                <Link href={profileHref({ username: member.username })} aria-label={member.displayName}>
+                  <PresenceAvatar userId={member.userId} src={member.avatarUrl} alt="" size={32} />
                 </Link>
-                <RoleBadge role={person.role as GroupRole} />
               </li>
             ))}
           </ul>

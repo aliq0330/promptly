@@ -339,7 +339,9 @@ export function setupCommunities(db) {
       const pid = eq(q, "id");
       const idList = (q.get("id") ?? "").match(/^in\.\((.*)\)$/)?.[1]?.split(",").map((x) => x.replace(/"/g, "")) ?? null;
       let list = db.posts.filter((p) => (!cid || p.community_id === cid) && (!pid || p.id === pid) && (!idList || idList.includes(p.id)) && (pinnedOnly ? p.pinned_at : unpinned ? !p.pinned_at : true));
-      list = list.slice().sort((a, b) => b.created_at.localeCompare(a.created_at));
+      // docs/history/475-*: `order=like_count.desc,…` akışı beğeniye göre sıralar (keyset imleci `or` süzgecidir; burada yalnız sıra taklit edilir).
+      const byLikes = (q.get("order") ?? "").startsWith("like_count");
+      list = list.slice().sort((a, b) => (byLikes ? b.like_count - a.like_count : 0) || b.created_at.localeCompare(a.created_at));
       const lim = Number(q.get("limit") ?? 0); if (lim) list = list.slice(0, lim);
       return rows(list.map((p) => ({
         id: p.id, community_id: p.community_id, kind: p.kind, like_count: p.like_count, comment_count: p.comment_count, save_count: p.save_count ?? 0, content_type: p.content_type, note: p.note, pinned_at: p.pinned_at, created_at: p.created_at, author: pub(userById(p.author_id)),

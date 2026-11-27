@@ -14,6 +14,7 @@ import {
   communityTopicLabelKey,
   COMMUNITY_CATEGORIES,
   communityChatHref,
+  communityRoomHref,
   communityHref,
   coverModeOf,
   normalizeCoverColor,
@@ -256,6 +257,7 @@ test("yollar: topluluk ve sohbet adresleri", () => {
   assert.equal(communityHref("abc", "members", "requests"), "/communities/local?id=abc&tab=members&section=requests");
   assert.equal(communityHref("abc", undefined, "requests"), "/communities/local?id=abc");
   assert.equal(communityChatHref("abc"), "/messages/local?id=abc");
+  assert.equal(communityRoomHref("abc", "r 1"), "/messages/local?id=abc&room=r%201");
 });
 
 test("görünürlük: bilinmeyen değer en kapalı düzeye düşer; üç düzey sıralıdır", () => {

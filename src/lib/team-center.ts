@@ -1,4 +1,4 @@
-import type { BoardItem, BoardState, MemberProjectRoles, TeamActivity } from "./supabase/team-center.ts";
+import type { BoardItem, BoardProposal, BoardState, MemberProjectRoles, TeamActivity } from "./supabase/team-center.ts";
 import { projectLink } from "./team-projects.ts";
 
 /**
@@ -73,4 +73,51 @@ export function approvalBadge(items: readonly BoardItem[]): number {
   const lead = items.filter((item) => item.state === "pending" && item.canDecide).length;
   if (lead > 0) return lead;
   return items.filter((item) => item.state === "changes" && item.mine).length;
+}
+
+// ---------------------------------------------------------------------------------------------
+// Onaylar sekmesi: liste + ayrıntı (docs/history/475-*)
+// ---------------------------------------------------------------------------------------------
+
+/** Onay listesinin üç bölümü: bana bekleyen · gönderdiklerim · karar verilen. */
+export type ApprovalSegment = "inbox" | "sent" | "decided";
+export const APPROVAL_SEGMENTS: readonly ApprovalSegment[] = ["inbox", "sent", "decided"];
+
+/** Listedeki bir satır: öğe (paketin temsilcisi) ya da değişiklik önerisi. `key` adreste (`decision=`) taşınır. */
+export type ApprovalRow = { key: string; type: "item"; item: BoardItem } | { key: string; type: "proposal"; proposal: BoardProposal };
+
+export const approvalRowKey = (row: { type: "item"; item: Pick<BoardItem, "id"> } | { type: "proposal"; proposal: Pick<BoardProposal, "itemId"> }): string =>
+  row.type === "item" ? row.item.id : `p-${row.proposal.itemId}`;
+
+const rowTime = (row: ApprovalRow): number => {
+  const iso = row.type === "item" ? (row.item.decidedAt ?? row.item.submittedAt) : row.proposal.proposedAt;
+  return iso ? Date.parse(iso) || 0 : 0;
+};
+
+/**
+ * Onay listesinin satırları. Paketler tek satırdır (`groupBoard`). Bölümler:
+ *  - `inbox`: kararı SENDEN bekleyen (lider için bekleyen öğeler + değişiklik önerileri) ve düzeltmen gereken (değişiklik istenen kendi öğelerin);
+ *  - `sent`: senin gönderdiğin ve henüz sonuçlanmamış ya da geri dönmüş öğeler;
+ *  - `decided`: onaylananlar ve (başkasının) değişiklik istenen öğeleri.
+ * Her bölüm en yeni olay üstte sıralanır. Yetki kararı sunucudadır; `canDecide`/`mine` yalnız gösterimi belirler.
+ */
+export function approvalRows(items: readonly BoardItem[], proposals: readonly BoardProposal[], segment: ApprovalSegment): ApprovalRow[] {
+  const [pending, changes, approved] = groupBoard(items, "all");
+  const asItem = (item: BoardItem): ApprovalRow => ({ key: approvalRowKey({ type: "item", item }), type: "item", item });
+  const asProposal = (proposal: BoardProposal): ApprovalRow => ({ key: approvalRowKey({ type: "proposal", proposal }), type: "proposal", proposal });
+  let rows: ApprovalRow[];
+  if (segment === "inbox") rows = [...pending.rows.filter((item) => item.canDecide).map(asItem), ...proposals.map(asProposal), ...changes.rows.filter((item) => item.mine).map(asItem)];
+  else if (segment === "sent") rows = [...pending.rows, ...changes.rows].filter((item) => item.mine).map(asItem);
+  else rows = [...approved.rows, ...changes.rows.filter((item) => !item.mine)].map(asItem);
+  return rows.sort((a, b) => rowTime(b) - rowTime(a));
+}
+
+/** Her bölümün satırları (adresteki `decision=` başka bölümdeki bir satırı da bulabilsin). */
+export function findApprovalRow(items: readonly BoardItem[], proposals: readonly BoardProposal[], key: string | null): ApprovalRow | null {
+  if (!key) return null;
+  for (const segment of APPROVAL_SEGMENTS) {
+    const row = approvalRows(items, proposals, segment).find((entry) => entry.key === key);
+    if (row) return row;
+  }
+  return null;
 }

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { approvalBadge, boardItemHref, boardProjects, groupBoard, memberRoleSummary } from "./team-center.ts";
-import type { BoardItem } from "./supabase/team-center.ts";
+import { approvalBadge, approvalRows, boardItemHref, boardProjects, findApprovalRow, groupBoard, memberRoleSummary } from "./team-center.ts";
+import type { BoardItem, BoardProposal } from "./supabase/team-center.ts";
 
 const item = (over: Partial<BoardItem>): BoardItem => ({
   id: "i1",
@@ -70,4 +70,43 @@ test("approvalBadge: lider bekleyen kararları, diğerleri kendi değişiklik is
   assert.equal(approvalBadge([item({ id: "a" }), item({ id: "b" })]), 2);
   assert.equal(approvalBadge([item({ id: "a", canDecide: false, mine: true, state: "pending" }), item({ id: "b", canDecide: false, mine: true, state: "changes" })]), 1);
   assert.equal(approvalBadge([]), 0);
+});
+
+const proposal = (over: Partial<BoardProposal> = {}): BoardProposal => ({
+  itemId: "x1", kind: "prompt", spaceId: "s1", projectId: "p1", projectTitle: "Bahar", fileId: "f1", fileTitle: "Afiş", currentTitle: "Eski", proposedTitle: "Yeni", proposedBody: "metin", note: "", proposerId: "u2", proposerName: "Mert", proposedAt: "2026-11-27T10:00:00Z", ...over,
+});
+
+test("approvalRows(inbox): kararı bekleyen + öneriler + düzeltilecek kendi öğelerim, en yeni üstte", () => {
+  const rows = approvalRows(
+    [
+      item({ id: "a", submittedAt: "2026-11-27T08:00:00Z" }),
+      item({ id: "b", canDecide: false, submittedAt: "2026-11-27T09:00:00Z" }),
+      item({ id: "c", state: "changes", mine: true, decidedAt: "2026-11-26T08:00:00Z" }),
+      item({ id: "d", state: "approved", decidedAt: "2026-11-25T08:00:00Z" }),
+    ],
+    [proposal()],
+    "inbox",
+  );
+  assert.deepEqual(rows.map((row) => row.key), ["p-x1", "a", "c"]);
+});
+
+test("approvalRows(sent/decided): gönderdiklerim ve karar verilenler ayrılır; paket tek satırdır", () => {
+  const items = [
+    item({ id: "m1", mine: true, canDecide: false }),
+    item({ id: "m2", state: "changes", mine: true }),
+    item({ id: "a1", state: "approved", decidedAt: "2026-11-25T08:00:00Z" }),
+    item({ id: "c1", state: "changes", mine: false, decidedAt: "2026-11-26T08:00:00Z" }),
+    item({ id: "u1", unit: "pk", unitCount: 2, state: "approved", decidedAt: "2026-11-24T08:00:00Z" }),
+    item({ id: "u2", unit: "pk", unitCount: 2, state: "approved", decidedAt: "2026-11-24T08:00:00Z" }),
+  ];
+  assert.deepEqual(approvalRows(items, [], "sent").map((row) => row.key).sort(), ["m1", "m2"]);
+  assert.deepEqual(approvalRows(items, [], "decided").map((row) => row.key), ["c1", "a1", "u1"]);
+});
+
+test("findApprovalRow: adresteki satırı hangi bölümde olursa olsun bulur", () => {
+  const items = [item({ id: "a", state: "approved", decidedAt: "2026-11-25T08:00:00Z" })];
+  assert.equal(findApprovalRow(items, [proposal()], "a")?.key, "a");
+  assert.equal(findApprovalRow(items, [proposal()], "p-x1")?.type, "proposal");
+  assert.equal(findApprovalRow(items, [], "yok"), null);
+  assert.equal(findApprovalRow(items, [], null), null);
 });
