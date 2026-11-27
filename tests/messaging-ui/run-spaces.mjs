@@ -184,7 +184,13 @@ for (const [w, cols, aside] of [[1440, 3, true], [820, 2, false], [390, 2, false
     const band = page.locator("[data-space-band]");
     await band.waitFor();
     await band.getByRole("heading", { level: 1, name: "Kış koleksiyonu moodboard" }).waitFor();
-    for (const tag of ["Moodboard", "Özel", "7 öğe"]) assert.ok(await band.getByText(tag, { exact: true }).isVisible(), `etiket ${tag}`);
+    // Mockup (docs/history/476-*): telefonda yalnız tür + «Özel» etiketi; «N öğe» etiketi telefonda yok (sayı çipleri altta).
+    for (const tag of w >= 768 ? ["Moodboard", "Özel", "7 öğe"] : ["Moodboard", "Özel"]) assert.ok(await band.getByText(tag, { exact: true }).isVisible(), `etiket ${tag}`);
+    if (w < 768) {
+      const bandBox = await band.boundingBox();
+      assert.ok(bandBox.x <= 1 && bandBox.width >= 389, `telefonda bant kenardan kenara (${bandBox.x}, ${bandBox.width})`);
+      assert.ok(await band.locator("[data-space-actions]").getByRole("button", { name: "Panoyu aç" }).evaluate((el) => el.getBoundingClientRect().width >= 150), "Panoyu aç geniş");
+    }
     assert.equal(await band.locator("[data-space-band-palette] button").count(), 5, "bandın alt kenarında ilk palet şeridi");
     const strip = await band.locator("[data-space-band-palette]").evaluate((el) => ({ h: Math.round(el.getBoundingClientRect().height), w: Math.round(el.getBoundingClientRect().width), bw: Math.round(el.parentElement.getBoundingClientRect().width) }));
     assert.ok(strip.h <= 12 && strip.w >= strip.bw - 2, `palet şeridi ince ve bant genişliğinde ${JSON.stringify(strip)}`);
@@ -205,6 +211,7 @@ for (const [w, cols, aside] of [[1440, 3, true], [820, 2, false], [390, 2, false
     }
     assert.equal(await page.getByTestId("space-overview-stats").isVisible(), w < 768, "sayı çipleri yalnız telefonda");
     assert.ok(await overflowFree(page), "yatay taşma yok");
+    if (process.env.SHOT) await page.screenshot({ path: `${process.env.SHOT}/space-${w}.png` }).catch(() => undefined);
     // Kutu → ilgili sekme; «Davet et» → Üyeler.
     await wall.getByRole("listitem").filter({ hasText: "Renk notu" }).getByRole("button").click();
     await page.waitForURL(/tab=notes/);

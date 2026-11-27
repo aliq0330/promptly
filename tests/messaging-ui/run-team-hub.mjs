@@ -285,7 +285,7 @@ await scenario("17. Ekip sohbeti (gömülü): '+' menüsünde Kütüphaneden pay
   assert.ok((await page.getByText("Kütüphaneden").count()) >= 1, "Kütüphaneden paylaş seçenekleri");
 }, { setup: (db) => { db.addTeamChannel(CH_GENERAL, { name: "genel", members: [[U.bob, "member"]], texts: [[U.bob, "lansman afişi hazır"]] }); } });
 
-await scenario("15. Ekip başlığı (mockup): geri bağlantısı, Ekip rozeti, üye · Space · Yalnızca davetle satırı, Davet et; kenar çubuğunda Ekiplerim", async ({ page }) => {
+await scenario("15. Ekip başlığı (mockup): Ekip rozeti, üye · proje · Yalnızca davetle satırı, birincil «Ekip sohbetini aç», ⋮ menüsünde Davet et; kenar çubuğunda Ekiplerim", async ({ page }) => {
   await page.goto(`${BASE}/teams/local?id=atolye-mor&tab=spaces`);
   await page.getByTestId("team-page").waitFor();
   const band = page.getByTestId("team-band");
@@ -293,7 +293,13 @@ await scenario("15. Ekip başlığı (mockup): geri bağlantısı, Ekip rozeti, 
   await band.getByRole("heading", { name: "Atölye Mor" }).waitFor();
   await band.getByText("Yalnızca davetle").waitFor();
   await page.getByTestId("team-tabs").waitFor();
-  await page.locator("[data-team-invite-header]").waitFor();
+  // Birincil düğme sohbettir (docs/history/476-*); «Davet et» ⋮ menüsündedir.
+  await band.locator("[data-team-open-chat]").waitFor();
+  assert.match(await band.locator("[data-team-open-chat]").innerText(), /Ekip sohbetini aç/);
+  assert.equal(await band.locator("[data-hub-back]").count(), 0, "bantta geri oku yok (mockup)");
+  await band.locator("[data-team-menu]").click();
+  await band.locator("[data-team-invite-header]").waitFor();
+  await page.keyboard.press("Escape");
   const sidebar = page.getByTestId("sidebar-teams");
   await sidebar.getByText("Atölye Mor").waitFor();
   await sidebar.getByText("Ekiplerim").waitFor();
@@ -638,21 +644,34 @@ await scenario("37. Telefon: Ekip sayfasında genel üst menü görünür; açı
   assert.equal(await page.locator("[data-app-header]").isVisible(), false, "açık kanal: üst menü gizli");
 }, { viewport: { width: 390, height: 800 } });
 
-await scenario("38. Telefon (Merkez): bant (geri · im · ad · Davet et · ⋯) + kaydırılan sekme şeridi; sekme adresi değiştirir; proje açılınca bant yerine proje başlığı", async ({ page }) => {
+await scenario("38. Telefon (Merkez, mockup): kenardan kenara bant (im + ad üstte, tam genişlik «Ekip sohbetini aç» + ⋮ altta) + kaydırılan sekme şeridi; sekme adresi değiştirir; proje açılınca bant yerine proje başlığı", async ({ page }) => {
   await page.goto(`${BASE}/teams/local?id=atolye-mor`);
   const band = page.getByTestId("team-band");
   await band.waitFor();
-  await band.locator("[data-team-back-phone]").waitFor();
-  await band.locator("[data-team-invite-header]").waitFor();
+  assert.equal(await band.locator("[data-hub-back], [data-team-back-phone]").count(), 0, "telefonda bantta geri oku yok");
   const bandBox = await band.boundingBox();
+  assert.ok(bandBox.x <= 1 && bandBox.width >= 389, `bant kenardan kenara (${bandBox.x}, ${bandBox.width})`);
+  const chat = band.locator("[data-team-open-chat]");
+  await chat.waitFor();
+  const chatBox = await chat.boundingBox();
   const menuBox = await band.locator("[data-team-menu]").boundingBox();
-  assert.ok(bandBox.x + bandBox.width - (menuBox.x + menuBox.width) <= 20 && menuBox.y - bandBox.y <= 20, "⋯ menüsü bandın sağ üst köşesinde");
+  assert.ok(chatBox.width >= 250, `birincil düğme tam genişlik (${chatBox.width})`);
+  assert.ok(Math.abs(chatBox.y - menuBox.y) <= 8 && menuBox.x > chatBox.x + chatBox.width, "⋮ düğmenin yanında, aynı satırda");
+  assert.ok(bandBox.x + bandBox.width - (menuBox.x + menuBox.width) <= 20, "⋮ bandın sağında");
+  const nameBox = await band.getByRole("heading", { name: "Atölye Mor" }).boundingBox();
+  assert.ok(nameBox.y < chatBox.y, "ad düğmenin üstünde");
+  assert.equal(await band.locator("[data-hub-band-kicker]").isVisible(), false, "etiket satırı telefonda yok (bilgi alt satırda)");
+  assert.match(await band.locator("[data-team-meta]").innerText(), /6 üye · Pazarlama ve tasarım · Sahip/);
   await band.locator("[data-team-menu]").click();
   await band.locator("[data-team-menu-list]").waitFor();
+  await band.locator("[data-team-invite-header]").waitFor();
   const listBox = await band.locator("[data-team-menu-list]").boundingBox();
   assert.ok(listBox.x >= 0 && listBox.x + listBox.width <= 390, "menü paneli ekranın içinde");
   await page.keyboard.press("Escape");
   const tabs = page.getByTestId("team-tabs");
+  const tabsBox = await tabs.getByRole("tablist").boundingBox();
+  assert.ok(tabsBox.x <= 1 && tabsBox.width >= 389, "sekme çubuğu da kenardan kenara");
+  assert.ok(tabsBox.y - (bandBox.y + bandBox.height) <= 2, "sekmeler bandın hemen altında");
   for (const key of ["projects", "approvals", "chat", "members", "panel", "admin"]) await tabs.locator(`[data-team-tab-link=${key}]`).waitFor({ state: "attached" });
   await tabs.locator("[data-team-tab-link=approvals]").click();
   await page.waitForFunction(() => location.search.includes("tab=approvals"));

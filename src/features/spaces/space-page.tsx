@@ -9,7 +9,7 @@ import { LogOut } from "@/components/icons/log-out";
 import { Settings } from "@/components/icons/settings";
 import { Trash2 } from "@/components/icons/trash-2";
 import { Button, buttonClassName } from "@/components/ui/button";
-import { HUB_PAGE_CLASS } from "@/features/hub/hub-kit";
+import { HUB_PAGE_CLASS, HUB_PHONE_TABS_CLASS } from "@/features/hub/hub-kit";
 import { DetailSkeleton, NotFoundBlock } from "@/components/ui/detail-skeleton";
 import { usePageTitle } from "@/components/layout/page-title";
 import { Tabs } from "@/components/ui/tabs";
@@ -225,8 +225,9 @@ function SpaceView() {
         )}
 
         {/* Altı çizgili sekmeler (docs/history/371-*, 475-*): yalnız yazı + sayı (simgesiz); sayılar görseller, promptlar, notlar ve üyeler. */}
-        <div className="mt-4" data-space-tabs="">
+        <div className={cn("mt-4", tab === "overview" && "max-md:mt-0")} data-space-tabs="">
           <Tabs
+            className={HUB_PHONE_TABS_CLASS}
             ariaLabel={t("spaces.page.tabsAria")}
             active={tab}
             onChange={(next) => goTo(next)}

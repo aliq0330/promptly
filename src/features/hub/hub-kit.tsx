@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { ArrowLeft } from "@/components/icons/arrow-left";
 import type { IconComponent } from "@/components/icons/icon";
 import { Button, buttonClassName } from "@/components/ui/button";
 import { SearchField } from "@/components/ui/search-field";
@@ -328,74 +327,95 @@ export function HubBadge({ children, tone = "neutral" }: { children: ReactNode; 
 }
 
 /**
- * İç sayfa bandı: üstte tam genişlikli satır (solda geri oku + tür etiketleri, sağ üst köşede ⋮ `menu`), altında solda 16:9 (telefonda kare) kapak, ortada başlık + alt bilgi, `xl`+'ta sağda, daha dar
- * ekranda altta eylem satırı. `backdrop` kapağın bulanık kopyasıyla bandı boyar (verilmezse marka tonu).
+ * Telefonda (`< md`) iç sayfa bandı ve altındaki sekmeler kenardan kenara akar (mockup: bant üst çubuğun hemen altında, köşesiz). Sayfa kabuğunun
+ * kenar boşluğu `sm` altında 12, `sm`–`md` arasında 24 px olduğundan negatif boşluk ikisini ayrı karşılar.
+ */
+export const HUB_BLEED_CLASS = "max-sm:-mx-3 sm:max-md:-mx-6";
+export const HUB_BLEED_TOP_CLASS = "max-sm:-mt-4 sm:max-md:-mt-6";
+/** Bandın altındaki sekme çubuğu telefonda kenardan kenara; ilk sekmenin yazısı bant içeriğiyle (16 px) hizalanır. */
+export const HUB_PHONE_TABS_CLASS = cn(HUB_BLEED_CLASS, "max-md:[&_[role=tablist]]:px-1");
+
+/** Detay bandındaki ⋮ düğmesinin 48 px'lik hâli (Topluluk ve Space'in büyük birincil düğmesinin yanında). */
+export const HUB_BAND_MENU_BUTTON_LG_CLASS = "h-12 w-12";
+
+/** Bant kapağının üç boyutu (mockup): Ekip için küçük, Topluluk için büyük; köşe yarıçapı boyutla birlikte büyür. */
+const BAND_ART_SIZE: Record<"sm" | "lg", string> = {
+  sm: "size-14 rounded-md md:size-20 md:rounded-lg xl:size-26 xl:rounded-xl",
+  lg: "size-18 rounded-lg md:size-22 md:rounded-lg xl:size-30 xl:rounded-xl",
+};
+
+/**
+ * İç sayfa bandı (mockup "Ekip · Merkez bandı" / "Topluluk · Albüm bandı"): kare kapak solda, yanında başlık + tek satır alt bilgi; `md+`'da
+ * başlığın üstünde etiketler (`kicker`), altında açıklama ve üye yüzleri (`faces`), sağda eylemler + ⋮ `menu`. Telefonda kapak ve başlık tek satır, altında
+ * açıklama, en altta tam genişlik birincil düğme + ⋮ gelir (birincil düğme `max-md:flex-1` alır). `backdrop` kapağın bulanık kopyasıyla bandı boyar
+ * (verilmezse marka tonu). Geri oku YOKTUR: dönüş yan menü / üst çubuktadır (mockup).
  */
 export function HubDetailBand({
   art,
+  artSize = "sm",
   backdrop,
-  backHref,
-  backLabel,
-  backAttrs,
   kicker,
   title,
   byline,
   description,
+  faces,
   actions,
   menu,
   className,
   ...rest
 }: {
   art: ReactNode;
+  artSize?: "sm" | "lg";
   backdrop?: ReactNode;
-  backHref?: string;
-  backLabel?: string;
-  /** Geri bağlantısına eklenen veri öznitelikleri. */
-  backAttrs?: Record<`data-${string}`, string>;
-  /** Başlığın üstündeki tür/görünürlük etiketleri. */
+  /** Başlığın üstündeki tür/görünürlük etiketleri (yalnız `md+`; telefonda bilgi alt satıra taşınır). */
   kicker?: ReactNode;
   title: ReactNode;
   byline?: ReactNode;
   description?: ReactNode;
+  /** Başlığın altındaki üye yüzleri (yalnız `md+`). */
+  faces?: ReactNode;
   actions?: ReactNode;
   menu?: ReactNode;
   className?: string;
   [data: `data-${string}`]: string | undefined;
 }) {
   return (
-    <header className={cn("relative isolate rounded-lg border border-border-soft bg-primary-soft", className)} data-hub-detail-band="" {...rest}>
+    <header
+      className={cn(
+        "relative isolate bg-primary-soft",
+        "max-md:rounded-none md:rounded-lg md:border md:border-border-soft xl:rounded-xl",
+        HUB_BLEED_CLASS,
+        HUB_BLEED_TOP_CLASS,
+        className,
+      )}
+      data-hub-detail-band=""
+      {...rest}
+    >
       {backdrop && (
-        <div aria-hidden className="absolute inset-0 -z-10 overflow-hidden rounded-lg">
+        <div aria-hidden className="absolute inset-0 -z-10 overflow-hidden md:rounded-lg xl:rounded-xl">
           <div className="absolute inset-0 scale-150 opacity-70 blur-3xl saturate-150">{backdrop}</div>
           <div className="absolute inset-0 bg-background/55" />
         </div>
       )}
-      <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-4 gap-y-3 p-4 md:gap-x-5 md:p-5 xl:grid-cols-[auto_minmax(0,1fr)_auto]">
-        {/* Üst satır bandın tam genişliğidir: geri oku + etiketler SOLA, ⋮ menüsü SAĞ ÜST köşeye dayanır (telefonda da; menü paneli sağa hizalı açıldığı için ekran dışına taşmaz). */}
-        {(backHref || kicker || menu) && (
-          <div className="col-span-full flex min-w-0 items-start justify-between gap-2" data-hub-band-top="">
-            <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-caption text-text-secondary">
-              {backHref && (
-                <Link href={backHref} aria-label={backLabel} className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-surface/70 text-text hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus" data-hub-back="" {...backAttrs}>
-                  <ArrowLeft size={16} aria-hidden />
-                </Link>
-              )}
-              {kicker}
-            </div>
-            {menu && <div className="shrink-0" data-hub-band-menu="">{menu}</div>}
-          </div>
-        )}
-        <div className="relative aspect-square w-16 shrink-0 overflow-hidden rounded-xl border-2 border-surface bg-surface shadow-card md:aspect-video md:w-32 xl:w-44" data-hub-band-art="">
+      <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-3 p-4 md:grid-cols-[auto_minmax(12rem,1fr)_auto] md:gap-x-5 md:p-5 xl:gap-x-6 xl:px-7 xl:py-6">
+        <div className={cn("relative shrink-0 overflow-hidden bg-surface md:row-span-3", BAND_ART_SIZE[artSize])} data-hub-band-art="">
           {art}
         </div>
-        <div className="min-w-0 space-y-1.5">
-          <div className="min-w-0 [&>h1]:break-words [&>h1]:font-display [&>h1]:text-h2 [&>h1]:font-extrabold [&>h1]:text-text md:[&>h1]:text-h1">{title}</div>
-          {byline && <div className="min-w-0 text-small text-text-secondary">{byline}</div>}
-          {description && <div className="line-clamp-2 min-w-0 max-w-3xl whitespace-pre-line break-words text-small text-text-secondary">{description}</div>}
+        <div className="col-start-2 row-start-1 min-w-0">
+          {kicker && <div className="mb-1.5 hidden min-w-0 flex-wrap items-center gap-2 text-caption text-text-secondary md:flex" data-hub-band-kicker="">{kicker}</div>}
+          <div className="min-w-0 [&>h1]:break-words [&>h1]:font-display [&>h1]:text-h2 [&>h1]:font-bold [&>h1]:text-text md:[&>h1]:text-h1">{title}</div>
+          {byline && <div className="mt-0.5 min-w-0 text-caption text-text-secondary md:mt-1.5">{byline}</div>}
         </div>
-        {actions && (
-          <div className="col-span-2 flex flex-wrap items-center gap-2 xl:col-span-1" data-hub-band-actions="">
+        {description && (
+          <div className="col-span-2 row-start-2 mt-3 line-clamp-3 min-w-0 whitespace-pre-line break-words font-serif text-small text-text-secondary md:col-span-1 md:col-start-2 md:mt-2 md:line-clamp-2 md:max-w-xl md:text-body" data-hub-band-description="">
+            {description}
+          </div>
+        )}
+        {faces && <div className="mt-3 hidden min-w-0 md:col-start-2 md:row-start-3 md:block" data-hub-band-faces="">{faces}</div>}
+        {(actions || menu) && (
+          <div className="col-span-2 row-start-3 mt-3 flex min-w-0 items-center gap-2 md:col-span-1 md:col-start-3 md:row-span-3 md:row-start-1 md:mt-0 md:max-w-sm md:self-center xl:max-w-none" data-hub-band-actions="">
             {actions}
+            {menu && <div className="shrink-0" data-hub-band-menu="">{menu}</div>}
           </div>
         )}
       </div>

@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { ChevronDown } from "@/components/icons/chevron-down";
 import { Loader2 } from "@/components/icons/loader-2";
@@ -51,6 +52,7 @@ export function CommunityJoinButton({
   onToast,
   onInvited,
   size = "sm",
+  phoneFill = false,
 }: {
   target: JoinTarget;
   status: JoinState;
@@ -62,6 +64,8 @@ export function CommunityJoinButton({
   onInvited?: () => void;
   /** "lg": the community page's actions row (docs/history/203-*). */
   size?: "sm" | "md" | "lg";
+  /** Telefonda düğme kapsayıcının tamamını doldurur (bant: tam genişlik birincil düğme, docs/history/476-*). */
+  phoneFill?: boolean;
 }) {
   const { t } = useTranslation();
   const { user } = useAuth();
@@ -136,12 +140,14 @@ export function CommunityJoinButton({
     </>
   );
 
+  const fill = phoneFill ? "max-md:w-full max-md:justify-center" : undefined;
   let control: React.ReactNode = null;
   if (status === "member") {
     control = (
       <DropdownMenu
         label={t("communities.join.menuAria", { status: t("communities.join.joined"), name: target.name })}
-        triggerClassName={buttonClassName({ size, variant: "outline" })}
+        triggerClassName={buttonClassName({ size, variant: "outline", className: fill })}
+        className={phoneFill ? "max-md:w-full" : undefined}
         trigger={trigger(t("communities.join.joined"))}
       >
         {(close) =>
@@ -169,7 +175,8 @@ export function CommunityJoinButton({
     control = (
       <DropdownMenu
         label={t("communities.join.menuAria", { status: t("communities.card.requested"), name: target.name })}
-        triggerClassName={buttonClassName({ size, variant: "secondary" })}
+        triggerClassName={buttonClassName({ size, variant: "secondary", className: fill })}
+        className={phoneFill ? "max-md:w-full" : undefined}
         trigger={trigger(t("communities.card.requested"))}
       >
         {(close) => (
@@ -186,20 +193,20 @@ export function CommunityJoinButton({
     );
   } else if (status === "invited") {
     control = onInvited ? (
-      <Button type="button" size={size} variant="secondary" onClick={onInvited}>
+      <Button type="button" size={size} variant="secondary" onClick={onInvited} className={fill}>
         {t("groups.page.invited")}
       </Button>
     ) : null;
   } else if (mode === "join") {
     control = (
-      <Button type="button" size={size} onClick={() => void start("join")} disabled={action.busy || full || target.closed} aria-label={t("groups.page.joinAria", { name: target.name })}>
+      <Button type="button" size={size} className={fill} onClick={() => void start("join")} disabled={action.busy || full || target.closed} aria-label={t("groups.page.joinAria", { name: target.name })}>
         {action.busy ? <Loader2 size={16} className="animate-spin" aria-hidden /> : null}
         {target.closed ? t("communities.join.closed") : full ? t("groups.page.full") : t("groups.page.join")}
       </Button>
     );
   } else if (mode === "request") {
     control = (
-      <Button type="button" size={size} onClick={() => void start("request")} disabled={action.busy || full || target.closed} aria-label={t("communities.join.requestAria", { name: target.name })}>
+      <Button type="button" size={size} className={fill} onClick={() => void start("request")} disabled={action.busy || full || target.closed} aria-label={t("communities.join.requestAria", { name: target.name })}>
         {action.busy ? <Loader2 size={16} className="animate-spin" aria-hidden /> : <Send size={16} aria-hidden />}
         {target.closed ? t("communities.join.closed") : full ? t("groups.page.full") : t("communities.join.request")}
       </Button>
@@ -209,7 +216,7 @@ export function CommunityJoinButton({
   if (!control) return null;
 
   return (
-    <div className="flex flex-col items-end gap-1">
+    <div className={cn("flex flex-col items-end gap-1", phoneFill && "max-md:w-full max-md:flex-1 max-md:items-stretch")}>
       {control}
       {action.error && !rulesFor && (
         <p role="alert" className="max-w-64 text-right text-caption text-danger">
