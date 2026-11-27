@@ -71,7 +71,7 @@ function team(db, { role = "owner" } = {}) {
   ]);
   const day = 86400000;
   const guest = (id, name, un, days, role, joinedAgo) => ({ user_id: id, username: un, display_name: name, avatar_url: null, guest_org: null, guest_until: new Date(Date.now() + days * day + 3600000).toISOString(), joined_at: new Date(Date.now() - joinedAgo * day).toISOString(), expired: false, spaces: role === "edit" ? [{ space_id: "s1", title: "A", role: "editor" }] : [{ space_id: "s1", title: "A", role: "viewer" }, { space_id: "s2", title: "B", role: "viewer" }], channels: [] });
-  reply("team_list_guests", () => [guest("g1", "Selin Kara", "selin", 12, "view", 1), guest("g2", "Onur Tan", "onur", 5, "edit", 0), guest("g3", "Deniz Aksoy", "deniz", 30, "view", 3)]);
+  reply("team_list_guests", () => [guest(U.dave.id, "Selin Kara", "selin", 12, "view", 1), guest("g2", "Onur Tan", "onur", 5, "edit", 0), guest("g3", "Deniz Aksoy", "deniz", 30, "view", 3)]);
   reply("team_list_groups", () => []);
   reply("team_audit_stats", () => ({ total: 128, roleAccess: 14, deletes: 3 }));
   const now = new Date();
@@ -89,6 +89,40 @@ function team(db, { role = "owner" } = {}) {
     return prev ? prev(ctx) : null;
   };
 }
+
+const PROJECT = "e1000000-0000-4000-8000-0000000000b1";
+const FILE = "e1000000-0000-4000-8000-0000000000b3";
+const SID = (n) => `5e000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
+function teamProject(db, { files = true } = {}) {
+  team(db);
+  const calls = db.teamCalls;
+  const reply = (name, fn) => { db.rpc[name] = (body) => { calls.push({ name, body }); return { body: fn(body) }; }; };
+  const person = (id, name, role, over = {}) => ({ type: "member", id, name, username: name.toLowerCase(), avatar_url: null, role, implicit: false, member_count: null, ...over });
+  const detail = () => ({
+    project: { id: PROJECT, team_id: TEAM, title: "Mobil uygulama yenileme", description: "2027 ilk çeyrek tasarım dili ve prompt setleri.", tone: "primary", access_mode: "selected", base_role: "view", review_default: true, archived_at: null, created_at: "2026-11-01T00:00:00Z" },
+    my_role: "lead", main_area_id: null, channel_id: null, item_count: 4, pending_count: 0,
+    files: [{ id: FILE, title: "Onboarding akışı", position: 0, review_required: true, main_area_id: SID(2), item_count: 6, board_count: 2, pending_count: 0 }],
+    boards: [{ id: SID(3), title: "Akış", file_id: FILE, item_count: 3, position: 0, group_id: "g1" }, { id: SID(4), title: "Ekranlar", file_id: FILE, item_count: 2, position: 1, group_id: "g1" }],
+    groups: [{ id: "g1", file_id: FILE, title: "Grup" }],
+    people: [person("p1", "Ayşe", "lead"), person("p2", "Can", "edit"), person("p3", "Mert", "edit"), person("p4", "Deniz", "view"), person("p5", "Selin", "view"), person("p6", "Onur", "view"), person("p7", "Sahip", "lead", { implicit: true })],
+    variables: [{ id: "v1", file_id: FILE, name: "marka", value: "Lumen" }, { id: "v2", file_id: FILE, name: "ton", value: "Samimi, kısa cümleler" }, { id: "v3", file_id: FILE, name: "hedef_kitle", value: "22–35 yaş, şehirli" }],
+  });
+  reply("team_projects_list", () => [{ id: PROJECT, title: "Mobil uygulama yenileme", description: "", tone: "primary", archived_at: null, review_default: true, access_mode: "selected", base_role: "view", my_role: "lead", main_area_id: null, channel_id: null, member_count: 6, board_count: 2, item_count: 6, pending_count: 0, files: files ? detail().files : [] }]);
+  reply("team_project_get", () => detail());
+  reply("team_project_channels", () => []);
+  reply("team_channels_overview", () => []);
+  reply("team_list_channels", () => []);
+  reply("team_variables_list", () => detail().variables);
+  reply("team_project_access", () => ({ mode: "selected", base_role: "view", entries: [
+    { type: "member", id: ME, role: "lead", name: "Ayşe Yılmaz", username: "ayse", sub: "owner" },
+    { type: "member", id: U.carol.id, role: "edit", name: "Can Yıldız", username: "can.yildiz", sub: "editor" },
+    { type: "group", id: "tg1", role: "edit", name: "Tasarım grubu", username: null, sub: "7" },
+    { type: "member", id: U.dave.id, role: "view", name: "Selin Kara", username: "selin", sub: "guest" },
+  ] }));
+  reply("team_update_project", () => null);
+  reply("team_set_project_access", () => null);
+}
+const projUrl = `/teams/local?id=${TEAM}&tab=projects&project=${PROJECT}`;
 
 export const PAGES = [
   { id: "A1", mock: "A1-yonetim-listesi", height: 1290, url: `/communities/local?id=${C1}&tab=manage`, setup: (db) => { community(db); db.groups.find((g) => g.id === C1).pending_request_count = 3; } },
@@ -119,4 +153,7 @@ export const PAGES = [
   { id: "D2", mock: "D2-ekip-tehlike", height: 1000, url: `/teams/local?id=${TEAM}&tab=admin&section=danger`, setup: (db) => team(db) },
   { id: "D3", mock: "D3-ekip-silme", height: 900, url: `/teams/local?id=${TEAM}&tab=admin&section=danger&sub=delete`, setup: (db) => team(db) },
   { id: "E3", mock: "E3-denetim-gunlugu", height: 1240, textIgnore: ["row", "rt", "av", "tag"], ignore: ["tag#4"], url: `/teams/local?id=${TEAM}&tab=admin&section=audit`, setup: (db) => team(db) },
+  { id: "D4", mock: "D4-proje-ayarlari", height: 1120, url: projUrl, setup: (db) => teamProject(db), normalize: (x) => x.replace(/\d+ kişi/g, "<k>"), before: async (page) => { await page.getByRole("button", { name: "Bilgi" }).first().click(); await page.locator("[data-project-settings]").click(); await page.waitForTimeout(500); } },
+  { id: "D5", mock: "D5-proje-erisimi", height: 1320, ignore: ["rt#1", "btn#1"], textIgnore: ["row"], url: projUrl, setup: (db) => teamProject(db), normalize: (x) => x.replace(/@[\w.]+( · Konuk)?( · \d+ gün kaldı)?/g, "@u").replace(/\d+ kişi/g, "<k>").replace(/^[A-ZÇĞİÖŞÜ]{1,3}(?=\S)/, "").replace(/(Düzenleyici|Görüntüleyici)$/, "<r>").replace(/Konuk · \d+ gün kaldı/, "<g>"), before: async (page) => { await page.getByRole("button", { name: "Bilgi" }).first().click(); await page.locator("[data-project-settings]").click(); await page.getByText("Proje erişimi").first().click(); await page.waitForTimeout(600); await page.locator("[data-sx-page] .btn.sel").nth(1).click(); await page.getByRole("radio", { name: "Görüntüleyici" }).click(); await page.getByRole("button", { name: "Seç" }).click(); await page.waitForTimeout(300); } },
+  { id: "E2", mock: "E2-dosya-ayarlari", height: 1240, url: `${projUrl}&file=${FILE}`, setup: (db) => teamProject(db), before: async (page) => { await page.getByRole("button", { name: "Bilgi" }).first().click(); await page.waitForTimeout(500); } },
 ];

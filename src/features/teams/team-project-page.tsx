@@ -29,8 +29,6 @@ import {
   DeleteFileDialog,
   NewBoardDialog,
   NewFileDialog,
-  ProjectAccessDialog,
-  ProjectSettingsDialog,
   RenameFileDialog,
   ReviewSwitchRow,
   VariableDialog,
@@ -52,6 +50,7 @@ import type { TeamCtx } from "./team-page";
 import { SectionError, TeamMark, toneClass } from "./team-ui";
 import { addProjectChannel, type TeamActionError } from "@/lib/supabase/teams";
 import { MuteCard, MuteChip } from "./mute-card";
+import { FileSettingsSx, ProjectAccessSx, ProjectSettingsSx } from "./project-sx";
 import { useTeamChannelList, useTeamMutes } from "./team-chat-data";
 
 /**
@@ -308,70 +307,36 @@ function FileInfoSheet({
       setBusy(false);
     }
   };
+  const [editVar, setEditVar] = useState<{ variable: ProjectDetail["variables"][number] | null } | null>(null);
   return (
-    <SpaceDialog title={t("tp.info.fileTitle")} eyebrow={file.title} onClose={onClose} formTestId="file-info-sheet">
-      <div className="space-y-5">
-        <div className="flex flex-wrap items-center gap-2 text-small text-text-secondary">
-          {t("tp.page.yourRole")} <ProjectRoleChip role={myRole} />
-        </div>
-        {lead ? (
-          <div className={cn(busy && "pointer-events-none opacity-60")} data-file-review-switch>
-            <ReviewSwitchRow value={file.reviewRequired} onChange={(on) => void toggleReview(on)} />
-          </div>
-        ) : (
-          <p className="rounded-lg card-flat p-4 text-small text-text-secondary" data-file-review-note>
-            {t(file.reviewRequired ? "tp.review.noteOn" : "tp.review.noteOff")}
-          </p>
-        )}
-        <section className="space-y-2" data-testid="file-chat-section">
-          <h3 className="text-body font-bold text-text">{t("th.file.chatSection")}</h3>
-          {fileChannel ? (
-            <div className="flex flex-wrap items-center gap-2">
-              <Link href={teamLink(teamId, "chat", { channel: fileChannel.id })} className={buttonClassName({ variant: "outline", size: "sm", className: "gap-1.5" })} data-file-open-chat>
-                <MessageCircle size={16} aria-hidden />
-                {t("th.file.chatOpen")}
-              </Link>
-              <MuteChip scope={fileChannel.muteScope ?? (fileChannel.muted ? "channel" : null)} />
-            </div>
-          ) : lead ? (
-            <div className="space-y-2">
-              <p className="text-caption text-text-secondary">{t("th.file.chatNoneLead")}</p>
-              <Button type="button" size="sm" variant="outline" className="gap-1.5" disabled={busy || !channelsState.loaded} onClick={() => void createChat()} data-file-create-chat>
-                <Plus size={16} aria-hidden />
-                {t("th.file.chatCreate")}
-              </Button>
-            </div>
-          ) : (
-            <p className="text-caption text-text-secondary" data-file-chat-none>
-              {t("th.file.chatNone")}
-            </p>
-          )}
-        </section>
-        <ProjectVariablesPanel projectId={project.id} fileId={file.id} variables={detail.variables} role={myRole} onChanged={onChanged} />
-        {file.mainAreaId && (
-          <div className="border-t border-border-soft pt-4">
-            <Button type="button" size="sm" variant="outline" className="gap-1.5" onClick={() => setCopyOpen(true)} data-file-copy>
-              <Send size={16} aria-hidden />
-              {t("spaces.copy.fileButton")}
-            </Button>
-          </div>
-        )}
-        {copyOpen && file.mainAreaId && <CopyItemsDialog sourceSpaceId={file.mainAreaId} sourceTitle={file.title} defaultDestination="newSpace" allowArchive={false} onClose={() => setCopyOpen(false)} />}
-        {lead && (
-          <div className="flex flex-wrap gap-2 border-t border-border-soft pt-4">
-            <Button type="button" size="sm" variant="outline" className="gap-1.5" onClick={onRename} data-file-rename>
-              <Pencil size={16} aria-hidden />
-              {t("tp.file.rename")}
-            </Button>
-            <Button type="button" size="sm" variant="outline" className="gap-1.5 text-danger" onClick={onDelete} data-file-delete>
-              <Trash2 size={16} aria-hidden />
-              {t("tp.file.deleteTitle")}
-            </Button>
-          </div>
-        )}
-      </div>
+    <>
+      <FileSettingsSx
+        detail={detail}
+        file={file}
+        fileChannel={fileChannel}
+        lead={lead}
+        onClose={onClose}
+        onChanged={onChanged}
+        onRename={onRename}
+        onDelete={onDelete}
+        onCreateChat={() => void createChat()}
+        onEditVariable={(variable) => setEditVar({ variable })}
+        chatBusy={busy || !channelsState.loaded}
+      />
+      {editVar && (
+        <VariableDialog
+          projectId={project.id}
+          fileId={file.id}
+          variable={editVar.variable}
+          onClose={() => setEditVar(null)}
+          onDone={() => {
+            setEditVar(null);
+            onChanged();
+          }}
+        />
+      )}
       {toastNode}
-    </SpaceDialog>
+    </>
   );
 }
 
@@ -535,7 +500,7 @@ function ProjectHome({ ctx, detail, onChanged }: { ctx: TeamCtx; detail: Project
         />
       )}
       {dialog === "access" && (
-        <ProjectAccessDialog
+        <ProjectAccessSx teamName={ctx.team.name}
           project={detail}
           onClose={() => setDialog(null)}
           onDone={() => {
@@ -545,7 +510,7 @@ function ProjectHome({ ctx, detail, onChanged }: { ctx: TeamCtx; detail: Project
         />
       )}
       {dialog === "settings" && (
-        <ProjectSettingsDialog
+        <ProjectSettingsSx teamName={ctx.team.name}
           project={detail}
           canManage={lead}
           onClose={() => setDialog(null)}
@@ -838,7 +803,7 @@ function BoardPage({ ctx, detail, boardId, onChanged }: { ctx: TeamCtx; detail: 
 
       {dialog === "info" && <ProjectInfoSheet ctx={ctx} detail={detail} onClose={() => setDialog(null)} onAccess={() => setDialog("access")} onSettings={() => setDialog("settings")} onChanged={onChanged} />}
       {dialog === "access" && (
-        <ProjectAccessDialog
+        <ProjectAccessSx teamName={ctx.team.name}
           project={detail}
           onClose={() => setDialog(null)}
           onDone={() => {
@@ -848,7 +813,7 @@ function BoardPage({ ctx, detail, boardId, onChanged }: { ctx: TeamCtx; detail: 
         />
       )}
       {dialog === "settings" && (
-        <ProjectSettingsDialog
+        <ProjectSettingsSx teamName={ctx.team.name}
           project={detail}
           canManage={lead}
           onClose={() => setDialog(null)}
@@ -934,7 +899,7 @@ function BoardMode({ ctx, detail, onChanged }: { ctx: TeamCtx; detail: ProjectDe
       <TeamAreaView key={areaId} spaceId={areaId} role={myRole} tab="board" hrefFor={(_next, extra) => boardPageHref(team.id, project.id, areaId) + (extra?.focus ? `&focus=${extra.focus}` : "")} focusId={focus} team={config} />
       {dialog === "info" && <ProjectInfoSheet ctx={ctx} detail={detail} onClose={() => setDialog(null)} onAccess={() => setDialog("access")} onSettings={() => setDialog("settings")} onChanged={onChanged} />}
       {dialog === "access" && (
-        <ProjectAccessDialog
+        <ProjectAccessSx teamName={ctx.team.name}
           project={detail}
           onClose={() => setDialog(null)}
           onDone={() => {
@@ -944,7 +909,7 @@ function BoardMode({ ctx, detail, onChanged }: { ctx: TeamCtx; detail: ProjectDe
         />
       )}
       {dialog === "settings" && (
-        <ProjectSettingsDialog
+        <ProjectSettingsSx teamName={ctx.team.name}
           project={detail}
           canManage={lead}
           onClose={() => setDialog(null)}
