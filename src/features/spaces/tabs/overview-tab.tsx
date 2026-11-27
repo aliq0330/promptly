@@ -23,7 +23,7 @@ const PALETTE_SLOTS = [4, 9];
 type Tile = { key: string; item: SpaceItem } | { key: string; palette: SpacePalette };
 
 /**
- * Genel bakış = koleksiyon duvarı (docs/history/474-*): görsel, prompt, not ve palet TEK karışık moodboard'da (CSS sütunları: telefonda 2,
+ * Genel bakış = koleksiyon duvarı (docs/history/475-*): görsel, prompt, not ve palet TEK karışık moodboard'da (CSS sütunları: telefonda 2,
  * masaüstünde 3), yan sütunda üyeler ve gruplar. Kutu → ilgili sekmeye (öğeye odaklı) gider. Boş Space'te ilk adımlar gösterilir.
  * Telefonda duvarın üstünde sayı çipleri durur; sayılar masaüstünde bandın «N öğe» etiketindedir.
  */

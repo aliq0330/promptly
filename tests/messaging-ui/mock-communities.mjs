@@ -339,7 +339,7 @@ export function setupCommunities(db) {
       const pid = eq(q, "id");
       const idList = (q.get("id") ?? "").match(/^in\.\((.*)\)$/)?.[1]?.split(",").map((x) => x.replace(/"/g, "")) ?? null;
       let list = db.posts.filter((p) => (!cid || p.community_id === cid) && (!pid || p.id === pid) && (!idList || idList.includes(p.id)) && (pinnedOnly ? p.pinned_at : unpinned ? !p.pinned_at : true));
-      // docs/history/474-*: `order=like_count.desc,…` akışı beğeniye göre sıralar (keyset imleci `or` süzgecidir; burada yalnız sıra taklit edilir).
+      // docs/history/475-*: `order=like_count.desc,…` akışı beğeniye göre sıralar (keyset imleci `or` süzgecidir; burada yalnız sıra taklit edilir).
       const byLikes = (q.get("order") ?? "").startsWith("like_count");
       list = list.slice().sort((a, b) => (byLikes ? b.like_count - a.like_count : 0) || b.created_at.localeCompare(a.created_at));
       const lim = Number(q.get("limit") ?? 0); if (lim) list = list.slice(0, lim);

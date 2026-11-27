@@ -17,7 +17,7 @@ const ROOM_LIMIT = 3;
 const CARD_CLASS = "block min-w-0 rounded-md card-flat px-4 py-3 text-left transition-colors hover:border-border-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus";
 
 /**
- * «Odalar ve etkinlik» şeridi (docs/history/474-*): Akış sekmesinin hemen altında tek satır — ilk odalar (okunmamış sayısıyla, dokununca
+ * «Odalar ve etkinlik» şeridi (docs/history/475-*): Akış sekmesinin hemen altında tek satır — ilk odalar (okunmamış sayısıyla, dokununca
  * Mesajlar'daki odayı açar) ve en yakın etkinlik. Telefonda yatay kayar, tablet ve masaüstünde eşit genişlikte dört kart. Odalar yalnız üyeye
  * görünür (sohbet üyelik ister); hiçbiri yoksa HİÇBİR ŞEY çizilmez. Sohbetin kendisi ikinci bir arayüz değildir: kartlar Mesajlar'a bağlanır.
  */

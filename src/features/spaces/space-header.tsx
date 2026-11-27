@@ -20,7 +20,7 @@ import { SaveIndicator } from "./save-indicator";
 import { useSpaceContext } from "./space-provider";
 
 /**
- * Space başlığı (docs/history/474-*): Genel bakış sekmesinde TAM BANT (etiketler, büyük başlık, serif açıklama, avatar yığını, tek büyük
+ * Space başlığı (docs/history/475-*): Genel bakış sekmesinde TAM BANT (etiketler, büyük başlık, serif açıklama, avatar yığını, tek büyük
  * birincil «Panoyu aç», «Davet et», ⋮ ve bandın alt kenarına yayılan ilk palet şeridi); diğer sekmelerde TEK SATIR (geri · başlık · etiketler ·
  * avatarlar · Davet et · ⋮) — Pano'da tuval kalan alanın tamamını alır. Telefonda: tam bant kart olarak, tek satır ise geri + başlık + «tür · N üye» olarak.
  */

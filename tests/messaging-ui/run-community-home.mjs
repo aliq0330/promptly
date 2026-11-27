@@ -443,7 +443,7 @@ for (const [label, width, aside, columns] of [["1440", 1440, false, 3], ["1280",
     assert.equal(await overflowFree(page), true, "no horizontal overflow");
   }, { viewport: { width, height: 900 }, setup: layoutWorld });
 }
-/** docs/history/474-*: «Odalar ve etkinlik» şeridi (oda kartları + en yakın etkinlik), «Hakkında ve kurallar» yan sütunu, sıralama menüsü. */
+/** docs/history/475-*: «Odalar ve etkinlik» şeridi (oda kartları + en yakın etkinlik), «Hakkında ve kurallar» yan sütunu, sıralama menüsü. */
 const stripWorld = (db) => {
   setupRooms(db);
   db.addCommunity(id(7), { name: "Sinematik Işık", myRole: "member", members: [[U.bob, "owner"]], rules: "1. Kendi ürettiğini paylaş\n2. Kritik nazik olsun" });
@@ -521,7 +521,7 @@ await scenario("26b. Topluluk sayfası: başlık kompakt, akış ızgarası (+ x
     assert.ok(posts.every((b) => b.width <= CARD_MAX), `${w}: card too wide ${JSON.stringify(posts)}`);
     if (w >= 1280) {
       const asides = await page.locator("[data-community-aside]").evaluateAll((els) => els.map((e) => e.getAttribute("data-community-aside")));
-      // docs/history/474-*: «Hakkında ve kurallar» tek kart (kurallar listesi içinde); «Çevrimiçi» yalnız görünen çevrimiçi üye varken çizilir.
+      // docs/history/475-*: «Hakkında ve kurallar» tek kart (kurallar listesi içinde); «Çevrimiçi» yalnız görünen çevrimiçi üye varken çizilir.
       assert.deepEqual(asides, ["about", "rules"], `${w}: community aside sections`);
     }
     assert.equal(new Set(posts.map((b) => b.left)).size, Math.min(cols, posts.length), `${w}: columns`);

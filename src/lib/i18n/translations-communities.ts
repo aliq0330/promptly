@@ -656,7 +656,7 @@ export const communityTranslations = {
   "communities.home.comments": { tr: "{{count}} yorum", en: "{{count}} comments" },
   "communities.home.untitledPost": { tr: "Gönderi", en: "Post" },
 
-  // ---- Odalar ve etkinlik şeridi (docs/history/474-*) ----
+  // ---- Odalar ve etkinlik şeridi (docs/history/475-*) ----
   "communities.strip.label": { tr: "Odalar ve etkinlik", en: "Rooms and events" },
   "communities.strip.openChat": { tr: "Sohbeti aç", en: "Open chat" },
   "communities.strip.unread": { tr: "{{count}} yeni", en: "{{count}} new" },

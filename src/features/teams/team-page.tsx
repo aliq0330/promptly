@@ -139,7 +139,7 @@ function TeamPageInner() {
   const adminSub = tab === "admin" && Boolean(params.get("section"));
   // Pano kipi (docs/history/367-*): `sub=board` tuvalı tam genişlikte açar; bant/sekmeler gizlenir (sol menü ve telefon alt menüsü uygulamanındır, dokunulmaz).
   const boardMode = drilled && params.get("sub") === "board" && !params.get("item") && !params.get("review");
-  // Telefonda açık bir onay satırı (docs/history/474-*) tam ekran ayrıntı sayfasıdır: bant ve sekmeler gizlenir, Geri listeye döner.
+  // Telefonda açık bir onay satırı (docs/history/475-*) tam ekran ayrıntı sayfasıdır: bant ve sekmeler gizlenir, Geri listeye döner.
   const decisionOpen = tab === "approvals" && Boolean(params.get("decision"));
   const hideChrome = boardMode || (phone && (chatFocus || drilled || adminSub || decisionOpen));
   const [inviteOpen, setInviteOpen] = useState(false);

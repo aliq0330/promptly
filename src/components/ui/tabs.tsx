@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useLayoutEffect, useRef, useState } from "react";
 import type { IconComponent } from "@/components/icons/icon";
+import { CountBadge } from "@/components/ui/badge";
 import { ScrollRow } from "@/components/ui/scroll-row";
 import { nextRovingIndex } from "@/lib/modal-focus";
 import { cn } from "@/lib/utils";
@@ -25,6 +26,8 @@ export interface TabItem<K extends string> {
  *   - `segmented` — switching the view of one list (feed: Takip/Popüler/Sana Özel).
  *   - `pill` — Meydan's separate pills (community sections, docs/history/190-*);
  *     the selected pill is filled, so it needs no sliding indicator.
+ *   - `hub` — the three hub homes (Topluluklar · Ekipler · Spaces, docs/history/474-*): 44 px text tabs, a dark 2 px underline under the selected one,
+ *     an orange count bubble only where something waits for the reader.
  * Both scroll horizontally on narrow screens instead of wrapping. `touch-
  * pan-x` locks the touch gesture to horizontal panning (so a swipe that
  * isn't perfectly horizontal doesn't also drag the whole page vertically)
@@ -45,7 +48,7 @@ export function Tabs<K extends string>({
   active: K;
   onChange: (key: K) => void;
   ariaLabel: string;
-  variant?: "underline" | "segmented" | "pill";
+  variant?: "underline" | "segmented" | "pill" | "hub";
   className?: string;
 }) {
   const listRef = useRef<HTMLElement>(null);
@@ -99,7 +102,9 @@ export function Tabs<K extends string>({
         "relative",
         variant === "underline"
           ? "gap-1 border-b border-border-soft"
-          : variant === "pill"
+          : variant === "hub"
+            ? "border-b border-border-soft"
+            : variant === "pill"
             ? "gap-2 py-0.5"
             : "w-fit max-w-full gap-0.5 rounded-sm card-soft p-0.5",
       )}
@@ -112,6 +117,8 @@ export function Tabs<K extends string>({
             "pointer-events-none absolute transition-[transform,width] duration-[var(--motion-normal)] ease-soft",
             variant === "underline"
               ? "bottom-0 left-0 h-0.5 rounded-full bg-primary"
+              : variant === "hub"
+                ? "bottom-0 left-0 h-0.5 rounded-full bg-text"
               : "bottom-0.5 left-0 top-0.5 rounded-sm bg-surface shadow-sm ring-1 ring-border-soft",
           )}
           style={{ width: indicator.width, transform: `translateX(${indicator.left}px)` }}
@@ -123,7 +130,12 @@ export function Tabs<K extends string>({
         const Icon = item.icon;
         const tabClassName = cn(
               "relative inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap text-label font-semibold transition-[color,background-color,border-color,box-shadow] duration-200 ease-soft",
-              variant === "underline"
+              variant === "hub"
+                ? cn(
+                    "-mb-px mr-[0.625rem] h-11 border-b-2 px-0.5 text-body max-sm:mr-[0.875rem]",
+                    selected ? cn("font-semibold text-text", indicator ? "border-transparent" : "border-text") : "border-transparent font-medium text-text-muted hover:text-text",
+                  )
+                : variant === "underline"
                 ? cn(
                     "-mb-px border-b-2 px-3 py-3",
                     // Until the indicator is measured (first paint) the tab draws its own mark.
@@ -145,22 +157,27 @@ export function Tabs<K extends string>({
           <>
             {Icon && <Icon size={16} className={selected ? "text-primary-text" : undefined} />}
             {item.label}
-            {item.count !== undefined && (
-              <span
-                className={cn(
-                  "rounded-xs px-1.5 text-caption tabular-nums",
-                  variant === "pill"
-                    ? selected
-                      ? "bg-background/20 text-background"
-                      : "bg-surface text-text-muted"
-                    : selected
-                      ? "bg-primary-soft text-primary-text"
-                      : "bg-surface-soft text-text-muted",
-                )}
-              >
-                {item.count}
-              </span>
-            )}
+            {item.count !== undefined &&
+              (variant === "hub" ? (
+                <CountBadge tone="primary" className="ml-1.5">
+                  {item.count}
+                </CountBadge>
+              ) : (
+                <span
+                  className={cn(
+                    "rounded-xs px-1.5 text-caption tabular-nums",
+                    variant === "pill"
+                      ? selected
+                        ? "bg-background/20 text-background"
+                        : "bg-surface text-text-muted"
+                      : selected
+                        ? "bg-primary-soft text-primary-text"
+                        : "bg-surface-soft text-text-muted",
+                  )}
+                >
+                  {item.count}
+                </span>
+              ))}
           </>
         );
         if (item.href) {

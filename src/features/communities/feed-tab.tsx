@@ -204,7 +204,7 @@ export function FeedTab(props: CommunityTabProps) {
                 {t("communities.feed.share")}
               </Button>
             )}
-            {/* Sıralama (docs/history/474-*): en yeni (varsayılan) ya da en çok beğenilen; sabitlenenler her zaman üstte kalır. */}
+            {/* Sıralama (docs/history/475-*): en yeni (varsayılan) ya da en çok beğenilen; sabitlenenler her zaman üstte kalır. */}
             <span className="ml-auto" data-feed-sort="">
               <DropdownMenu
                 label={t("communities.feed.sort.aria")}

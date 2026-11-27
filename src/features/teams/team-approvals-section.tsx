@@ -45,7 +45,7 @@ const SEGMENT_LABEL: Record<ApprovalSegment, TranslationKey> = { inbox: "tc.appr
 const variablesOf = (text: string): string[] => [...new Set([...text.matchAll(/\{([^{}\s]{1,40})\}/g)].map((match) => match[1]))];
 
 /**
- * Onaylar (`tab=approvals`; docs/history/366-*, 474-*): ekibin onay kuyruğu, «liste + ayrıntı» düzeninde. Solda üç bölümlü liste (Bana bekleyen ·
+ * Onaylar (`tab=approvals`; docs/history/366-*, 475-*): ekibin onay kuyruğu, «liste + ayrıntı» düzeninde. Solda üç bölümlü liste (Bana bekleyen ·
  * Gönderdiklerim · Karar verilen), sağda seçilen öğenin ayrıntısı ve karar düğmeleri. Tablette liste 300 px, masaüstünde 420 px; TELEFONDA yalnız
  * liste açılır, satıra dokununca ayrıntı tam ekran sayfa olur (`&decision=<satır>`, Geri listeye döner) ve karar düğmeleri altta sabit durur.
  * Lider kendi projelerinin her şeyini görür ve karar verir; diğerleri yalnız KENDİ öğelerinin durumunu görür. Karar sunucudadır

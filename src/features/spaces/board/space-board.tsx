@@ -1559,7 +1559,7 @@ export function SpaceBoard({ focusId, team, openComment }: { focusId: string | n
             "h-auto min-h-[calc(100dvh-10rem)] rounded-t-none border-t-0"
           : // Tuval: telefonda üst menü ile alt menü arasını tam doldurur (dvh hesabı Safari'de boşluk bırakıyordu), masaüstünde sabit yükseklik.
             "max-md:fixed max-md:inset-x-0 max-md:bottom-[calc(4rem+env(safe-area-inset-bottom))] max-md:top-16 max-md:z-20 max-md:rounded-none max-md:border-x-0 md:h-[calc(100dvh-8.5rem)]"
-        : // Kişisel Space (docs/history/474-*): başlık tek satıra indi, tuval başlık + sekmelerden kalan alanın tamamını alır.
+        : // Kişisel Space (docs/history/475-*): başlık tek satıra indi, tuval başlık + sekmelerden kalan alanın tamamını alır.
           "h-[calc(100dvh-15rem)] min-h-[420px] md:h-[calc(100dvh-15.5rem)]",
   );
   const commentMode = tool === "comment";

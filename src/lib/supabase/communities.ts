@@ -669,7 +669,7 @@ async function mapPostRows(rows: PostRow[]): Promise<CommunityPost[]> {
 export const POST_PAGE_SIZE = 12;
 
 /** Akış sayfası: yeniden eskiye keyset (`created_at`, `id`). Sabit gönderiler ayrıca `fetchPinnedPosts` ile başa konur. */
-/** Topluluk akışının sırası (docs/history/474-*): en yeni (varsayılan) ya da en çok beğenilen. İkisi de keyset sayfalar. */
+/** Topluluk akışının sırası (docs/history/475-*): en yeni (varsayılan) ya da en çok beğenilen. İkisi de keyset sayfalar. */
 export type CommunityFeedOrder = "new" | "top";
 
 export interface CommunityPostCursor {

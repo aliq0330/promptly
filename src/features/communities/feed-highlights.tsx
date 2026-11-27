@@ -10,7 +10,7 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 
 /**
  * Akışın üstündeki ince özet: (varsa) güncel kuralları kabul uyarısı, kapatılmış topluluk notu ve son duyurular (en yakın etkinlik artık
- * sekmelerin altındaki «Odalar ve etkinlik» şeridindedir, docs/history/474-*).
+ * sekmelerin altındaki «Odalar ve etkinlik» şeridindedir, docs/history/475-*).
  * Bunların hiçbiri yoksa HİÇBİR ŞEY çizilmez — akış ilk açılış ekranıdır, özet onu itmez. Yönetim (duyuru yayınlama vb.) "Yönet" sekmesindedir.
  */
 export function FeedHighlights({ group, role, membership, reload, onToast, goTab }: CommunityTabProps) {

@@ -560,7 +560,7 @@ export const spaceTranslations = {
   // Puan + yorum (docs/history/242-*)
   // Etkinlik geçmişi (docs/history/242-*)
 
-  // ---- Başlık + Genel bakış duvarı (docs/history/474-*) ----
+  // ---- Başlık + Genel bakış duvarı (docs/history/475-*) ----
   "spaces.header.itemsTag": { tr: "{{count}} öğe", en: "{{count}} items" },
   "spaces.header.kindMembers": { tr: "{{kind}} · {{count}} üye", en: "{{kind}} · {{count}} members" },
   "spaces.overview.tagImage": { tr: "Görsel", en: "Image" },

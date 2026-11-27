@@ -49,7 +49,7 @@ export function ruleLines(rules: string | null): string[] {
 /**
  * Topluluk sayfasının sağ yardımcı sütunu (Meydan, docs/history/190-* Faz 6; yalnız `xl`+ ve Akış/Etkinlikler sekmesinde): «Hakkında ve kurallar»
  * (kuruluş tarihi + kuralların ilk satırları, tamamı "Hakkında ve kurallar" sekmesinde) ve — yalnız üyeye ve durumu görünen kişiler varsa —
- * «Çevrimiçi» (avatar yığını). Etkinlik sekmelerin altındaki şeritte, yöneticiler Üyeler sekmesindedir (docs/history/474-*). Yeni veri
+ * «Çevrimiçi» (avatar yığını). Etkinlik sekmelerin altındaki şeritte, yöneticiler Üyeler sekmesindedir (docs/history/475-*). Yeni veri
  * kaynağı yok: topluluk satırı sayfada zaten var, çevrimiçi üyeler sunucuda kişi başına gizlilikle süzülür.
  */
 export function CommunityAside({ group, isMember, onReadRules }: { group: ChatGroup; isMember: boolean; onReadRules: () => void }) {

@@ -1,4 +1,4 @@
-# 474 — Topluluk · Ekip · Space öneri tasarımlarının uygulanması
+# 475 — Topluluk · Ekip · Space öneri tasarımlarının uygulanması
 
 Kaynak: öneri tuvali (6 tahta: Öneri özeti · Topluluk · Ekip Genel bakış · Ekip Onaylar · Space Pano · Space Genel bakış; 390 / 820 / 1440). Karar (kullanıcı): önerilen yönler mockup'taki gibi uygulansın. Tahta ilkesi: var olan Hub kalıbını (bant → sekmeler → içerik + yan sütun) koru, her sayfada yalnız eksik parçayı güçlendir.
 
@@ -24,4 +24,4 @@ Kaynak: öneri tuvali (6 tahta: Öneri özeti · Topluluk · Ekip Genel bakış 
 ## Testler
 `run-team-hub` 43–45 yeniden yazıldı (+44b telefon akışı), `run-community-home` 26b güncellendi (+26c şerit 1440/820/390, +26d sıralama), `run-spaces` 33 (Genel bakış 1440/820/390) + 33b (Pano kompakt başlık), `team-center.test.ts` (`approvalRows`/`findApprovalRow`), `communities.test.ts` (`communityRoomHref`). `mock-communities.mjs` `order=like_count` sırasını taklit eder.
 
-Bu değişiklikten ÖNCE de kırmızı olanlar (`main`'de aynı derlemeyle doğrulandı, yeni hata değil): `run-spaces` 2, 19–22, 30–32; `run-communities` 13b, 22; `run-community-home` 4; `run-presence` 18; `run-workflow-space` 1, 6*, 9*, 10b; `run-groups` 4, 20, 24, 26, 27; `run-community-shelf` 1; `run-team-projects` 32b, 45i. Yük altında dalgalananlar (aynı paket tek başına yeşil): `run-nav-layout` 1/6, `run-community-posts` 3d/5/17, `run-team-projects` 9. Gerçek Supabase'e / cihaza karşı DENENMEDİ (ağ taklitli Playwright + birim testleri).
+`main` (474 Stil 2 dahil) ile birleştirildikten sonra kalan kırmızılar bu değişiklikten ÖNCE de kırmızıydı (`main` derlemesiyle doğrulandı): `run-spaces` 30; `run-communities` 13b, 22; `run-team-projects` 32b, 45i. Yük altında dalgalananlar (aynı paket tek başına yeşil): `run-team-projects` 9, `run-nav-layout` 1/6, `run-community-posts` 3d/5/17. Gerçek Supabase'e / cihaza karşı DENENMEDİ (ağ taklitli Playwright + birim testleri).

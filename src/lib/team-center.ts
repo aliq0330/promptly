@@ -76,7 +76,7 @@ export function approvalBadge(items: readonly BoardItem[]): number {
 }
 
 // ---------------------------------------------------------------------------------------------
-// Onaylar sekmesi: liste + ayrıntı (docs/history/474-*)
+// Onaylar sekmesi: liste + ayrıntı (docs/history/475-*)
 // ---------------------------------------------------------------------------------------------
 
 /** Onay listesinin üç bölümü: bana bekleyen · gönderdiklerim · karar verilen. */

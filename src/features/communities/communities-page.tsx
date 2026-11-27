@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Tabs, type TabItem } from "@/components/ui/tabs";
 import { CONTROL_ICON_BUTTON } from "@/features/content/section-menu";
-import { HUB_GRID_CLASS, HUB_PAGE_CLASS, HubBand, HubControlRow, HubCreateButton } from "@/features/hub/hub-kit";
+import { HUB_GRID_CLASS, HUB_PAGE_CLASS, HubBand, HubControls, HubCreateButton, HubFilterChip } from "@/features/hub/hub-kit";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useAuthPrompt } from "@/features/auth/auth-prompt-provider";
 import { useRealMessages } from "@/features/messages/real-messages-provider";
@@ -36,16 +36,15 @@ import {
   listMyCommunities,
   searchCommunities,
   type CommunitySort,
+  type CommunitySummary,
   type MyCommunityScope,
 } from "@/lib/supabase/communities";
 import { communityHref } from "@/lib/communities";
 import { DOMAIN_IDS, DOMAIN_LABEL_KEYS, type DomainId } from "@/lib/domains";
 import { homeHref, isInvitesSection, resolveHomeView, type HomeTab, type InvitesSection } from "@/lib/community-home";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import { cn } from "@/lib/utils";
 import { InlineAlert } from "@/components/ui/inline-alert";
 import { ScrollRow } from "@/components/ui/scroll-row";
-import { SearchField } from "@/components/ui/search-field";
 
 const SORTS: CommunitySort[] = ["popular", "newest", "active"];
 
@@ -79,7 +78,6 @@ export function CommunitiesPage() {
   const [invitations, setInvitations] = useState<GroupInvitation[] | null>(null);
   const [inviteReload, setInviteReload] = useState(0);
   const [query, setQuery] = useState("");
-  const [searchOpen, setSearchOpen] = useState(false);
   const inviteCount = invitations?.length ?? null;
 
   const sectionParam = searchParams.get("section");
@@ -99,7 +97,7 @@ export function CommunitiesPage() {
   const tabs: TabItem<HomeTab>[] = tabKeys.map((key) => ({
     key,
     label: tabLabel[key],
-    count: key === "invites" ? (actionCount > 0 ? actionCount : undefined) : key === "managed" ? managed.length : undefined,
+    count: key === "invites" && actionCount > 0 ? actionCount : undefined,
   }));
   const activeTab: HomeTab = view;
 
@@ -129,66 +127,59 @@ export function CommunitiesPage() {
     if (inviteLength.current !== null && inviteLength.current !== count) setInviteReload((k) => k + 1);
   }, []);
 
-  const search = (event: React.FormEvent) => {
-    event.preventDefault();
+  // Kontrol satırındaki arama yazdıkça listeyi süzer; Enter tüm topluluklarda arar (eski davranış).
+  const searchAll = () => {
     const q = query.trim();
     router.push(q ? `/communities/all?q=${encodeURIComponent(q)}` : "/communities/all");
   };
 
   const inviteStrip = user && (view === "mine" || view === "posts") && invitations && invitations.length > 0 ? <HomeInviteNotice invitations={invitations} /> : null;
 
+  const allLink = (
+    <Link href="/communities/all" aria-label={t("communities.all.button")} title={t("communities.all.button")} className={CONTROL_ICON_BUTTON} data-testid="communities-all-link">
+      <LayoutGrid size={24} aria-hidden />
+    </Link>
+  );
+  // Listeyi kendisi tutan sekmeler (Topluluklarım · Yönettiklerim) kontrol satırını kendi sayısıyla çizer; öteki sekmelerde yalnız arama + tüm topluluklar bağlantısı.
+  const ownsList = Boolean(user) && (view === "mine" || view === "managed");
+  const plainControls = Boolean(user) && !ownsList && (
+    <HubControls query={query} onQuery={setQuery} label={t("communities.all.searchPlaceholder")} onSubmit={searchAll}>
+      {allLink}
+    </HubControls>
+  );
+
   return (
-    <div className={cn(HUB_PAGE_CLASS, "space-y-4")}>
-      {/* Hub düzeni (docs/history/379-*): üç alanda aynı bant + sekmeler + kontrol satırı + kart ızgarası. */}
+    <div className={HUB_PAGE_CLASS}>
+      {/* Hub düzeni (Stil 2, docs/history/474-*): üç alanda aynı bant + sekmeler + kontrol satırı + kart ızgarası. */}
       <HubBand
-        icon={Users}
         title={t("communities.page.title")}
         description={t("hub.communities.intro")}
-        action={<HubCreateButton label={t("communities.page.create")} shortLabel={t("hub.communities.createShort")} onClick={() => requireAuth("create") && openCreate()} attr={{ "data-create-community": true }} />}
+        action={<HubCreateButton label={t("communities.page.create")} onClick={() => requireAuth("create") && openCreate()} attr={{ "data-create-community": true }} />}
       />
 
-      {user && <Tabs items={tabs} active={activeTab} onChange={goTab} ariaLabel={t("communities.page.tabsAria")} />}
+      {user && <Tabs variant="hub" items={tabs} active={activeTab} onChange={goTab} ariaLabel={t("communities.page.tabsAria")} />}
 
-      {/* Tek kontrol satırı: arama (Tüm topluluklar'da açılır) · "Tüm topluluklar" bağlantısı. */}
-      {user && searchOpen ? (
-        <form role="search" onSubmit={search}>
-          <SearchField
-            value={query}
-            onChange={setQuery}
-            placeholder={t("communities.all.searchPlaceholder")}
-            clearLabel={t("common.clear")}
-            alwaysClear
-            onClear={() => setSearchOpen(false)}
-            autoFocus
-          />
-        </form>
-      ) : (
-        user && (
-          <HubControlRow>
-            <button type="button" onClick={() => setSearchOpen(true)} aria-label={t("communities.page.searchOpen")} title={t("communities.page.searchOpen")} className={CONTROL_ICON_BUTTON}>
-              <Search size={24} aria-hidden />
-            </button>
-            <Link href="/communities/all" aria-label={t("communities.all.button")} title={t("communities.all.button")} className={CONTROL_ICON_BUTTON} data-testid="communities-all-link">
-              <LayoutGrid size={24} aria-hidden />
-            </Link>
-          </HubControlRow>
-        )
-      )}
-
-      {inviteStrip}
+      {plainControls}
+      {!ownsList && inviteStrip && <div className="mb-4">{inviteStrip}</div>}
 
       {authLoading ? (
         <LoadingRows />
       ) : !user ? (
         <DiscoverView onToast={show} onGoInvites={() => goTab("invites")} />
-      ) : view === "mine" ? (
-        <MyCommunitiesView scope="member" onToast={show} />
+      ) : view === "mine" || view === "managed" ? (
+        <MyCommunitiesView
+          scope={view === "mine" ? "member" : "managed"}
+          onToast={show}
+          query={query}
+          onQuery={setQuery}
+          onSearchAll={searchAll}
+          allLink={allLink}
+          strip={inviteStrip}
+        />
       ) : view === "posts" ? (
         <HomePostsTab onToast={show} />
       ) : view === "discover" ? (
         <HomeDiscoverTab onToast={show} onGoInvites={() => goTab("invites")} />
-      ) : view === "managed" ? (
-        <MyCommunitiesView scope="managed" onToast={show} />
       ) : (
         <HomeInvitesTab
           userId={user.id}
@@ -364,13 +355,31 @@ export function DiscoverView({
 
 
 /** Üyesi olduklarım · Yönettiklerim: `list_my_communities` (yalnız kendi üyeliğim). */
-function MyCommunitiesView({ scope, onToast }: { scope: MyCommunityScope; onToast: (message: string) => void }) {
+function MyCommunitiesView({
+  scope,
+  onToast,
+  query,
+  onQuery,
+  onSearchAll,
+  allLink,
+  strip,
+}: {
+  scope: MyCommunityScope;
+  onToast: (message: string) => void;
+  query: string;
+  onQuery: (value: string) => void;
+  onSearchAll: () => void;
+  allLink: React.ReactNode;
+  /** Bekleyen davet şeridi: kontrol satırının hemen altında. */
+  strip: React.ReactNode;
+}) {
   const { t } = useTranslation();
   const { conversations, restoreConversation, refresh } = useRealMessages();
   const [reloadKey, setReloadKey] = useState(0);
   const [state, setState] = useState<ListState | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [onlyNew, setOnlyNew] = useState(false);
   const [unseen, setUnseen] = useState<Map<string, number>>(() => new Map());
   const action = useAsyncAction();
 
@@ -440,43 +449,75 @@ function MyCommunitiesView({ scope, onToast }: { scope: MyCommunityScope; onToas
       ? [...current.items].sort((a, b) => (unseen.get(b.id) ?? 0) - (unseen.get(a.id) ?? 0) || (Date.parse(b.lastActivityAt ?? b.createdAt) || 0) - (Date.parse(a.lastActivityAt ?? a.createdAt) || 0))
       : (current?.items ?? []);
 
-  if (!current) return <LoadingRows />;
-  if (current.error) return <ErrorBox message={t("communities.page.loadError")} onRetry={() => setReloadKey((k) => k + 1)} />;
+  const needle = query.trim().toLocaleLowerCase();
+  const isNewCommunity = (c: CommunitySummary) => (unseen.get(c.id) ?? 0) > 0 || c.unreadCount > 0 || c.pendingRequestCount > 0;
+  const visibleItems = sortedItems.filter((c) => (!needle || `${c.name} ${c.description ?? ""}`.toLocaleLowerCase().includes(needle)) && (!onlyNew || isNewCommunity(c)));
+  const controls = (
+    <HubControls
+      count={current ? t("hub.count.communities", { count: `${visibleItems.length}${current.hasMore ? "+" : ""}` }) : undefined}
+      query={query}
+      onQuery={onQuery}
+      label={t("communities.all.searchPlaceholder")}
+      onSubmit={onSearchAll}
+    >
+      <HubFilterChip selected={onlyNew} onClick={() => setOnlyNew((value) => !value)} data-hub-only-new="">
+        {t("hub.filter.onlyNew")}
+      </HubFilterChip>
+      {allLink}
+    </HubControls>
+  );
+  const head = (
+    <>
+      {controls}
+      {strip && <div className="mb-4">{strip}</div>}
+    </>
+  );
+
+  if (!current) return <>{head}<LoadingRows /></>;
+  if (current.error) return <>{head}<ErrorBox message={t("communities.page.loadError")} onRetry={() => setReloadKey((k) => k + 1)} /></>;
   if (current.items.length === 0) {
     return (
-      <EmptyState
-        icon={scope === "managed" ? ShieldCheck : Users}
-        scene="community"
-        title={t(`communities.empty.${emptyKey}` as "communities.empty.mine")}
-        description={t(`communities.empty.${emptyKey}Help` as "communities.empty.mineHelp")}
-        action={scope === "member" ? { label: t("communities.tab.discover"), href: homeHref("discover") } : undefined}
-      />
+      <>
+        {head}
+        <EmptyState
+          icon={scope === "managed" ? ShieldCheck : Users}
+          scene="community"
+          title={t(`communities.empty.${emptyKey}` as "communities.empty.mine")}
+          description={t(`communities.empty.${emptyKey}Help` as "communities.empty.mineHelp")}
+          action={scope === "member" ? { label: t("communities.tab.discover"), href: homeHref("discover") } : undefined}
+        />
+      </>
     );
   }
 
   return (
     <div className="space-y-3">
+      {head}
       {action.error && (
         <InlineAlert>
           {action.error}
         </InlineAlert>
       )}
-      <ul className={HUB_GRID_CLASS}>
-        {sortedItems.map((community) => {
-          const conversation = conversations.find((c) => c.id === community.id);
-          const hiddenInInbox = Boolean(conversation && (conversation.deletedAt || conversation.archivedAt));
-          return (
-            <CommunityCard
-              key={community.id}
-              community={community}
-              onStatusChange={(next) => changeStatus(community.id, next)}
-              onToast={onToast}
-              footerNote={hiddenInInbox ? t("communities.card.hiddenInInbox") : undefined}
-              unseen={unseen.get(community.id) ?? 0}
-            />
-          );
-        })}
-      </ul>
+      {visibleItems.length === 0 ? (
+        <EmptyState icon={Search} scene="search" title={t("groups.page.noResults")} description={t("groups.page.noResultsHelp")} compact />
+      ) : (
+        <ul className={HUB_GRID_CLASS}>
+          {visibleItems.map((community) => {
+            const conversation = conversations.find((c) => c.id === community.id);
+            const hiddenInInbox = Boolean(conversation && (conversation.deletedAt || conversation.archivedAt));
+            return (
+              <CommunityCard
+                key={community.id}
+                community={community}
+                onStatusChange={(next) => changeStatus(community.id, next)}
+                onToast={onToast}
+                footerNote={hiddenInInbox ? t("communities.card.hiddenInInbox") : undefined}
+                unseen={unseen.get(community.id) ?? 0}
+              />
+            );
+          })}
+        </ul>
+      )}
       {current.items.some((c) => conversations.find((x) => x.id === c.id && (x.deletedAt || x.archivedAt))) && (
         <ul className="space-y-1 rounded-lg card-flat px-4 py-3">
           {current.items

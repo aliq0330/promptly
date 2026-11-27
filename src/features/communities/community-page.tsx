@@ -290,7 +290,7 @@ function CommunityPageInner() {
               aside={tab === "feed" || tab === "events" ? <CommunityAside group={g} isMember={Boolean(role)} onReadRules={() => goTab("about")} /> : undefined}
               asideLabel={t("communities.aside.pageLabel")}
             >
-              {/* Odalar ve etkinlik şeridi (docs/history/474-*): yalnız Akış'ta, sekmelerin hemen altında (yan sütun şeritle aynı hizadan başlar). */}
+              {/* Odalar ve etkinlik şeridi (docs/history/475-*): yalnız Akış'ta, sekmelerin hemen altında (yan sütun şeritle aynı hizadan başlar). */}
               {tab === "feed" && <CommunityStrip group={g} role={role} viewerId={user?.id ?? null} goTab={goTab} />}
               {/* Sekmenin kendi eylem yuvası (Akış'ta "Gönderi oluştur" + sıralama menüsü buraya portal edilir). */}
               <div ref={setActionsEl} className="flex items-center justify-between gap-1.5 empty:hidden" data-community-actions-slot />

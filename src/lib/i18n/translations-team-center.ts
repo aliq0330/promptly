@@ -90,7 +90,7 @@ export const teamCenterTranslations = {
   "tc.admin.overview": { tr: "Genel", en: "General" },
   "tc.admin.auditAll": { tr: "Tümü", en: "See all" },
 
-  // --- Onaylar sekmesi: liste + ayrıntı (docs/history/474-*) ---
+  // --- Onaylar sekmesi: liste + ayrıntı (docs/history/475-*) ---
   "tc.appr.seg.inbox": { tr: "Bana bekleyen", en: "Waiting for me" },
   "tc.appr.seg.sent": { tr: "Gönderdiklerim", en: "Sent by me" },
   "tc.appr.seg.decided": { tr: "Karar verilen", en: "Decided" },

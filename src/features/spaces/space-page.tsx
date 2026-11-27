@@ -203,7 +203,7 @@ function SpaceView() {
 
   return (
     <div className={cn(HUB_PAGE_CLASS, "animate-rise-in")} data-space-page={space.id} data-space-role={role ?? "none"}>
-      {/* Başlık (docs/history/474-*): Genel bakışta tam bant (palet şeridi bandın alt kenarında), diğer sekmelerde tek satır; Pano'da tuval kalan alanı alır. */}
+      {/* Başlık (docs/history/475-*): Genel bakışta tam bant (palet şeridi bandın alt kenarında), diğer sekmelerde tek satır; Pano'da tuval kalan alanı alır. */}
       <SpaceHeader variant={tab === "overview" ? "full" : "compact"} members={members} backdropUrl={coverUrls[0] ?? null} menuItems={menuItems} goTo={goTo} />
 
       <div className="w-full">
@@ -224,7 +224,7 @@ function SpaceView() {
           </p>
         )}
 
-        {/* Altı çizgili sekmeler (docs/history/371-*, 474-*): yalnız yazı + sayı (simgesiz); sayılar görseller, promptlar, notlar ve üyeler. */}
+        {/* Altı çizgili sekmeler (docs/history/371-*, 475-*): yalnız yazı + sayı (simgesiz); sayılar görseller, promptlar, notlar ve üyeler. */}
         <div className="mt-4" data-space-tabs="">
           <Tabs
             ariaLabel={t("spaces.page.tabsAria")}
