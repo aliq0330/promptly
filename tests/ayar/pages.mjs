@@ -2,6 +2,7 @@
 import { ME, U } from "../messaging-ui/mock.mjs";
 import { setupCommunities } from "../messaging-ui/mock-communities.mjs";
 import { setupRooms } from "../messaging-ui/mock-rooms.mjs";
+import { setupSpaces, SID, MEDIA, IID } from "../messaging-ui/mock-spaces.mjs";
 
 const C1 = "e0000000-0000-4000-8000-0000000000a1";
 const R_IPUCLARI = "e0000000-0000-4000-8000-0000000000b3";
@@ -92,7 +93,7 @@ function team(db, { role = "owner" } = {}) {
 
 const PROJECT = "e1000000-0000-4000-8000-0000000000b1";
 const FILE = "e1000000-0000-4000-8000-0000000000b3";
-const SID = (n) => `5e000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
+const PID = (n) => `5e000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
 function teamProject(db, { files = true } = {}) {
   team(db);
   const calls = db.teamCalls;
@@ -101,8 +102,8 @@ function teamProject(db, { files = true } = {}) {
   const detail = () => ({
     project: { id: PROJECT, team_id: TEAM, title: "Mobil uygulama yenileme", description: "2027 ilk çeyrek tasarım dili ve prompt setleri.", tone: "primary", access_mode: "selected", base_role: "view", review_default: true, archived_at: null, created_at: "2026-11-01T00:00:00Z" },
     my_role: "lead", main_area_id: null, channel_id: null, item_count: 4, pending_count: 0,
-    files: [{ id: FILE, title: "Onboarding akışı", position: 0, review_required: true, main_area_id: SID(2), item_count: 6, board_count: 2, pending_count: 0 }],
-    boards: [{ id: SID(3), title: "Akış", file_id: FILE, item_count: 3, position: 0, group_id: "g1" }, { id: SID(4), title: "Ekranlar", file_id: FILE, item_count: 2, position: 1, group_id: "g1" }],
+    files: [{ id: FILE, title: "Onboarding akışı", position: 0, review_required: true, main_area_id: PID(2), item_count: 6, board_count: 2, pending_count: 0 }],
+    boards: [{ id: PID(3), title: "Akış", file_id: FILE, item_count: 3, position: 0, group_id: "g1" }, { id: PID(4), title: "Ekranlar", file_id: FILE, item_count: 2, position: 1, group_id: "g1" }],
     groups: [{ id: "g1", file_id: FILE, title: "Grup" }],
     people: [person("p1", "Ayşe", "lead"), person("p2", "Can", "edit"), person("p3", "Mert", "edit"), person("p4", "Deniz", "view"), person("p5", "Selin", "view"), person("p6", "Onur", "view"), person("p7", "Sahip", "lead", { implicit: true })],
     variables: [{ id: "v1", file_id: FILE, name: "marka", value: "Lumen" }, { id: "v2", file_id: FILE, name: "ton", value: "Samimi, kısa cümleler" }, { id: "v3", file_id: FILE, name: "hedef_kitle", value: "22–35 yaş, şehirli" }],
@@ -123,6 +124,21 @@ function teamProject(db, { files = true } = {}) {
   reply("team_set_project_access", () => null);
 }
 const projUrl = `/teams/local?id=${TEAM}&tab=projects&project=${PROJECT}`;
+
+// ---------------------------------------------------------------------------------------------
+// Space: "Neon şehir karakterleri", sahip sensin, 3 üye + 1 bekleyen davet, 5 görsel.
+// ---------------------------------------------------------------------------------------------
+function space(db) {
+  setupSpaces(db);
+  const row = db.addSpace(1, { title: "Neon şehir karakterleri", description: "Cyberpunk şehir için ana karakterler, yan roller ve kostüm paleti.", kind: "character", members: [[U.bob, "editor"], [U.carol, "viewer"]] });
+  row.cover_url = "https://example.supabase.co/storage/v1/object/public/space-media/cover.jpg";
+  for (let i = 1; i <= 5; i += 1) db.addItem(row.id, { id: IID(i), kind: "image", media_url: MEDIA(row.id, i), title: `Görsel ${i}` });
+  db.spaceInvites.push({ id: "inv1", space_id: row.id, invitee_id: U.erin.id, inviter_id: ME, role: "viewer", status: "pending", created_at: new Date().toISOString() });
+  return row;
+}
+const SPACE_URL = `/spaces/local?id=${SID(1)}`;
+const openMenu = async (page) => { await page.getByRole("button", { name: "Daha fazla işlem" }).first().click(); await page.getByRole("menuitem", { name: /Ayarlar/ }).first().click(); await page.waitForTimeout(500); };
+const spaceNorm = (x) => x.replace(/!$/, "").replace(/\d+ üye · \d+ bekleyen davet/, "<m>").replace(/@[\w.]+/g, "@u");
 
 export const PAGES = [
   { id: "A1", mock: "A1-yonetim-listesi", height: 1290, url: `/communities/local?id=${C1}&tab=manage`, setup: (db) => { community(db); db.groups.find((g) => g.id === C1).pending_request_count = 3; } },
@@ -156,4 +172,10 @@ export const PAGES = [
   { id: "D4", mock: "D4-proje-ayarlari", height: 1120, url: projUrl, setup: (db) => teamProject(db), normalize: (x) => x.replace(/\d+ kişi/g, "<k>"), before: async (page) => { await page.getByRole("button", { name: "Bilgi" }).first().click(); await page.locator("[data-project-settings]").click(); await page.waitForTimeout(500); } },
   { id: "D5", mock: "D5-proje-erisimi", height: 1320, ignore: ["rt#1", "btn#1"], textIgnore: ["row"], url: projUrl, setup: (db) => teamProject(db), normalize: (x) => x.replace(/@[\w.]+( · Konuk)?( · \d+ gün kaldı)?/g, "@u").replace(/\d+ kişi/g, "<k>").replace(/^[A-ZÇĞİÖŞÜ]{1,3}(?=\S)/, "").replace(/(Düzenleyici|Görüntüleyici)$/, "<r>").replace(/Konuk · \d+ gün kaldı/, "<g>"), before: async (page) => { await page.getByRole("button", { name: "Bilgi" }).first().click(); await page.locator("[data-project-settings]").click(); await page.getByText("Proje erişimi").first().click(); await page.waitForTimeout(600); await page.locator("[data-sx-page] .btn.sel").nth(1).click(); await page.getByRole("radio", { name: "Görüntüleyici" }).click(); await page.getByRole("button", { name: "Seç" }).click(); await page.waitForTimeout(300); } },
   { id: "E2", mock: "E2-dosya-ayarlari", height: 1240, url: `${projUrl}&file=${FILE}`, setup: (db) => teamProject(db), before: async (page) => { await page.getByRole("button", { name: "Bilgi" }).first().click(); await page.waitForTimeout(500); } },
+  { id: "F1", mock: "F1-space-ayarlari", height: 1180, url: SPACE_URL, setup: space, normalize: spaceNorm, before: async (page) => { await openMenu(page); await page.locator("[data-sx-page] #sp-ad").fill("Neon şehir karakterleri!"); } },
+  { id: "F2", mock: "F2-space-kapak", height: 920, url: SPACE_URL, setup: space, normalize: spaceNorm, before: async (page) => { await openMenu(page); await page.getByRole("button", { name: "Değiştir" }).first().click(); await page.waitForTimeout(400); } },
+  { id: "F3", mock: "F3-space-uyeler", height: 1300, url: `${SPACE_URL}&tab=members`, setup: space, normalize: (x) => x.replace(/@[\w.]+/g, "@u").replace(/^[A-ZÇĞİÖŞÜ]{1,3}(?=\S)/, "").replace(/(Alice|Sen|Bob|Carol|Can Yıldız|Selin Kara)/g, "<n>").replace(/(Düzenleyici|Görüntüleyici|Sahip)/g, "<r>").replace(/^<n>?.*$/, (m) => m), textIgnore: ["row", "rt", "av"] },
+  { id: "F4", mock: "F4-space-uye-rol", height: 960, url: `${SPACE_URL}&tab=members`, setup: space, normalize: (x) => x.replace(/@[\w.]+/g, "@u"), textIgnore: ["rt", "hd", "av", "card", "row", "btn", "bar", "bt"], before: async (page) => { await page.locator("[data-sx-page] .btn.sel").first().click(); await page.waitForTimeout(400); }, ignore: ["hd#0"] },
+  { id: "F5", mock: "F5-space-tehlike", height: 900, url: SPACE_URL, setup: space, before: async (page) => { await openMenu(page); await page.getByText("Arşivle veya sil").first().click(); await page.waitForTimeout(400); } },
+  { id: "F6", mock: "F6-space-silme", height: 860, url: SPACE_URL, setup: space, normalize: (x) => x.replace(/\d+ görsel, \d+ prompt, \d+ not/, "<g>").replace(/\d+ üyelik ve \d+ bekleyen davet/, "<u>"), before: async (page) => { await openMenu(page); await page.getByText("Arşivle veya sil").first().click(); await page.getByRole("button", { name: "Space'i sil" }).first().click(); await page.waitForTimeout(500); } },
 ];

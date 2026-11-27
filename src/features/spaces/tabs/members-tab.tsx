@@ -31,6 +31,8 @@ import {
 import { useSpaceContext } from "../space-provider";
 import { FormError } from "../space-forms";
 import { PersonRow } from "@/components/ui/person-row";
+import { useMediaQuery } from "@/lib/use-media-query";
+import { SpaceMembersSx } from "../space-sx";
 
 const ROLE_ICON: Record<SpaceRole, typeof Crown> = { owner: Crown, editor: Pencil, viewer: Eye };
 
@@ -54,6 +56,7 @@ export function MembersTab() {
   const [confirm, setConfirm] = useState<null | { kind: "remove"; member: SpaceMember } | { kind: "leave" }>(null);
   const inputId = useId();
   const roleId = useId();
+  const phone = useMediaQuery("(max-width: 767px)");
 
   const load = useCallback(async () => {
     try {
@@ -99,6 +102,8 @@ export function MembersTab() {
       setError(err instanceof Error ? err.message : t("spaces.error.generic"));
     }
   }
+
+  if (phone) return <SpaceMembersSx />;
 
   return (
     <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]" data-testid="space-members">

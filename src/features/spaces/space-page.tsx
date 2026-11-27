@@ -32,7 +32,7 @@ import { fetchAreaInfo } from "@/lib/supabase/team-projects";
 import { projectLink } from "@/lib/team-projects";
 import { isSpaceTab, SPACE_TAB_LABEL, SPACE_TABS, spaceHref, type SpaceTab } from "@/lib/spaces";
 import { SpaceProvider, useSpaceContext, type SpaceData } from "./space-provider";
-import { DeleteSpaceDialog, SpaceSettingsModal } from "./space-modals";
+import { DeleteSpaceSx as DeleteSpaceDialog, SpaceSettingsSx } from "./space-sx";
 import type { PopoverMenuItem } from "@/components/ui/popover-menu";
 import { SpaceHeader } from "./space-header";
 import { useSpaceMembers } from "./use-space-members";
@@ -251,7 +251,7 @@ function SpaceView() {
       </div>
 
       {dialog === "copy" && <CopyItemsDialog sourceSpaceId={space.id} sourceTitle={space.title} onArchived={() => void refreshSpace()} onClose={() => setDialog(null)} />}
-      {dialog === "settings" && <SpaceSettingsModal space={space} images={images} onClose={() => setDialog(null)} onSaved={setSpace} />}
+      {dialog === "settings" && <SpaceSettingsSx space={space} images={images} onClose={() => setDialog(null)} onSaved={setSpace} onDeleted={() => router.replace("/spaces")} />}
       {dialog === "delete" && <DeleteSpaceDialog space={space} onClose={() => setDialog(null)} onDeleted={() => router.replace("/spaces")} />}
       {dialog === "leave" && userId && (
         <ConfirmDialog
