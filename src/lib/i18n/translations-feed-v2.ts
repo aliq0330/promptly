@@ -106,7 +106,7 @@ export const feedV2Translations = {
   "follow.mode.muted": { tr: "Sessiz", en: "Muted" },
 
   // Kart görselleri
-  // docs/history/476-*: satır düzeni (D) ve seçici pencereler.
+  // docs/history/477-*: satır düzeni (D) ve seçici pencereler.
   "card.row.published": { tr: "Yayında", en: "Published" },
   "prompt.privateBadge": { tr: "Sadece ben", en: "Only me" },
   "tf.pick.addSelected": { tr: "Ekle ({{count}})", en: "Add ({{count}})" },

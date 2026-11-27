@@ -14,7 +14,7 @@ import { QuotedArt, QuotedKicker, quotedTypeIcon } from "./quoted-parts";
 
 /**
  * Alıntının akıştaki kartı (docs/history/217-*): başvuru gönderisinin kartıyla (`ApplicationCard`) AYNI aile — akış gönderisi
- * `ContentCardPost` (docs/history/476-*): alıntılanan içeriğin çıktısı/kapağı; altında tür etiketi + zaman, başlık, alıntı notu (özetin yerine); altta
+ * `ContentCardPost` (docs/history/477-*): alıntılanan içeriğin çıktısı/kapağı; altında tür etiketi + zaman, başlık, alıntı notu (özetin yerine); altta
  * ALINTILAYAN ve sayaçlar — sayaçlar ALINTININ kendisine aittir (alıntılanan içeriğinki değil). Karta tıklamak alıntının sayfasını açar; orijinal içeriğe oradan gidilir.
  */
 export function QuoteCard({ quote }: { quote: Quote }) {

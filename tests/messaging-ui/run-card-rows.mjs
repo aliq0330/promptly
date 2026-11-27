@@ -1,4 +1,4 @@
-// Yatay satır (docs/history/476-*, "D"): İçeriklerim ve profil listeleri kart değil SATIR çizer — solda kare görsel, sağda kicker + başlık + özet;
+// Yatay satır (docs/history/477-*, "D"): İçeriklerim ve profil listeleri kart değil SATIR çizer — solda kare görsel, sağda kicker + başlık + özet;
 // kutusuz, alt çizgili; kendi kütüphanede "Yayında" rozeti + "Düzenle" düğmesi, profilde yazar satırı yok. Ağ taklitli; gerçek Supabase'e / cihaza KARŞI DENENMEDİ.
 import { chromium } from "playwright";
 import assert from "node:assert/strict";

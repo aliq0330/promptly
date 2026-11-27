@@ -24,7 +24,7 @@ type CollectionRemoval = { onRemove: () => Promise<void> };
  *
  *   picture: the output image; a video/audio prompt's poster that PLAYS by itself while the card is in view (`PlayableCardArt`:
  *            silent looping video / audio, round play-pause button in the middle, no progress); the prompt itself when there is no picture.
- *            Kicker (type · tool · time), title and a two-line summary are drawn BELOW the picture (docs/history/476-*).
+ *            Kicker (type · tool · time), title and a two-line summary are drawn BELOW the picture (docs/history/477-*).
  *   row:     (·) Name                 ♥ · 💬 · 🔖 · ⋮
  *
  * The prompt text is what people come for: a prompt without a picture shows it as the art (`PromptPreviewBox` "art").

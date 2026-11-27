@@ -15,11 +15,14 @@ export function DropdownMenu({
   children,
   trigger,
   triggerClassName,
+  className,
 }: {
   label: string;
   children: (close: () => void) => ReactNode;
   trigger?: ReactNode;
   triggerClassName?: string;
+  /** Kök kapsayıcıya eklenir (ör. telefonda tam genişlik). */
+  className?: string;
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -51,7 +54,7 @@ export function DropdownMenu({
   }, [open]);
 
   return (
-    <div ref={ref} className="relative">
+    <div ref={ref} className={cn("relative", className)}>
       <button
         ref={triggerRef}
         type="button"

@@ -7,8 +7,8 @@ import { LogOut } from "@/components/icons/log-out";
 import { MoreVertical } from "@/components/icons/more-vertical";
 import { Avatar } from "@/components/ui/avatar";
 import { Tabs } from "@/components/ui/tabs";
-import { HUB_BAND_MENU_BUTTON_CLASS, HubDetailBand } from "@/features/hub/hub-kit";
-import { Button } from "@/components/ui/button";
+import { HUB_BAND_MENU_BUTTON_CLASS, HUB_PHONE_TABS_CLASS, HubDetailBand } from "@/features/hub/hub-kit";
+import { buttonClassName } from "@/components/ui/button";
 import { MENU_ITEM_CLASS, MENU_ITEM_DANGER_CLASS, MENU_PANEL_CLASS } from "@/components/ui/menu";
 import { Lock } from "@/components/icons/lock";
 import { VisibilityTag } from "@/components/ui/visibility-tag";
@@ -18,12 +18,12 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import { listTeamMembers, type TeamMember, type TeamSummary } from "@/lib/supabase/teams";
 import { teamLink, type TeamTab } from "@/lib/teams";
 import { cn } from "@/lib/utils";
-import { TeamMark } from "./team-ui";
+import { TeamMark, roleLabelKey } from "./team-ui";
 
 /**
- * Ekip bandı + sekmeler (docs/history/366-*, Yön B · Merkez): uygulama menüsü yerinde kalır; ekip renkli bant ve alt çizgili sekmelerle bir ana sayfa gibi açılır.
- * Bant: ekip imi, "EKİP" etiketi, ad, tek satır özet (üye · proje · yalnızca davetle · çevrimiçi), ilk üyelerin yüzleri, "Davet et" ve ⋯ menüsü.
- * Telefonda aynı bant tek satırdır (geri · im · ad · Davet et · ⋯) ve sekmeler kaydırılır.
+ * Ekip bandı + sekmeler (docs/history/366-*, Yön B · Merkez; bant düzeni mockup'a göre docs/history/476-*): kare ekip imi, ad, tek satır alt bilgi (üye · açıklama · rol | proje),
+ * tek birincil düğme «Ekip sohbetini aç» ve ⋮ menüsü (Davet et, bilgi, bildirimler, ayrıl). `md+`'da başlığın üstünde etiketler (Ekip · yalnızca davetle · rol)
+ * ve altında üye yüzleri durur. Telefonda bant kenardan kenara akar: im + ad üstte, tam genişlik düğme + ⋮ altta; sekmeler hemen altında kaydırılır.
  */
 export const BAND_TONE: Record<string, string> = {
   primary: "bg-primary-soft",
@@ -96,31 +96,29 @@ export function TeamBand({
     };
   }, [menuOpen]);
 
-  const meta = [t("tm.card.members", { count: team.memberCount }), t("tp.header.projects", { count: team.spaceCount })];
+  const role = t(roleLabelKey(team.myRole));
+  const description = team.description?.trim() ?? "";
+  const extraFaces = Math.max(0, team.memberCount - Math.min(5, faces.length));
 
   return (
     <HubDetailBand
       data-testid="team-band"
       data-team-band=""
       className={BAND_TONE[team.tone] ?? BAND_TONE.primary}
-      backHref="/teams"
-      backLabel={t("tm.page.backToTeams")}
-      backAttrs={{ "data-team-back-phone": "" }}
-      art={
-        <span aria-hidden className={cn("absolute inset-0 grid place-items-center", BAND_TONE[team.tone] ?? BAND_TONE.primary)}>
-          <TeamMark name={team.name} tone={team.tone} solid size={52} className="rounded-md" />
-        </span>
-      }
+      art={<TeamMark name={team.name} tone={team.tone} solid fill className="text-h3 md:text-h2 xl:text-h1" />}
       kicker={
         <>
-          <span className="rounded-sm bg-surface/80 px-2.5 py-0.5 font-semibold text-text">{t("tc.band.kicker")}</span>
+          <span className="rounded-xs bg-surface/80 px-2 py-0.5 font-semibold text-text-secondary">{t("tc.band.kicker")}</span>
           <VisibilityTag icon={Lock} label={t("tm.header.inviteOnly")} data-team-visibility="" />
+          <span className="rounded-xs bg-surface/80 px-2 py-0.5 font-semibold text-primary-text" data-team-role="">{role}</span>
         </>
       }
       title={<h1 data-team-name="">{team.name}</h1>}
       byline={
-        <p className="min-w-0 truncate text-small text-text-secondary" data-team-meta data-team-header-block>
-          {meta.join(" · ")}
+        <p className="min-w-0 truncate" data-team-meta data-team-header-block>
+          {[t("tm.card.members", { count: team.memberCount }), description].filter(Boolean).join(" · ")}
+          <span className="lg:hidden"> · {role}</span>
+          <span className="hidden lg:inline"> · {t("tp.header.projects", { count: team.spaceCount })}</span>
           {onlineCount > 0 && (
             <>
               {" · "}
@@ -130,6 +128,23 @@ export function TeamBand({
             </>
           )}
         </p>
+      }
+      faces={
+        faces.length > 0 ? (
+          <div className="flex items-center" data-team-avatars>
+            {faces.slice(0, 5).map((member, index) => (
+              <span key={member.userId} className={cn("rounded-full ring-2 ring-primary-soft", index > 0 && "-ml-2", index === 4 && "max-xl:hidden")}>
+                <Avatar src={member.avatarUrl} alt={member.displayName || member.username} size={32} />
+              </span>
+            ))}
+            {extraFaces > 0 && <span className="ml-1.5 whitespace-nowrap text-caption text-text-secondary">+{extraFaces}</span>}
+          </div>
+        ) : undefined
+      }
+      actions={
+        <Link href={teamLink(team.id, "chat")} data-team-open-chat className={buttonClassName({ className: "max-md:flex-1 max-md:justify-center xl:h-12 xl:px-6" })}>
+          {t("tm.header.openChat")}
+        </Link>
       }
       menu={
         <div className="relative shrink-0" ref={menuRef}>
@@ -147,6 +162,23 @@ export function TeamBand({
           </button>
           {menuOpen && (
             <ul ref={listRef} role="menu" onKeyDown={(event) => menuKeyDown(event, listRef.current)} className={cn(MENU_PANEL_CLASS, "absolute right-0 top-full z-30 mt-1.5 w-56")} data-team-menu-list>
+              {canInvite && (
+                <li role="none">
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      setMenuOpen(false);
+                      onInvite();
+                    }}
+                    data-team-invite-header
+                    className={MENU_ITEM_CLASS}
+                  >
+                    <UserPlus size={16} aria-hidden />
+                    {t("tm.invite.title")}
+                  </button>
+                </li>
+              )}
               {menuItems.map((item) => (
                 <li key={item.key} role="none">
                   <Link href={item.href} role="menuitem" onClick={() => setMenuOpen(false)} className={MENU_ITEM_CLASS}>
@@ -175,30 +207,6 @@ export function TeamBand({
           )}
         </div>
       }
-      actions={
-        faces.length > 0 || canInvite ? (
-        <>
-          {faces.length > 0 && (
-            <div className="hidden items-center lg:flex" data-team-avatars>
-              {faces.slice(0, 3).map((member, index) => (
-                <span key={member.userId} className={cn("rounded-full ring-2 ring-surface", index > 0 && "-ml-1.5")}>
-                  <Avatar src={member.avatarUrl} alt={member.displayName || member.username} size={32} />
-                </span>
-              ))}
-              {Math.max(0, team.memberCount - Math.min(3, faces.length)) > 0 && (
-                <span className="-ml-1.5 grid h-8 min-w-8 place-items-center rounded-sm bg-surface px-1.5 text-caption font-semibold text-text ring-2 ring-surface">+{Math.max(0, team.memberCount - Math.min(3, faces.length))}</span>
-              )}
-            </div>
-          )}
-          {canInvite && (
-            <Button type="button" onClick={onInvite} data-team-invite-header aria-label={t("tm.invite.title")} className="shrink-0">
-              <UserPlus size={20} aria-hidden />
-              <span>{t("tm.invite.title")}</span>
-            </Button>
-          )}
-        </>
-        ) : undefined
-      }
     />
   );
 }
@@ -208,6 +216,7 @@ export function TeamTabs({ teamId, items, active, ariaLabel }: { teamId: string;
   return (
     <div data-testid="team-tabs">
       <Tabs
+        className={HUB_PHONE_TABS_CLASS}
         ariaLabel={ariaLabel}
         active={active}
         onChange={() => undefined}

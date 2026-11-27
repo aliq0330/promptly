@@ -415,7 +415,7 @@ export function DiscoverEditorial({ onSeeAllCreators }: { onSeeAllCreators: () =
                 </span>
               </span>
             </ArtTile>
-            {/* Sıralı liste (docs/history/476-*, "D · Yatay satır"): numara + orta boyut satır; ilk üç numara marka renginde. */}
+            {/* Sıralı liste (docs/history/477-*, "D · Yatay satır"): numara + orta boyut satır; ilk üç numara marka renginde. */}
             <ol className="content-start" data-discover-ranking="">
               {data.popular.slice(0, 6).map((prompt, index) => (
                 <li key={prompt.id} className="grid grid-cols-[2rem_minmax(0,1fr)] items-center gap-3 border-b border-border last:border-b-0">

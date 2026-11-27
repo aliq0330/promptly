@@ -1,4 +1,4 @@
-# 9.476 — Akış gönderisi ("A") ve yatay satır ("D")
+# 9.477 — Akış gönderisi ("A") ve yatay satır ("D")
 
 Kullanıcı, `Promptly Kart Yönleri` mockup'ındaki A (Akış gönderisi) ve D (Yatay satır) yönlerinin sitede uygulanmasını istedi; plan ve yüzey haritası bir mockup sayfasında onaylandı (kart yönleri → "A ve D Planı"). Bu iş **266-\*** (görsel kart), **277-\*** (başlık görselin üstünde, açıklama yok) ve **337-\*** / 196-\* ("her liste `ContentGrid`, ikinci liste görünümü yok") kararlarını, onaylanan yüzeyler için geri alır. Veritabanı, Edge Function ve migration değişikliği YOKTUR.
 

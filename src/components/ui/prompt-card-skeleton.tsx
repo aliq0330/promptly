@@ -6,7 +6,7 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import { GRID_COLUMNS } from "@/lib/grid-columns";
 import { useContentRowsScope } from "@/features/content/content-card";
 
-/** Mirrors the feed post (`ContentCardPost`, docs/history/476-*): a 12 px picture, the kicker, the title and summary lines, then the author row with the counters on the right. */
+/** Mirrors the feed post (`ContentCardPost`, docs/history/477-*): a 12 px picture, the kicker, the title and summary lines, then the author row with the counters on the right. */
 export function PromptCardSkeleton() {
   return (
     <div aria-hidden>
@@ -24,7 +24,7 @@ export function PromptCardSkeleton() {
   );
 }
 
-/** Mirrors the horizontal row (D, docs/history/476-*): a square picture, kicker, title and summary lines, the author. */
+/** Mirrors the horizontal row (D, docs/history/477-*): a square picture, kicker, title and summary lines, the author. */
 export function PromptRowSkeleton() {
   return (
     <div aria-hidden className="flex items-start gap-3 border-b border-border py-4 sm:gap-4">

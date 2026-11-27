@@ -54,7 +54,7 @@ interface Row {
   id: string;
   title: string;
   by: string;
-  /** The post's first picture (docs/history/476-*: the small row shows it); none = the type's icon. */
+  /** The post's first picture (docs/history/477-*: the small row shows it); none = the type's icon. */
   image: string | null;
 }
 

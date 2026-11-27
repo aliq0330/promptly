@@ -199,7 +199,7 @@ function TeamPageInner() {
   return (
     <div className={boardMode ? "mx-auto w-full max-w-none" : cn(HUB_PAGE_CLASS, "space-y-4")} data-testid="team-page" data-team-id={team.id} data-board-mode={boardMode ? "" : undefined}>
       {!hideChrome && (
-        <div className="space-y-4" data-team-chrome>
+        <div className="space-y-4 max-md:space-y-0" data-team-chrome>
           <TeamBand team={team} canInvite={can("manage_members") && !isGuest} onInvite={() => setInviteOpen(true)} onLeave={team.myRole !== "owner" ? () => setLeaveOpen(true) : undefined} menuItems={menuItems} />
           <TeamTabs teamId={team.id} items={items} active={tab} ariaLabel={t("tm.tab.aria")} />
         </div>

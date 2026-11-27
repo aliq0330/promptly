@@ -141,7 +141,7 @@ export function OptionCheckbox({
 }
 
 /**
- * The end mark of a selectable list row (docs/history/476-*): a rounded square with a tick for MANY, a ring with a dot for ONE. Always drawn
+ * The end mark of a selectable list row (docs/history/477-*): a rounded square with a tick for MANY, a ring with a dot for ONE. Always drawn
  * (an empty ring when off), never a native input (docs/history/453-*).
  */
 export function SelectMark({ kind, selected }: { kind: "check" | "radio"; selected: boolean }) {

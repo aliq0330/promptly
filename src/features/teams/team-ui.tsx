@@ -35,13 +35,13 @@ const SOLID_TONE_CLASS: Record<TeamLook, string> = {
 export const toneClass = (tone: string | null | undefined) => TONE_CLASS[resolveTeamTone(tone)];
 
 /** Ekibin kare "logosu": renk tonu + adın baş harfleri. Kullanıcı içeriği olan ad çevrilmez. */
-export function TeamMark({ name, tone, size = 40, className, solid = false }: { name: string; tone?: string | null; size?: number; className?: string; /** Dolu zemin + beyaz harf (ekip sayfası başlığı, Ekipler kartları — mockup). */ solid?: boolean }) {
+export function TeamMark({ name, tone, size = 40, className, solid = false, fill = false }: { name: string; tone?: string | null; size?: number; className?: string; /** Dolu zemin + beyaz harf (ekip sayfası başlığı, Ekipler kartları — mockup). */ solid?: boolean; /** Kapsayıcıyı doldurur (boyutu ve yazı ölçeğini `className` belirler; bant kapağı duyarlı boyutlanır). */ fill?: boolean }) {
   const initials = name.trim().split(/\s+/).slice(0, 2).map((part) => part.charAt(0)).join("").toLocaleUpperCase() || "?";
   return (
     <span
       aria-hidden
-      className={cn("inline-grid shrink-0 place-items-center rounded-xl font-display font-bold", solid ? SOLID_TONE_CLASS[resolveTeamTone(tone)] : toneClass(tone), className)}
-      style={{ width: size, height: size, fontSize: size * 0.38 }}
+      className={cn("inline-grid shrink-0 place-items-center rounded-xl font-display font-bold", fill && "size-full rounded-none", solid ? SOLID_TONE_CLASS[resolveTeamTone(tone)] : toneClass(tone), className)}
+      style={fill ? undefined : { width: size, height: size, fontSize: size * 0.38 }}
     >
       {initials}
     </span>

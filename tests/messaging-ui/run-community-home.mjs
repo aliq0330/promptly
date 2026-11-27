@@ -649,14 +649,16 @@ await scenario("28. Telefon: bant + kaydırmalı sekmeler; 'Akış' gönderileri
   await head.waitFor();
   assert.match(await head.innerText(), /Sahibi Olduğum/);
   await head.locator("[data-open-chat]").waitFor();
-  // Bant üst satırı: geri oku sola, ⋮ menüsü sağ üst köşeye dayanır; menü paneli ekranın içinde açılır (sola taşıp kırpılmaz).
+  // Mockup (docs/history/476-*): bant kenardan kenara, geri oku YOK; ⋮ menüsü birincil düğmenin yanında, bandın sağında.
   const band = await head.boundingBox();
-  const back = await head.locator("[data-hub-back]").boundingBox();
+  assert.equal(await head.locator("[data-hub-back]").count(), 0, "bantta geri oku yok");
+  assert.ok(band.x <= 1 && band.width >= 389, `bant kenardan kenara (${band.x}, ${band.width})`);
   const menuButton = head.locator("[data-community-menu] button");
   const menuBox = await menuButton.boundingBox();
-  assert.ok(back.x - band.x <= 20, `geri oku bandın soluna dayalı (${back.x - band.x}px)`);
+  const chatBox = await head.locator("[data-open-chat]").boundingBox();
   assert.ok(band.x + band.width - (menuBox.x + menuBox.width) <= 20, "⋮ menüsü bandın sağında");
-  assert.ok(menuBox.y - band.y <= 20, "⋮ menüsü bandın üstünde");
+  assert.ok(Math.abs(menuBox.y - chatBox.y) <= 8 && menuBox.x > chatBox.x + chatBox.width, "⋮ birincil düğmenin yanında");
+  assert.ok(chatBox.width >= 140, `birincil düğme geniş (${chatBox.width}); üyede «Katıldın» ile satırı paylaşır`);
   await menuButton.click();
   const panel = await page.getByRole("menu").boundingBox();
   assert.ok(panel.x >= 0 && panel.x + panel.width <= 390, `menü paneli ekranın içinde (${panel.x}..${panel.x + panel.width})`);

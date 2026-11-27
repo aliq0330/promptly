@@ -36,7 +36,7 @@ export function ContentTypeLabel({
 }
 
 /**
- * A card's kicker (docs/history/476-*): the type's icon + a small label (+ `detail`, e.g. the tool) in the brand colour, drawn BELOW the
+ * A card's kicker (docs/history/477-*): the type's icon + a small label (+ `detail`, e.g. the tool) in the brand colour, drawn BELOW the
  * picture on the feed post (it used to sit on the picture in the light on-art ink) — the same voice as the detail band's `ContentTypeLabel`.
  */
 export function ContentTypePill({ icon: Icon, label, detail, className }: { icon: IconComponent; label: string; detail?: string | null; className?: string }) {

@@ -15,7 +15,7 @@ export interface RelatedCardItem {
 }
 
 /**
- * The "Benzer" blocks' content (docs/history/476-*, "D · Yatay satır", small size): a column of rows — a 56 px cover (the type's icon on a
+ * The "Benzer" blocks' content (docs/history/477-*, "D · Yatay satır", small size): a column of rows — a 56 px cover (the type's icon on a
  * soft tile when the post has no picture), the title (two lines) and one meta line — which shows more posts in the 300 px side column
  * than the old two-up cards did and never cuts a title.
  */

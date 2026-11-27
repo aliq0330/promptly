@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 import type { CommentAttachmentType } from "@/types";
 
 /**
- * The small sizes of the horizontal row ("D · Yatay satır", docs/history/476-*). The FULL row (search, collections, profile, My content) is the
+ * The small sizes of the horizontal row ("D · Yatay satır", docs/history/477-*). The FULL row (search, collections, profile, My content) is the
  * same content card drawn by `ContentCardPost` inside `ContentGrid layout="rows"`; the small rows below are for places that do not hold a
  * whole card — pick lists, the detail page's side column, a ranked list — and only know a cover, a title and one line:
  *

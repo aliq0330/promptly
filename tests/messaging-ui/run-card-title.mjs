@@ -1,4 +1,4 @@
-// Akış gönderisi (docs/history/476-*, "A"): görselin ALTINDA tür · araç etiketi + zaman, başlık ve iki satırlık özet; görselin üstünde yazı yok;
+// Akış gönderisi (docs/history/477-*, "A"): görselin ALTINDA tür · araç etiketi + zaman, başlık ve iki satırlık özet; görselin üstünde yazı yok;
 // "@kullanıcı · zaman" yalnız ekran okuyucuya; çok görselli kartın "+N" çipi sol üstte; telefonda görsel en çok kare. Ağ taklitli; gerçek Supabase'e / cihaza KARŞI DENENMEDİ.
 import { chromium } from "playwright";
 import assert from "node:assert/strict";

@@ -41,7 +41,7 @@ type CardExit = (commit?: () => void | Promise<void>) => Promise<void>;
 const CardExitContext = createContext<CardExit | null>(null);
 
 /**
- * "A" (feed post) or "D" (row) layout of every card under it (docs/history/476-*): `ContentGrid layout="rows"` provides `{ author }` and each
+ * "A" (feed post) or "D" (row) layout of every card under it (docs/history/477-*): `ContentGrid layout="rows"` provides `{ author }` and each
  * content card — which already hands its picture, kicker, title, counters and menu to `ContentCardPost` — draws as a horizontal row (square
  * picture on the left; kicker + time, title, summary, author, counters on the right; hairline under it, no box). No second set of card
  * adapters exists: one card component, two layouts. `author: false` hides the author line where the page is already one person's (a profile).
@@ -50,7 +50,7 @@ type CardLayout = { author: boolean; own: boolean; highlight?: string[] } | null
 const CardLayoutContext = createContext<CardLayout>(null);
 
 /**
- * A page region whose post lists are ROWS (docs/history/476-*): every `ContentGrid` below it draws rows without each list passing `layout`, so a page
+ * A page region whose post lists are ROWS (docs/history/477-*): every `ContentGrid` below it draws rows without each list passing `layout`, so a page
  * (search results, a profile tab, a collection, My content) switches layout in ONE place. `author={false}` hides the author line (the page is one
  * person's); `own` marks the viewer's own library (My content): a status badge and an "Düzenle" button join each row.
  */
@@ -160,7 +160,7 @@ export function ContentGrid({
 }: React.HTMLAttributes<HTMLElement> & {
   as?: "div" | "ul";
   columns?: string;
-  /** "rows" = the horizontal row list (D, docs/history/476-*): every card below draws as a row, in a grid of 1 or 2 columns by width. Default: the surrounding `ContentRowsScope`, else cards. */
+  /** "rows" = the horizontal row list (D, docs/history/477-*): every card below draws as a row, in a grid of 1 or 2 columns by width. Default: the surrounding `ContentRowsScope`, else cards. */
   layout?: "cards" | "rows";
   /** Rows only: false hides each row's author line (a profile's own list). */
   rowAuthor?: boolean;
@@ -230,7 +230,7 @@ export function bandTint(color: string): string {
 }
 
 /**
- * The one inner structure of every content card — the FEED POST (docs/history/476-*, "A · Akış gönderisi"; it replaced the picture-first
+ * The one inner structure of every content card — the FEED POST (docs/history/477-*, "A · Akış gönderisi"; it replaced the picture-first
  * card of 266-* and 277-* whose title sat over the picture):
  *
  *   ┌──────────────────────────────────────────────┐
@@ -401,7 +401,7 @@ export function ContentCardPost({
   );
 }
 
-/** Search results (docs/history/476-*): the words that matched are marked in a row's title and summary. */
+/** Search results (docs/history/477-*): the words that matched are marked in a row's title and summary. */
 function highlightWords(text: string, words: string[] | undefined): React.ReactNode {
   if (!words || words.length === 0) return text;
   const pattern = new RegExp(`(${words.map((word) => word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")})`, "gi");

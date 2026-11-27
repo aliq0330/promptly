@@ -34,7 +34,7 @@ export function TextArtExcerpt({ children, className }: { children: React.ReactN
   );
 }
 
-/** The text surface of a quoted / applied post whose content has no picture: the most telling text it has (the title is drawn below the picture, docs/history/476-*). */
+/** The text surface of a quoted / applied post whose content has no picture: the most telling text it has (the title is drawn below the picture, docs/history/477-*). */
 export function SummaryTextArt({ summary, seed }: { summary: ContentSummary; seed: string }) {
   const text = summary.promptText ?? summary.description ?? "";
   return (

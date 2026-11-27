@@ -10,7 +10,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { PopoverMenu, type PopoverMenuItem } from "@/components/ui/popover-menu";
 import { StorageImg } from "@/components/ui/storage-media";
-import { HUB_BAND_MENU_BUTTON_CLASS } from "@/features/hub/hub-kit";
+import { HUB_BAND_MENU_BUTTON_CLASS, HUB_BLEED_CLASS, HUB_BLEED_TOP_CLASS } from "@/features/hub/hub-kit";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { SPACE_KIND_LABEL, type SpaceTab } from "@/lib/spaces";
 import { cn } from "@/lib/utils";
@@ -101,11 +101,11 @@ export function SpaceHeader({
         </Link>
       )}
       <SpaceTags kindLabel={kindLabel} archived={Boolean(space.archivedAt)} />
-      <span className={TAG_CLASS}>{t("spaces.header.itemsTag", { count: items.length })}</span>
+      <span className={cn(TAG_CLASS, "max-md:hidden")}>{t("spaces.header.itemsTag", { count: items.length })}</span>
     </div>
   );
   return (
-    <header className="relative isolate overflow-hidden rounded-xl border border-border-soft bg-primary-soft" data-space-band="" data-hub-detail-band="">
+    <header className={cn("relative isolate overflow-hidden border-border-soft bg-primary-soft max-md:rounded-none md:rounded-xl md:border", HUB_BLEED_CLASS, HUB_BLEED_TOP_CLASS)} data-space-band="" data-hub-detail-band="">
       {backdropUrl && (
         <div aria-hidden className="absolute inset-0 -z-10 overflow-hidden">
           <div className="absolute inset-0 scale-150 opacity-70 blur-3xl saturate-150">
@@ -118,7 +118,7 @@ export function SpaceHeader({
         <div className="min-w-0 flex-1 space-y-2">
           {tags}
           <h1 className="break-words font-display text-h2 font-extrabold text-text md:text-h1">{space.title}</h1>
-          {space.description && <p className="line-clamp-3 max-w-2xl whitespace-pre-line break-words font-serif text-body text-text-secondary">{space.description}</p>}
+          {space.description && <p className="line-clamp-3 max-w-2xl whitespace-pre-line break-words font-serif text-small text-text-secondary md:text-body">{space.description}</p>}
         </div>
         {!phone && <MemberStack members={members} size={40} />}
         <div className="flex shrink-0 flex-wrap items-center gap-2 md:flex-nowrap" data-space-actions="">
