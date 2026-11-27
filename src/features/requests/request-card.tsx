@@ -1,5 +1,6 @@
 "use client";
 
+import { usePinnedHere } from "@/features/profile/profile-pins";
 import Link from "next/link";
 import { MessageCircle } from "@/components/icons/message-circle";
 import { Reply } from "@/components/icons/reply";
@@ -62,12 +63,15 @@ export function RequestCard({ request, onDeleted }: { request: PromptRequest; on
     </Badge>
   );
 
+  const pinned = usePinnedHere("request", request.id);
+
   return (
     <ContentCard variant="visual" href={href}>
       <ContentCardPost
         author={request.author}
         meta={postMeta(request.author.username, request.createdAt, language)}
         time={formatRelativeTime(request.createdAt, language)}
+        pinned={pinned}
         editHref={`/requests/new?edit=${request.id}`}
         ownMetrics={
           <RowMetrics
@@ -85,7 +89,7 @@ export function RequestCard({ request, onDeleted }: { request: PromptRequest; on
             <CommunityOnlyBadge communityId={request.communityId} />
           </>
         }
-        menu={<PostMenu requestId={request.id} communityId={request.communityId} authorId={request.author.id} onDeleted={onDeleted} />}
+        menu={<PostMenu target={{ kind: "request", request }} onDeleted={onDeleted} />}
         art={
           picture ? (
             <RequestArt

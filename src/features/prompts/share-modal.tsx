@@ -3,11 +3,11 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Bookmark } from "@/components/icons/bookmark";
-import { ChevronRight } from "@/components/icons/chevron-right";
 import { CircleFadingPlus } from "@/components/icons/circle-fading-plus";
 import { Check } from "@/components/icons/check";
-import { Quote as QuoteIcon } from "@/components/icons/quote";
 import { Shapes } from "@/components/icons/shapes";
+import { Download } from "@/components/icons/download";
+import { Link2 } from "@/components/icons/link-2";
 import { Share2 } from "@/components/icons/share-2";
 import { X } from "@/components/icons/x";
 import { Modal } from "@/components/ui/modal";
@@ -24,13 +24,13 @@ import type { TranslationKey } from "@/lib/i18n/translations";
 import { shareRefFromQuery } from "@/features/messages/share-message";
 import { CONTENT_TYPE_META } from "./content-type-meta";
 import { SharePeople } from "./share-people";
-import { shareOrCopyLink } from "./share-button";
+import { canUseNativeShare, copyShareLink, nativeShareLink } from "./share-button";
 import type { Preset, Prompt, PromptRequest, PromptResult, Skill, StoryLinkedType, Workflow } from "@/types";
 import { StorageBackground } from "@/components/ui/storage-media";
-import { QuoteSection } from "@/features/quotes/quote-section";
 import { SaveToCollectionModal } from "@/features/collections/save-to-collection-modal";
 import { AddToSpaceModal, type AddToSpaceTarget } from "@/features/spaces/add-to-space-modal";
-import type { QuoteContentType } from "@/lib/supabase/quotes";
+import { ExportPromptsModal } from "@/features/exchange/export-prompts-modal";
+import { fetchPromptForExport } from "@/lib/supabase/prompt-exchange";
 import { summarizeContent } from "@/features/communities/content-summary";
 import { quoteHref } from "@/lib/quotes";
 import type { Quote } from "@/lib/supabase/quotes";
@@ -204,38 +204,6 @@ function getSharePreview(target: ShareModalTarget, t: (key: TranslationKey) => s
   };
 }
 
-/**
- * "Alıntıla" hedefi (akışta + topluluklarda; eskiden "Topluluklarda duyur"): yalnız topluluğa ait OLMAYAN içerik; herkese açık + yayında değilse satır nedeniyle kapalı durur
- * (topluluk paylaşımı hiçbir içeriği otomatik açmaz). Sonuç ve topluluk gönderisi duyurulamaz.
- */
-function announceTarget(target: ShareModalTarget): { type: QuoteContentType; id: string; blockedKey: TranslationKey | null } | null {
-  if (target.contentType === "prompt") {
-    const x = target.prompt;
-    if (x.communityId) return null;
-    return { type: "prompt", id: x.id, blockedKey: x.status === "published" && x.visibility === "public" ? null : "share.announce.notPublic" };
-  }
-  if (target.contentType === "request") {
-    const x = target.request;
-    if (x.communityId) return null;
-    return { type: "request", id: x.id, blockedKey: !x.isDraft && (x.visibility ?? "public") === "public" ? null : "share.announce.notPublic" };
-  }
-  if (target.contentType === "workflow") {
-    const x = target.workflow;
-    if (x.communityId) return null;
-    return { type: "workflow", id: x.id, blockedKey: x.status === "published" && x.visibility === "public" ? null : "share.announce.notPublic" };
-  }
-  if (target.contentType === "preset") {
-    const x = target.preset;
-    if (x.communityId) return null;
-    return { type: "preset", id: x.id, blockedKey: x.status === "published" && x.visibility === "public" ? null : "share.announce.notPublic" };
-  }
-  if (target.contentType === "skill") {
-    const x = target.skill;
-    return { type: "skill", id: x.id, blockedKey: x.status === "published" && x.visibility === "public" ? null : "share.announce.notPublic" };
-  }
-  return null;
-}
-
 /** "Kendin için" hedefleri: Space'e ekle (topluluğa ait içerik eklenemez) ve koleksiyona kaydet (istek kaydedilemez). */
 function selfTargets(target: ShareModalTarget): { space: AddToSpaceTarget | null; save: { promptId?: string; workflowId?: string; presetId?: string; skillId?: string } | null } {
   if (target.contentType === "prompt") {
@@ -296,38 +264,42 @@ export function ShareModal({ target, onClose }: { target: ShareModalTarget; onCl
   const { user } = useAuth();
   const { t, language } = useTranslation();
   const [copied, setCopied] = useState(false);
-  const [self, setSelf] = useState<"space" | "save" | null>(null);
-  const [quoteOpen, setQuoteOpen] = useState(false);
+  const [self, setSelf] = useState<"space" | "save" | "export" | null>(null);
   const preview = getSharePreview(target, t, language);
-  const announce = user ? announceTarget(target) : null;
   const selfOptions = user ? selfTargets(target) : { space: null, save: null };
 
   // "Kendin için" bir pencere açar; Paylaş penceresinin yerini alır (üst üste iki pencere olmaz).
   if (self === "space" && selfOptions.space) return <AddToSpaceModal target={selfOptions.space} onClose={onClose} />;
   if (self === "save" && selfOptions.save) return <SaveToCollectionModal {...selfOptions.save} onClose={onClose} />;
+  // Dışa aktar (docs/history/480-*): yalnız prompt (başkasınınki yazar adı + bağlantıyla); topluluğa özgü içerik topluluktan çıkmaz.
+  if (self === "export" && target.contentType === "prompt") {
+    const promptId = target.prompt.id;
+    return <ExportPromptsModal single load={() => fetchPromptForExport(promptId, user?.id).then((item) => (item ? [item] : []))} onClose={onClose} />;
+  }
 
-  async function handleNativeShare() {
-    const result = await shareOrCopyLink(preview.href, preview.title, { direct: preview.directLink });
-    if (result === "copied") {
+  // "Bağlantıyı kopyala": her zaman panoya kopyalar; "Diğer uygulamalar": sistem paylaşım sayfası (yalnız destekleyen cihazda).
+  async function handleCopyLink() {
+    if (await copyShareLink(preview.href, { direct: preview.directLink })) {
       setCopied(true);
       setTimeout(onClose, 1200);
-    } else {
-      onClose();
     }
+  }
+  async function handleNativeShare() {
+    const result = await nativeShareLink(preview.href, preview.title, { direct: preview.directLink });
+    if (result === "shared") onClose();
   }
 
   const shareRef = user ? shareRefFromQuery(preview.messageParam, preview.title) : null;
-  const quoteBlocked = announce?.blockedKey ? t(announce.blockedKey) : null;
   // Eylem satırı (docs/history/447-*): kimse seçili değilken kişi ızgarasının altında durur; hepsi tek tür simge + kısa etiket.
+  const canExport = target.contentType === "prompt" && !target.prompt.communityId;
   const actionRow = (
     <div className="flex flex-wrap items-start justify-around gap-x-1 gap-y-3" data-share-actions="">
-      <ShareAction icon={copied ? Check : Share2} label={copied ? t("share.action.copied") : t("share.action.link")} onClick={handleNativeShare} data-share-link="" />
-      {announce && (
-        <ShareAction icon={QuoteIcon} label={t("quotes.section.title")} onClick={() => setQuoteOpen(true)} disabled={Boolean(quoteBlocked)} title={quoteBlocked ?? undefined} data-share-quote="" />
-      )}
+      <ShareAction icon={copied ? Check : Link2} label={copied ? t("share.action.copied") : t("share.action.copyLink")} onClick={handleCopyLink} data-share-copy="" />
+      {canUseNativeShare() && <ShareAction icon={Share2} label={t("share.action.system")} onClick={handleNativeShare} data-share-link="" />}
       {user && preview.storyLink && <ShareAction icon={CircleFadingPlus} label={t("share.action.story")} href={preview.storyLink} onClick={onClose} data-share-to-story="" />}
       {selfOptions.space && <ShareAction icon={Shapes} label={t("share.action.space")} onClick={() => setSelf("space")} data-share-add-to-space="" />}
       {selfOptions.save && <ShareAction icon={Bookmark} label={t("share.action.collection")} onClick={() => setSelf("save")} data-share-save="" />}
+      {canExport && <ShareAction icon={Download} label={t("share.action.export")} onClick={() => setSelf("export")} data-share-export="" />}
     </div>
   );
 
@@ -371,35 +343,7 @@ export function ShareModal({ target, onClose }: { target: ShareModalTarget; onCl
         ) : user ? (
           <div className="mt-4 border-t border-border-soft pt-3">{actionRow}</div>
         ) : (
-          <div className="mt-4 space-y-2">
-            <button
-              type="button"
-              onClick={handleNativeShare}
-              data-share-link=""
-              className="flex w-full items-center gap-3 rounded-md border border-border p-3 text-left transition-colors hover:bg-accent-surface/50"
-            >
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent-surface text-text">
-                <Share2 size={20} />
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block text-small font-semibold text-text">{copied ? t("common.linkCopied") : t("share.shareElsewhere")}</span>
-                <span className="block text-caption text-text-muted">{t("share.shareElsewhereHint")}</span>
-              </span>
-              <ChevronRight size={16} className="shrink-0 text-text-muted" />
-            </button>
-          </div>
-        )}
-        {announce && (
-          <QuoteSection
-            mode="popup"
-            hideTrigger
-            open={quoteOpen}
-            onOpenChange={setQuoteOpen}
-            contextTitle={preview.title}
-            type={announce.type}
-            contentId={announce.id}
-            blockedReason={announce.blockedKey ? t(announce.blockedKey) : null}
-          />
+          <div className="mt-4 border-t border-border-soft pt-3">{actionRow}</div>
         )}
       </div>
     </Modal>

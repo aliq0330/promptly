@@ -1,12 +1,11 @@
 "use client";
 
 import { SkillsUsingContent } from "@/features/skills/skill-aside-blocks";
-import { EngageCommentCount, EngageComments, EngageLike, EngageReactionSummary, EngageSave, EngageShare, EngageStatistics } from "@/features/content/scoped-engagement";
+import { EngageCommentCount, EngageComments, EngageLike, EngageReactionSummary, EngageQuoteSlot, EngageSave, EngageShare } from "@/features/content/scoped-engagement";
 import { usePageTitle } from "@/components/layout/page-title";
 import { DetailMetaCard } from "@/features/content/detail-meta-card";
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { PenLine } from "@/components/icons/pen-line";
 import { ContentTypeLabel } from "@/features/content/content-type-label";
 import { RelatedPrompts } from "@/features/prompts/related-prompts";
 import { TaxonomyLinks } from "@/features/content/taxonomy-links";
@@ -18,7 +17,6 @@ import { PromptActions } from "@/features/prompts/prompt-actions";
 import { PromptDnaDisplay } from "@/features/prompts/prompt-dna-display";
 import { PromptVariableInputs } from "@/features/prompts/prompt-variable-inputs";
 import { EditHistoryPanel } from "@/features/prompts/edit-history-panel";
-import { SuggestEditModal } from "@/features/prompts/suggest-edit-modal";
 import { EditSuggestionsPanel } from "@/features/prompts/edit-suggestions-panel";
 import { PromptHistoryPanel } from "@/features/prompts/prompt-history-panel";
 import { VersionRestoreToast } from "@/features/versions/version-restore-toast";
@@ -33,7 +31,6 @@ import { hasPendingCardTransition, useCardMediaTransition } from "@/lib/card-tra
 import { effectiveVariableValues } from "@/lib/prompt-variable-types";
 import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
 import { PostMenu } from "@/features/prompts/post-menu";
-import type { PostMenuExtra } from "@/features/prompts/post-menu-extras";
 import { parseHighlightValue } from "@/lib/notification-utils";
 import { cn, formatCount, promptHref, relationMapHref } from "@/lib/utils";
 import { splitSourceNotes } from "@/lib/source-notes";
@@ -79,7 +76,6 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
   const [dnaSections, setDnaSections] = useState<DnaSection[]>([]);
   const [versions, setVersions] = useState<PromptVersion[]>([]);
   const [activeTab, setActiveTab] = useState<PromptTab>("prompt");
-  const [isSuggestModalOpen, setIsSuggestModalOpen] = useState(false);
   // The prompt's own display text, lifted into local state so accepting a
   // real edit suggestion (Düzenleme Önerisi modülü) updates the page
   // instantly — `prompt` itself is a prop from a parent that only refetches
@@ -103,11 +99,7 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
   const toolNames = useMemo(() => [...new Set(prompt.tools.map((ref) => findTool(parseToolRef(ref).toolId)?.name).filter((name): name is string => Boolean(name)))], [prompt.tools]);
   const promptInfoLine = [toolNames.length > 0 ? t("prompt.recommendedTool", { tool: toolNames.join(", ") }) : null, t("prompt.charCount", { count: displayText.length.toLocaleString(language) })].filter(Boolean).join(" · ");
 
-  // Rarely-used actions live in the band's ⋮ menu (docs/history/279-*); RelationMapMenu adds the relation-map row after these.
-  const menuExtras = useMemo<PostMenuExtra[]>(
-    () => (user && !isOwn ? [{ key: "suggest-edit", label: t("prompt.suggestEdit"), icon: <PenLine size={16} />, onSelect: () => setIsSuggestModalOpen(true) }] : []),
-    [user, isOwn, t],
-  );
+  // Rarely-used actions (Düzenleme öner dahil) live in the band's ⋮ menu (`PostMenu`, docs/history/480-*); RelationMapMenu adds the relation-map row.
 
   const searchParams = useSearchParams();
   const highlight = parseHighlightValue(searchParams.get("hl"));
@@ -194,8 +186,8 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
             />
           }
           menu={
-            <RelationMapMenu kind="prompt" id={prompt.id} extras={menuExtras}>
-              <PostMenu promptId={prompt.id} communityId={prompt.communityId} authorId={prompt.author.id} />
+            <RelationMapMenu kind="prompt" id={prompt.id}>
+              <PostMenu target={{ kind: "prompt", prompt }} surface="detail" />
             </RelationMapMenu>
           }
         />
@@ -206,7 +198,7 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
           below={<EngageReactionSummary id={prompt.id} likeCount={prompt.likeCount} />}
           end={
             <>
-              <EngageStatistics target={{ contentType: "prompt", contentId: prompt.id, likeCount: prompt.likeCount, commentCount: prompt.commentCount, saveCount: prompt.saveCount, copyCount: prompt.copyCount }} size={20} />
+              <EngageQuoteSlot share={{ contentType: "prompt", prompt }} stats={{ contentType: "prompt", contentId: prompt.id, likeCount: prompt.likeCount, commentCount: prompt.commentCount, saveCount: prompt.saveCount, copyCount: prompt.copyCount }} size={20} />
               <EngageShare target={{ contentType: "prompt", prompt }} />
             </>
           }
@@ -336,14 +328,6 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
           <VersionRestoreToast contentId={prompt.id} />
         </article>
 
-      {isSuggestModalOpen && user && (
-        <SuggestEditModal
-          promptId={prompt.id}
-          proposerId={user.id}
-          promptText={livePromptText}
-          onClose={() => setIsSuggestModalOpen(false)}
-        />
-      )}
     </DetailShell>
   );
 }

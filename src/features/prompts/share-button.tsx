@@ -20,25 +20,41 @@ export async function shareOrCopyLink(
   title: string,
   options?: { direct?: boolean },
 ): Promise<"shared" | "cancelled" | "copied" | "unavailable"> {
-  // Public prompts/requests/workflows/presets/profiles are shared through their static share page so the link unfurls with a real title/description; any other href is used as-is.
-  // `direct`: private (community) content has no static share page — the link goes to the real page, which only people who can read it can open.
-  const fullUrl = absoluteUrl(options?.direct ? url : shareLinkForHref(url));
+  if (canUseNativeShare()) return nativeShareLink(url, title, options);
+  return (await copyShareLink(url, options)) ? "copied" : "unavailable";
+}
 
-  if (typeof navigator !== "undefined" && navigator.share) {
-    try {
-      await navigator.share({ title, url: fullUrl });
-      return "shared";
-    } catch {
-      // user cancelled the native share sheet
-      return "cancelled";
-    }
-  }
+/**
+ * Public prompts/requests/workflows/presets/profiles are shared through their static share page so the link unfurls with a real title/description; any other href is used as-is.
+ * `direct`: private (community) content has no static share page — the link goes to the real page, which only people who can read it can open.
+ */
+export function shareableUrl(url: string, direct?: boolean): string {
+  return absoluteUrl(direct ? url : shareLinkForHref(url));
+}
 
+/** Paylaş penceresinin "Bağlantıyı kopyala" eylemi (docs/history/480-*): her zaman panoya kopyalar (sistem paylaşım sayfası ayrı eylemdir). */
+export async function copyShareLink(url: string, options?: { direct?: boolean }): Promise<boolean> {
   try {
-    await navigator.clipboard.writeText(fullUrl);
-    return "copied";
+    await navigator.clipboard.writeText(shareableUrl(url, options?.direct));
+    return true;
   } catch {
-    return "unavailable";
+    return false;
+  }
+}
+
+/** Tarayıcı/cihaz sistem paylaşım sayfasını (Web Share API) destekliyor mu — telefonlarda genellikle evet, masaüstünde çoğunlukla hayır. */
+export function canUseNativeShare(): boolean {
+  return typeof navigator !== "undefined" && typeof navigator.share === "function";
+}
+
+/** Sistem paylaşım sayfasını açar; kullanıcı vazgeçerse "cancelled". */
+export async function nativeShareLink(url: string, title: string, options?: { direct?: boolean }): Promise<"shared" | "cancelled"> {
+  try {
+    await navigator.share({ title, url: shareableUrl(url, options?.direct) });
+    return "shared";
+  } catch {
+    // user cancelled the native share sheet
+    return "cancelled";
   }
 }
 

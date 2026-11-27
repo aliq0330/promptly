@@ -408,8 +408,8 @@ function PostItem({
     const c = post.content;
     const extras: PostMenuExtra[] = [];
     if (canPin) extras.push({ key: "pin", label: post.pinnedAt ? t("communities.feed.unpin") : t("communities.feed.pin"), icon: post.pinnedAt ? <PinOff size={16} /> : <Pin size={16} />, onSelect: () => onPin(post) });
-    if (role && !mine) extras.push({ key: "report", label: t("communities.report.menu"), icon: <Flag size={16} />, onSelect: () => onAction({ kind: "report", post }) });
-    if (canModerate && !mine) extras.push({ key: "moderate", label: t("communities.feed.removeAsStaff"), icon: <ShieldAlert size={16} />, danger: true, onSelect: () => onAction({ kind: "moderate", post }) });
+    if (role && !mine) extras.push({ key: "report", label: t("communities.report.menu"), icon: <Flag size={16} />, group: "safety", order: 45, onSelect: () => onAction({ kind: "report", post }) });
+    if (canModerate && !mine) extras.push({ key: "moderate", label: t("communities.feed.removeAsStaff"), icon: <ShieldAlert size={16} />, danger: true, group: "safety", order: 55, onSelect: () => onAction({ kind: "moderate", post }) });
     return (
       <li data-community-post={post.id} data-post-kind="native" className={CONTENT_GRID_ITEM_CLASS}>
         {post.pinnedAt && (

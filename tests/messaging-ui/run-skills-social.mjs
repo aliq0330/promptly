@@ -309,7 +309,7 @@ await scenario("4. Yorum yazınca prompt_comments'a skill_id ile yazılır ve li
 
 await scenario("5. ⋮ menüsünde Şikâyet: başkasının Skill'inde var, kendi Skill'inde yok", async ({ page }) => {
   await openDetail(page);
-  const menu = page.locator("[data-skill-menu]");
+  const menu = page.locator('[data-post-menu="detail"]');
   await menu.waitFor();
   await menu.getByRole("button").first().click();
   await page.getByRole("menuitem", { name: /Şikayet/i }).click();
@@ -319,12 +319,12 @@ await scenario("5. ⋮ menüsünde Şikâyet: başkasının Skill'inde var, kend
 
 await scenario("5b. Sahibi kendi Skill'ini şikâyet edemez; ⋮ menüsünde Düzenle ve Sil var, bant dışında ayrı düğme yok", async ({ page }) => {
   await openDetail(page);
-  const menu = page.locator("[data-skill-menu]");
+  const menu = page.locator('[data-post-menu="detail"]');
   await menu.waitFor();
-  assert.equal(await page.locator("[data-detail-actions] [data-skill-edit], [data-detail-actions] [data-skill-delete]").count(), 0, "Düzenle/Sil eylem satırında değil");
+  assert.equal(await page.locator("[data-detail-actions] [data-post-menu-item=edit], [data-detail-actions] [data-post-menu-item=delete]").count(), 0, "Düzenle/Sil eylem satırında değil");
   await menu.getByRole("button").first().click();
-  await page.locator("[data-skill-edit]").waitFor();
-  await page.locator("[data-skill-delete]").waitFor();
+  await page.locator('[data-post-menu-item="edit"]').waitFor();
+  await page.locator('[data-post-menu-item="delete"]').waitFor();
   assert.equal(await page.getByRole("menuitem", { name: /Şikayet/i }).count(), 0);
 }, { me: U.alice });
 
@@ -482,12 +482,9 @@ await scenario("17c. Çalıştı mı?: sahibine ve oysuz Skill'de blok çizilmez
   assert.equal(await page.locator("[data-skill-works]").count(), 0);
 }, { me: U.alice });
 
-await scenario("18. Alıntıla: Skill detayında Paylaş → Alıntıla; create_quote('skill', id, not) çağrılır, topluluk seçici yoktur", async ({ page, state }) => {
+await scenario("18. Alıntıla: Skill detayında eylem çubuğundaki Alıntıla (docs/history/480-*); create_quote('skill', id, not) çağrılır, topluluk seçici yoktur", async ({ page, state }) => {
   await openDetail(page);
-  await page.locator("[data-detail-actions]").getByRole("button", { name: "Paylaş" }).first().click();
-  const modal = page.locator('[data-share-modal="skill"]');
-  await modal.waitFor();
-  await modal.locator("[data-share-quote]").click();
+  await page.locator("[data-detail-actions] [data-quote-trigger]").click();
   const quote = page.locator("[data-quote-popup]");
   await quote.locator("[data-quote-destination=feed]").waitFor();
   assert.equal(await quote.getByText("Topluluklarda alıntıla").count(), 0, "Skill topluluğa duyurulmaz");
@@ -610,16 +607,17 @@ await scenario("29. Prompt sayfasıyla aynı düzen: bölünmüş İndir düğme
   await openDetail(page);
   await page.locator("[data-skill-download-split]").waitFor();
   // Eylem satırında (prompt sayfası gibi) büyük birincil düğme, ⋮ ya da Düzenle/Sil yok: yalnız tepki/yorum/kaydet + İstatistik/Paylaş; İndir bloğun altındadır.
-  assert.equal(await page.locator("[data-detail-actions] [data-skill-download-split], [data-detail-actions] [data-skill-menu], [data-detail-actions] [data-skill-edit], [data-detail-actions] [data-skill-delete]").count(), 0);
+  assert.equal(await page.locator("[data-detail-actions] [data-skill-download-split], [data-detail-actions] [data-post-menu=detail], [data-detail-actions] [data-post-menu-item=edit], [data-detail-actions] [data-post-menu-item=delete]").count(), 0);
   assert.equal(await page.locator("[data-skill-text-block] ~ [data-skill-actions] [data-skill-download-split], [data-skill-actions] [data-skill-download-split]").count(), 1);
   // İndirme seçenekleri ok parçasında (kopyalama ayrı düğme olduğundan üç seçenek).
   await page.locator("[data-skill-download-menu] button").click();
   assert.equal(await page.getByRole("menuitem").count(), 3);
   await page.keyboard.press("Escape");
-  // ⋮ menüsü: bağlantıyı kopyala + ilişki haritası + Şikâyet (başkasının Skill'i).
-  await page.locator("[data-skill-menu]").getByRole("button").first().click();
-  await page.locator("[data-skill-copy-link]").waitFor();
-  await page.locator("[data-skill-relation-map]").waitFor();
+  // ⋮ menüsü (docs/history/480-*): Bağlantıyı kopyala Paylaş'ta; menüde ilişki haritası + İstatistik + Şikâyet (başkasının Skill'i).
+  await page.locator('[data-post-menu="detail"]').getByRole("button").first().click();
+  assert.equal(await page.getByRole("menuitem", { name: /Bağlantıyı kopyala/ }).count(), 0);
+  await page.locator('[data-post-menu-extra="relation-map"]').waitFor();
+  await page.locator('[data-post-menu-item="stats"]').waitFor();
   await page.getByRole("menuitem", { name: /Şikayet/i }).waitFor();
   // Hakkında kartı: uyumlu araç + kategori çipi.
   await page.locator('[data-testid="detail-meta"]').waitFor();
@@ -636,9 +634,9 @@ await scenario("30. Sana özel: Skill, nedeniyle birlikte (takip edilen kişi) S
 await scenario("34. Sana özel: Skill kartının ⋮ menüsünde 'İlgimi çekiyor / çekmiyor' vardır; cevap set_content_interest('skill') ile yazılır", async ({ page, state }) => {
   await page.goto(`${BASE}/`);
   await page.getByText("Logo Skill").first().waitFor();
-  await page.getByRole("button", { name: /Skill menüsü/ }).first().click();
-  await page.getByRole("menuitem", { name: /İlgimi çekmiyor/ }).waitFor();
-  await page.getByRole("menuitem", { name: /İlgimi çekiyor/ }).click();
+  await page.getByRole("button", { name: /Gönderi seçenekleri|Post options/ }).first().click();
+  await page.getByRole("menuitemcheckbox", { name: /İlgimi çekmiyor/ }).waitFor();
+  await page.getByRole("menuitemcheckbox", { name: /İlgimi çekiyor/ }).click();
   const end = Date.now() + 4000;
   while (Date.now() < end && state.interestCalls.length === 0) await new Promise((r) => setTimeout(r, 100));
   assert.equal(state.interestCalls.length, 1);
@@ -691,7 +689,7 @@ await scenario("31. Odak: Skill sahnesi (özet + araç), prompt kartı (Skill + 
 
 await scenario("32. Space'e ekle: Skill detayı ⋮ menüsünden eklenir; kopyalanmaz, content_type=skill ile başvurulur", async ({ page, state }) => {
   await openDetail(page);
-  await page.locator("[data-skill-menu]").getByRole("button").first().click();
+  await page.locator('[data-post-menu="detail"]').getByRole("button").first().click();
   await page.locator("[data-add-to-space]").click();
   const modal = page.getByTestId("add-to-space");
   await modal.waitFor();
@@ -705,12 +703,13 @@ await scenario("32. Space'e ekle: Skill detayı ⋮ menüsünden eklenir; kopyal
   assert.ok(!state.spaceInserts[0].body, "metin kopyalanmadı");
 });
 
-await scenario("33. Skill kartının ⋮ menüsü normal kart gibi: bağlantıyı kopyala + Space'e ekle (oturumlu)", async ({ page }) => {
+await scenario("33. Skill kartının ⋮ menüsü normal kartla AYNI menü (docs/history/480-*): Paylaş + Space'e ekle (oturumlu); Bağlantıyı kopyala menüde yok", async ({ page }) => {
   await page.goto(`${BASE}/discover?section=skills`);
-  const menuButton = page.getByRole("button", { name: /Skill menüsü/ }).first();
+  const menuButton = page.getByRole("button", { name: /Gönderi seçenekleri|Post options/ }).first();
   await menuButton.waitFor();
   await menuButton.click();
-  await page.getByRole("menuitem", { name: /Bağlantıyı kopyala/ }).waitFor();
+  await page.getByRole("menuitem", { name: /^Paylaş$/ }).waitFor();
+  assert.equal(await page.getByRole("menuitem", { name: /Bağlantıyı kopyala/ }).count(), 0);
   await page.getByRole("menuitem", { name: /Space'e ekle/ }).click();
   await page.getByTestId("add-to-space").waitFor();
 });

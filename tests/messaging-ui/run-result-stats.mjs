@@ -116,7 +116,9 @@ const shot = async (page, name) => { if (process.env.SHOTS) await page.screensho
 const box = async (locator) => (await locator.boundingBox());
 const overflowFree = (page) => page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1);
 const openStats = async (page) => {
-  await page.locator("[data-detail-actions]").getByRole("button", { name: /İstatistik|statistics/i }).first().click();
+  // İstatistik eylem çubuğundan ⋮ menüsüne taşındı (docs/history/480-*).
+  await page.locator("[data-detail-menu]").getByRole("button", { name: /Gönderi seçenekleri|Post options/ }).click();
+  await page.locator('[data-post-menu-item="stats"]').click();
   const dialog = page.getByRole("dialog");
   await dialog.waitFor();
   return dialog;

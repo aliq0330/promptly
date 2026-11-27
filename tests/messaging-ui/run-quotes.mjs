@@ -194,17 +194,14 @@ await scenario("3. Alıntı sayfası: bilinmeyen alıntı 'bulunamadı' gösteri
   await page.getByRole("link", { name: "Ana Sayfa'ya git" }).waitFor();
 });
 
-await scenario("4. Paylaş → Alıntıla: not + 'Akışta' seçili; create_quote(prompt, id, not) çağrılır, sonuç alıntı bağlantısı gösterilir; ikinci deneme hatayı açıklar", async ({ page, db, state }) => {
+await scenario("4. Eylem çubuğu → Alıntıla (docs/history/480-*): not + 'Akışta' seçili; create_quote(prompt, id, not) çağrılır, sonuç alıntı bağlantısı gösterilir; ikinci deneme hatayı açıklar", async ({ page, db, state }) => {
   await openNewest(page);
   const post = promptCard(page);
   await post.waitFor();
   assert.equal(await post.getByRole("button", { name: "Paylaş" }).count(), 0, "the visual card has no share button (detail page)");
   await post.getByRole("link", { name: /./ }).first().click();
-  await page.locator("[data-detail-actions]").getByRole("button", { name: "Paylaş" }).first().click();
-  const modal = page.locator('[data-share-modal="prompt"]');
-  await modal.waitFor();
-  await modal.locator("[data-share-quote]").click();
-  // Alıntıla formu Paylaş penceresinin ÜSTÜNDE ikinci bir pencerede açılır (docs/history/338-*).
+  // Alıntıla düğmesi detay eylem çubuğundadır (İstatistik'in yerinde); Paylaş penceresinde artık yok.
+  await page.locator("[data-detail-actions] [data-quote-trigger]").click();
   const quote = page.locator("[data-quote-popup]");
   await quote.locator("[data-quote-destination=feed]").waitFor();
   await quote.locator("[data-quote-note-input]").fill("Harika bir ışık");
@@ -224,9 +221,7 @@ await scenario("5. Alıntıla: sunucu hatası (already_quoted) nedeniyle açıkl
   await openNewest(page);
   const post = promptCard(page);
   await post.getByRole("link", { name: /./ }).first().click();
-  await page.locator("[data-detail-actions]").getByRole("button", { name: "Paylaş" }).first().click();
-  const modal = page.locator('[data-share-modal="prompt"]');
-  await modal.locator("[data-share-quote]").click();
+  await page.locator("[data-detail-actions] [data-quote-trigger]").click();
   const quote = page.locator("[data-quote-popup]");
   await quote.locator("[data-quote-submit]").click();
   await quote.getByText("Bu içeriği son 24 saatte zaten alıntıladın.").waitFor();

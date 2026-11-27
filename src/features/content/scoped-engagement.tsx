@@ -12,6 +12,7 @@ import type { StatisticsTarget } from "@/features/statistics/statistics-modal";
 import { PostCommentLink, PostLike, PostSave, PostShareButton, PostStatisticsButton } from "@/features/communities/post-engagement";
 import { usePostScope } from "@/features/communities/post-scope";
 import { QuoteCommentLink, QuoteLike, QuoteShareButton, QuoteStatisticsButton } from "@/features/quotes/quote-engagement";
+import { QuoteTriggerButton } from "@/features/quotes/quote-trigger-button";
 import { useQuoteScope } from "@/features/quotes/quote-scope";
 import type { LikeableContentType } from "@/lib/supabase/likes";
 
@@ -91,6 +92,17 @@ export function EngageStatistics({ target, label, size = 18 }: { target: Statist
   if (quoteScope) return <QuoteStatisticsButton quote={quoteScope.quote} size={size} label={label} />;
   if (scope) return <PostStatisticsButton post={scope.post} size={size} label={label} />;
   return <StatisticsButton target={target} size={size} label={label} />;
+}
+
+/**
+ * Eylem çubuğunun sağ başındaki düğme (docs/history/480-*): normal içerik sayfasında **Alıntıla** (İstatistik ⋮ menüsüne taşındı); başvuru gönderisi /
+ * alıntı sayfasında gönderi alıntılanamayacağı için eskisi gibi **İstatistik** kalır.
+ */
+export function EngageQuoteSlot({ share, stats, size = 20 }: { share: ShareModalTarget; stats: StatisticsTarget; size?: number }) {
+  const scope = usePostScope();
+  const quoteScope = useQuoteScope();
+  if (scope || quoteScope) return <EngageStatistics target={stats} size={size} />;
+  return <QuoteTriggerButton target={share} size={size} />;
 }
 
 export function EngageShare({ target, label }: { target: ShareModalTarget; label?: string }) {

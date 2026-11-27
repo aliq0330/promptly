@@ -10,7 +10,7 @@ type PostHeaderTarget =
   | { preset: Preset; prompt?: never; workflow?: never };
 
 /**
- * The ⋮ menu of a prompt / workflow / preset card (Bağlantıyı kopyala, Düzenle, Sil, koleksiyondan kaldır…).
+ * The ⋮ menu of a prompt / workflow / preset card (Paylaş, Space'e ekle, Düzenle, Sil, koleksiyondan kaldır… — docs/history/480-*).
  * Since Meydan (docs/history/190-*) the identity row itself is drawn by `ContentCardPost`; this only picks the
  * right `PostMenu` for the target.
  */
@@ -22,13 +22,9 @@ export function PostTargetMenu({
   onDeleted?: () => void;
   collectionRemoval?: { onRemove: () => Promise<void> };
 }) {
-  if (target.preset) {
-    return <PostMenu presetId={target.preset.id} communityId={target.preset.communityId} authorId={target.preset.creator.id} onDeleted={onDeleted} collectionRemoval={collectionRemoval} />;
-  }
-  if (target.workflow) {
-    return <PostMenu workflowId={target.workflow.id} communityId={target.workflow.communityId} authorId={target.workflow.creator.id} onDeleted={onDeleted} collectionRemoval={collectionRemoval} />;
-  }
-  return <PostMenu promptId={target.prompt.id} communityId={target.prompt.communityId} authorId={target.prompt.author.id} onDeleted={onDeleted} collectionRemoval={collectionRemoval} />;
+  if (target.preset) return <PostMenu target={{ kind: "preset", preset: target.preset }} onDeleted={onDeleted} collectionRemoval={collectionRemoval} />;
+  if (target.workflow) return <PostMenu target={{ kind: "workflow", workflow: target.workflow }} onDeleted={onDeleted} collectionRemoval={collectionRemoval} />;
+  return <PostMenu target={{ kind: "prompt", prompt: target.prompt }} onDeleted={onDeleted} collectionRemoval={collectionRemoval} />;
 }
 
 /** "@carol · 3 gün önce" (+ " · Yanıt paylaştı") — the muted part of a card's identity line. */

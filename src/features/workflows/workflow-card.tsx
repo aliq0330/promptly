@@ -1,5 +1,6 @@
 "use client";
 
+import { usePinnedHere } from "@/features/profile/profile-pins";
 import { ArrowRight } from "@/components/icons/arrow-right";
 import { Bookmark } from "@/components/icons/bookmark";
 import { Heart } from "@/components/icons/heart";
@@ -38,12 +39,15 @@ export function WorkflowCard({
   const category = categoryLabel(workflow.contentTypes, workflow.category, language);
   const rows = useRowsLayout();
 
+  const pinned = usePinnedHere("workflow", workflow.id);
+
   return (
     <ContentCard variant="visual" href={href}>
       <ContentCardPost
         author={workflow.creator}
         meta={postMeta(workflow.creator.username, workflow.createdAt, language)}
         time={formatRelativeTime(workflow.createdAt, language)}
+        pinned={pinned}
         editHref={`/workflows/create?edit=${workflow.id}`}
         ownMetrics={
           <RowMetrics
