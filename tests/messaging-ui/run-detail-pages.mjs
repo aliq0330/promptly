@@ -55,7 +55,7 @@ for (const kind of ["prompt", "request", "workflow", "preset"]) {
     assert.ok((await meta.getByText(/Tavsiye edilen araç\/model|Tercih edilen araç\/model/).count()) === 1, "tool label inside the meta card");
     await page.locator("#comments").waitFor();
     assert.match((await page.locator("#comments h2").first().textContent()) ?? "", /Yorumlar/);
-    // Takip Et bantta, yazar adının hemen sonunda; ⋮ bandın sağ üst köşesinde; İstatistik · Paylaş eylem satırının en sağında
+    // Takip Et bantta, yazar adının hemen sonunda; ⋮ bandın sağ üst köşesinde; Alıntıla · Paylaş eylem satırının en sağında
     const follow = await box(page.locator("[data-detail-band]").getByRole("button", { name: "Takip Et" }));
     const author = await box(page.locator("[data-detail-band] [data-detail-author]"));
     assert.ok(follow.left >= author.right - 1 && Math.abs((follow.top + follow.bottom) / 2 - (author.top + author.bottom) / 2) <= 6, "Takip Et right after the author's name, on its line");
@@ -63,9 +63,11 @@ for (const kind of ["prompt", "request", "workflow", "preset"]) {
     const menu = await box(page.locator("[data-detail-menu]"));
     assert.ok(menu.top - band.top <= 24 && band.right - menu.right <= 24, "⋮ sits in the band's top-right corner");
     const share = await box(bar.getByRole("button", { name: "Paylaş" }));
-    const stats = await box(bar.getByRole("button", { name: /İstatistik/ }).first());
+    // docs/history/480-*: İstatistik eylem çubuğundan ⋮ menüsüne taşındı; yerine Alıntıla geldi.
+    assert.equal(await bar.getByRole("button", { name: /İstatistik/ }).count(), 0, "İstatistik is no longer in the action row (it lives in the ⋮ menu)");
+    const quote = await box(bar.locator("[data-quote-trigger]"));
     const like = await box(bar.getByRole("button", { name: /Beğen|Tepki/ }).first());
-    assert.ok(share.left >= stats.right - 1 && stats.left > like.right + 40, "İstatistik · Paylaş on the far right");
+    assert.ok(share.left >= quote.right - 1 && quote.left > like.right + 40, "Alıntıla · Paylaş on the far right");
     assert.equal(await page.locator("[data-detail-actions]").getByRole("button", { name: "Promptu Kopyala" }).count(), 0, "no big copy button in the actions row");
   }, { viewport: { width: 390, height: 844 } });
 }

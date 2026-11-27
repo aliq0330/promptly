@@ -175,8 +175,8 @@ export function InterestCardFrame({ interest, item, index, children }: { interes
 
   const toggle = (value: InterestValue) => interest.answer(target, status === value ? null : value);
   const extras: PostMenuExtra[] = [
-    { key: "interest-yes", label: t("interest.yes"), icon: <Check size={16} aria-hidden />, selected: status === "interested", onSelect: () => toggle("interested") },
-    { key: "interest-no", label: t("interest.no"), icon: <X size={16} aria-hidden />, selected: status === "not_interested", onSelect: () => toggle("not_interested") },
+    { key: "interest-yes", label: t("interest.yes"), icon: <Check size={16} aria-hidden />, tone: "positive", group: "person", order: 20, selected: status === "interested", onSelect: () => toggle("interested") },
+    { key: "interest-no", label: t("interest.no"), icon: <X size={16} aria-hidden />, tone: "danger", group: "person", order: 30, selected: status === "not_interested", onSelect: () => toggle("not_interested") },
   ];
 
   return (

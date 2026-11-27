@@ -62,10 +62,11 @@ await scenario("1. Pencere açılır: kişi, topluluk ve ekip kanalı hedefleri 
   assert.equal(await modal.locator(`[data-share-target="${ADMINS}"]`).count(), 0, "yalnız yönetimin yazabildiği topluluk hedef değil");
   const preview = modal.locator("[data-share-preview]");
   assert.ok((await preview.boundingBox()).height < 48, "önizleme küçük çip");
-  // Kimse seçili değilken eylem satırı: Bağlantı · Alıntıla · Hikâye · Space · Koleksiyon.
+  // Kimse seçili değilken eylem satırı (docs/history/480-*): Bağlantıyı kopyala · Hikâye · Space · Koleksiyon · Dışa aktar; Alıntıla eylem çubuğuna taşındı.
   const actions = modal.locator("[data-share-actions]");
-  await actions.getByText("Bağlantı", { exact: true }).waitFor();
-  await actions.getByText("Alıntıla", { exact: true }).waitFor();
+  await actions.getByText("Bağlantıyı kopyala", { exact: true }).waitFor();
+  await actions.getByText("Dışa aktar", { exact: true }).waitFor();
+  assert.equal(await actions.getByText("Alıntıla", { exact: true }).count(), 0, "Alıntıla Paylaş penceresinde değil");
   assert.equal(await modal.locator("[data-share-people-compose]").count(), 0);
   // Pencerenin tamamı telefonda kaydırmadan sığar.
   const box = await modal.locator("[data-share-modal]").boundingBox().catch(() => null);
@@ -156,19 +157,40 @@ await scenario("8. Bu cihazdan sık paylaşılan sohbet öne geçer (yerel saya�
   assert.equal(first, C_ALICE);
 }, { setup: (db) => { db.addConv(C_ALICE, U.carol, { texts: ["eski"] }); db.addConv(C_BOB, U.bob, { texts: ["yeni"] }); } });
 
-await scenario("9. Eylem satırı: Bağlantı kopyalanır; Alıntıla ikinci pencereyi açar", async ({ page, context }) => {
+await scenario("9. Eylem satırı: 'Bağlantıyı kopyala' panoya yazar (sistem paylaşım sayfası olmasa da çalışır); 'Diğer uygulamalar' yok", async ({ page, context }) => {
   await context.grantPermissions(["clipboard-read", "clipboard-write"]);
   const modal = await openShare(page);
   await page.evaluate(() => Object.defineProperty(navigator, "share", { value: undefined, configurable: true }));
-  await modal.locator("[data-share-link]").click();
+  assert.equal(await modal.locator("[data-share-link]").count(), 0, "sistem paylaşımı desteklenmiyorsa düğme yok");
+  await modal.locator("[data-share-copy]").click();
   await modal.getByText("Kopyalandı", { exact: true }).waitFor();
   assert.match(await page.evaluate(() => navigator.clipboard.readText()), /prompts|share/);
 }, { setup: seed });
 
-await scenario("9b. Alıntıla simgesi alıntı penceresini açar", async ({ page }) => {
+await scenario("9a. Sistem paylaşım sayfası ayrı eylem: destekleyen cihazda 'Diğer uygulamalar' navigator.share'i çağırır (kopyalamaz)", async ({ page, context }) => {
+  await context.addInitScript(() => { window.__shared = []; Object.defineProperty(navigator, "share", { value: async (data) => { window.__shared.push(data); }, configurable: true }); });
   const modal = await openShare(page);
-  await modal.locator("[data-share-quote]").click();
+  await modal.getByText("Diğer uygulamalar", { exact: true }).waitFor();
+  await modal.locator("[data-share-link]").click();
+  await page.waitForFunction(() => window.__shared.length === 1);
+  const shared = await page.evaluate(() => window.__shared[0]);
+  assert.match(shared.url, /prompts|share/);
+  assert.equal(await modal.getByText("Kopyalandı", { exact: true }).count(), 0, "sistem paylaşımı panoya yazmaz");
+}, { setup: seed });
+
+await scenario("9b. Alıntıla eylem çubuğundadır (İstatistik'in yerinde): düğme alıntı penceresini açar; Paylaş'ta yok", async ({ page }) => {
+  await page.goto(`${BASE}${PAGES.prompt}`);
+  const bar = page.locator("[data-detail-actions]");
+  await bar.locator("[data-quote-trigger]").waitFor();
+  assert.equal(await bar.getByRole("button", { name: /İstatistik|statistics/i }).count(), 0, "İstatistik düğmesi eylem çubuğundan kalktı (⋮ menüsünde)");
+  await bar.locator("[data-quote-trigger]").click();
   await page.locator("[data-quote-popup]").waitFor();
+}, { setup: seed });
+
+await scenario("9c. Dışa aktar Paylaş penceresinde de var: dosya penceresi açılır", async ({ page }) => {
+  const modal = await openShare(page);
+  await modal.locator("[data-share-export]").click();
+  await page.locator('[data-testid="exchange-export"]').waitFor();
 }, { setup: seed });
 
 await scenario("10. İngilizce: etiketler çevrilmiş", async ({ page }) => {

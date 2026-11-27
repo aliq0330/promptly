@@ -62,6 +62,8 @@ const SERVER_ERROR_KEYS: Record<string, TranslationKey> = {
   skill_version_immutable: "error.skillVersionImmutable",
   skill_publish_via_edge: "error.skillPublishViaEdge",
   skill_secret_found: "error.skillSecretFound",
+  // Profilde sabitle (docs/history/480-*)
+  pin_limit: "error.profilePinLimit",
 };
 
 /** Hata zaten kendi ekranında (ör. şikâyet penceresi) gösterildiğinden ayrıca toast çıkmayan kodlar. */

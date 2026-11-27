@@ -521,3 +521,12 @@ ONLY="24" node tests/messaging-ui/run-calls.mjs
 
 `run-card-art.mjs` (6 senaryo, port 4320; `docs/history/479-*`): Ana Sayfa kartlarında zengin sanat — İstek yanıt küçük resimleri + "+" kutusu + sol alt durum çipi, Workflow adım düğümleri + oklar, Ayar paketi gerçek slider çubukları/renk (önce/sonra kaydırıcısı yok), Skill paket kutusu (en yeni sürüm), veri yokken eski sanat, telefonda taşma yok. Ağ taklitli; gerçek cihaza KARŞI DENENMEDİ.
 CHROMIUM_PATH=/opt/pw-browsers/chromium node tests/messaging-ui/run-card-art.mjs   # 6/6 beklenir
+
+## Gönderi ⋮ menüsü + Profilde sabitle (`docs/history/480-*`)
+
+`run-post-menu.mjs` (16 senaryo, port 4330): kart ve detay ⋮ menülerinin satır kümesi (başkasının / kendi gönderisi, mockup sırası, gruplar arası ayırıcı), olumsuz satırların kırmızı / "İlgimi çekiyor"un yeşil olması, yatay üç nokta, telefonda alttan açılan kart ↔ masaüstünde açılır panel, detay düğmesinin belirgin (≥ 40 px, kenarlıklı) olması, Bağlantıyı kopyala'nın menüde olmaması, eylemlerin yazma çağrıları (`set_profile_pin` + sabit sınırı hatası, `set_notification_mute` içerik/kişi, takip, engel onayı, `set_content_interest`), profilde sabitlenen gönderinin en üstte raptiyeyle görünmesi (başkasının ve kendi profili, anında), İngilizce. Ağ taklidi; gerçek Supabase'e KARŞI DENENMEDİ — sabitleme kuralları `supabase/tests/profile-pins.sql`'dedir.
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=https://example.supabase.co NEXT_PUBLIC_SUPABASE_ANON_KEY=dummy NEXT_PUBLIC_SKILLS_ENABLED=true npm run build
+node tests/messaging-ui/run-post-menu.mjs   # 16/16 beklenir
+```

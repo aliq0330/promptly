@@ -68,7 +68,7 @@ async function openPromptReport(page) {
   await page.goto(BASE + PAGES.prompt);
   await page.locator("[data-detail-actions]").waitFor();
   await page.getByRole("button", { name: /Gönderi seçenekleri|Post options/ }).first().click();
-  await page.getByRole("menuitem", { name: /Şikayet Et|Report/ }).click();
+  await page.getByRole("menuitem", { name: /Şikayet et|Report/i }).click();
   await modal(page).waitFor();
 }
 
@@ -197,7 +197,7 @@ await scenario("7. Kapat-aç sıfırlanır: seçim ve metin kalmaz; Escape ve Va
   await page.keyboard.press("Escape");
   await modal(page).waitFor({ state: "detached" });
   await page.getByRole("button", { name: /Gönderi seçenekleri|Post options/ }).first().click();
-  await page.getByRole("menuitem", { name: "Şikayet Et" }).click();
+  await page.getByRole("menuitem", { name: /^Şikayet et$/i }).click();
   await modal(page).waitFor();
   assert.equal(await modal(page).locator("[data-report-reason][aria-checked='true']").count(), 0);
   assert.equal(await modal(page).locator("textarea").count(), 0);
@@ -290,7 +290,7 @@ await scenario("12. İngilizce: başlık, nedenler, düğmeler ve başarı ekran
 await scenario("13. Ziyaretçi (oturumsuz): şikâyet noktası hiç çizilmez, pencere açılmaz", async ({ page }) => {
   await page.goto(BASE + PAGES.prompt);
   await page.locator("[data-detail-actions]").waitFor();
-  assert.equal(await page.getByRole("menuitem", { name: /Şikayet Et/ }).count(), 0);
+  assert.equal(await page.getByRole("menuitem", { name: /Şikayet et/i }).count(), 0);
   assert.equal(await page.getByRole("button", { name: "Şikayet Et" }).count(), 0);
   assert.equal(await modal(page).count(), 0);
 }, { guest: true });

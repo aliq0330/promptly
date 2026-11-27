@@ -44,6 +44,7 @@ import { firstRunTranslations } from "./translations-first-run";
 import { settingsTranslations } from "./translations-settings";
 import { connectGuideTranslations } from "./translations-connect-guide";
 import { worksTranslations } from "./translations-works";
+import { postMenuTranslations } from "./translations-post-menu";
 import { composeStudioTranslations } from "./translations-compose-studio";
 import { focusTranslations } from "./translations-focus";
 import { workflowAutoTranslations } from "./translations-workflow-auto";
@@ -3350,6 +3351,7 @@ export const translations = {
   ...settingsTranslations,
   ...connectGuideTranslations,
   ...worksTranslations,
+  ...postMenuTranslations,
   ...composeStudioTranslations,
   ...focusTranslations,
   ...workflowAutoTranslations,

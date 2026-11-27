@@ -138,7 +138,7 @@ export function ResultDetailView() {
           }
           title={<DetailTitle>{result.originalPrompt?.title ?? t("result.cardAriaLabel", { name: result.creator.displayName })}</DetailTitle>}
           byline={<DetailByline person={result.creator} createdAt={result.createdAt} language={language} />}
-          menu={<PostMenu resultId={result.id} authorId={result.creator.id} onDeleted={handleDeleted} onEdit={() => setIsEditOpen(true)} />}
+          menu={<PostMenu target={{ kind: "result", result }} surface="detail" onDeleted={handleDeleted} onEdit={() => setIsEditOpen(true)} />}
         />
       }
       actions={

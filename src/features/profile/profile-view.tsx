@@ -37,12 +37,13 @@ import { fetchPublicCollectionsByOwner } from "@/lib/supabase/collections";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
-import { fetchAuthorPromptsPage, fetchLikedPromptsPage, fetchProfileContentStats, type ProfileContentStats } from "@/lib/supabase/prompts";
+import { fetchAuthorPromptsPage, fetchLikedPromptsPage, fetchProfileContentStats, fetchPromptsByIds, type ProfileContentStats } from "@/lib/supabase/prompts";
+import { mergePinned, NO_PROFILE_PINS, ProfilePinScope, useProfilePins, usePinnedItemsFor } from "./profile-pins";
 import { usePagedList } from "@/features/content/use-paged-list";
 import { PagedListSkeleton, PagedListState } from "@/features/feed/paged-list-state";
 import { LoadMore } from "@/features/feed/load-more";
-import { fetchWorkflowsByCreatorPage } from "@/lib/supabase/workflows";
-import { fetchRequestsByAuthorPage } from "@/lib/supabase/requests";
+import { fetchWorkflowsByCreatorPage, fetchWorkflowsByIds } from "@/lib/supabase/workflows";
+import { fetchRequestsByAuthorPage, fetchRequestsByIds } from "@/lib/supabase/requests";
 import { WorkflowCard } from "@/features/workflows/workflow-card";
 import { ProfilePresetsPanel } from "@/features/presets/profile-presets-panel";
 import { ProfileSkillsPanel } from "@/features/skills/profile-skills-panel";
@@ -231,6 +232,16 @@ export function ProfileView({
   }, [liked.items, activeType, normalizedSearch, sort]);
   const list = activeTab === "liked" ? { items: filteredLiked, loading: liked.loading, failed: liked.failed, hasMore: liked.hasMore, loadingMore: liked.loadingMore, loadMore: liked.loadMore, retry: liked.retry, total: liked.total } : prompts;
 
+  // "Profilde sabitle" (docs/history/480-*): sabitlenen gönderiler bölümün en üstünde (raptiye işaretiyle); arama/süzgeç açıkken sıradan sonuç gösterilir.
+  const profilePins = useProfilePins(user.id);
+  const filtering = activeType !== "all" || normalizedSearch.length > 0;
+  const pinnedPrompts = usePinnedItemsFor(profilePins.pins, "prompt", fetchPromptsByIds, (prompt) => prompt.status === "published" && prompt.visibility === "public", activeTab === "prompts" && !filtering);
+  const pinnedRequests = usePinnedItemsFor(profilePins.pins, "request", fetchRequestsByIds, (request) => !request.isDraft && (request.visibility ?? "public") === "public", activeTab === "requests");
+  const pinnedWorkflows = usePinnedItemsFor(profilePins.pins, "workflow", fetchWorkflowsByIds, (workflow) => workflow.status === "published" && workflow.visibility === "public", activeTab === "workflows");
+  const promptItems = activeTab === "prompts" ? mergePinned(pinnedPrompts, list.items) : list.items;
+  const requestItems = mergePinned(pinnedRequests, requests.items);
+  const workflowItems = mergePinned(pinnedWorkflows, workflows.items);
+
   // The section's own filter icon (prompts / liked lists) sit in the control row next to the menu.
   const filterable = activeTab === "prompts" || activeTab === "liked";
   const hasActiveFilters = activeType !== "all" || normalizedSearch.length > 0;
@@ -320,6 +331,7 @@ export function ProfileView({
             />
           )}
 
+          <ProfilePinScope pins={activeTab === "liked" ? NO_PROFILE_PINS : profilePins.pins}>
           <ContentRowsScope author={activeTab === "liked"}>
           <div className="mt-4 space-y-4">
             {activeTab === "about" ? (
@@ -338,7 +350,7 @@ export function ProfileView({
                     action={isOwnProfile ? { label: t("create.requestTitle"), href: "/requests/new" } : undefined}
                   />
                 ) : (
-                  <RequestList requests={requests.items} />
+                  <RequestList requests={requestItems} />
                 )}
               </PagedListState>
             ) : activeTab === "workflows" ? (
@@ -352,7 +364,7 @@ export function ProfileView({
                   />
                 ) : (
                   <ContentGrid>
-                    {workflows.items.map((workflow) => (
+                    {workflowItems.map((workflow) => (
                       <div key={workflow.id} className={CONTENT_GRID_ITEM_CLASS}>
                         <WorkflowCard workflow={workflow} />
                       </div>
@@ -401,7 +413,7 @@ export function ProfileView({
                 ) : (
                   <>
                     <ProfileContentGrid
-                      prompts={list.items}
+                      prompts={promptItems}
                       isOwnProfile={isOwnProfile && activeTab === "prompts"}
                       onDeleted={handleDeleted}
                       emptyState={
@@ -423,6 +435,7 @@ export function ProfileView({
             )}
           </div>
           </ContentRowsScope>
+          </ProfilePinScope>
         </div>
       </div>
     </ContentGridColumns>

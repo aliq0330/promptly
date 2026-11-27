@@ -2,7 +2,7 @@
 
 import { DISCOVER_SECTION_HREF } from "@/lib/list-routes";
 import { SkillsUsingContent } from "@/features/skills/skill-aside-blocks";
-import { EngageCommentCount, EngageComments, EngageLike, EngageReactionSummary, EngageSave, EngageShare, EngageStatistics } from "@/features/content/scoped-engagement";
+import { EngageCommentCount, EngageComments, EngageLike, EngageReactionSummary, EngageQuoteSlot, EngageSave, EngageShare } from "@/features/content/scoped-engagement";
 import { usePageTitle } from "@/components/layout/page-title";
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -165,9 +165,8 @@ export function PresetDetailView({ presetId }: { presetId?: string } = {}) {
           byline={<DetailByline person={preset.creator} createdAt={preset.createdAt} language={language} follow={!isOwn && <FollowButton user={preset.creator} />} />}
           menu={
             <PostMenu
-              presetId={preset.id}
-              communityId={preset.communityId}
-              authorId={preset.creator.id}
+              target={{ kind: "preset", preset }}
+              surface="detail"
               onDeleted={() => {
                 removeFromCache(preset.id);
                 router.push(DISCOVER_SECTION_HREF.presets);
@@ -198,8 +197,9 @@ export function PresetDetailView({ presetId }: { presetId?: string } = {}) {
           }
           end={
             <>
-              <EngageStatistics
-                target={{ contentType: "preset", contentId: preset.id, likeCount: preset.likeCount, commentCount: preset.commentCount, saveCount: preset.saveCount }}
+              <EngageQuoteSlot
+                share={{ contentType: "preset", preset }}
+                stats={{ contentType: "preset", contentId: preset.id, likeCount: preset.likeCount, commentCount: preset.commentCount, saveCount: preset.saveCount }}
                 size={20}
               />
               <EngageShare target={{ contentType: "preset", preset }} />

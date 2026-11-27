@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { buttonClassName } from "@/components/ui/button";
 import { StorageImg } from "@/components/ui/storage-media";
 import { FeedItemCard } from "@/features/feed/feed-grid";
+import { PostMenuOptions } from "@/features/prompts/post-menu-extras";
 import { FollowButton } from "@/features/profile/follow-button";
 import { ResultCard } from "@/features/prompts/result-card";
 import { contentImage } from "@/features/content/content-image";
@@ -128,7 +129,9 @@ function When({ at }: { at: string }) {
 function CardSlot({ item }: { item: FeedEntry }) {
   return (
     <div className="w-full max-w-[480px]">
-      <FeedItemCard item={item} />
+      <PostMenuOptions interest={false}>
+        <FeedItemCard item={item} />
+      </PostMenuOptions>
     </div>
   );
 }

@@ -119,7 +119,7 @@ await scenario("3c. Yerel içeriğin (detay sayfasından) paylaşımı özel iç
   await page.evaluate(() => Object.defineProperty(navigator, "share", { value: undefined, configurable: true }));
   await post(page, "Yerel prompt").locator("article").first().getByRole("link", { name: "Yerel prompt" }).click();
   await page.locator("[data-detail-actions]").getByRole("button", { name: "Paylaş" }).first().click();
-  await dlg(page).locator("[data-share-link]").click();
+  await dlg(page).locator("[data-share-copy]").click();
   const copied = await page.evaluate(() => navigator.clipboard.readText());
   assert.match(copied, /prompts\/local\/?\?id=/);
   assert.doesNotMatch(copied, /\/share\//, "private community content has no public share page");
@@ -147,7 +147,7 @@ await scenario("3d. Başvuru gönderisinin sayfası Kaydet + İstatistik + Payla
   await page.evaluate(() => Object.defineProperty(navigator, "share", { value: undefined, configurable: true }));
   await bar3d.getByRole("button", { name: "Paylaş" }).click();
   await dlg(page).locator("[data-share-people-more]").waitFor();
-  await dlg(page).locator("[data-share-link]").click();
+  await dlg(page).locator("[data-share-copy]").click();
   const copied = await page.evaluate(() => navigator.clipboard.readText());
   assert.match(copied, /communities\/post\/local\/?\?id=/);
 }, { setup: (db) => { seed(db, { myRole: "member" }); db.addPost(C1, { title: "Başvuru prompt", kind: "application" }); } });

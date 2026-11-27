@@ -1,7 +1,7 @@
 "use client";
 
 import { DISCOVER_SECTION_HREF } from "@/lib/list-routes";
-import { EngageCommentCount, EngageComments, EngageLike, EngageReactionSummary, EngageShare, EngageStatistics } from "@/features/content/scoped-engagement";
+import { EngageCommentCount, EngageComments, EngageLike, EngageQuoteSlot, EngageReactionSummary, EngageShare } from "@/features/content/scoped-engagement";
 import { usePageTitle } from "@/components/layout/page-title";
 import { DetailMetaCard } from "@/features/content/detail-meta-card";
 import { useEffect, useRef, useState } from "react";
@@ -242,7 +242,7 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
           byline={<DetailByline person={live.author} createdAt={live.createdAt} language={language} follow={!isOwnRequest && <FollowButton user={live.author} />} />}
           menu={
             <RelationMapMenu kind="request" id={live.id}>
-              <PostMenu requestId={live.id} communityId={live.communityId} authorId={live.author.id} onDeleted={handleDeleted} />
+              <PostMenu target={{ kind: "request", request: live }} surface="detail" onDeleted={handleDeleted} />
             </RelationMapMenu>
           }
         />
@@ -254,7 +254,7 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
           primary={primary}
           end={
             <>
-              <EngageStatistics target={{ contentType: "request", contentId: live.id, likeCount: live.likeCount, commentCount: live.commentCount }} size={20} />
+              <EngageQuoteSlot share={{ contentType: "request", request: live }} stats={{ contentType: "request", contentId: live.id, likeCount: live.likeCount, commentCount: live.commentCount }} size={20} />
               <EngageShare target={{ contentType: "request", request: live }} />
             </>
           }

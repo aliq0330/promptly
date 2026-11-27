@@ -58,7 +58,7 @@ export function RelationMapMenu({ kind, id, extras = [], children }: { kind: Rel
   const items: PostMenuExtra[] = [
     ...inherited,
     ...extras,
-    { key: "relation-map", label: t("relations.open"), icon: <Network size={16} />, onSelect: () => router.push(relationMapHref({ kind, id })) },
+    { key: "relation-map", label: t("relations.open"), icon: <Network size={16} />, group: "content", order: 15, onSelect: () => router.push(relationMapHref({ kind, id })) },
   ];
   return <PostMenuExtras items={items}>{children}</PostMenuExtras>;
 }

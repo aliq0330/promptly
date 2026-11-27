@@ -2,7 +2,7 @@
 
 import { DISCOVER_SECTION_HREF } from "@/lib/list-routes";
 import { SkillsUsingContent } from "@/features/skills/skill-aside-blocks";
-import { EngageCommentCount, EngageComments, EngageLike, EngageReactionSummary, EngageSave, EngageShare, EngageStatistics } from "@/features/content/scoped-engagement";
+import { EngageCommentCount, EngageComments, EngageLike, EngageReactionSummary, EngageQuoteSlot, EngageSave, EngageShare } from "@/features/content/scoped-engagement";
 import { usePageTitle } from "@/components/layout/page-title";
 import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -194,9 +194,8 @@ export function WorkflowDetailView({ workflowId }: { workflowId?: string } = {})
           menu={
             <RelationMapMenu kind="workflow" id={workflow.id}>
               <PostMenu
-                workflowId={workflow.id}
-                communityId={workflow.communityId}
-                authorId={workflow.creator.id}
+                target={{ kind: "workflow", workflow }}
+                surface="detail"
                 onDeleted={() => {
                   removeFromCache(workflow.id);
                   router.push(DISCOVER_SECTION_HREF.workflows);
@@ -227,7 +226,7 @@ export function WorkflowDetailView({ workflowId }: { workflowId?: string } = {})
           }
           end={
             <>
-              <EngageStatistics target={{ contentType: "workflow", contentId: workflow.id, likeCount: workflow.likeCount, commentCount: workflow.commentCount, saveCount: workflow.saveCount }} size={20} />
+              <EngageQuoteSlot share={{ contentType: "workflow", workflow }} stats={{ contentType: "workflow", contentId: workflow.id, likeCount: workflow.likeCount, commentCount: workflow.commentCount, saveCount: workflow.saveCount }} size={20} />
               <EngageShare target={{ contentType: "workflow", workflow }} />
             </>
           }

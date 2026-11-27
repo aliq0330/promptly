@@ -1,5 +1,6 @@
 "use client";
 
+import { usePinnedHere } from "@/features/profile/profile-pins";
 import { SlidersHorizontal } from "@/components/icons/sliders-horizontal";
 import { formatRelativeTime, presetHref } from "@/lib/utils";
 import { taxonomyPathLabel } from "@/lib/content-taxonomy";
@@ -41,12 +42,15 @@ export function PresetCard({
   const category = taxonomyPathLabel(preset, language, true);
   const toolLabel = resolveToolRefs(preset.tools)[0]?.label ?? null;
 
+  const pinned = usePinnedHere("preset", preset.id);
+
   return (
     <ContentCard variant="visual" href={href}>
       <ContentCardPost
         author={preset.creator}
         meta={postMeta(preset.creator.username, preset.createdAt, language)}
         time={formatRelativeTime(preset.createdAt, language)}
+        pinned={pinned}
         editHref={`/presets/create?edit=${preset.id}`}
         ownMetrics={
           <RowMetrics

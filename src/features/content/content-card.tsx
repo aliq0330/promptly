@@ -5,6 +5,7 @@ import type { IconComponent } from "@/components/icons/icon";
 import { createContext, useCallback, useContext, useMemo, useRef, useState } from "react";
 import { prefersReducedMotion } from "@/lib/motion";
 import { Avatar } from "@/components/ui/avatar";
+import { Pin } from "@/components/icons/pin";
 import { Badge } from "@/components/ui/badge";
 import { buttonClassName } from "@/components/ui/button";
 import { useAuth } from "@/features/auth/auth-provider";
@@ -274,6 +275,7 @@ export function ContentCardPost({
   menu,
   editHref,
   ownMetrics,
+  pinned = false,
   art,
   title,
   footer,
@@ -296,6 +298,8 @@ export function ContentCardPost({
   editHref?: string;
   /** Counters shown INSTEAD of `footer` on a row of the viewer's own library (`ContentRowsScope own`): `RowMetrics` — copies + saves. */
   ownMetrics?: React.ReactNode;
+  /** The post is pinned to the open profile (docs/history/480-*): a pin mark at the kicker's right end. */
+  pinned?: boolean;
   /** What fills the picture: the output, a prompt box, the steps… It sets the picture's height. */
   art?: React.ReactNode;
   /** `ContentCardTitle` (title + optional two-line summary). */
@@ -330,10 +334,11 @@ export function ContentCardPost({
           </div>
         </div>
         <div className="flex min-w-0 flex-1 flex-col gap-2">
-          {(badges || rowStatus || time) && (
+          {(badges || rowStatus || time || pinned) && (
             <div className="flex min-w-0 items-center gap-2">
               <div className="flex min-w-0 flex-1 items-center gap-x-3 overflow-hidden">{badges}</div>
               {rowStatus && <div className="relative z-10 flex shrink-0 flex-wrap items-center gap-1.5">{rowStatus}</div>}
+              {pinned && <PinnedMark />}
               {time && <span className="shrink-0 text-caption text-text-muted">{time}</span>}
             </div>
           )}
@@ -386,13 +391,14 @@ export function ContentCardPost({
         </div>
         {status && <div className="absolute bottom-2 right-2 z-3 flex flex-wrap items-center justify-end gap-1.5">{status}</div>}
       </div>
-      {(badges || time) && (
+      {(badges || time || pinned) && (
         <div className="mt-3 flex min-w-0 items-center gap-2">
           <div className="flex min-w-0 flex-1 items-center gap-x-3 overflow-hidden">{badges}</div>
+          {pinned && <PinnedMark />}
           {time && <span className="shrink-0 text-caption text-text-muted">{time}</span>}
         </div>
       )}
-      <div className={cn("space-y-2", badges || time ? "mt-2" : "mt-3")}>{title}</div>
+      <div className={cn("space-y-2", badges || time || pinned ? "mt-2" : "mt-3")}>{title}</div>
       {meta && <p className="sr-only">{meta}</p>}
       {children && <div className="mt-2 space-y-2 empty:hidden">{children}</div>}
       <div className="relative z-10 flex items-center gap-2 pt-3">
@@ -475,5 +481,15 @@ export function ContentCardTitle({
       </h2>
       {cardBody && <p data-card-summary className="line-clamp-2 break-words font-serif text-body leading-[1.45] text-text-secondary">{summaryParts(cardBody, words)}</p>}
     </>
+  );
+}
+
+/** Raptiye işareti (docs/history/480-*): profilde "Profilde sabitle" ile en üste sabitlenmiş gönderiyi belli eder. */
+function PinnedMark() {
+  const { t } = useTranslation();
+  return (
+    <span role="img" aria-label={t("postMenu.pinned")} title={t("postMenu.pinned")} data-pinned-mark="" className="inline-flex shrink-0 items-center text-primary-text">
+      <Pin size={16} />
+    </span>
   );
 }
