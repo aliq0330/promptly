@@ -49,6 +49,11 @@ const CardExitContext = createContext<CardExit | null>(null);
 type CardLayout = { author: boolean; own: boolean; highlight?: string[] } | null;
 const CardLayoutContext = createContext<CardLayout>(null);
 
+/** `true` inside a row list (`ContentGrid layout="rows"` / `ContentRowsScope`): the art is a small square there (docs/history/479-*). */
+export function useRowsLayout(): boolean {
+  return useContext(CardLayoutContext) !== null;
+}
+
 /**
  * A page region whose post lists are ROWS (docs/history/477-*): every `ContentGrid` below it draws rows without each list passing `layout`, so a page
  * (search results, a profile tab, a collection, My content) switches layout in ONE place. `author={false}` hides the author line (the page is one
