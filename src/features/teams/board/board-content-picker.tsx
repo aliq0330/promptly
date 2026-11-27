@@ -35,7 +35,7 @@ export function ContentPickerDialog({ type, onClose, onPick }: { type: Extract<S
             list.map((item) => ({
               id: item.id,
               title: item.title,
-              image: "referenceImage" in item ? (item.referenceImage ?? item.media[0])?.url ?? null : null,
+              image: "referenceImage" in item ? (item.referenceImage ?? item.media[0])?.url ?? null : "coverUrl" in item ? item.coverUrl ?? null : null,
             })),
           ),
         () => alive && setRows([]),

@@ -161,6 +161,16 @@ await scenario("4. Arama: sonuçlar satırdır, eşleşen sözcük başlıkta i�
   },
 });
 
+await scenario("5. İçeriklerim: sosyal sayaçların yerine kopyalama + kaydedilme sayaçları", async ({ page }) => {
+  await page.goto(`${BASE}/my-content`);
+  const row = rowOf(page, 0);
+  await row.waitFor();
+  const metrics = row.locator("[data-row-metrics]");
+  await metrics.waitFor();
+  await metrics.getByTitle("Kopyalama").waitFor();
+  await metrics.getByTitle("Kaydedilme").waitFor();
+}, { viewport: { width: 1280, height: 900 }, setup: own });
+
 await browser.close();
 server.close();
 let failed = 0;

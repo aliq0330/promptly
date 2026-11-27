@@ -1,10 +1,14 @@
 "use client";
 
 import { ArrowRight } from "@/components/icons/arrow-right";
+import { Bookmark } from "@/components/icons/bookmark";
+import { Heart } from "@/components/icons/heart";
 import { Workflow as WorkflowIcon } from "@/components/icons/workflow";
 import { formatRelativeTime, workflowHref } from "@/lib/utils";
 import { ContentCard, ContentCardPost, ContentCardTitle } from "@/features/content/content-card";
 import { ContentTypePill } from "@/features/content/content-type-label";
+import { RowMetrics } from "@/features/content/row-metrics";
+import { CommunityOnlyBadge } from "@/features/content/community-only-badge";
 import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
 import { PostTargetMenu, postMeta } from "@/features/prompts/post-header";
 import { PromptCardFooter } from "@/features/prompts/prompt-card-footer";
@@ -39,11 +43,20 @@ export function WorkflowCard({
         meta={postMeta(workflow.creator.username, workflow.createdAt, language)}
         time={formatRelativeTime(workflow.createdAt, language)}
         editHref={`/workflows/create?edit=${workflow.id}`}
+        ownMetrics={
+          <RowMetrics
+            items={[
+              { icon: Heart, label: t("card.row.likes"), value: workflow.likeCount },
+              { icon: Bookmark, label: t("card.row.saves"), value: workflow.saveCount },
+            ]}
+          />
+        }
         typeIcon={WorkflowIcon}
         status={workflow.status === "draft" ? <Badge variant="warning">{t("workflow.draftBadge")}</Badge> : undefined}
         badges={
           <>
             <ContentTypePill icon={WorkflowIcon} label={t("workflow.singular")} detail={category} />
+            <CommunityOnlyBadge communityId={workflow.communityId} />
           </>
         }
         menu={<PostTargetMenu workflow={workflow} onDeleted={onDeleted} collectionRemoval={collectionRemoval} />}

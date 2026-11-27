@@ -3,9 +3,13 @@
 import { resolveToolRefs } from "@/lib/ai-tool-catalog";
 import { formatRelativeTime, promptHref } from "@/lib/utils";
 import { handOffPrompt } from "@/lib/detail-handoff";
+import { Bookmark } from "@/components/icons/bookmark";
+import { Copy } from "@/components/icons/copy";
 import { Badge } from "@/components/ui/badge";
+import { RowMetrics } from "@/features/content/row-metrics";
 import { ContentCard, ContentCardPost, ContentCardTitle } from "@/features/content/content-card";
 import { ContentTypePill } from "@/features/content/content-type-label";
+import { CommunityOnlyBadge } from "@/features/content/community-only-badge";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { CONTENT_TYPE_META } from "./content-type-meta";
 import { PostTargetMenu, postMeta } from "./post-header";
@@ -61,10 +65,19 @@ export function PromptCard({
         time={formatRelativeTime(prompt.createdAt, language)}
         status={prompt.visibility === "private" ? <Badge variant="neutral">{t("prompt.privateBadge")}</Badge> : undefined}
         editHref={`/create?edit=${prompt.id}`}
+        ownMetrics={
+          <RowMetrics
+            items={[
+              { icon: Copy, label: t("card.row.copies"), value: prompt.copyCount },
+              { icon: Bookmark, label: t("card.row.saves"), value: prompt.saveCount },
+            ]}
+          />
+        }
         typeIcon={meta.icon}
         badges={
           <>
             <ContentTypePill icon={meta.icon} label={`${t(meta.labelKey)} Prompt`} detail={tool} />
+            <CommunityOnlyBadge communityId={prompt.communityId} />
           </>
         }
         menu={<PostTargetMenu prompt={prompt} onDeleted={onDeleted} collectionRemoval={collectionRemoval} />}
