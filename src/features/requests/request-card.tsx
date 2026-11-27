@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Reply } from "@/components/icons/reply";
 import { Sparkles } from "@/components/icons/sparkles";
 import { Badge } from "@/components/ui/badge";
-import { TextArt, TextArtTitle } from "@/features/content/text-art";
+import { TextArt } from "@/features/content/text-art";
 import { ContentCard, ContentCardPost, ContentCardTitle } from "@/features/content/content-card";
 import { ContentTypePill } from "@/features/content/content-type-label";
 import { StorageImage } from "@/components/ui/storage-media";
@@ -15,7 +15,7 @@ import { LikeButton } from "@/features/prompts/like-button";
 import { CommentCountLink } from "@/features/prompts/comment-count-link";
 import { PostMenu } from "@/features/prompts/post-menu";
 import { postMeta } from "@/features/prompts/post-header";
-import { formatCount, requestHref } from "@/lib/utils";
+import { formatCount, formatRelativeTime, requestHref } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import type { PromptRequest } from "@/types";
@@ -40,8 +40,8 @@ export const STATUS_VARIANTS: Record<PromptRequest["status"], "success" | "dange
 
 /**
  * RequestCard — a community prompt request on the visual card (`ContentCardPost`, docs/history/266-*): the Açık/Kapandı status
- * stays on the picture, art = the reference picture or, without one, the brief itself (and the creative direction), title and
- * kicker on the picture (always visible, docs/history/277-*), the same real like button and `PostMenu`. "Yanıtla" lives on the detail page. The row: Beğeni · Yorum · Yanıt
+ * stays on the picture, art = the reference picture or, without one, the brief itself (and the creative direction), kicker, title and
+ * summary below it (docs/history/477-*), the same real like button and `PostMenu`. "Yanıtla" lives on the detail page. The row: Beğeni · Yorum · Yanıt
  * (real response count, the existing link) — a request has no Kaydet (not savable anywhere) and no "Kopyala".
  */
 export function RequestCard({ request, onDeleted }: { request: PromptRequest; onDeleted?: () => void }) {
@@ -55,12 +55,14 @@ export function RequestCard({ request, onDeleted }: { request: PromptRequest; on
       <ContentCardPost
         author={request.author}
         meta={postMeta(request.author.username, request.createdAt, language)}
+        time={formatRelativeTime(request.createdAt, language)}
+        editHref={`/requests/new?edit=${request.id}`}
         typeIcon={Sparkles}
-        titleInArt={!picture}
         status={
           <Badge variant={STATUS_VARIANTS[request.status]}>
             <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-current" />
             {t(STATUS_LABELS[request.status])}
+            {request.responseCount > 0 && ` · ${t("request.cardAnswers", { count: formatCount(request.responseCount) })}`}
           </Badge>
         }
         badges={
@@ -76,17 +78,8 @@ export function RequestCard({ request, onDeleted }: { request: PromptRequest; on
             </figure>
           ) : (
             <TextArt seed={request.id}>
-              {/* Akış 2.1 (docs/history/451-*): istek bir SORUDUR — başlık tırnak içinde, büyük; altında kısa açıklama ve yanıt sayısı. */}
-              <TextArtTitle>
-                <span aria-hidden className="text-primary-text">“</span>
-                {request.title}
-                <span aria-hidden className="text-primary-text">”</span>
-              </TextArtTitle>
-              <p className="line-clamp-3 whitespace-pre-line break-words text-small leading-relaxed">{request.description}</p>
-              <p className="inline-flex items-center gap-1.5 text-caption font-semibold">
-                <Sparkles size={12} aria-hidden />
-                {t("request.cardAnswers", { count: formatCount(request.responseCount) })}
-              </p>
+              {/* Resimsiz istek: yazı yüzeyi kısa açıklama + yanıt sayısı gösterir; başlık görselin altındadır (docs/history/477-*). */}
+              <p className="line-clamp-4 whitespace-pre-line break-words text-small leading-relaxed">{request.description}</p>
               {request.creativeDirection && (
                 <p className="line-clamp-1 text-caption opacity-75">
                   <span className="font-semibold">{t("request.creativeDirection")} · </span>
@@ -96,7 +89,7 @@ export function RequestCard({ request, onDeleted }: { request: PromptRequest; on
             </TextArt>
           )
         }
-        title={<ContentCardTitle href={href} title={request.title} />}
+        title={<ContentCardTitle href={href} title={request.title} description={picture ? request.description : undefined} />}
         footer={
           <>
             <LikeButton id={request.id} likeCount={request.likeCount} contentType="request" />

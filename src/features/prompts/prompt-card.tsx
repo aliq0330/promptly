@@ -1,8 +1,9 @@
 "use client";
 
 import { resolveToolRefs } from "@/lib/ai-tool-catalog";
-import { promptHref } from "@/lib/utils";
+import { formatRelativeTime, promptHref } from "@/lib/utils";
 import { handOffPrompt } from "@/lib/detail-handoff";
+import { Badge } from "@/components/ui/badge";
 import { ContentCard, ContentCardPost, ContentCardTitle } from "@/features/content/content-card";
 import { ContentTypePill } from "@/features/content/content-type-label";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -22,8 +23,8 @@ type CollectionRemoval = { onRemove: () => Promise<void> };
  * `prompts` row), on the visual card (`ContentCardPost`, docs/history/266-*):
  *
  *   picture: the output image; a video/audio prompt's poster that PLAYS by itself while the card is in view (`PlayableCardArt`:
- *            silent looping video / audio, round play-pause button in the middle, no progress) (+ the type glyph in the corner); the prompt itself
- *            when there is no picture. Kicker (type · tool) and title are drawn on the picture at all times (docs/history/277-*).
+ *            silent looping video / audio, round play-pause button in the middle, no progress); the prompt itself when there is no picture.
+ *            Kicker (type · tool · time), title and a two-line summary are drawn BELOW the picture (docs/history/477-*).
  *   row:     (·) Name                 ♥ · 💬 · 🔖 · ⋮
  *
  * The prompt text is what people come for: a prompt without a picture shows it as the art (`PromptPreviewBox` "art").
@@ -49,12 +50,17 @@ export function PromptCard({
   const isResponse = prompt.origin.type === "request-response";
   const hasPromptText = prompt.promptText.trim().length > 0;
   const tool = resolveToolRefs(prompt.tools)[0]?.label ?? prompt.tool ?? null;
+  // The two-line summary: the author's description; an image / video / audio prompt without one shows its prompt text (a text prompt's text is already the art).
+  const summary = prompt.description.trim() || (hasPromptText && prompt.contentType !== "text" ? prompt.promptText.trim() : "");
 
   return (
     <ContentCard variant="visual" href={href} onOpen={() => handOffPrompt(prompt)}>
       <ContentCardPost
         author={prompt.author}
         meta={postMeta(prompt.author.username, prompt.createdAt, language, isResponse ? t("prompt.sharedAReply") : undefined)}
+        time={formatRelativeTime(prompt.createdAt, language)}
+        status={prompt.visibility === "private" ? <Badge variant="neutral">{t("prompt.privateBadge")}</Badge> : undefined}
+        editHref={`/create?edit=${prompt.id}`}
         typeIcon={meta.icon}
         badges={
           <>
@@ -71,7 +77,7 @@ export function PromptCard({
             <PromptPreviewBox prompt={prompt} lines={4} variant="art" />
           ) : undefined
         }
-        title={<ContentCardTitle href={href} title={prompt.title} />}
+        title={<ContentCardTitle href={href} title={prompt.title} description={summary} />}
         footer={<PromptCardFooter prompt={prompt} />}
       >
         {prompt.origin.type === "request-response" && (

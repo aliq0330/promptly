@@ -2,14 +2,14 @@
 
 import { ArrowRight } from "@/components/icons/arrow-right";
 import { Workflow as WorkflowIcon } from "@/components/icons/workflow";
-import { workflowHref } from "@/lib/utils";
+import { formatRelativeTime, workflowHref } from "@/lib/utils";
 import { ContentCard, ContentCardPost, ContentCardTitle } from "@/features/content/content-card";
 import { ContentTypePill } from "@/features/content/content-type-label";
 import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
 import { PostTargetMenu, postMeta } from "@/features/prompts/post-header";
 import { PromptCardFooter } from "@/features/prompts/prompt-card-footer";
 import { Badge } from "@/components/ui/badge";
-import { TextArt, TextArtTitle } from "@/features/content/text-art";
+import { TextArt } from "@/features/content/text-art";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { categoryLabel } from "./step-meta";
 import type { Workflow } from "@/types";
@@ -37,8 +37,9 @@ export function WorkflowCard({
       <ContentCardPost
         author={workflow.creator}
         meta={postMeta(workflow.creator.username, workflow.createdAt, language)}
+        time={formatRelativeTime(workflow.createdAt, language)}
+        editHref={`/workflows/create?edit=${workflow.id}`}
         typeIcon={WorkflowIcon}
-        titleInArt={!workflow.coverUrl}
         status={workflow.status === "draft" ? <Badge variant="warning">{t("workflow.draftBadge")}</Badge> : undefined}
         badges={
           <>
@@ -59,7 +60,6 @@ export function WorkflowCard({
             </figure>
           ) : (
             <TextArt seed={workflow.id}>
-              <TextArtTitle>{workflow.title}</TextArtTitle>
               <span className="flex flex-wrap items-center gap-1.5">
                 {workflow.contentTypes.map((type, index) => {
                   const Icon = CONTENT_TYPE_META[type].icon;
@@ -95,7 +95,7 @@ export function WorkflowCard({
             </TextArt>
           )
         }
-        title={<ContentCardTitle href={href} title={workflow.title} />}
+        title={<ContentCardTitle href={href} title={workflow.title} description={workflow.description} />}
         footer={<PromptCardFooter workflow={workflow} />}
       />
     </ContentCard>

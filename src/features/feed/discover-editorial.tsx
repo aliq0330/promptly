@@ -8,6 +8,7 @@ import { Trophy } from "@/components/icons/trophy";
 import { TrendingUp } from "@/components/icons/trending-up";
 import { Avatar } from "@/components/ui/avatar";
 import { ScrollRow } from "@/components/ui/scroll-row";
+import { ContentRowSmall } from "@/features/content/content-row";
 import { StorageAppearanceImage } from "@/components/ui/storage-media";
 import { CreatorCard } from "@/features/profile/creator-card";
 import { ToolLogo } from "@/features/content/tool-logo";
@@ -398,8 +399,8 @@ export function DiscoverEditorial({ onSeeAllCreators }: { onSeeAllCreators: () =
       {data.weekPrompt && (
         <Section label={t("discover.ed.popular")}>
           <SectionHead title={t("discover.ed.popular")} hint={t("discover.ed.popularHint")} />
-          <div className="grid auto-rows-[180px] grid-cols-2 gap-3 sm:auto-rows-[220px] lg:grid-cols-4">
-            <ArtTile href={promptHref(data.weekPrompt)} prompt={data.weekPrompt} className="col-span-2 row-span-2 p-6">
+          <div className="grid gap-6 lg:grid-cols-2">
+            <ArtTile href={promptHref(data.weekPrompt)} prompt={data.weekPrompt} className="min-h-72 p-6 lg:min-h-[26rem]">
               <span className="flex items-center gap-1.5 text-caption font-semibold text-on-art-muted">
                 <Trophy size={12} aria-hidden />
                 {t("discover.ed.weekPrompt")}
@@ -414,19 +415,27 @@ export function DiscoverEditorial({ onSeeAllCreators }: { onSeeAllCreators: () =
                 </span>
               </span>
             </ArtTile>
-            {data.popular.map((prompt, index) => (
-              <ArtTile key={prompt.id} href={promptHref(prompt)} prompt={prompt} className={index === 1 ? "row-span-2" : undefined}>
-                <span className="line-clamp-2 font-display text-h3 font-bold leading-tight">{prompt.title}</span>
-                <span className="flex items-center gap-2 text-caption text-on-art-muted">
-                  <Avatar src={prompt.author.avatarUrl} alt="" size={20} />
-                  <span className="truncate">{prompt.author.displayName}</span>
-                  <span className="ml-auto inline-flex items-center gap-1">
-                    <Heart size={12} aria-hidden />
-                    {formatCount(prompt.likeCount)}
-                  </span>
-                </span>
-              </ArtTile>
-            ))}
+            {/* Sıralı liste (docs/history/477-*, "D · Yatay satır"): numara + orta boyut satır; ilk üç numara marka renginde. */}
+            <ol className="content-start" data-discover-ranking="">
+              {data.popular.slice(0, 6).map((prompt, index) => (
+                <li key={prompt.id} className="grid grid-cols-[2rem_minmax(0,1fr)] items-center gap-3 border-b border-border last:border-b-0">
+                  <span className={cn("text-center font-serif text-h2 font-bold tabular-nums", index < 3 ? "text-primary-text" : "text-text-muted")}>{index + 1}</span>
+                  <ContentRowSmall
+                    href={promptHref(prompt)}
+                    type="prompt"
+                    image={prompt.media[0]?.url ?? null}
+                    title={prompt.title}
+                    meta={prompt.author.displayName}
+                    trailing={
+                      <span className="inline-flex shrink-0 items-center gap-1 text-caption font-semibold tabular-nums text-text-muted">
+                        <Heart size={12} aria-hidden />
+                        {formatCount(prompt.likeCount)}
+                      </span>
+                    }
+                  />
+                </li>
+              ))}
+            </ol>
           </div>
         </Section>
       )}

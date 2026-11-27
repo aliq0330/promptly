@@ -4,7 +4,10 @@ import Link from "next/link";
 import { useState } from "react";
 import { ArrowUpRight } from "@/components/icons/arrow-up-right";
 import { buttonClassName } from "@/components/ui/button";
-import { OptionGroup } from "@/components/ui/option-group";
+import { OptionRowGroup } from "@/components/ui/option-group";
+import { ContentRowKicker, ContentThumb } from "@/features/content/content-row";
+import { usePickerCards } from "@/features/content/use-picker-cards";
+import { attachmentKey } from "@/lib/supabase/comment-attachments";
 import { Modal } from "@/components/ui/modal";
 import { fieldControlClassName } from "@/components/ui/field";
 import { Tabs } from "@/components/ui/tabs";
@@ -41,6 +44,7 @@ export function ShareExistingModal({ userId, onClose }: { userId: string; onClos
   const [type, setType] = useState<CommunityPostType>("prompt");
   const { search, setSearch, list } = useShareableContent(userId, type);
   const items = list.items;
+  const cards = usePickerCards(items ? items.map((item) => ({ type, id: item.id, title: item.title })) : null);
   const loadError = list.failed && items !== null && items.length === 0;
   const [selected, setSelected] = useState<{ id: string; title: string } | null>(null);
   const [quoteOpen, setQuoteOpen] = useState(false);
@@ -84,7 +88,7 @@ export function ShareExistingModal({ userId, onClose }: { userId: string; onClos
             ) : items.length === 0 ? (
               <p className="rounded-lg border border-dashed border-border px-4 py-6 text-center text-small text-text-muted">{t("communities.feed.pickEmpty")}</p>
             ) : (
-              <OptionGroup<string>
+              <OptionRowGroup<string>
                 ariaLabel={t("communities.feed.pickAria")}
                 value={selected?.id ?? null}
                 reselect
@@ -94,7 +98,13 @@ export function ShareExistingModal({ userId, onClose }: { userId: string; onClos
                   setSelected({ id: item.id, title: item.title || t("communities.feed.untitled") });
                   setQuoteOpen(true);
                 }}
-                options={items.map((item) => ({ key: item.id, label: <span className="break-words">{item.title || t("communities.feed.untitled")}</span>, attrs: { "data-share-existing-item": item.id } }))}
+                options={items.map((item) => ({
+                  key: item.id,
+                  leading: <ContentThumb type={type} src={cards.get(attachmentKey({ type, id: item.id }))?.thumbnailUrl} />,
+                  kicker: <ContentRowKicker type={type} />,
+                  label: item.title || t("communities.feed.untitled"),
+                  attrs: { "data-share-existing-item": item.id },
+                }))}
               />
             )}
             {items !== null && items.length > 0 && (

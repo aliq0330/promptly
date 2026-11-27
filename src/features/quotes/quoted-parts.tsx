@@ -55,8 +55,3 @@ export function QuotedKicker({ quote, summary }: { quote: Quote; summary: Conten
 export function quotedTypeIcon(quote: Quote, summary: ContentSummary | null): IconComponent | undefined {
   return summary?.typeIcon ?? (quote.skill ? GraduationCap : undefined);
 }
-
-/** Görselin kendisi başlığı zaten gösteriyorsa (yazı yüzeyi) kapak katmanında başlık yalnız ekran okuyucuya kalır. */
-export function quotedTitleInArt(summary: ContentSummary | null): boolean {
-  return Boolean(summary && summary.media.length === 0 && !summary.promptText);
-}

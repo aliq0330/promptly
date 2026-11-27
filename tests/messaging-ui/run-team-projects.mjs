@@ -824,6 +824,7 @@ await scenario("32c. Ekle → Seç: iki sekme (Paylaştıklarım / Başkaların�
   assert.deepEqual(first.p_author_ids, [ME], "Paylaştıklarım: yalnız kendi içeriğim");
   assert.equal(first.p_exclude_author_ids, undefined, "eski imza");
   await picker.locator(`[data-picker-add="${PICK_P1}"]`).click();
+  await page.locator("[data-picker-add-selected]").click();
   await picker.locator(`[data-picker-added="${PICK_P1}"]`).waitFor();
   const [attach] = called(db, "team_attach_content");
   assert.deepEqual({ f: attach.body.p_file, t: attach.body.p_type, i: attach.body.p_id, b: attach.body.p_board }, { f: FILE, t: "prompt", i: PICK_P1, b: null });
@@ -847,6 +848,7 @@ await scenario("32e. Seçilen içerik dosyaya girince kaynağı HEMEN yüklenir 
   const picker = page.locator("[data-team-content-picker=prompt]");
   await picker.waitFor();
   await picker.locator(`[data-picker-add="${PICK_P1}"]`).click();
+  await page.locator("[data-picker-add-selected]").click();
   await picker.locator(`[data-picker-added="${PICK_P1}"]`).waitFor();
   await page.locator("[data-picker-done]").click();
   await page.getByTestId("area-rows").getByText("Benim promptum").waitFor();

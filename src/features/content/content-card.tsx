@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 import type { IconComponent } from "@/components/icons/icon";
-import { ImageIcon } from "@/components/icons/image-icon";
-import { createContext, useCallback, useContext, useRef, useState } from "react";
+import { createContext, useCallback, useContext, useMemo, useRef, useState } from "react";
 import { prefersReducedMotion } from "@/lib/motion";
 import { Avatar } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { buttonClassName } from "@/components/ui/button";
+import { useAuth } from "@/features/auth/auth-provider";
 import { rememberCardMedia, useCardMediaReturn } from "@/lib/card-transition";
 import { cn, profileHref } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -37,9 +39,34 @@ import { GRID_COLUMNS, GRID_COLUMNS_ASIDE } from "@/lib/grid-columns";
  */
 type CardExit = (commit?: () => void | Promise<void>) => Promise<void>;
 const CardExitContext = createContext<CardExit | null>(null);
-/** True inside a card's picture overlay: titles and kickers draw in the light on-art ink there (`text-on-art`), never by a CSS descendant hack. */
-const OnArtContext = createContext(false);
 
+/**
+ * "A" (feed post) or "D" (row) layout of every card under it (docs/history/477-*): `ContentGrid layout="rows"` provides `{ author }` and each
+ * content card — which already hands its picture, kicker, title, counters and menu to `ContentCardPost` — draws as a horizontal row (square
+ * picture on the left; kicker + time, title, summary, author, counters on the right; hairline under it, no box). No second set of card
+ * adapters exists: one card component, two layouts. `author: false` hides the author line where the page is already one person's (a profile).
+ */
+type CardLayout = { author: boolean; own: boolean; highlight?: string[] } | null;
+const CardLayoutContext = createContext<CardLayout>(null);
+
+/**
+ * A page region whose post lists are ROWS (docs/history/477-*): every `ContentGrid` below it draws rows without each list passing `layout`, so a page
+ * (search results, a profile tab, a collection, My content) switches layout in ONE place. `author={false}` hides the author line (the page is one
+ * person's); `own` marks the viewer's own library (My content): a status badge and an "Düzenle" button join each row.
+ */
+const ContentRowsScopeContext = createContext<CardLayout>(null);
+export function ContentRowsScope({ author = true, own = false, highlight, children }: { author?: boolean; own?: boolean; highlight?: string[]; children: React.ReactNode }) {
+  const key = highlight?.join("\u0000") ?? "";
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- `key` is the words' identity (the array is a new object every render)
+  const value = useMemo<CardLayout>(() => ({ author, own, highlight }), [author, own, key]);
+  return <ContentRowsScopeContext.Provider value={value}>{children}</ContentRowsScopeContext.Provider>;
+}
+/** One extra small line a list puts under a row's author (a shared collection's "Ekleyen …"); rows only, nothing is drawn on a card. */
+export const RowNoteContext = createContext<React.ReactNode>(null);
+/** Is the surrounding list a row list? (Skeletons and empty states follow it.) */
+export function useContentRowsScope(): boolean {
+  return useContext(ContentRowsScopeContext) !== null;
+}
 export function useCardExit(): CardExit {
   return useContext(CardExitContext) ?? (async (commit) => void (await commit?.()));
 }
@@ -77,6 +104,7 @@ export function ContentCard({
   }, []);
   // Back from this card's own detail page: the hero shrinks back into the cover.
   useCardMediaReturn(href, ref);
+  const rows = useContext(CardLayoutContext) !== null && variant === "visual";
   return (
     <CardExitContext.Provider value={exit}>
     <article
@@ -91,7 +119,9 @@ export function ContentCard({
       }}
       className={cn(
         variant === "visual"
-          ? "group relative flex flex-col"
+          ? rows
+            ? "group relative border-b border-border py-4"
+            : "group relative flex flex-col"
           : [
               "group relative flex flex-col rounded-lg card-flat shadow-card transition-[border-color,box-shadow] duration-300 ease-soft hover:border-border hover:shadow-card-hover",
               // Hover-capable pointers only (Tailwind's hover: variant): a hairline of the brand colour opens along the top edge.
@@ -104,7 +134,7 @@ export function ContentCard({
       {children}
       {/* Mouse/touch convenience only: hidden from assistive tech and the tab
           order — the card title (ContentCardTitle) is the accessible link. */}
-      <Link href={href} data-card-link className={cn("absolute inset-0 z-0", variant === "visual" ? "rounded-xl" : "rounded-lg")} aria-hidden tabIndex={-1} />
+      <Link href={href} data-card-link className={cn("absolute inset-0 z-0", variant === "visual" ? "rounded-md" : "rounded-lg")} aria-hidden tabIndex={-1} />
     </article>
     </CardExitContext.Provider>
   );
@@ -122,11 +152,36 @@ export { GRID_COLUMNS, GRID_COLUMNS_ASIDE };
 export function ContentGrid({
   as: Tag = "div",
   columns,
+  layout,
+  rowAuthor,
   className,
   children,
   ...rest
-}: React.HTMLAttributes<HTMLElement> & { as?: "div" | "ul"; columns?: string; [data: `data-${string}`]: string | undefined }) {
+}: React.HTMLAttributes<HTMLElement> & {
+  as?: "div" | "ul";
+  columns?: string;
+  /** "rows" = the horizontal row list (D, docs/history/477-*): every card below draws as a row, in a grid of 1 or 2 columns by width. Default: the surrounding `ContentRowsScope`, else cards. */
+  layout?: "cards" | "rows";
+  /** Rows only: false hides each row's author line (a profile's own list). */
+  rowAuthor?: boolean;
+  [data: `data-${string}`]: string | undefined;
+}) {
   const pageColumns = useContext(ContentGridColumnsContext);
+  const scope = useContext(ContentRowsScopeContext);
+  const rows = layout ? layout === "rows" : scope !== null;
+  const author = rowAuthor ?? scope?.author ?? true;
+  const own = scope?.own ?? false;
+  const highlight = scope?.highlight;
+  const layoutValue = useMemo<CardLayout>(() => (rows ? { author, own, highlight } : null), [rows, author, own, highlight]);
+  if (rows) {
+    return (
+      <CardLayoutContext.Provider value={layoutValue}>
+        <Tag {...rest} data-content-rows="" className={cn("grid gap-x-10 [grid-template-columns:repeat(auto-fill,minmax(min(100%,30rem),1fr))] [&>*]:pb-0!", className)}>
+          {children}
+        </Tag>
+      </CardLayoutContext.Provider>
+    );
+  }
   columns ??= pageColumns ?? GRID_COLUMNS;
   return (
     <Tag {...rest} className={cn("sm:gap-4", columns, className)}>
@@ -175,86 +230,155 @@ export function bandTint(color: string): string {
 }
 
 /**
- * The one inner structure of every content card — the VISUAL card (picture first, the Dribbble-style post):
+ * The one inner structure of every content card — the FEED POST (docs/history/477-*, "A · Akış gönderisi"; it replaced the picture-first
+ * card of 266-* and 277-* whose title sat over the picture):
  *
  *   ┌──────────────────────────────────────────────┐
- *   │ [status]                             ( ▶ )    │  ← the post's picture, rounded, no frame; the small round
- *   │                                               │    glyph is the type (video/audio/text/workflow/preset/
- *   │              (the picture / the art)          │    request — not shown for an image prompt)
- *   │  ░ kicker (type · tool) + title, always       │
+ *   │ [status]                             ( ▶ )    │  ← the post's picture, 12 px corners, no frame
+ *   │              (the picture / the art)          │
  *   └──────────────────────────────────────────────┘
+ *   [icon] Görsel Prompt · Midjourney          2 sa      ← kicker (`badges`) + `time`
+ *   Başlık, 17/700                                      ← `title` (`ContentCardTitle`)
+ *   İki satırlık serif özet                            ← `ContentCardTitle description`
  *   (·) Name                       ♥ 12  💬 3  🔖  ⋮
  *
- * The kicker (type · tool) and the title sit over the picture's bottom edge at all times (docs/history/277-*; they used to appear only on
- * hover/focus — never on a phone); the title is the card's real link for keyboard and screen-reader users. No description is drawn. `art` is whatever fills the picture (the output, a prompt text, the steps…) and
- * sets its height; `status` is always visible (Taslak, Açık/Kapandı, Alıntı…); `badges` (the kicker) and `meta`
- * appear with the title. `children` are extra lines (a request-response's provenance, a quote's note) between the picture and
- * the footer. Nothing here creates a stacking context outside the picture (no `isolate`/transform on the card), so the ⋮ menu
- * still opens over the next card; the controls are `relative z-10` above the card's stretched link and the menu `z-20`.
+ * The picture is the card's face and carries no text but what the art itself is (a prompt text, the steps, the parameters…); the type,
+ * tool, time, title and summary are real text BELOW it, so they read on every phone and for assistive tech. `art` sets the picture's
+ * height (an output keeps its own clamped ratio); below `sm` the picture is cropped to at most a square (centred), so a feed on a phone
+ * stays scannable. `status` is always visible in the picture's bottom-right corner (Taslak, Açık/Kapandı, Alıntı…); `badges` is the kicker
+ * and `time` its right end; `meta` ("@user · time") stays for assistive tech. `children` are extra lines (a request-response's provenance,
+ * a quote's note) between the title block and the footer. Nothing here creates a stacking context outside the picture (no `isolate`/transform
+ * on the card), so the ⋮ menu still opens over the next card; the controls are `relative z-10` above the card's stretched link and the menu `z-20`.
  */
 export function ContentCardPost({
   author,
   meta,
+  time,
   typeIcon: TypeIcon,
-  titleInArt,
   status,
   badges,
   menu,
+  editHref,
   art,
   title,
   footer,
   children,
 }: {
   /** `null` = unknown/removed author (shown as a generic user, no profile link). */
-  author: Pick<UserProfile, "username" | "displayName" | "avatarUrl"> | null;
-  /** Muted part of the author line — e.g. "@carol · 3 gün önce" or "bir prompt paylaştı · dün"; kept for assistive tech only (not drawn on the picture). */
+  author: (Pick<UserProfile, "username" | "displayName" | "avatarUrl"> & { id?: string }) | null;
+  /** Muted part of the author line — e.g. "@carol · 3 gün önce" or "bir prompt paylaştı · dün"; kept for assistive tech only. */
   meta: string;
-  /** The small round glyph on the picture: what kind of post this is (skipped for an image prompt, whose picture says it). */
+  /** The short relative time at the kicker's right end ("2 sa", "dün"). */
+  time?: string;
+  /** The type's glyph for a card with no art at all (an empty placeholder); nothing is drawn on the picture itself. */
   typeIcon?: IconComponent;
-  /** The art already shows the title (a text surface): the hover layer keeps it only for assistive tech / keyboard focus. */
-  titleInArt?: boolean;
-  /** Always-visible chips in the picture's bottom-right corner (clear of the type glyph and of a text surface's title) (`Badge`s: Taslak, Açık/Kapandı, Alıntı, Sabit…). */
+  /** Always-visible chips in the picture's bottom-right corner (`Badge`s: Taslak, Açık/Kapandı, Alıntı, Sabit…). */
   status?: React.ReactNode;
-  /** The kicker row drawn above the title on the picture (`ContentTypePill`…). */
+  /** The kicker row below the picture (`ContentTypePill`…). */
   badges?: React.ReactNode;
   menu?: React.ReactNode;
+  /** Where the author edits this post; a row in the viewer's own library (`ContentRowsScope own`) shows an "Düzenle" button to it. */
+  editHref?: string;
   /** What fills the picture: the output, a prompt box, the steps… It sets the picture's height. */
   art?: React.ReactNode;
-  /** `ContentCardTitle`. */
+  /** `ContentCardTitle` (title + optional two-line summary). */
   title: React.ReactNode;
   /** The compact counters (Beğeni · Yorum · Kaydet), right of the author. */
   footer?: React.ReactNode;
-  /** Extra lines between the picture and the author row. */
+  /** Extra lines between the title block and the author row. */
   children?: React.ReactNode;
 }) {
   const { t } = useTranslation();
+  const rows = useContext(CardLayoutContext);
+  const rowNote = useContext(RowNoteContext);
+  const { user } = useAuth();
   const name = author?.displayName ?? t("common.genericUser");
-  return (
-    <>
-      <div data-card-media className="relative overflow-hidden rounded-xl bg-primary-soft">
-        {art ?? (
-          <div aria-hidden className="flex aspect-[4/3] w-full items-center justify-center text-primary-text/40">
-            {TypeIcon && <TypeIcon size={40} />}
+  if (rows) {
+    const canEdit = rows.own && Boolean(editHref) && Boolean(author?.id) && user?.id === author?.id;
+    const rowStatus = status ?? (rows.own ? <Badge variant="success">{t("card.row.published")}</Badge> : null);
+    return (
+      <div className="flex items-start gap-3 sm:gap-4">
+        <div
+          data-card-media
+          className="relative aspect-square w-26 shrink-0 overflow-hidden rounded-md bg-primary-soft sm:w-36 lg:w-48 [&_figure]:aspect-square! [&_[data-skill-detail-cover]]:aspect-square!"
+        >
+          <div className="absolute inset-0 flex items-center">
+            <div className="min-w-0 flex-1">
+              {art ?? (
+                <div aria-hidden className="flex aspect-square w-full items-center justify-center text-primary-text/40">
+                  {TypeIcon && <TypeIcon size={32} />}
+                </div>
+              )}
+            </div>
           </div>
-        )}
-        {status && <div className="absolute bottom-2.5 right-2.5 z-3 flex flex-wrap items-center justify-end gap-1.5">{status}</div>}
-        {art && TypeIcon && TypeIcon !== ImageIcon && (
-          <span aria-hidden className="absolute right-2.5 top-2.5 z-1 flex h-9 w-9 items-center justify-center rounded-full bg-art-chip text-on-art">
-            <TypeIcon size={20} />
-          </span>
-        )}
-        {/* Kicker (type · tool) + title over the picture, ALWAYS visible (docs/history/277-*). The overlay lets clicks through to the stretched link; the title link inside it is the keyboard way in. */}
-        <div className={cn("pointer-events-none absolute inset-x-0 bottom-0 z-2 space-y-1.5 art-scrim px-4 pb-3 pt-10 [&_a]:pointer-events-auto", status && "pr-24", titleInArt && "sr-only")}>
-          <OnArtContext.Provider value>
-            {badges && <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">{badges}</div>}
-            {title}
-          </OnArtContext.Provider>
-          {/* "@user · time" is not drawn on the picture (the author row below says who); it stays for assistive tech. */}
+        </div>
+        <div className="flex min-w-0 flex-1 flex-col gap-2">
+          {(badges || rowStatus || time) && (
+            <div className="flex min-w-0 items-center gap-2">
+              <div className="flex min-w-0 flex-1 items-center gap-x-3 overflow-hidden">{badges}</div>
+              {rowStatus && <div className="relative z-10 flex shrink-0 flex-wrap items-center gap-1.5">{rowStatus}</div>}
+              {time && <span className="shrink-0 text-caption text-text-muted">{time}</span>}
+            </div>
+          )}
+          <div className="space-y-2">{title}</div>
           {meta && <p className="sr-only">{meta}</p>}
+          {children && <div className="space-y-2 empty:hidden">{children}</div>}
+          {rows.author && (
+            <div className="relative z-10 mt-auto flex min-w-0 items-center">
+              {author ? (
+                <Link href={profileHref(author)} className="flex min-w-0 items-center gap-2 rounded-full outline-none focus-visible:ring-2 focus-visible:ring-focus">
+                  <Avatar src={author.avatarUrl} alt="" size={24} className="shrink-0" />
+                  <span className="min-w-0 truncate text-small font-medium text-text hover:text-primary-text">{name}</span>
+                </Link>
+              ) : (
+                <span className="flex min-w-0 items-center gap-2">
+                  <Avatar src={null} alt="" size={24} className="shrink-0" />
+                  <span className="min-w-0 truncate text-small font-medium text-text">{name}</span>
+                </span>
+              )}
+            </div>
+          )}
+          {rowNote}
+          {(footer || menu || canEdit) && (
+            <div data-card-actions className="relative z-10 -ml-2 flex items-center">
+              {footer}
+              {canEdit && editHref && (
+                <>
+                  <span className="flex-1" />
+                  <Link href={editHref} data-card-edit="" className={buttonClassName({ size: "sm", variant: "outline", className: "mx-1 shrink-0" })}>
+                    {t("common.edit")}
+                  </Link>
+                </>
+              )}
+              {menu && <div className="relative z-20 focus-within:z-30">{menu}</div>}
+            </div>
+          )}
         </div>
       </div>
-      {children && <div className="space-y-2 px-0.5 pt-2 empty:hidden">{children}</div>}
-      <div className="relative z-10 flex items-center gap-2 pt-1">
+    );
+  }
+  return (
+    <>
+      <div data-card-media className="relative flex items-center overflow-hidden rounded-md bg-primary-soft max-sm:max-h-[calc(100vw-1.5rem)]">
+        <div className="min-w-0 flex-1">
+          {art ?? (
+            <div aria-hidden className="flex aspect-[4/3] w-full items-center justify-center text-primary-text/40">
+              {TypeIcon && <TypeIcon size={40} />}
+            </div>
+          )}
+        </div>
+        {status && <div className="absolute bottom-2 right-2 z-3 flex flex-wrap items-center justify-end gap-1.5">{status}</div>}
+      </div>
+      {(badges || time) && (
+        <div className="mt-3 flex min-w-0 items-center gap-2">
+          <div className="flex min-w-0 flex-1 items-center gap-x-3 overflow-hidden">{badges}</div>
+          {time && <span className="shrink-0 text-caption text-text-muted">{time}</span>}
+        </div>
+      )}
+      <div className={cn("space-y-2", badges || time ? "mt-2" : "mt-3")}>{title}</div>
+      {meta && <p className="sr-only">{meta}</p>}
+      {children && <div className="mt-2 space-y-2 empty:hidden">{children}</div>}
+      <div className="relative z-10 flex items-center gap-2 pt-3">
         {author ? (
           <Link href={profileHref(author)} className="flex min-w-0 flex-1 items-center gap-2 rounded-full outline-none focus-visible:ring-2 focus-visible:ring-focus">
             <Avatar src={author.avatarUrl} alt="" size={24} className="shrink-0" />
@@ -277,9 +401,37 @@ export function ContentCardPost({
   );
 }
 
+/** Search results (docs/history/477-*): the words that matched are marked in a row's title and summary. */
+function highlightWords(text: string, words: string[] | undefined): React.ReactNode {
+  if (!words || words.length === 0) return text;
+  const pattern = new RegExp(`(${words.map((word) => word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")})`, "gi");
+  return text.split(pattern).map((part, index) =>
+    index % 2 === 1 ? (
+      <mark key={index} className="rounded-xs bg-primary-soft px-0.5 text-inherit">
+        {part}
+      </mark>
+    ) : (
+      part
+    ),
+  );
+}
+
+/** The summary's `{variable}` jetons drawn as small mono chips (the same mark the prompt text uses); everything else is plain text (matched words marked in search rows). */
+function summaryParts(text: string, words?: string[]): React.ReactNode[] {
+  return text.split(/(\{[^{}\n]{1,40}\})/g).map((part, index) =>
+    part.startsWith("{") && part.endsWith("}") ? (
+      <span key={index} className="rounded-xs bg-primary-soft px-1 font-mono text-small font-medium text-primary-text">
+        {part}
+      </span>
+    ) : (
+      highlightWords(part, words)
+    ),
+  );
+}
+
 /**
- * Card title — a real link so keyboard users reach the item from its title
- * (the stretched link behind the card is `tabIndex=-1`, mouse-only).
+ * Card title — a real link so keyboard users reach the item from its title (the stretched link behind the card is `tabIndex=-1`,
+ * mouse-only) — plus the optional two-line Spectral summary (`description`; credit lines "Kaynak: …" belong on the detail page, not here).
  */
 export function ContentCardTitle({
   href,
@@ -290,22 +442,20 @@ export function ContentCardTitle({
   title: string;
   description?: string;
 }) {
-  // Credit lines ("Kaynak: …") belong on the detail page, not in the preview. The Albüm card passes no description
-  // (title + author only); a caller that does gets two clamped lines.
-  const cardBody = splitSourceNotes(description).body;
-  const onArt = useContext(OnArtContext);
+  const cardBody = splitSourceNotes(description).body.trim();
+  const words = useContext(CardLayoutContext)?.highlight;
   return (
-    <div className="space-y-1">
-      <h2 className={cn("font-display text-h2 font-extrabold leading-[1.1]", onArt ? "text-on-art" : "text-text")}>
+    <>
+      <h2 className="font-display text-h3 font-bold leading-[1.25] text-text [overflow-wrap:anywhere] [text-wrap:balance]">
         <Link
           href={href}
           data-card-link
           className="relative z-10 rounded-xs outline-none decoration-primary/40 underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-focus"
         >
-          {title}
+          {highlightWords(title, words)}
         </Link>
       </h2>
-      {cardBody && <p className="line-clamp-2 text-small leading-relaxed text-text-muted">{cardBody}</p>}
-    </div>
+      {cardBody && <p data-card-summary className="line-clamp-2 break-words font-serif text-body leading-[1.45] text-text-secondary">{summaryParts(cardBody, words)}</p>}
+    </>
   );
 }

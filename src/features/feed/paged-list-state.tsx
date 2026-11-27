@@ -3,11 +3,14 @@
 import { LineArtScene } from "@/components/line-art/line-art-scene";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CONTENT_GRID_ITEM_CLASS, ContentGrid } from "@/features/content/content-card";
+import { PromptCardSkeletonGrid } from "@/components/ui/prompt-card-skeleton";
+import { CONTENT_GRID_ITEM_CLASS, ContentGrid, useContentRowsScope } from "@/features/content/content-card";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { LoadMore } from "./load-more";
 
 export function PagedListSkeleton() {
+  const rows = useContentRowsScope();
+  if (rows) return <PromptCardSkeletonGrid count={4} />;
   return (
     <ContentGrid>
       {[0, 1, 2, 3].map((i) => (

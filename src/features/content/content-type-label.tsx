@@ -36,15 +36,15 @@ export function ContentTypeLabel({
 }
 
 /**
- * A card's kicker (Albüm card, docs/history/202-*): the type's icon + a small label (+ `detail`, e.g. the tool), in the
- * brand colour — the same voice as the detail band's `ContentTypeLabel`.
+ * A card's kicker (docs/history/477-*): the type's icon + a small label (+ `detail`, e.g. the tool) in the brand colour, drawn BELOW the
+ * picture on the feed post (it used to sit on the picture in the light on-art ink) — the same voice as the detail band's `ContentTypeLabel`.
  */
 export function ContentTypePill({ icon: Icon, label, detail, className }: { icon: IconComponent; label: string; detail?: string | null; className?: string }) {
   return (
-    <SectionLabel as="span" tone="overlay" icon={Icon} className={cn("inline-flex", className)}>
+    <SectionLabel as="span" tone="primary" icon={Icon} className={cn("inline-flex", className)}>
       <span className="truncate">
         {label}
-        {detail && <span className="font-medium text-on-art-muted"> · {detail}</span>}
+        {detail && <span className="font-medium text-text-muted"> · {detail}</span>}
       </span>
     </SectionLabel>
   );

@@ -1,7 +1,7 @@
 "use client";
 
 import { SlidersHorizontal } from "@/components/icons/sliders-horizontal";
-import { presetHref } from "@/lib/utils";
+import { formatRelativeTime, presetHref } from "@/lib/utils";
 import { taxonomyPathLabel } from "@/lib/content-taxonomy";
 import { presetParameterEntries } from "@/lib/preset-utils";
 import { resolveToolRefs } from "@/lib/ai-tool-catalog";
@@ -10,7 +10,7 @@ import { ContentTypePill } from "@/features/content/content-type-label";
 import { PostTargetMenu, postMeta } from "@/features/prompts/post-header";
 import { PromptCardFooter } from "@/features/prompts/prompt-card-footer";
 import { Badge } from "@/components/ui/badge";
-import { TextArt, TextArtTitle } from "@/features/content/text-art";
+import { TextArt } from "@/features/content/text-art";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Preset } from "@/types";
 
@@ -40,6 +40,8 @@ export function PresetCard({
       <ContentCardPost
         author={preset.creator}
         meta={postMeta(preset.creator.username, preset.createdAt, language)}
+        time={formatRelativeTime(preset.createdAt, language)}
+        editHref={`/presets/create?edit=${preset.id}`}
         typeIcon={SlidersHorizontal}
         status={
           preset.status === "draft" ? (
@@ -54,10 +56,8 @@ export function PresetCard({
           </>
         }
         menu={<PostTargetMenu preset={preset} onDeleted={onDeleted} collectionRemoval={collectionRemoval} />}
-        titleInArt
         art={
           <TextArt seed={preset.id}>
-            <TextArtTitle>{preset.title}</TextArtTitle>
             {shown.length > 0 && (
               <ul aria-label={t("preset.contentsTitle")}>
                 {shown.map((entry) => (
@@ -73,7 +73,7 @@ export function PresetCard({
             </p>
           </TextArt>
         }
-        title={<ContentCardTitle href={href} title={preset.title} />}
+        title={<ContentCardTitle href={href} title={preset.title} description={preset.description} />}
         footer={<PromptCardFooter preset={preset} />}
       />
     </ContentCard>

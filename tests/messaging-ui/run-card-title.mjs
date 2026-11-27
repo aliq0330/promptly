@@ -1,5 +1,5 @@
-// Kart başlığı her zaman görünür (docs/history/277-*): görselin altında "GÖRSEL PROMPT · araç" + başlık, üzerine gelmeden; "@kullanıcı · zaman" resme yazılmaz;
-// çok görselli kartın "+N" çipi sol üste taşındı (başlıkla çakışmaz). Ağ taklitli; gerçek Supabase'e / cihaza KARŞI DENENMEDİ.
+// Akış gönderisi (docs/history/477-*, "A"): görselin ALTINDA tür · araç etiketi + zaman, başlık ve iki satırlık özet; görselin üstünde yazı yok;
+// "@kullanıcı · zaman" yalnız ekran okuyucuya; çok görselli kartın "+N" çipi sol üstte; telefonda görsel en çok kare. Ağ taklitli; gerçek Supabase'e / cihaza KARŞI DENENMEDİ.
 import { chromium } from "playwright";
 import assert from "node:assert/strict";
 import { serve } from "./server.mjs";
@@ -100,31 +100,35 @@ const cell = (page, n) => page.locator("[data-flip-key]").nth(n);
 const menuButton = (page, n) => cell(page, n).getByRole("button", { name: /Gönderi seçenekleri|Post options/ });
 const waitFeed = async (page) => { await page.locator("[data-flip-key]").first().waitFor(); };
 
-const overlayOf = (page, n) => cell(page, n).locator("[data-card-media] > div.absolute.inset-x-0.bottom-0");
 const rect = (loc) => loc.evaluate((el) => { const r = el.getBoundingClientRect(); return { l: r.left, t: r.top, r: r.right, b: r.bottom, w: r.width, h: r.height }; });
+const textOf = (loc) => loc.evaluate((el) => (el.innerText ?? "").replace(/\s+/g, " ").trim());
 
-await scenario("1. telefon: başlık + 'GÖRSEL PROMPT · araç' üzerine gelmeden görünür; kullanıcı adı/zaman resme yazılmaz", async ({ page }) => {
+await scenario("1. telefon: tür · araç + zaman, başlık ve özet görselin ALTINDA; görselin üstünde yazı yok", async ({ page }) => {
   await page.goto(`${BASE}/`);
   await waitFeed(page);
   await cell(page, 0).scrollIntoViewIfNeeded();
   await page.waitForTimeout(900);
-  const overlay = overlayOf(page, 0);
-  assert.equal(await overlay.evaluate((el) => getComputedStyle(el).opacity), "1", "katman hover olmadan tam görünür");
-  const title = overlay.getByRole("link", { name: "Görsel prompt 1" });
-  await title.waitFor();
   const media = await rect(cell(page, 0).locator("[data-card-media]"));
+  const title = cell(page, 0).getByRole("link", { name: "Görsel prompt 1" });
+  await title.waitFor();
   const t = await rect(title);
-  assert.ok(t.w > 40 && t.t >= media.t && t.b <= media.b + 1, "başlık görselin içinde");
-  const kicker = overlay.getByText("Görsel Prompt", { exact: false }).first();
-  await kicker.waitFor();
-  assert.match((await overlay.innerText()).replace(/\s+/g, " "), /Görsel Prompt\s*·\s*GPT Image 1/i, "tür + araç");
-  assert.equal(await overlay.getByText("@bobby").evaluate((el) => el.getBoundingClientRect().width <= 1), true, "@kullanıcı · zaman görünür değil (yalnız ekran okuyucu)");
-  const white = await title.evaluate((el) => getComputedStyle(el.closest("h2")).color);
-  assert.equal(white, "rgb(255, 255, 255)", "başlık beyaz");
-  await shot(page, "1-title");
+  assert.ok(t.w > 40 && t.t >= media.b - 1, "başlık görselin altında");
+  const card = await textOf(cell(page, 0));
+  assert.match(card, /Görsel Prompt\s*·\s*GPT Image 1/i, "tür + araç etiketi");
+  const mediaText = await textOf(cell(page, 0).locator("[data-card-media]"));
+  assert.ok(!/Görsel prompt 1|GPT Image 1/.test(mediaText), "görselin üstünde başlık/araç yazısı yok");
+  const summary = cell(page, 0).locator("[data-card-summary]");
+  await summary.waitFor();
+  assert.equal(await textOf(summary), "d", "özet açıklamadan gelir");
+  assert.equal(await cell(page, 0).locator("p.sr-only").first().evaluate((el) => el.getBoundingClientRect().width <= 1), true, "@kullanıcı · zaman görünür değil (yalnız ekran okuyucu)");
+  const color = await title.evaluate((el) => getComputedStyle(el.closest("h2")).color);
+  assert.notEqual(color, "rgb(255, 255, 255)", "başlık görselin dışında, normal metin rengi");
+  const radius = await cell(page, 0).locator("[data-card-media]").evaluate((el) => getComputedStyle(el).borderTopLeftRadius);
+  assert.equal(radius, "12px", "görsel köşesi 12 px");
+  await shot(page, "1-post");
 });
 
-await scenario("2. çok görselli kartın '+N' çipi sol üstte, başlıkla çakışmaz ve hep görünür", async ({ page }) => {
+await scenario("2. çok görselli kartın '+N' çipi görselin sol üstünde ve hep görünür", async ({ page }) => {
   await page.goto(`${BASE}/`);
   await waitFeed(page);
   await cell(page, 2).scrollIntoViewIfNeeded();
@@ -133,39 +137,56 @@ await scenario("2. çok görselli kartın '+N' çipi sol üstte, başlıkla çak
   await chip.waitFor();
   const media = await rect(cell(page, 2).locator("[data-card-media]"));
   const c = await rect(chip);
-  const t = await rect(overlayOf(page, 2).getByRole("link", { name: "Görsel prompt 3" }));
   assert.ok(c.t - media.t < 20 && c.l - media.l < 20, "çip sol üstte");
-  assert.ok(c.b < t.t, "çip başlığın üstünde (çakışmaz)");
   assert.equal(await chip.evaluate((el) => getComputedStyle(el).opacity), "1");
 });
 
-await scenario("3. masaüstü: başlık hover olmadan görünür ve üzerine gelince değişmez", async ({ page }) => {
+await scenario("3. masaüstü: üzerine gelince düzen oynamaz, yatay taşma yok", async ({ page }) => {
   await page.goto(`${BASE}/`);
   await waitFeed(page);
   await cell(page, 0).scrollIntoViewIfNeeded();
   await page.waitForTimeout(900);
-  const overlay = overlayOf(page, 0);
-  assert.equal(await overlay.evaluate((el) => getComputedStyle(el).opacity), "1");
-  const before = await rect(overlay);
+  const before = await rect(cell(page, 0).getByRole("link", { name: "Görsel prompt 1" }));
   const box = await rect(cell(page, 0).locator("[data-card-media]"));
   await page.mouse.move(box.l + box.w / 2, Math.min(box.t + box.h / 3, 600));
   await page.waitForTimeout(300);
-  assert.equal(await overlay.evaluate((el) => getComputedStyle(el).opacity), "1");
-  assert.deepEqual(await rect(overlay), before, "hover düzeni oynatmaz");
+  assert.deepEqual(await rect(cell(page, 0).getByRole("link", { name: "Görsel prompt 1" })), before, "hover düzeni oynatmaz");
   assert.equal(await overflowFree(page), true);
   await page.evaluate(() => window.scrollBy(0, 300));
   await page.waitForTimeout(600);
   await shot(page, "3-desktop");
 }, { viewport: { width: 1280, height: 900 } });
 
-await scenario("4. İngilizce: kicker'da araç + başlık görünür", async ({ page }) => {
+await scenario("4. İngilizce: kicker'da araç ve başlık görünür", async ({ page }) => {
   await page.goto(`${BASE}/`);
   await waitFeed(page);
   await cell(page, 0).scrollIntoViewIfNeeded();
   await page.waitForTimeout(900);
-  assert.match((await overlayOf(page, 0).innerText()).replace(/\s+/g, " "), /GPT Image 1/i);
-  await overlayOf(page, 0).getByRole("link", { name: "Görsel prompt 1" }).waitFor();
+  assert.match(await textOf(cell(page, 0)), /GPT Image 1/i);
+  await cell(page, 0).getByRole("link", { name: "Görsel prompt 1" }).waitFor();
 }, { lang: "en" });
+
+const tall = ({ rows }) => {
+  rows[0].prompt_media[0] = { ...rows[0].prompt_media[0], width: 900, height: 1200 };
+};
+
+await scenario("5. telefon: uzun (3:4) görsel en çok kare kırpılır", async ({ page }) => {
+  await page.goto(`${BASE}/`);
+  await waitFeed(page);
+  await cell(page, 0).scrollIntoViewIfNeeded();
+  await page.waitForTimeout(900);
+  const media = await rect(cell(page, 0).locator("[data-card-media]"));
+  assert.ok(media.h <= media.w + 1, `görsel kare ya da daha alçak (${Math.round(media.w)}×${Math.round(media.h)})`);
+}, { setup: tall });
+
+await scenario("6. masaüstü: aynı uzun görsel kendi oranında kalır", async ({ page }) => {
+  await page.goto(`${BASE}/`);
+  await waitFeed(page);
+  await cell(page, 0).scrollIntoViewIfNeeded();
+  await page.waitForTimeout(900);
+  const media = await rect(cell(page, 0).locator("[data-card-media]"));
+  assert.ok(media.h > media.w * 1.1, `görsel dikey kalır (${Math.round(media.w)}×${Math.round(media.h)})`);
+}, { viewport: { width: 1280, height: 900 }, setup: tall });
 
 await browser.close();
 server.close();

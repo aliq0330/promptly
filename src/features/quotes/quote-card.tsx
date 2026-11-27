@@ -10,11 +10,11 @@ import { formatRelativeTime } from "@/lib/utils";
 import type { Quote } from "@/lib/supabase/quotes";
 import { QuoteCommentLink, QuoteLike } from "./quote-engagement";
 import { QuoteMenu } from "./quote-menu";
-import { QuotedArt, QuotedKicker, quotedTitleInArt, quotedTypeIcon } from "./quoted-parts";
+import { QuotedArt, QuotedKicker, quotedTypeIcon } from "./quoted-parts";
 
 /**
- * Alıntının akıştaki kartı (docs/history/217-*): başvuru gönderisinin kartıyla (`ApplicationCard`) AYNI aile — Albüm kartı
- * `ContentCardPost` (docs/history/266-*): alıntılanan içeriğin çıktısı/kapağı; tür simgesi köşede, başlık + "alıntıladı · zaman" üzerine gelince, alıntı notu; altta
+ * Alıntının akıştaki kartı (docs/history/217-*): başvuru gönderisinin kartıyla (`ApplicationCard`) AYNI aile — akış gönderisi
+ * `ContentCardPost` (docs/history/477-*): alıntılanan içeriğin çıktısı/kapağı; altında tür etiketi + zaman, başlık, alıntı notu (özetin yerine); altta
  * ALINTILAYAN ve sayaçlar — sayaçlar ALINTININ kendisine aittir (alıntılanan içeriğinki değil). Karta tıklamak alıntının sayfasını açar; orijinal içeriğe oradan gidilir.
  */
 export function QuoteCard({ quote }: { quote: Quote }) {
@@ -31,8 +31,8 @@ export function QuoteCard({ quote }: { quote: Quote }) {
       <ContentCardPost
         author={quote.author}
         meta={`${t("quotes.card.quoted")} · ${formatRelativeTime(quote.createdAt, language)}`}
+        time={formatRelativeTime(quote.createdAt, language)}
         typeIcon={quotedTypeIcon(quote, summary)}
-        titleInArt={quotedTitleInArt(summary)}
         status={<Badge variant="default">{t("quotes.badge")}</Badge>}
         badges={<QuotedKicker quote={quote} summary={summary} />}
         menu={<QuoteMenu quote={quote} onDeleted={() => setGone(true)} />}
@@ -47,7 +47,7 @@ export function QuoteCard({ quote }: { quote: Quote }) {
         }
       >
         {quote.note && (
-          <p data-quote-note className="whitespace-pre-wrap break-words rounded-lg bg-surface/80 px-3 py-2.5 text-small text-text-secondary">
+          <p data-quote-note className="line-clamp-3 whitespace-pre-wrap break-words font-serif text-body leading-[1.45] text-text-secondary">
             {quote.note}
           </p>
         )}

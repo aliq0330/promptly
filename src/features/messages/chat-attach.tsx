@@ -11,7 +11,10 @@ import { SquareTerminal } from "@/components/icons/square-terminal";
 import { Workflow } from "@/components/icons/workflow";
 import { X } from "@/components/icons/x";
 import { Button } from "@/components/ui/button";
-import { OptionGroup } from "@/components/ui/option-group";
+import { OptionRowGroup } from "@/components/ui/option-group";
+import { ContentRowKicker, ContentThumb } from "@/features/content/content-row";
+import { usePickerCards } from "@/features/content/use-picker-cards";
+import { attachmentKey } from "@/lib/supabase/comment-attachments";
 import { fieldControlClassName } from "@/components/ui/field";
 import { Modal } from "@/components/ui/modal";
 import { Tabs } from "@/components/ui/tabs";
@@ -162,7 +165,7 @@ export function ChatLibraryPicker({
   const items = list.items;
   const loadError = list.failed && items !== null && items.length === 0;
   const [selected, setSelected] = useState<ChatShareable | null>(null);
-  const Icon = CHAT_LIBRARY_TYPES.find((entry) => entry.type === type)?.icon ?? SquareTerminal;
+  const cards = usePickerCards(items ? items.map((item) => ({ type, id: item.id, title: item.title })) : null);
 
   function changeType(next: ChatLibraryType) {
     setType(next);
@@ -209,7 +212,7 @@ export function ChatLibraryPicker({
             <p className="mx-3 mt-2 rounded-lg border border-dashed border-border px-4 py-6 text-center text-small text-text-muted">{t("communities.feed.pickEmpty")}</p>
           ) : (
             <div className="px-3">
-              <OptionGroup<string>
+              <OptionRowGroup<string>
                 ariaLabel={t("communities.feed.pickAria")}
                 value={selected?.id ?? null}
                 onChange={(id) => {
@@ -218,13 +221,9 @@ export function ChatLibraryPicker({
                 }}
                 options={items.map((item) => ({
                   key: item.id,
-                  leading: (
-                    <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-primary-soft text-primary-text">
-                      <Icon size={24} aria-hidden />
-                    </span>
-                  ),
-                  label: <span className="block truncate text-body font-semibold">{item.title || t("communities.feed.untitled")}</span>,
-                  description: <span className="block truncate text-small">{t(`communities.feed.type.${type}`)}</span>,
+                  leading: <ContentThumb type={type} src={cards.get(attachmentKey({ type, id: item.id }))?.thumbnailUrl} />,
+                  kicker: <ContentRowKicker type={type} />,
+                  label: item.title || t("communities.feed.untitled"),
                   attrs: { "data-library-item": item.id },
                 }))}
               />

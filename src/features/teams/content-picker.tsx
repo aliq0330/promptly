@@ -7,6 +7,7 @@ import { Loader2 } from "@/components/icons/loader-2";
 import { Button } from "@/components/ui/button";
 import { Tabs } from "@/components/ui/tabs";
 import { useAuth } from "@/features/auth/auth-provider";
+import { ContentRowSmall } from "@/features/content/content-row";
 import { LoadMore } from "@/features/feed/load-more";
 import { AdvancedSearchBox } from "@/features/search/advanced-search-box";
 import { SearchFilterSections, type SearchSort } from "@/features/search/search-filter-sections";
@@ -53,6 +54,8 @@ interface Row {
   id: string;
   title: string;
   by: string;
+  /** The post's first picture (docs/history/477-*: the small row shows it); none = the type's icon. */
+  image: string | null;
 }
 
 interface Keyset {
@@ -67,20 +70,20 @@ interface Keyset {
 const PAGE = 20;
 
 async function fetchPage(kind: PickerKind, text: string, filters: ContentSearchFilters, cursor: SearchCursor | null): Promise<SearchPage<Row>> {
-  const map = <T extends { id: string; title: string }>(page: SearchPage<T>, by: (item: T) => string): SearchPage<Row> => ({
+  const map = <T extends { id: string; title: string }>(page: SearchPage<T>, by: (item: T) => string, image: (item: T) => string | null): SearchPage<Row> => ({
     nextCursor: page.nextCursor,
-    items: page.items.map((item) => ({ id: item.id, title: item.title, by: by(item) })),
+    items: page.items.map((item) => ({ id: item.id, title: item.title, by: by(item), image: image(item) })),
   });
   if (kind === "skill") {
     // Skill de aynı arama motorundan geçer (`search_content` p_kind='skill'); kartlar kimlik sırasıyla okunur.
     const { ids, nextCursor } = await searchContentIds("skill", text, filters, PAGE, cursor);
     const byId = new Map((await fetchSkillsByIds(ids)).map((skill) => [skill.id, skill]));
-    return { nextCursor, items: ids.flatMap((id) => byId.get(id) ?? []).map((skill) => ({ id: skill.id, title: skill.title, by: skill.creator.username })) };
+    return { nextCursor, items: ids.flatMap((id) => byId.get(id) ?? []).map((skill) => ({ id: skill.id, title: skill.title, by: skill.creator.username, image: null })) };
   }
-  if (kind === "prompt") return map(await searchPromptsPage(text, filters, PAGE, cursor), (item) => item.author.username);
-  if (kind === "request") return map(await searchRequestsPage(text, filters, PAGE, cursor), (item) => item.author.username);
-  if (kind === "workflow") return map(await searchWorkflowsPage(text, filters, PAGE, cursor), (item) => item.creator.username);
-  return map(await searchPresetsPage(text, filters, PAGE, cursor), (item) => item.creator.username);
+  if (kind === "prompt") return map(await searchPromptsPage(text, filters, PAGE, cursor), (item) => item.author.username, (item) => item.media[0]?.url ?? null);
+  if (kind === "request") return map(await searchRequestsPage(text, filters, PAGE, cursor), (item) => item.author.username, (item) => (item.referenceImage ?? item.media[0])?.url ?? null);
+  if (kind === "workflow") return map(await searchWorkflowsPage(text, filters, PAGE, cursor), (item) => item.creator.username, (item) => item.coverUrl ?? null);
+  return map(await searchPresetsPage(text, filters, PAGE, cursor), (item) => item.creator.username, () => null);
 }
 
 export function ContentPickerDialog({
@@ -109,7 +112,8 @@ export function ContentPickerDialog({
   const [state, setState] = useState<Keyset | null>(null);
   const [retry, setRetry] = useState(0);
   const [added, setAdded] = useState<Set<string>>(new Set());
-  const [busy, setBusy] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
   const [error, setError] = useState<string | null>(null);
   const flight = useRef<string | null>(null);
 
@@ -167,16 +171,34 @@ export function ContentPickerDialog({
     }
   }, [current, key, kind, debounced, filters]);
 
-  async function pick(row: Row) {
-    setBusy(row.id);
+  function toggle(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (!next.delete(id)) next.add(id);
+      return next;
+    });
+  }
+
+  /** Adds every ticked row one after the other (the same `onPick` as before); the first failure stops the batch and is shown, the rows already added stay marked. */
+  async function addSelected() {
+    const rowsToAdd = (current?.rows ?? []).filter((row) => selected.has(row.id));
+    if (rowsToAdd.length === 0) return;
+    setBusy(true);
     setError(null);
     try {
-      await onPick({ id: row.id, title: row.title });
-      setAdded((prev) => new Set(prev).add(row.id));
+      for (const row of rowsToAdd) {
+        await onPick({ id: row.id, title: row.title });
+        setAdded((prev) => new Set(prev).add(row.id));
+        setSelected((prev) => {
+          const next = new Set(prev);
+          next.delete(row.id);
+          return next;
+        });
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : t("spaces.error.generic"));
     } finally {
-      setBusy(null);
+      setBusy(false);
     }
   }
 
@@ -191,9 +213,17 @@ export function ContentPickerDialog({
       wide
       formTestId="team-content-picker"
       footer={
-        <Button type="button" onClick={onClose} data-picker-done="">
-          {t("tf.pick.done")}
-        </Button>
+        <div className="flex w-full items-center gap-2">
+          <span className="min-w-0 flex-1 truncate text-small text-text-muted" data-picker-count="">
+            {selected.size > 0 ? t("tf.pick.selectedCount", { count: String(selected.size) }) : t("tf.pick.noneSelected")}
+          </span>
+          <Button type="button" variant="outline" onClick={onClose} data-picker-done="">
+            {t("tf.pick.done")}
+          </Button>
+          <Button type="button" disabled={busy || selected.size === 0} onClick={() => void addSelected()} data-picker-add-selected="">
+            {busy ? <Loader2 size={16} className="animate-spin" aria-hidden /> : t("tf.pick.addSelected", { count: String(selected.size) })}
+          </Button>
+        </div>
       }
     >
       <div className="space-y-3" data-team-content-picker={kind}>
@@ -256,21 +286,34 @@ export function ContentPickerDialog({
         <ul className="divide-y divide-border-soft">
           {rows.map((row) => {
             const done = added.has(row.id) || alreadyIds?.has(row.id) === true;
+            const meta = tab === "others" ? `@${row.by}` : undefined;
             return (
-              <li key={row.id} className="flex min-h-14 items-center gap-3 py-2" data-picker-row={row.id}>
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate text-body font-semibold text-text">{row.title}</span>
-                  {tab === "others" && <span className="block truncate text-caption text-text-muted">@{row.by}</span>}
-                </span>
+              <li key={row.id} data-picker-row={row.id}>
                 {done ? (
-                  <span className={cn("inline-flex items-center gap-1 text-small font-semibold text-success")} data-picker-added={row.id}>
-                    <Check size={16} aria-hidden />
-                    {t("tf.pick.added")}
-                  </span>
+                  <ContentRowSmall
+                    type={kind}
+                    image={row.image}
+                    title={row.title}
+                    meta={meta}
+                    trailing={
+                      <span className={cn("inline-flex shrink-0 items-center gap-1 text-small font-semibold text-success")} data-picker-added={row.id}>
+                        <Check size={16} aria-hidden />
+                        {t("tf.pick.added")}
+                      </span>
+                    }
+                  />
                 ) : (
-                  <Button type="button" size="sm" disabled={busy !== null} data-picker-add={row.id} onClick={() => void pick(row)}>
-                    {busy === row.id ? <Loader2 size={16} className="animate-spin" aria-hidden /> : t("tf.pick.add")}
-                  </Button>
+                  <ContentRowSmall
+                    type={kind}
+                    image={row.image}
+                    title={row.title}
+                    meta={meta}
+                    select="check"
+                    selected={selected.has(row.id)}
+                    disabled={busy}
+                    onSelect={() => toggle(row.id)}
+                    attrs={{ "data-picker-add": row.id }}
+                  />
                 )}
               </li>
             );

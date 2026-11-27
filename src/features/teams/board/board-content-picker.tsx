@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { ContentRowSmall } from "@/features/content/content-row";
 import { SpaceDialog } from "@/features/spaces/space-modals";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { fetchRecentPresets, searchPresets } from "@/lib/supabase/presets";
@@ -15,7 +16,7 @@ import type { SpaceContentType } from "@/lib/spaces";
 export function ContentPickerDialog({ type, onClose, onPick }: { type: Extract<SpaceContentType, "preset" | "request">; onClose: () => void; onPick: (item: { id: string; title: string }) => Promise<void> }) {
   const { t } = useTranslation();
   const [query, setQuery] = useState("");
-  const [rows, setRows] = useState<{ id: string; title: string }[] | null>(null);
+  const [rows, setRows] = useState<{ id: string; title: string; image: string | null }[] | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -28,7 +29,15 @@ export function ContentPickerDialog({ type, onClose, onPick }: { type: Extract<S
         return wanted ? await searchRequests(wanted, {}, 20) : (await fetchRecentRequests(20)).items;
       };
       void load().then(
-        (list) => alive && setRows(list.map((item) => ({ id: item.id, title: item.title }))),
+        (list) =>
+          alive &&
+          setRows(
+            list.map((item) => ({
+              id: item.id,
+              title: item.title,
+              image: "referenceImage" in item ? (item.referenceImage ?? item.media[0])?.url ?? null : null,
+            })),
+          ),
         () => alive && setRows([]),
       );
     }, 250);
@@ -53,27 +62,33 @@ export function ContentPickerDialog({ type, onClose, onPick }: { type: Extract<S
         {rows !== null && rows.length === 0 && <p className="text-small text-text-muted">{t("tb.pick.empty")}</p>}
         <ul className="divide-y divide-border-soft">
           {(rows ?? []).map((row) => (
-            <li key={row.id} className="flex min-h-12 items-center gap-3">
-              <span className="min-w-0 flex-1 truncate text-body font-semibold text-text">{row.title}</span>
-              <Button
-                type="button"
-                size="sm"
-                disabled={busy !== null}
-                data-board-pick={row.id}
-                onClick={async () => {
-                  setBusy(row.id);
-                  setError(null);
-                  try {
-                    await onPick(row);
-                    onClose();
-                  } catch (e) {
-                    setError(e instanceof Error ? e.message : t("spaces.error.generic"));
-                    setBusy(null);
-                  }
-                }}
-              >
-                {t("tb.pick.add")}
-              </Button>
+            <li key={row.id}>
+              <ContentRowSmall
+                type={type}
+                image={row.image}
+                title={row.title}
+                trailing={
+                  <Button
+                    type="button"
+                    size="sm"
+                    disabled={busy !== null}
+                    data-board-pick={row.id}
+                    onClick={async () => {
+                      setBusy(row.id);
+                      setError(null);
+                      try {
+                        await onPick({ id: row.id, title: row.title });
+                        onClose();
+                      } catch (e) {
+                        setError(e instanceof Error ? e.message : t("spaces.error.generic"));
+                        setBusy(null);
+                      }
+                    }}
+                  >
+                    {t("tb.pick.add")}
+                  </Button>
+                }
+              />
             </li>
           ))}
         </ul>

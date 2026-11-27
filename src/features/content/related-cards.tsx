@@ -1,8 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import type { IconComponent } from "@/components/icons/icon";
-import { StorageImage } from "@/components/ui/storage-media";
+import { ContentRowSmall } from "@/features/content/content-row";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export interface RelatedCardItem {
@@ -16,33 +15,16 @@ export interface RelatedCardItem {
 }
 
 /**
- * The "Benzer" blocks' content: two-up cards that lead with the post's picture
- * (an icon tile when it has none), then title and meta — pictures make a related
- * list scannable and give it more presence than a plain text list.
+ * The "Benzer" blocks' content (docs/history/477-*, "D · Yatay satır", small size): a column of rows — a 56 px cover (the type's icon on a
+ * soft tile when the post has no picture), the title (two lines) and one meta line — which shows more posts in the 300 px side column
+ * than the old two-up cards did and never cuts a title.
  */
 export function RelatedCards({ items }: { items: RelatedCardItem[] }) {
   return (
-    <ul className="grid grid-cols-2 gap-3 p-2.5">
+    <ul className="divide-y divide-border-soft px-4" data-related-rows="">
       {items.map((item) => (
         <li key={item.id} className="min-w-0">
-          <Link
-            href={item.href}
-            className="group block overflow-hidden rounded-md card-flat transition-colors duration-200 ease-soft hover:border-border-strong"
-          >
-            <span className="relative flex aspect-[4/3] w-full items-center justify-center overflow-hidden bg-surface-soft">
-              {item.image ? (
-                <StorageImage src={item.image.url} alt={item.image.alt} fill sizes="(min-width: 1024px) 140px, 45vw" className="object-cover" />
-              ) : (
-                <span className="flex h-9 w-9 items-center justify-center rounded-md bg-primary-soft text-primary-text">
-                  <item.icon size={20} />
-                </span>
-              )}
-            </span>
-            <span className="block space-y-0.5 px-2.5 py-2 leading-tight">
-              <span className="line-clamp-2 break-words text-label font-semibold text-text transition-colors group-hover:text-primary-text">{item.title}</span>
-              <span className="block truncate text-caption text-text-muted">{item.meta}</span>
-            </span>
-          </Link>
+          <ContentRowSmall size="xs" href={item.href} icon={item.icon} image={item.image?.url ?? null} title={item.title} meta={item.meta} />
         </li>
       ))}
     </ul>
@@ -52,11 +34,14 @@ export function RelatedCards({ items }: { items: RelatedCardItem[] }) {
 /** Placeholder with the same footprint while a related list loads. */
 export function RelatedCardsSkeleton({ count = 4 }: { count?: number }) {
   return (
-    <div className="grid grid-cols-2 gap-3 p-2.5" aria-hidden>
+    <div className="divide-y divide-border-soft px-4" aria-hidden>
       {Array.from({ length: count }, (_, index) => (
-        <div key={index} className="space-y-2">
-          <Skeleton className="aspect-[4/3] w-full rounded-md" />
-          <Skeleton className="h-3 w-4/5" />
+        <div key={index} className="flex items-center gap-3 py-3">
+          <Skeleton className="h-14 w-14 shrink-0 rounded-sm" />
+          <div className="min-w-0 flex-1 space-y-2">
+            <Skeleton className="h-4 w-4/5" />
+            <Skeleton className="h-3 w-1/2" />
+          </div>
         </div>
       ))}
     </div>

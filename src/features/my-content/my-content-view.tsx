@@ -13,7 +13,6 @@ import { Button } from "@/components/ui/button";
 import { PageContainer } from "@/components/ui/page-header";
 import { Chip } from "@/components/ui/chip";
 import { EmptyState } from "@/components/ui/empty-state";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Reveal } from "@/components/ui/reveal";
 import { useAuth } from "@/features/auth/auth-provider";
 import { type ContentSortKey } from "@/features/content/sort-select";
@@ -40,7 +39,8 @@ import { SkillCard } from "@/features/skills/skill-card";
 import { GraduationCap } from "@/components/icons/graduation-cap";
 import { SKILLS_MENU_ENABLED } from "@/lib/skills/flag";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import { CONTENT_GRID_ITEM_CLASS, ContentGrid } from "@/features/content/content-card";
+import { CONTENT_GRID_ITEM_CLASS, ContentGrid, ContentRowsScope } from "@/features/content/content-card";
+import { PromptCardSkeletonGrid } from "@/components/ui/prompt-card-skeleton";
 
 type Kind =
   | "prompts"
@@ -323,14 +323,9 @@ export function MyContentView() {
       ) : (
         <>
           {pages.loading ? (
-            <div className="columns-1 gap-4 sm:columns-2 xl:columns-3">
-              {[0, 1, 2].map((i) => (
-                <Skeleton
-                  key={i}
-                  className="mb-4 h-56 w-full break-inside-avoid rounded-xl"
-                />
-              ))}
-            </div>
+            <ContentRowsScope own author={false}>
+              <PromptCardSkeletonGrid count={3} />
+            </ContentRowsScope>
           ) : pages.failed && visible.length === 0 ? (
             <div className="space-y-3 py-8 text-center" role="alert">
               <p className="text-small text-danger">{t("feed.loadFailed")}</p>
@@ -355,13 +350,15 @@ export function MyContentView() {
               />
             )
           ) : (
-            <ContentGrid>
-              {visible.map((entry, index) => (
-                <Reveal key={entry.id} index={index} className={CONTENT_GRID_ITEM_CLASS}>
-                  {entry.node}
-                </Reveal>
-              ))}
-            </ContentGrid>
+            <ContentRowsScope own author={false}>
+              <ContentGrid>
+                {visible.map((entry, index) => (
+                  <Reveal key={entry.id} index={index} className={CONTENT_GRID_ITEM_CLASS}>
+                    {entry.node}
+                  </Reveal>
+                ))}
+              </ContentGrid>
+            </ContentRowsScope>
           )}
           {!pages.loading && (
             <LoadMore failed={pages.failed} hasMore={pages.hasMore} loadingMore={pages.loadingMore} onLoadMore={() => void pages.loadMore()} auto />

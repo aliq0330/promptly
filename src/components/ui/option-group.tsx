@@ -140,9 +140,31 @@ export function OptionCheckbox({
   );
 }
 
+/**
+ * The end mark of a selectable list row (docs/history/477-*): a rounded square with a tick for MANY, a ring with a dot for ONE. Always drawn
+ * (an empty ring when off), never a native input (docs/history/453-*).
+ */
+export function SelectMark({ kind, selected }: { kind: "check" | "radio"; selected: boolean }) {
+  return (
+    <span
+      aria-hidden
+      className={cn(
+        "grid h-6 w-6 shrink-0 place-items-center border-2 transition-colors duration-200 motion-reduce:transition-none",
+        kind === "check" ? "rounded-xs" : "rounded-full",
+        selected ? "border-primary" : "border-control-border bg-surface",
+        selected && kind === "check" && "bg-primary",
+      )}
+    >
+      {selected && (kind === "check" ? <Check size={16} className="text-primary-foreground" /> : <span className="h-2 w-2 rounded-full bg-primary" />)}
+    </span>
+  );
+}
+
 export interface OptionRowItem<K extends string> {
   key: K;
   label: ReactNode;
+  /** The row's kicker above the title (the content type): `ContentRowKicker`. */
+  kicker?: ReactNode;
   /** One short line under the title (owner, step count). */
   description?: ReactNode;
   /** A thumbnail / cover at the start of the row. */
@@ -160,6 +182,7 @@ export function OptionRowGroup<K extends string>({
   value,
   options,
   onChange,
+  reselect,
   ariaLabel,
   labelledBy,
   className,
@@ -167,6 +190,8 @@ export function OptionRowGroup<K extends string>({
   value: K | null;
   options: OptionRowItem<K>[];
   onChange: (key: K) => void;
+  /** Pressing the already-checked row calls `onChange` again (a row whose choice opens a window that was closed). */
+  reselect?: boolean;
   ariaLabel?: string;
   labelledBy?: string;
   className?: string;
@@ -184,23 +209,20 @@ export function OptionRowGroup<K extends string>({
             aria-checked={checked}
             tabIndex={radioTabIndex(index, checked, anyChecked)}
             data-option={option.key}
-            onClick={() => !checked && onChange(option.key)}
+            onClick={() => (!checked || reselect) && onChange(option.key)}
             {...option.attrs}
             className={cn(
-              "flex min-h-14 w-full min-w-0 items-center gap-3 rounded-md px-2 py-2 text-left transition-colors duration-200 ease-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus motion-reduce:transition-none",
+              "flex min-h-18 w-full min-w-0 items-center gap-3 rounded-md px-2 py-3 text-left transition-colors duration-200 ease-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus motion-reduce:transition-none",
               checked ? "bg-primary-soft" : "hover:bg-surface-soft",
             )}
           >
             {option.leading}
-            <span className="min-w-0 flex-1">
-              <span className={cn("block truncate text-body font-semibold", checked ? "text-primary-text" : "text-text")}>{option.label}</span>
+            <span className="flex min-w-0 flex-1 flex-col gap-1">
+              {option.kicker}
+              <span className={cn("line-clamp-2 break-words text-body font-semibold leading-[1.3]", checked ? "text-primary-text" : "text-text")}>{option.label}</span>
               {option.description && <span className="block truncate text-caption text-text-muted">{option.description}</span>}
             </span>
-            {checked && (
-              <span aria-hidden className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground">
-                <Check size={16} />
-              </span>
-            )}
+            <SelectMark kind="radio" selected={checked} />
           </button>
         );
       })}
