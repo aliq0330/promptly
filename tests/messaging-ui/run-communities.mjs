@@ -1147,14 +1147,12 @@ await scenario("33d. Kapak · üye olmayan / ziyaretçi: kapak, kart kapağı RP
   assert.ok(calls(db, "rpc/community_card_covers").length >= 1);
 }, { guest: true, setup: (db) => { seed(db, { myRole: "none" }); db.groups.find((x) => x.id === C1).cover_color = "#7048e8"; } });
 
-await scenario("34. Sade kontrol satırı (docs/history/232-*): Topluluklar ana sayfasında arama simgesi alanı açar ✕ kapatır, Kart/Izgara düğmesi YOK; topluluk sayfasında sekme çubuğu + 'Gönderi oluştur' simgesi yuvası", async ({ page }) => {
+await scenario("34. Kontrol satırı (docs/history/232-*, 474-*): Topluluklar ana sayfasında arama kutusu hep açıktır (yazınca ✕ çıkar, temizler), Kart/Izgara düğmesi YOK; topluluk sayfasında sekme çubuğu + 'Gönderi oluştur' simgesi yuvası", async ({ page }) => {
   await page.goto(`${BASE}/communities?tab=posts`);
   await page.getByRole("heading", { name: "Topluluklar", level: 1 }).waitFor();
-  assert.equal(await page.getByRole("searchbox").count(), 0, "arama alanı simgeyle açılır");
-  await page.getByRole("button", { name: "Ara", exact: true }).click();
-  await page.getByRole("searchbox").waitFor();
+  await page.getByRole("searchbox").fill("atölye");
   await page.getByRole("button", { name: "Temizle" }).click();
-  assert.equal(await page.getByRole("searchbox").count(), 0);
+  assert.equal(await page.getByRole("searchbox").inputValue(), "");
   assert.equal(await page.locator("[data-view-toggle]").count(), 0, "Kart/Izgara düğmesi kaldırıldı");
   await open(page, C1);
   // Hub düzeni (docs/history/379-*): sekme çubuğu + hemen altında sekmenin eylem yuvası ("Gönderi oluştur" simgesi).

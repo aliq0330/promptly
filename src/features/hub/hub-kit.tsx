@@ -4,8 +4,9 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { ArrowLeft } from "@/components/icons/arrow-left";
 import type { IconComponent } from "@/components/icons/icon";
-import { Plus } from "@/components/icons/plus";
 import { Button, buttonClassName } from "@/components/ui/button";
+import { SearchField } from "@/components/ui/search-field";
+import { useTranslation } from "@/lib/i18n/language-provider";
 import { CARD_SURFACE_CLASS } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
@@ -16,86 +17,128 @@ import { usePhoneDuplicateClass } from "@/components/layout/phone-title";
 /**
  * Hub düzeni (docs/history/379-*): Spaces, Topluluklar ve Ekipler'in ana sayfaları ile iç sayfaları TEK iskeleti paylaşır.
  *
- * Ana sayfa: `HubBand` (simge karosu · başlık · açıklama · tek birincil düğme) → altı çizgili `Tabs` → `HubControlRow` (sayı + arama/filtre/
- * görünüm simgeleri) → `HubAttentionStrip` (davet/bekleyen iş, tek satır) → `HubGrid` içinde `HubCard`'lar.
+ * Ana sayfa (docs/history/474-*, "Stil 2 · Kart ızgarası"): `HubBand` (başlık · açıklama · tek birincil düğme) → altı çizgili `Tabs variant="hub"` →
+ * `HubControls` (sayı · arama · "Yalnız yeni") → `HubAttentionStrip` (davet/bekleyen iş, tek satır) → `HubGrid` içinde `HubCard`'lar.
  * İç sayfa: `HubDetailBand` (kapak · tür etiketi · başlık · alt bilgi · eylemler) → aynı `Tabs` → `HubDetailLayout` (içerik + "Hakkında" yan sütunu).
  *
  * Yeni bir Space/Topluluk/Ekip ekranı yazarken bu parçaları kullan; ikinci bir bant, sekme çubuğu ya da kart gövdesi çizme.
  */
 
 /** Sayfa kabuğu: telefonda 12, tablette 24, masaüstünde 32 px kenar boşluğu — üç alanda aynı genişlik. */
-export const HUB_PAGE_CLASS = `mx-auto w-full ${PAGE_WIDTH_CLASS.hub} ${PAGE_GUTTER_CLASS} pb-16 pt-4 sm:pt-6 lg:pt-7`;
-
-const HUB_BAND_TONE = { primary: "bg-primary-soft text-primary-text", secondary: "bg-secondary-soft text-secondary", neutral: "bg-surface-soft text-text" } as const;
+export const HUB_PAGE_CLASS = `mx-auto w-full ${PAGE_WIDTH_CLASS.hub} ${PAGE_GUTTER_CLASS} pb-16 pt-4 sm:pt-6 lg:pt-8`;
 
 /** Detay bandındaki ⋮ düğmesi (docs/history/420-*): üç alanda aynı 40 px kenarlıklı yuvarlak; menüyü kendi bileşeni çizer. */
 export const HUB_BAND_MENU_BUTTON_CLASS =
   "grid h-10 w-10 shrink-0 place-items-center rounded-sm border border-border bg-surface/80 text-text transition-colors hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus";
 
-/** Ana sayfa bandı. Telefonda düğme kısa etiketle aynı satırda kalır. */
+/**
+ * Ana sayfa bandı (Stil 2): solda büyük başlık + açıklama, sağda tek birincil düğme. Başlık telefonda üst çubuktaki adla aynı olduğundan gizlidir;
+ * düğme telefonda açıklamanın altında tam genişliktir.
+ */
 export function HubBand({
-  icon: Icon,
   title,
   description,
   action,
   testId,
-  tone = "primary",
   ...rest
 }: {
-  icon: IconComponent;
   title: string;
   description?: string;
   action?: ReactNode;
-  /** Alanın simge tonu (P1-4): Topluluk mavi, Space turuncu ("senin olan"), Ekip nötr — üç ana sayfa ilk bakışta ayrışsın. */
-  tone?: "primary" | "secondary" | "neutral";
   testId?: string;
   [data: `data-${string}`]: string | undefined;
 }) {
   const duplicate = usePhoneDuplicateClass(title);
   return (
-    <div className="flex items-center gap-3 sm:gap-4" data-hub-band="" data-testid={testId} {...rest}>
-      <span className={cn("grid h-12 w-12 shrink-0 place-items-center rounded-lg", HUB_BAND_TONE[tone])}>
-        <Icon size={24} aria-hidden />
-      </span>
-      <div className="min-w-0 flex-1">
-        <h1 className={cn("truncate text-h2 font-extrabold text-text md:text-h1", duplicate)}>{title}</h1>
-        {description && <p className="truncate text-small text-text-muted">{description}</p>}
+    <div className="mb-5 flex flex-wrap items-start gap-4 max-sm:mb-3 max-sm:gap-3" data-hub-band="" data-testid={testId} {...rest}>
+      <div className="min-w-[16.25rem] flex-1 max-sm:min-w-[13.75rem]">
+        <h1 className={cn("mb-1.5 text-h1 font-bold text-text", duplicate)}>{title}</h1>
+        {description && <p className="max-w-[35rem] text-body text-text-muted">{description}</p>}
       </div>
       {action}
     </div>
   );
 }
 
-/** Bandın tek birincil düğmesi ("Yeni Space", "Topluluk oluştur", "Ekip oluştur"): telefonda `shortLabel` görünür. */
+/** Bandın tek birincil düğmesi ("Yeni Space", "Topluluk oluştur", "Ekip oluştur"): telefonda tam genişlik, 44 px. */
 export function HubCreateButton({
   label,
-  shortLabel,
   onClick,
   testId,
   attr,
 }: {
   label: string;
-  shortLabel?: string;
   onClick: () => void;
   testId?: string;
   /** Eski testlerin bulduğu veri özniteliği (ör. `data-create-community`). */
   attr?: Record<`data-${string}`, string | boolean>;
 }) {
   return (
-    <Button type="button" onClick={onClick} title={label} aria-label={label} data-testid={testId} className="h-10 shrink-0 rounded-sm px-4 sm:px-5" {...attr}>
-      <Plus size={20} aria-hidden />
-      <span className="max-sm:hidden">{label}</span>
-      <span className="sm:hidden">{shortLabel ?? label}</span>
+    <Button type="button" onClick={onClick} title={label} aria-label={label} data-testid={testId} className="h-11 w-full shrink-0 px-5 sm:h-10 sm:w-auto" {...attr}>
+      {label}
     </Button>
   );
 }
 
-/** Sayı metni solda, simge eylemleri sağda tek satır. */
-export function HubControlRow({ count, children, className }: { count?: ReactNode; children?: ReactNode; className?: string }) {
+/** "Yalnız yeni" gibi tek tıkla açılıp kapanan süzgeç: 40 px, açıkken turuncu çerçeve + yumuşak zemin. */
+export function HubFilterChip({ selected, onClick, children, ...rest }: { selected: boolean; onClick: () => void; children: ReactNode; [data: `data-${string}`]: string | undefined }) {
   return (
-    <div className={cn("flex min-h-9 items-center justify-between gap-3", className)} data-hub-controls="">
-      <span className="min-w-0 truncate text-small text-text-secondary">{count}</span>
-      <div className="flex shrink-0 items-center gap-0.5">{children}</div>
+    <button
+      type="button"
+      aria-pressed={selected}
+      onClick={onClick}
+      className={cn(
+        "inline-flex h-10 shrink-0 items-center rounded-sm border px-[0.875rem] text-small font-semibold whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus",
+        selected ? "border-primary bg-primary-soft text-primary-text" : "border-border-strong bg-surface text-text hover:bg-surface-soft",
+      )}
+      {...rest}
+    >
+      {children}
+    </button>
+  );
+}
+
+/**
+ * Kontrol satırı (Stil 2): solda sayı metni, sağda arama kutusu (telefonda tam genişlik, kendi satırında) ve süzgeç çipleri (`children`:
+ * `HubFilterChip`, sayfaya özgü ek denetimler). Arama yazdıkça listeyi süzer; `onSubmit` verilirse Enter genel aramaya gider.
+ */
+export function HubControls({
+  count,
+  query,
+  onQuery,
+  label,
+  onSubmit,
+  children,
+  hideSearch,
+}: {
+  count?: ReactNode;
+  query: string;
+  onQuery: (value: string) => void;
+  /** Aramanın erişilebilir adı ("Ekip ara…"); kutuda kısa "Ara…" yazar. */
+  label: string;
+  onSubmit?: () => void;
+  children?: ReactNode;
+  hideSearch?: boolean;
+}) {
+  const { t } = useTranslation();
+  return (
+    <div className="my-[0.875rem] flex flex-wrap items-center gap-[0.625rem]" data-hub-controls="">
+      <span className="min-w-[5.625rem] flex-1 text-small text-text-muted" aria-live="polite">
+        {count}
+      </span>
+      {!hideSearch && (
+        <form
+          role="search"
+          className="w-full shrink-0 sm:w-[13.75rem]"
+          onSubmit={(event) => {
+            event.preventDefault();
+            onSubmit?.();
+          }}
+        >
+          <SearchField dense value={query} onChange={onQuery} placeholder={t("hub.search")} aria-label={label} clearLabel={t("common.clear")} data-hub-search="" />
+        </form>
+      )}
+      {children}
     </div>
   );
 }
@@ -153,24 +196,32 @@ export function HubGrid({ children, className, ...rest }: { children: ReactNode;
   );
 }
 
-/** Kartın sol üst tür etiketi / sağ üst eylem düğmesi (kapağın üstünde yüzer; kartın bağlantısının üstünde `relative z-10`). */
-export const HUB_CARD_CHIP_CLASS = "rounded-xs bg-surface/90 px-2.5 py-0.5 text-caption font-semibold text-text shadow-xs";
+/** Kartın sol üst tür etiketi / sağ üst rozeti ve ⋮ düğmesi (kapağın üstünde yüzer; kartın bağlantısının üstünde `relative z-10`). */
+export const HUB_CARD_CHIP_CLASS = "rounded-xs bg-surface px-2 py-[3px] text-caption font-semibold text-text";
+/** Sağ üst köşedeki "N yeni" / "2 onay" gibi dikkat rozeti (kapağın rengi ne olursa olsun okunsun diye beyaz zemin, turuncu metin). */
+export const HUB_CARD_BADGE_CLASS = "rounded-xs bg-surface px-2 py-[3px] text-caption font-semibold text-primary-text";
 export const HUB_CARD_CORNER_BUTTON_CLASS =
   "grid h-8 w-8 place-items-center rounded-sm bg-surface/90 text-text-secondary shadow-xs transition-colors hover:bg-surface hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus";
 
-/** Kart gövdesinin sabit yüksekliği: üç alanda her kart aynı boyda olsun diye başlık + özet + alt satır bu kutuya sığar. */
-export const HUB_CARD_BODY_CLASS = "h-[6.5rem]";
+/** Kartın alt satırındaki küçük eylem düğmesi (36 px): birincil (Aç, Katıl) ya da kenarlıklı (tamamlanmış durum). */
+export const HUB_CARD_ACTION_CLASS = "h-9 shrink-0 px-[0.875rem] text-label";
+
+/** Kapak ve gövde yükseklikleri (Stil 2): kapak 150 (telefonda 132) px, gövde 112 px — üç alanda her kart aynı boyda. */
+export const HUB_CARD_COVER_CLASS = "h-[9.375rem] max-sm:h-[8.25rem]";
+export const HUB_CARD_BODY_CLASS = "h-28";
 
 /**
- * Tek kart (üç alanda aynı): 16:9 kapak + sabit yükseklikli gövde. Başlık bağlantısı kartın tamamını kaplar (`after:inset-0`), kapağın köşe
- * öğeleri ve alt satır `relative z-10` ile üstünde kalır; kart yığın bağlamı kurmaz (⋮ menüsü sonraki kartın üstüne açılabilsin).
+ * Tek kart (üç alanda aynı): sabit yükseklikli kapak + sabit yükseklikli gövde. Başlık bağlantısı kartın tamamını kaplar (`after:inset-0`),
+ * kapağın köşe öğeleri ve alt satır `relative z-10` ile üstünde kalır; kart yığın bağlamı kurmaz (⋮ menüsü sonraki kartın üstüne açılabilsin).
+ * Gövde: başlık · tek satır açıklama · alt satır (solda küçük özet `footerStart`, sağda tek eylem `footerEnd`).
  */
 export function HubCard({
   href,
   title,
-  meta,
+  description,
   cover,
   chip,
+  badge,
   corner,
   coverOverlay,
   footerStart,
@@ -179,19 +230,22 @@ export function HubCard({
   className,
   ...rest
 }: {
-  href: string;
+  /** Kartın bağlantısı; verilmezse (davet gibi henüz açılamayan kart) başlık düz metindir ve kart tıklanmaz. */
+  href?: string;
   title: ReactNode;
-  /** Başlığın altındaki tek satır özet (sahip · sayılar · zaman). */
-  meta?: ReactNode;
+  /** Başlığın altındaki tek satır açıklama. */
+  description?: ReactNode;
   /** Kapağın içi: kapsayıcıyı dolduran görsel/çizim. */
   cover: ReactNode;
   /** Sol üst tür etiketi. */
   chip?: ReactNode;
+  /** Sağ üst köşede ⋮ menüsünün solundaki dikkat rozeti ("3 yeni"). */
+  badge?: ReactNode;
   /** Sağ üst köşe (Sabitle, ⋮ menüsü). */
   corner?: ReactNode;
-  /** Kapağın alt kenarına konan küçük öğe (palet çizgisi, "N yeni" rozeti). */
+  /** Kapağın alt kenarına konan küçük öğe (palet çizgisi). */
   coverOverlay?: ReactNode;
-  /** Alt satırın solu (üye yüzleri) ve sağı (durum rozeti ya da tek eylem). */
+  /** Alt satırın solu (küçük özet: üye sayısı · rol) ve sağı (tek eylem düğmesi). */
   footerStart?: ReactNode;
   footerEnd?: ReactNode;
   /** Kartın altına eklenen satır dışı bildirim (hata gibi). */
@@ -209,21 +263,30 @@ export function HubCard({
       data-hub-card=""
       {...rest}
     >
-      <div className="relative aspect-video overflow-hidden rounded-t-lg bg-primary-soft">
+      <div className={cn("relative overflow-hidden rounded-t-lg bg-primary-soft", HUB_CARD_COVER_CLASS)}>
         {cover}
-        {chip && <span className="absolute left-2.5 top-2.5 z-10 max-w-[70%] truncate">{chip}</span>}
-        {corner && <div className="absolute right-2 top-2 z-10 flex items-center gap-1.5">{corner}</div>}
-        {coverOverlay && <div className="absolute inset-x-2.5 bottom-2 z-10 flex items-center gap-1.5">{coverOverlay}</div>}
+        {chip && <span className="absolute left-3 top-3 z-10 max-w-[60%] truncate">{chip}</span>}
+        {(badge || corner) && (
+          <div className="absolute right-3 top-3 z-10 flex items-center gap-1.5">
+            {badge}
+            {corner}
+          </div>
+        )}
+        {coverOverlay && <div className="absolute inset-x-3 bottom-2 z-10 flex items-center gap-1.5">{coverOverlay}</div>}
       </div>
-      <div className={cn(HUB_CARD_BODY_CLASS, "flex min-w-0 flex-col px-4 py-3")}>
-        <h3 className="min-w-0 truncate font-display text-h3 font-bold leading-tight text-text">
-          <Link href={href} className="after:absolute after:inset-0 after:rounded-lg focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-primary">
-            {title}
-          </Link>
+      <div className={cn(HUB_CARD_BODY_CLASS, "flex min-w-0 flex-col gap-1 px-[0.875rem] py-3")}>
+        <h3 className="min-w-0 truncate text-h3 font-bold leading-tight text-text">
+          {href ? (
+            <Link href={href} className="after:absolute after:inset-0 after:rounded-lg focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-focus">
+              {title}
+            </Link>
+          ) : (
+            title
+          )}
         </h3>
-        {meta && <div className="mt-0.5 min-w-0 truncate text-caption text-text-muted">{meta}</div>}
-        <div className="relative z-10 mt-auto flex min-h-8 min-w-0 items-center justify-between gap-2">
-          <div className="flex min-w-0 items-center">{footerStart}</div>
+        <div className="min-w-0 truncate text-small text-text-muted">{description}</div>
+        <div className="relative z-10 mt-auto flex min-h-9 min-w-0 items-center gap-2">
+          <div className="min-w-0 flex-1 truncate text-label text-text-muted">{footerStart}</div>
           <div className="flex shrink-0 items-center gap-1.5">{footerEnd}</div>
         </div>
       </div>
@@ -232,12 +295,12 @@ export function HubCard({
   );
 }
 
-/** Yüklenirken kartın yerini tutan iskelet (aynı 16:9 kapak + sabit gövde: kayma yok). */
+/** Yüklenirken kartın yerini tutan iskelet (aynı kapak + gövde yüksekliği: kayma yok). */
 export function HubCardSkeleton() {
   return (
     <li aria-hidden className="overflow-hidden rounded-lg card-flat">
-      <Skeleton className="aspect-video w-full rounded-none" />
-      <div className={cn(HUB_CARD_BODY_CLASS, "space-y-2 px-4 py-3")}>
+      <Skeleton className={cn("w-full rounded-none", HUB_CARD_COVER_CLASS)} />
+      <div className={cn(HUB_CARD_BODY_CLASS, "space-y-2 px-[0.875rem] py-3")}>
         <Skeleton className="h-4 w-2/3" />
         <Skeleton className="h-3 w-1/2" />
       </div>

@@ -56,16 +56,19 @@ const hasTab = async (page, name) => (await page.getByRole("tab", { name: optMat
 const overflowFree = (page) => page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1);
 const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: `${SHOTS}/${name}.png` }); };
 
-await scenario("1. telefon (Hub düzeni, docs/history/379-*): bant (başlık + kısa '+ Oluştur') → sekmeler → kontrol satırı → kart ızgarası; taşma yok", async ({ page }) => {
+await scenario("1. telefon (Hub düzeni, docs/history/379-*, 474-*): bant (başlık + tam genişlik 'Topluluk oluştur') → sekmeler → kontrol satırı → kart ızgarası; taşma yok", async ({ page }) => {
   await page.goto(`${BASE}/communities`);
-  const h1 = await page.getByRole("heading", { level: 1, name: "Topluluklar" }).boundingBox();
-  assert.ok(h1 && h1.height > 20, "başlık görünür");
+  await cardsOf(page).first().waitFor();
+  // Telefonda başlık üst çubuktadır, bantta gizlidir (docs/history/463-*): konumlar açıklamadan okunur.
+  const intro = await page.locator("[data-hub-band] p").boundingBox();
+  assert.ok(intro && intro.height > 10, "açıklama görünür");
   const create = await page.locator("[data-create-community]").boundingBox();
-  assert.ok(Math.abs(h1.y + h1.height / 2 - (create.y + create.height / 2)) < 30, "birincil düğme bantla aynı satırda");
+  // Stil 2 (docs/history/474-*): telefonda birincil düğme açıklamanın altında tam genişliktir (44 px).
+  assert.ok(create.y > intro.y && create.width >= 300 && Math.abs(create.height - 44) < 2, `birincil düğme bantta tam genişlik (${create.width}×${create.height})`);
   await cardsOf(page).first().waitFor();
   const tabsY = (await page.getByRole("tablist").first().boundingBox()).y;
   const cardY = (await cardsOf(page).first().boundingBox()).y;
-  assert.ok(h1.y < tabsY && tabsY < cardY, "sıra: bant → sekmeler → kartlar");
+  assert.ok(intro.y < tabsY && tabsY < cardY, "sıra: bant → sekmeler → kartlar");
   assert.equal(await tabEl(page, "Topluluklarım").getAttribute("aria-selected"), "true", "ilk sekme Topluluklarım varsayılan");
   assert.ok(await overflowFree(page), "yatay taşma yok");
   await shot(page, "1-phone");
@@ -80,8 +83,10 @@ await scenario("2. Topluluklarım: kartlar, yeni olan önce; 'N yeni' rozeti (99
   assert.equal(await page.locator(`[data-community-card="${id(2)}"]`).getByText("4 yeni").count(), 1);
   assert.equal(await page.locator(`[data-community-card="${id(3)}"]`).getByText("99+ yeni").count(), 1);
   assert.equal(await page.locator(`[data-community-card="${id(1)}"] [data-shelf-unseen]`).count(), 0, "yeni yoksa rozet yok");
-  const cover = await page.locator(`[data-community-card="${id(1)}"] .aspect-video`).first().boundingBox();
-  assert.ok(Math.abs(cover.width / cover.height - 16 / 9) < 0.05, "kapak 16:9");
+  const cover = await page.locator(`[data-community-card="${id(1)}"] > div`).first().boundingBox();
+  assert.ok(Math.abs(cover.height - 132) < 1.5, `telefonda kapak 132 px (${cover.height})`);
+  const body = await page.locator(`[data-community-card="${id(1)}"] > div`).nth(1).boundingBox();
+  assert.ok(Math.abs(body.height - 112) < 1.5, `gövde 112 px (${body.height})`);
   assert.match(await page.locator(`[data-community-card="${id(2)}"] h3 a`).getAttribute("href"), new RegExp(`/communities/local/?\\?id=${id(2)}`));
   await tabEl(page, "Gönderiler").click();
   await page.waitForURL(/tab=posts/);
@@ -108,7 +113,6 @@ await scenario("4. davet: sekmede sayaç; tek satırlık dikkat şeridi → 'Gö
 
 await scenario("5. arama 'Tüm topluluklar'a sorguyla gider ve sorgu kutuda hazır gelir", async ({ page }) => {
   await page.goto(`${BASE}/communities`);
-  await page.getByRole("button", { name: "Ara", exact: true }).click();
   await page.getByRole("searchbox").fill("anime");
   await page.getByRole("searchbox").press("Enter");
   await page.waitForURL(/\/communities\/all\/?\?q=anime/);

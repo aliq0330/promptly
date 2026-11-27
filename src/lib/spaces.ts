@@ -94,6 +94,16 @@ export function spaceHref(id: string, tab?: SpaceTab): string {
   return `/spaces/local?id=${encodeURIComponent(id)}${tab && tab !== "overview" ? `&tab=${tab}` : ""}`;
 }
 
+/**
+ * "Yeni" Space (Hub süzgeci "Yalnız yeni" + kart rozeti, docs/history/474-*): hiç açmadığım ya da son açışımdan sonra değişen Space.
+ * Arşivdekiler hiçbir zaman yeni sayılmaz.
+ */
+export function spaceIsNew(space: { lastOpenedAt: string | null; updatedAt: string; archivedAt: string | null }): boolean {
+  if (space.archivedAt) return false;
+  if (!space.lastOpenedAt) return true;
+  return Date.parse(space.updatedAt) > Date.parse(space.lastOpenedAt);
+}
+
 /** Arayüz yetkisi (göster/gizle). Arşivlenen Space herkes için salt-okunurdur. */
 export function spaceCapabilities(role: SpaceRole | null, archived: boolean, teamManaged = false) {
   const member = role !== null;

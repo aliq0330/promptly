@@ -33,15 +33,14 @@ import {
   type MySpaceInvitation,
   type SpaceSummary,
 } from "@/lib/supabase/spaces";
-import { isSpaceFilter, SPACE_KIND_LABEL, SPACE_PAGE_SIZE, SPACE_ROLE_LABEL, spaceHref, type SpaceFilter, type SpaceKind, type SpaceSort } from "@/lib/spaces";
+import { isSpaceFilter, SPACE_KIND_LABEL, SPACE_PAGE_SIZE, SPACE_ROLE_LABEL, spaceHref, spaceIsNew, type SpaceFilter, type SpaceKind, type SpaceSort } from "@/lib/spaces";
 import { CreateSpaceModal } from "./space-modals";
 import { CREATE_PAGE_QUERY } from "@/features/content/create-page-shell";
 import { useMediaQuery } from "@/lib/use-media-query";
 import { SpaceCard } from "./space-card";
 import { type SectionMenuItem, CONTROL_ICON_BUTTON } from "@/features/content/section-menu";
-import { HUB_GRID_CLASS, HUB_PAGE_CLASS, HubAttentionStrip, HubBand, HubCardSkeleton, HubControlRow, HubCreateButton } from "@/features/hub/hub-kit";
+import { HUB_GRID_CLASS, HUB_PAGE_CLASS, HubAttentionStrip, HubBand, HubCardSkeleton, HubControls, HubCreateButton, HubFilterChip } from "@/features/hub/hub-kit";
 import { Tabs } from "@/components/ui/tabs";
-import { SearchField } from "@/components/ui/search-field";
 import { SpacesFilterSheet, SpaceTemplates } from "./spaces-controls";
 import { SpaceCoverArt, SpacesIcon } from "./space-visuals";
 
@@ -91,7 +90,7 @@ export function SpacesHome() {
   const [palettes, setPalettes] = useState<Map<string, string[]>>(() => new Map());
   const [createOpen, setCreateOpen] = useState(false);
   const [createKind, setCreateKind] = useState<SpaceKind | undefined>(undefined);
-  const [searchOpen, setSearchOpen] = useState(false);
+  const [onlyNew, setOnlyNew] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
   const [kindFilter, setKindFilter] = useState<SpaceKind | null>(null);
   const requestId = useRef(0);
@@ -222,8 +221,8 @@ export function SpacesHome() {
     { key: "archived", label: t("spaces.filter.archived") },
     ...(invites.length > 0 ? [{ key: "invites" as const, label: t("spaces.nav.invites"), count: invites.length }] : []),
   ];
-  // Tür süzgeci yüklenmiş Space'ler üzerinde çalışır.
-  const shown = items?.filter((item) => !kindFilter || item.kind === kindFilter) ?? null;
+  // Tür süzgeci ve "Yalnız yeni" yüklenmiş Space'ler üzerinde çalışır.
+  const shown = items?.filter((item) => (!kindFilter || item.kind === kindFilter) && (!onlyNew || spaceIsNew(item))) ?? null;
   const filtersActive = sort !== "updated" || kindFilter !== null;
 
   const showRecent = Boolean(user) && section === "all" && !debounced && recent.length > 0;
@@ -233,74 +232,65 @@ export function SpacesHome() {
 
   const iconButton = CONTROL_ICON_BUTTON;
   return (
-    <div className={cn(HUB_PAGE_CLASS, "space-y-4")}>
-      {/* Hub düzeni (docs/history/379-*): üç alanda aynı bant + sekmeler + kontrol satırı + kart ızgarası. */}
+    <div className={HUB_PAGE_CLASS}>
+      {/* Hub düzeni (Stil 2, docs/history/474-*): üç alanda aynı bant + sekmeler + kontrol satırı + kart ızgarası. */}
       <HubBand
-        icon={SpacesIcon}
-        tone="secondary"
         title={t("spaces.home.title")}
         description={t("hub.spaces.intro")}
         data-space-home-band=""
-        action={<HubCreateButton label={t("spaces.home.create")} shortLabel={t("hub.spaces.createShort")} onClick={() => openCreate()} testId="create-space" />}
+        action={<HubCreateButton label={t("spaces.home.create")} onClick={() => openCreate()} testId="create-space" />}
       />
 
-      {user && <Tabs items={menuItems} active={showInvites ? "invites" : filter} onChange={setSection} ariaLabel={t("spaces.filter.label")} />}
+      {user && <Tabs variant="hub" items={menuItems} active={showInvites ? "invites" : filter} onChange={setSection} ariaLabel={t("spaces.filter.label")} />}
 
-      {searchOpen || query ? (
-        <form role="search" onSubmit={(event) => event.preventDefault()}>
-          <SearchField
-            value={query}
-            onChange={setQuery}
-            placeholder={t("spaces.home.searchPlaceholder")}
-            clearLabel={t("common.clear")}
-            alwaysClear
-            onClear={() => setSearchOpen(false)}
-            autoFocus
-          />
-        </form>
-      ) : (
-        <HubControlRow count={items ? t("hub.count.spaces", { count: `${shown?.length ?? items.length}${hasMore ? "+" : ""}` }) : undefined}>
-          <button type="button" onClick={() => setSearchOpen(true)} aria-label={t("spaces.home.searchOpen")} title={t("spaces.home.searchOpen")} className={iconButton}>
-            <Search size={24} aria-hidden />
-          </button>
-          {!showInvites && (
-            <>
-              <button
-                type="button"
-                onClick={() => setFilterOpen(true)}
-                aria-label={t("spaces.home.filterOpen")}
-                title={t("spaces.home.filterOpen")}
-                data-filter-button
-                className={cn(iconButton, "relative", filtersActive && "bg-surface-soft")}
-              >
-                <Filter size={24} aria-hidden />
-                {filtersActive && <span aria-hidden className="absolute right-2 top-2 h-2.5 w-2.5 rounded-full border-2 border-background bg-primary" />}
-              </button>
-              <button
-                type="button"
-                onClick={() => changeView(view === "grid" ? "list" : "grid")}
-                aria-label={t(view === "grid" ? "spaces.home.viewList" : "spaces.home.viewGrid")}
-                title={t(view === "grid" ? "spaces.home.viewList" : "spaces.home.viewGrid")}
-                className={iconButton}
-              >
-                {view === "grid" ? <List size={24} aria-hidden /> : <Grid2x2 size={24} aria-hidden />}
-              </button>
-            </>
-          )}
-        </HubControlRow>
-      )}
+      <HubControls
+        count={items ? t("hub.count.spaces", { count: `${shown?.length ?? items.length}${hasMore ? "+" : ""}` }) : undefined}
+        query={query}
+        onQuery={setQuery}
+        label={t("spaces.home.searchPlaceholder")}
+      >
+        {!showInvites && (
+          <>
+            <HubFilterChip selected={onlyNew} onClick={() => setOnlyNew((value) => !value)} data-hub-only-new="">
+              {t("hub.filter.onlyNew")}
+            </HubFilterChip>
+            <button
+              type="button"
+              onClick={() => setFilterOpen(true)}
+              aria-label={t("spaces.home.filterOpen")}
+              title={t("spaces.home.filterOpen")}
+              data-filter-button
+              className={cn(iconButton, "relative", filtersActive && "bg-surface-soft")}
+            >
+              <Filter size={24} aria-hidden />
+              {filtersActive && <span aria-hidden className="absolute right-2 top-2 h-2.5 w-2.5 rounded-full border-2 border-background bg-primary" />}
+            </button>
+            <button
+              type="button"
+              onClick={() => changeView(view === "grid" ? "list" : "grid")}
+              aria-label={t(view === "grid" ? "spaces.home.viewList" : "spaces.home.viewGrid")}
+              title={t(view === "grid" ? "spaces.home.viewList" : "spaces.home.viewGrid")}
+              className={iconButton}
+            >
+              {view === "grid" ? <List size={24} aria-hidden /> : <Grid2x2 size={24} aria-hidden />}
+            </button>
+          </>
+        )}
+      </HubControls>
 
       {/* Bekleyen davet: tek satırlık kart (Topluluklar'daki gibi); dokununca "Davetler" bölümü açılır. */}
       {user && invites.length > 0 && !showInvites && (
-        <HubAttentionStrip icon={Mail} actionLabel={t("spaces.invites.open")} onAction={() => setSection("invites")} testId="space-invites-banner">
-          {t("spaces.invites.banner", { count: invites.length })}
-        </HubAttentionStrip>
+        <div className="mb-4">
+          <HubAttentionStrip icon={Mail} actionLabel={t("spaces.invites.open")} onAction={() => setSection("invites")} testId="space-invites-banner">
+            {t("spaces.invites.banner", { count: invites.length })}
+          </HubAttentionStrip>
+        </div>
       )}
 
       {showTemplates && <SpaceTemplates onPick={(kind) => openCreate(kind)} />}
 
       {showRecent && (
-        <section aria-labelledby="spaces-recent" className="space-y-2">
+        <section aria-labelledby="spaces-recent" className="mb-5 space-y-2">
           <h2 id="spaces-recent" className="px-1 text-label font-semibold text-text-muted">
             {t("spaces.home.recent")}
           </h2>
@@ -323,7 +313,7 @@ export function SpacesHome() {
       )}
 
       {!user && !authLoading && (
-        <div className="flex flex-col gap-3 rounded-lg border border-border-soft bg-primary-soft/50 p-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mb-4 flex flex-col gap-3 rounded-lg border border-border-soft bg-primary-soft/50 p-4 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-small text-text-secondary">{t("spaces.home.guestHint")}</p>
           <Button size="sm" onClick={() => openCreate()}>
             {t("spaces.home.create")}

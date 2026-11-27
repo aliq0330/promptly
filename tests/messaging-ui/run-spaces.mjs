@@ -116,7 +116,7 @@ await scenario("2. liste: kartlar, süzgeç RPC'ye gider, arama gecikmeli, liste
   await waitFor(() => calls(db, "RPC", "list_spaces").some((c) => c.body.p_filter === "shared"));
   await page.getByText("Seninle paylaşılan Space yok").waitFor();
   await pickSection(page, "Tümü");
-  await page.getByRole("button", { name: "Ara", exact: true }).click();
+  // Arama kutusu kontrol satırında hep açıktır (docs/history/474-*).
   await page.getByRole("searchbox", { name: /Space, görsel/ }).fill("altın");
   await waitFor(() => calls(db, "RPC", "list_spaces").some((c) => c.body.p_query === "altın"));
   await waitFor(async () => (await page.locator("[data-space-card]").count()) === 1);
@@ -568,16 +568,13 @@ await scenario("32. telefon 390px: kaydırmalı bölüm sekmeleri, filtre sayfas
   await page.getByTestId("spaces-list").waitFor();
   assert.ok(await overflowFree(page));
   if (process.env.SHOTS) await page.screenshot({ path: `${process.env.SHOTS}/spaces-new-mobile.png` });
-  await page.getByRole("tab", { name: "Herkese açık" }).waitFor();
-  assert.ok(await overflowFree(page));
-  if (process.env.SHOTS) { await page.waitForTimeout(500); await page.screenshot({ path: `${process.env.SHOTS}/spaces-new-menu-mobile.png` }); }
-  await page.getByRole("tab", { name: "Herkese açık" }).click();
+  // "Herkese açık" bölümü docs/history/459-* ile kalktı (Space'ler özel): kaydırmalı sekmeler Tümü · Benim · Paylaşılan · Arşiv'dir.
+  await page.getByRole("tab", { name: "Paylaşılan" }).click();
   await waitFor(() => true);
   await page.locator("[data-filter-button]").click();
   await page.getByRole("dialog").getByRole("button", { name: "Bitti" }).waitFor();
   assert.ok(await overflowFree(page));
   await page.getByRole("dialog").getByRole("button", { name: "Bitti" }).click();
-  await page.getByRole("button", { name: "Ara", exact: true }).click();
   await page.getByRole("searchbox").waitFor();
   assert.ok(await overflowFree(page));
 }, { viewport: { width: 390, height: 844 }, setup: (db) => boardWith(db, 1) });
