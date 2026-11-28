@@ -311,6 +311,7 @@ export function FileSettingsSx({
   const action = useAsyncAction();
   const [review, setReview] = useState(file.reviewRequired);
   const [copyOpen, setCopyOpen] = useState(false);
+  const [warn, setWarn] = useState<string | null>(null);
   const vars = detail.variables.filter((v) => v.fileId === file.id);
   const boards = detail.boards.filter((b) => b.fileId === file.id);
   const grouped = boards.filter((b) => b.groupId);
@@ -319,23 +320,54 @@ export function FileSettingsSx({
       <SxLabel>{t("ay.file.file")}</SxLabel>
       <SxCard>
         <SxRow title={t("ay.file.name")} desc={file.title} trailing={lead ? <SxBtn onClick={onRename}>{t("ay.edit")}</SxBtn> : undefined} />
-        <SxRow top title={t("ay.file.review")} desc={t("ay.file.reviewDesc")} trailing={<SxSwitch checked={review} disabled={!lead || action.busy} label={t("ay.file.review")} onChange={(on) => { setReview(on); void action.run(async () => { await setFileReview(file.id, on); onChanged(); return true; }); }} />} />
+        <SxRow
+          top
+          title={t("ay.file.review")}
+          desc={t("ay.file.reviewDesc")}
+          attrs={{ "data-file-review-switch": "" }}
+          trailing={
+            <SxSwitch
+              checked={review}
+              disabled={!lead || action.busy}
+              label={t("ay.file.review")}
+              onChange={(on) => {
+                setReview(on);
+                setWarn(null);
+                void action.run(async () => {
+                  const left = await setFileReview(file.id, on);
+                  if (!on && left > 0) setWarn(t("tp.review.turnedOffLeft", { count: left }));
+                  onChanged();
+                  return true;
+                });
+              }}
+            />
+          }
+        />
+        {!lead && <SxRow top title={t(file.reviewRequired ? "tp.review.noteOn" : "tp.review.noteOff")} attrs={{ "data-file-review-note": "" }} />}
       </SxCard>
+      {warn && (
+        <>
+          <SxGap h={12} />
+          <SxNote><span data-file-review-warn="">{warn}</span></SxNote>
+        </>
+      )}
 
       <SxLabel>{t("ay.file.vars")}</SxLabel>
-      <SxCard>
+      <div data-variable-scope="file">
+        <SxCard testId="project-variables">
         {vars.map((v) => (
-          <SxRow key={v.id} title={`{${v.name}}`} desc={v.value} trailing={lead ? <SxBtn onClick={() => onEditVariable(v)}>{t("ay.edit")}</SxBtn> : undefined} />
+          <SxRow key={v.id} title={`{${v.name}}`} desc={v.value} attrs={{ "data-variable-row": v.name }} trailing={lead ? <SxBtn onClick={() => onEditVariable(v)}>{t("ay.edit")}</SxBtn> : undefined} />
         ))}
         {lead && (
           <>
             {vars.length > 0 && <SxSep />}
             <div style={{ padding: "12px 0 14px" }}>
-              <SxBtn tone="out" onClick={() => onEditVariable(null)}>{t("ay.file.addVar")}</SxBtn>
+              <SxBtn tone="out" data-variable-add="" onClick={() => onEditVariable(null)}>{t("ay.file.addVar")}</SxBtn>
             </div>
           </>
         )}
       </SxCard>
+      </div>
       <p className="hint" style={{ margin: "8px 20px 0" }}>{t("ay.file.varsHint")}</p>
 
       <SxLabel>{t("ay.file.boards")}</SxLabel>

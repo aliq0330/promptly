@@ -24,7 +24,7 @@ export function SettingsSubpage({ title, description, children, backHref = "/set
   return (
     <div className="mx-auto w-full max-w-[37.5rem] animate-rise-in px-3 pb-10 pt-2 sm:px-6 lg:px-8 lg:pt-6">
       <header className="sx-set-bar">
-        <Link href={backHref} className="sx-set-back" aria-label={backLabel ?? t("settings.backToSettings")} data-settings-back="" />
+        <Link href={backHref} className="sx-set-back" aria-label={t("settings.backToSettings")} data-settings-back="" />
         <div className="min-w-0">
           <small className="sx-set-parent">{parent}</small>
           <h1 className="sx-set-title">{title}</h1>
@@ -85,7 +85,7 @@ export function SettingsCard({
   const Tag = as;
   return (
     <section>
-      <h2 className="sx-set-label">{title}</h2>
+      <h3 className="sx-set-label">{title}</h3>
       {hint && <p className="sx-set-hint">{hint}</p>}
       <Tag onSubmit={onSubmit} className="sx-set-card space-y-6 p-4 sm:p-5">
         {children}
@@ -127,10 +127,14 @@ export function SettingsLinkRow({ href, icon, title, hint }: { href: string; ico
 }
 
 /** Gezinme satırlarını tek kartta çizgilerle ayırır (ayar sayfalarının liste kalıbı). */
-export function SettingsLinkCard({ label, children }: { label?: string; children: ReactNode }) {
+export function SettingsLinkCard({ label, id, children }: { label?: string; id?: string; children: ReactNode }) {
   return (
-    <section>
-      {label && <h2 className="sx-set-label">{label}</h2>}
+    <section aria-labelledby={label ? id : undefined}>
+      {label && (
+        <h2 id={id} className="sx-set-label">
+          {label}
+        </h2>
+      )}
       <div className="sx-set-card sx-set-rows">{children}</div>
     </section>
   );

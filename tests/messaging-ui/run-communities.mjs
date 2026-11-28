@@ -405,25 +405,27 @@ await scenario("13e. Moderatör: başkasının gönderisini sebeple kaldırır; 
 // 14 — duyurular
 await scenario("14. Duyuru: Yönet → Duyurular'dan yayınla (sohbette de), listede görünür; düzenle; sil. Akış özetinde yönetim düğmesi yok", async ({ page, db }) => {
   await open(page, C1, "manage&section=announcements");
-  await page.getByRole("button", { name: "Duyuru yayınla" }).click();
-  const d = dlg(page);
+  const pg = page.getByTestId("community-announcements-page");
+  await pg.waitFor();
+  await pg.getByRole("button", { name: "Duyuru yayınla" }).first().click();
+  const d = page.getByTestId("community-announcement-form");
   await d.getByLabel("Başlık").fill("Haftalık buluşma");
   await d.getByLabel("Duyuru metni").fill("Cuma 20:00");
-  await d.getByLabel(/Sohbette de bağlantılı duyuru/).check();
+  await d.getByRole("switch", { name: /Sohbette de bağlantılı duyuru/ }).click();
   await d.getByRole("button", { name: "Duyuru yayınla" }).dblclick();
   await page.getByText("Duyuru yayınlandı.").waitFor();
   const made = calls(db, "publish_community_announcement", "RPC");
   assert.equal(made.length, 1);
   assert.deepEqual([made[0].body.p_title, made[0].body.p_post_to_chat, made[0].body.p_notify], ["Haftalık buluşma", true, true]);
   assert.ok(db.messages.some((m) => m.announcement_id && m.body === "Haftalık buluşma"), "linked chat message exists");
-  await page.getByRole("heading", { name: "Haftalık buluşma" }).waitFor();
-  await page.getByRole("button", { name: "Düzenle" }).click();
-  await dlg(page).getByLabel("Başlık").fill("Haftalık buluşma (güncel)");
-  await dlg(page).getByRole("button", { name: "Kaydet" }).click();
+  await pg.getByText("Haftalık buluşma").first().waitFor();
+  await pg.getByRole("button", { name: "Düzenle" }).click();
+  await page.getByTestId("community-announcement-form").getByLabel("Başlık").fill("Haftalık buluşma (güncel)");
+  await page.getByTestId("community-announcement-form").getByRole("button", { name: "Kaydet" }).click();
   await page.getByText("Duyuru güncellendi.").waitFor();
-  await page.getByRole("button", { name: "Sil" }).click();
-  await dlg(page).getByRole("button", { name: "Sil" }).click();
-  await page.getByText("Henüz duyuru yok.").waitFor();
+  await pg.getByRole("button", { name: "Sil" }).click();
+  await page.getByTestId("community-announcement-delete").getByRole("button", { name: "Sil" }).click();
+  await pg.getByText("Henüz duyuru yok.").waitFor();
 }, { setup: (db) => seed(db, { myRole: "owner" }) });
 
 await scenario("14b. Üye duyuruyu akışın üstündeki özette okur ama yayınlama/düzenleme/silme kontrolleri görünmez; duyuru yoksa özet hiç çizilmez", async ({ page }) => {
@@ -506,12 +508,13 @@ await scenario("16. Hakkında: kurallar + kabul zorunluluğu etkisi; güncel sü
 }, { setup: (db) => seed(db, { myRole: "member", rules: "Kural 1: nazik ol", rulesRequired: true }) });
 
 await scenario("16b. Bildirim tercihi: Tümü / Yalnızca önemli / Sessiz kendi üyelik satırına yazılır; süreli sessize alma", async ({ page, db }) => {
-  await open(page, C1, "about");
-  await page.getByRole("radio", { name: /Yalnızca önemli/ }).check();
+  await open(page, C1, "about&section=prefs");
+  const prefs = page.getByTestId("community-prefs-page");
+  await prefs.waitFor();
+  await prefs.getByRole("radio", { name: /Yalnızca önemli/ }).click();
   await page.getByText("Bildirim tercihin kaydedildi.").waitFor();
   assert.equal(db.member(C1, ME).notify_level, "important");
-  await page.getByRole("button", { name: "Süreli sessize al" }).click();
-  await page.getByRole("button", { name: "8 saat" }).click();
+  await prefs.getByRole("radio", { name: "8 saat" }).click();
   await page.getByText(/tarihine kadar sessizde|Muted until|\d/).first().waitFor();
   assert.ok(db.member(C1, ME).notify_muted_until, "temporary mute stored");
   assert.ok(new Date(db.member(C1, ME).notify_muted_until) > new Date());
@@ -520,9 +523,9 @@ await scenario("16b. Bildirim tercihi: Tümü / Yalnızca önemli / Sessiz kendi
 }, { setup: (db) => seed(db, { myRole: "member" }) });
 
 await scenario("16c. Ayrılma: onay ister, çift tık tek istek, topluluklar sayfasına döner", async ({ page, db }) => {
-  await open(page, C1, "about");
-  await page.getByRole("button", { name: "Topluluktan ayrıl" }).click();
-  await dlg(page).getByRole("button", { name: "Topluluktan ayrıl" }).dblclick();
+  await open(page, C1, "about&section=prefs");
+  await page.getByTestId("community-prefs-page").getByText("Topluluktan ayrıl").first().click();
+  await page.getByRole("button", { name: "Topluluktan ayrıl" }).last().dblclick();
   await page.waitForURL(/\/communities\/?$/);
   assert.equal(calls(db, "rpc/leave_chat_group").length, 1);
   assert.equal(db.member(C1, ME), undefined);
@@ -530,33 +533,35 @@ await scenario("16c. Ayrılma: onay ister, çift tık tek istek, topluluklar say
 
 // 17 — yönetim
 await scenario("17. Yönetim · Özet: gerçek veriden sayılar, gizlilik notu; admin görür", async ({ page, db }) => {
-  await open(page, C1, "manage");
-  await page.getByRole("heading", { name: "Topluluk özeti" }).waitFor();
-  await page.getByText("Sayılar gerçek kayıtlardan toplulaştırılarak hesaplanır.").waitFor();
-  await page.getByText("Toplam üye").waitFor();
-  await page.getByText("340").first().waitFor();
+  await open(page, C1, "manage&section=stats");
+  const pg = page.getByTestId("community-stats-page");
+  await pg.waitFor();
+  await pg.getByText("Sayılar gerçek kayıtlardan toplulaştırılarak hesaplanır.").waitFor();
+  await pg.getByText("Toplam üye").waitFor();
+  await pg.getByText("340").first().waitFor();
   assert.equal(calls(db, "community_stats", "RPC")[0].body.p_days, 30);
-  await page.getByRole("radio", { name: "90 gün" }).click();
+  await pg.getByRole("button", { name: "90 gün" }).click();
   await page.waitForTimeout(300);
   assert.ok(calls(db, "community_stats", "RPC").some((c) => c.body.p_days === 90));
   assert.equal(await page.locator("[role=img][aria-label*='toplam']").count(), 3, "three daily charts (new members, posts, messages) with accessible totals");
 }, { setup: (db) => seed(db, { myRole: "admin" }) });
 
 await scenario("17b. Yönetim · Moderasyon kuyruğu: reddet / içeriği kaldır; karar kuyruğu 'Kapanan'a taşır", async ({ page, db }) => {
-  await open(page, C1, "manage");
-  await pickManage(page, "Moderasyon");
-  await page.getByText("Uygunsuz içerik").first().waitFor();
-  await page.getByRole("button", { name: "Reddet" }).first().click();
-  await dlg(page).getByRole("button", { name: "Reddet" }).click();
-  await page.getByText("Uygunsuz içerik").first().waitFor({ state: "detached" }).catch(() => undefined);
+  await open(page, C1, "manage&section=moderation");
+  const pg = page.getByTestId("community-moderation-page");
+  await pg.waitFor();
+  await pg.getByText("Uygunsuz içerik").first().waitFor();
+  await pg.getByRole("button", { name: "Reddet" }).first().click();
+  await page.getByTestId("community-report-confirm").getByRole("button", { name: "Reddet" }).click();
+  await pg.getByText("Uygunsuz içerik").first().waitFor({ state: "detached" }).catch(() => undefined);
   const first = calls(db, "resolve_community_report", "RPC")[0].body;
   assert.equal(first.p_action, "dismiss");
-  await page.getByRole("button", { name: "İçeriği kaldır" }).first().click();
-  await dlg(page).getByRole("button", { name: "İçeriği kaldır" }).click();
-  await page.getByText("Bekleyen rapor yok.").waitFor();
+  await pg.getByRole("button", { name: "İçeriği kaldır" }).first().click();
+  await page.getByTestId("community-report-confirm").getByRole("button", { name: "İçeriği kaldır" }).click();
+  await pg.getByText("Bekleyen rapor yok.").waitFor();
   assert.equal(calls(db, "resolve_community_report", "RPC")[1].body.p_action, "remove");
-  await page.getByRole("radio", { name: "Kapanan" }).click();
-  await page.getByText("Reddedildi").waitFor();
+  await pg.getByRole("radio", { name: "Kapanan" }).click();
+  await pg.getByText("Reddedildi").waitFor();
 }, {
   setup: (db) => {
     seed(db, { myRole: "admin" });

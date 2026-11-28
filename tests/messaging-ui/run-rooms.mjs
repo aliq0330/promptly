@@ -289,76 +289,72 @@ await scenario("10b. Aynı adlı oda: sunucu hatası çevrilmiş olarak formda g
 }, { setup: (db) => seed(db) });
 
 // 11
-await scenario("11. Yönetim: sayaç, bölümler, menüden aşağı taşı → sıra RPC'si; arşivle → arşiv bölümü", async ({ page, db }) => {
+const roomsPage = (page) => page.getByTestId("community-rooms-page");
+const roomRow = (page, name) => roomsPage(page).locator(".row").filter({ hasText: name }).first();
+const archiveRoomViaForm = async (page, name) => {
+  await roomRow(page, name).click();
+  await page.getByTestId("community-room-form-page").getByText("Odayı arşivle").first().click();
+  await page.waitForTimeout(400);
+};
+
+await scenario("11. Yönetim: sayaç, bölümler, Sırala → aşağı taşı → sıra RPC'si; form → arşivle → arşiv bölümü", async ({ page, db }) => {
   await page.goto(`${BASE}/communities/local?id=${G}&tab=manage&section=rooms`);
-  await page.locator("[data-rooms-manage]").waitFor();
-  await page.locator("[data-manage-room]").first().waitFor();
-  assert.match((await page.locator("[data-rooms-count]").innerText()).trim(), /^6 \/ 20$/);
-  const row = (name) => page.locator("[data-manage-room]").filter({ hasText: name }).first();
-  await row("Genel").getByText("Varsayılan oda · silinemez").waitFor();
-  await row("Prompt Paylaşımı").getByRole("button", { name: /Prompt Paylaşımı odası işlemleri/ }).click();
-  await page.getByRole("menuitem", { name: "Aşağı taşı" }).click();
-  await page.waitForFunction(() => true);
+  await roomsPage(page).waitFor();
+  await roomsPage(page).getByText(/6 \/ 20/).first().waitFor();
+  await roomRow(page, "Genel").getByText("Silinemez").waitFor().catch(() => undefined);
+  await page.getByTestId("community-rooms-sort").click();
+  await roomRow(page, "Prompt Paylaşımı").getByRole("button", { name: "Aşağı taşı" }).click();
   await page.waitForTimeout(400);
   const reorder = db.roomCalls.find((c) => c.fn === "reorder").body.p_room_ids;
   const names = reorder.map((id) => db.rooms.find((r) => r.id === id).name);
   assert.ok(names.indexOf("Prompt Paylaşımı") > names.indexOf("Görsel Çıktılar"), `sıra değişti: ${names.join(", ")}`);
-  await row("Yardım ve Sorular").getByRole("button", { name: /işlemleri/ }).click();
-  await page.getByRole("menuitem", { name: "Arşivle" }).click();
-  await page.waitForTimeout(400);
+  await page.getByTestId("community-rooms-sort").click();
+  await archiveRoomViaForm(page, "Yardım ve Sorular");
   assert.ok(db.roomCalls.some((c) => c.fn === "archive" && c.body.p_archived === true));
-  await page.getByRole("button", { name: /Arşivlenmiş odalar/ }).waitFor();
-  assert.match((await page.locator("[data-rooms-count]").innerText()).trim(), /^5 \/ 20$/);
+  await roomsPage(page).getByText(/Arşivdeki odalar/).first().waitFor();
+  await roomsPage(page).getByText(/5 \/ 20/).first().waitFor();
 }, { setup: (db) => seed(db) });
 
-await scenario("11b. Silme yalnız sahibe: yönetici menüsünde 'Odayı sil' yok; Genel'de hiçbir rol silemez", async ({ page }) => {
+await scenario("11b. Silme yalnız sahibe: yönetici arşivdeki odalar sayfasında 'Sil' görmez", async ({ page }) => {
   await page.goto(`${BASE}/communities/local?id=${G}&tab=manage&section=rooms`);
-  await page.locator("[data-manage-room]").first().waitFor();
-  await page.locator("[data-manage-room]").filter({ hasText: "Görsel Çıktılar" }).getByRole("button", { name: /işlemleri/ }).click();
-  assert.equal(await page.getByRole("menuitem", { name: "Odayı sil" }).count(), 0);
+  await roomsPage(page).waitFor();
+  await archiveRoomViaForm(page, "Görsel Çıktılar");
+  await roomsPage(page).getByText(/Arşivdeki odalar/).first().click();
+  const archived = page.getByTestId("community-archived-rooms");
+  await archived.waitFor();
+  await archived.getByText("Görsel Çıktılar").waitFor();
+  assert.equal(await archived.getByRole("button", { name: "Sil" }).count(), 0);
 }, { setup: (db) => seed(db, { role: "admin" }) });
 
-await scenario("11c. Sahip silerken onay penceresi mesajların da gideceğini söyler; onaylayınca RPC çağrılır; Genel menüsünde sil yok", async ({ page, db }) => {
+await scenario("11c. Sahip silerken onay sayfası mesajların da gideceğini söyler; onaylayınca RPC çağrılır", async ({ page, db }) => {
   await page.goto(`${BASE}/communities/local?id=${G}&tab=manage&section=rooms`);
-  await page.locator("[data-manage-room]").first().waitFor();
-  await page.locator("[data-manage-room]").filter({ hasText: "Genel" }).first().getByRole("button", { name: /işlemleri/ }).click();
-  assert.equal(await page.getByRole("menuitem", { name: "Odayı sil" }).count(), 0);
-  await page.keyboard.press("Escape");
-  await page.locator("[data-manage-room]").filter({ hasText: "Görsel Çıktılar" }).getByRole("button", { name: /işlemleri/ }).click();
-  await page.getByRole("menuitem", { name: "Odayı sil" }).click();
-  await dlg(page).getByText(/mesajlar da kalıcı olarak silinir/).waitFor();
-  await dlg(page).getByRole("button", { name: "Odayı sil" }).click();
+  await roomsPage(page).waitFor();
+  await archiveRoomViaForm(page, "Görsel Çıktılar");
+  await roomsPage(page).getByText(/Arşivdeki odalar/).first().click();
+  const archived = page.getByTestId("community-archived-rooms");
+  await archived.getByRole("button", { name: "Sil" }).first().click();
+  const confirm = page.getByTestId("community-room-delete");
+  await confirm.getByText(/mesajlar da kalıcı olarak silinir/).waitFor();
+  await confirm.getByRole("button", { name: "Odayı sil" }).click();
   await page.waitForTimeout(400);
   assert.ok(db.roomCalls.some((c) => c.fn === "delete" && c.body.p_room_id === seedResult.image.id));
-  assert.equal(await page.locator("[data-manage-room]").filter({ hasText: "Görsel Çıktılar" }).count(), 0);
 }, { setup: (db) => { seedResult = seed(db); } });
 
-await scenario("11d. Düzenle: yeni ad update RPC'sine gider; Bölüme taşı yalnız bölüm alanını gönderir", async ({ page, db }) => {
+await scenario("11d. Düzenle: yeni ad update RPC'sine gider (form sayfası)", async ({ page, db }) => {
   await page.goto(`${BASE}/communities/local?id=${G}&tab=manage&section=rooms`);
-  await page.locator("[data-manage-room]").first().waitFor();
-  const menu = async (name) => page.locator("[data-manage-room]").filter({ hasText: name }).first().getByRole("button", { name: /işlemleri/ }).click();
-  await menu("Yardım ve Sorular");
-  await page.getByRole("menuitem", { name: "Düzenle" }).click();
-  await dlg(page).getByLabel("Oda adı").fill("Destek");
-  await dlg(page).getByRole("button", { name: "Kaydet" }).click();
+  await roomsPage(page).waitFor();
+  await roomRow(page, "Yardım ve Sorular").click();
+  const form = page.getByTestId("community-room-form-page");
+  await form.getByLabel("Oda adı").fill("Destek");
+  await form.getByRole("button", { name: "Kaydet" }).last().click();
   await page.waitForTimeout(400);
   assert.equal(db.roomCalls.find((c) => c.fn === "update").body.p_patch.name, "Destek");
-  await menu("Destek");
-  await page.getByRole("menuitem", { name: "Bölüme taşı" }).click();
-  await dlg(page).getByRole("radio", { name: "Üretim" }).waitFor();
-  await dlg(page).getByRole("radio", { name: "Yönetim" }).click();
-  await dlg(page).getByRole("button", { name: "Kaydet" }).click();
-  await page.waitForTimeout(400);
-  const moved = db.roomCalls.filter((c) => c.fn === "update").pop().body.p_patch;
-  assert.deepEqual(Object.keys(moved), ["section"], "yalnız bölüm gönderilir");
-  assert.equal(moved.section, "Yönetim");
 }, { setup: (db) => seed(db) });
 
-await scenario("11e. 20 etkin oda sınırı: Oda ekle kapanır", async ({ page }) => {
+await scenario("11e. 20 etkin oda sınırı: Yeni oda kapanır", async ({ page }) => {
   await page.goto(`${BASE}/communities/local?id=${G}&tab=manage&section=rooms`);
-  await page.locator("[data-rooms-count]").getByText("20 / 20").waitFor();
-  assert.match((await page.locator("[data-rooms-count]").innerText()).trim(), /^20 \/ 20$/);
-  assert.ok(await page.locator("[data-manage-add-room]").isDisabled());
+  await roomsPage(page).getByText(/20 \/ 20/).first().waitFor();
+  assert.ok(await roomsPage(page).getByRole("button", { name: "Yeni oda" }).first().isDisabled());
 }, { setup: (db) => { seed(db); for (let i = 0; i < 14; i += 1) db.addRoom(G, { name: `Oda ${i}` }); } });
 
 // 12

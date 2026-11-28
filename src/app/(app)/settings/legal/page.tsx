@@ -14,7 +14,7 @@ export default function LegalSettingsPage() {
 
   return (
     <SettingsSubpage title={t("legal.groupTitle")} description={t("settings.hub.legalDesc")}>
-      <SettingsLinkCard label={t("legal.groupTitle")}>
+      <SettingsLinkCard id="settings-legal" label={t("legal.groupTitle")}>
         <SettingsLinkRow href="/terms" icon={<FileText size={20} className="text-text-secondary" />} title={t("legal.termsTitle")} hint={t("legal.termsHint")} />
         <SettingsLinkRow href="/privacy" icon={<Lock size={20} className="text-text-secondary" />} title={t("legal.privacyTitle")} hint={t("legal.privacyHint")} />
       </SettingsLinkCard>

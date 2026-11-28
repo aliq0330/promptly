@@ -8,6 +8,8 @@ import { useTranslation } from "@/lib/i18n/language-provider";
  * tekrar gönderim), hata yakalanıp kullanıcıya çevrilmiş mesaj olarak verilir, ham SQL metni asla gösterilmez.
  * `run` başarıda sonucu, hatada `undefined` döner.
  */
+const TRANSLATED_ERRORS = new Set(["GroupActionError", "TeamActionError", "SpaceError"]);
+
 export function useAsyncAction() {
   const { t } = useTranslation();
   const inFlight = useRef(false);
@@ -24,8 +26,8 @@ export function useAsyncAction() {
         return await task();
       } catch (err) {
         console.error("group action", err);
-        // GroupActionError mesajı zaten çevrilmiştir; diğer her hata genel mesaja iner.
-        setError(err instanceof Error && err.name === "GroupActionError" ? err.message : t("common.actionFailedRetry"));
+        // Veri katmanının kendi hata sınıfları (Group/Team/Space) mesajı zaten çevrilmiştir; diğer her hata genel mesaja iner.
+        setError(err instanceof Error && TRANSLATED_ERRORS.has(err.name) ? err.message : t("common.actionFailedRetry"));
         return undefined;
       } finally {
         inFlight.current = false;

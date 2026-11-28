@@ -54,6 +54,11 @@ export function auditSentence(t: ReturnType<typeof useTranslation>["t"], entry: 
 
 const auditKeyKnown = (key: string) => lookupTranslation(key, "tr") !== undefined;
 
+export function csvEscape(value: string): string {
+  const safe = /^[=+\-@\t\r]/.test(value) ? `'${value}` : value;
+  return /[",\n\r]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe;
+}
+
 export function download(name: string, text: string, type = "application/json") {
   const url = URL.createObjectURL(new Blob([text], { type }));
   const link = document.createElement("a");

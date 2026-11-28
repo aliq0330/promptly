@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { ChoiceGroup } from "@/components/ui/choice-group";
 import { ROOM_ICON_COMPONENTS } from "@/features/messages/rooms/room-icon";
 import { refreshCommunityRooms, useCommunityRooms } from "@/features/messages/rooms/use-community-rooms";
-import { SxBtn, SxCard, SxField, SxGap, SxHash, SxLabel, SxNote, SxPage, SxRow, SxSep, SxSub, SxTag, SxVal, SxBarAction, SxFootPair } from "@/features/settings/sx";
+import { SxBtn, SxCard, SxConfirmPage, SxField, SxGap, SxHash, SxLabel, SxNote, SxPage, SxRow, SxSep, SxSub, SxTag, SxVal, SxBarAction, SxFootPair } from "@/features/settings/sx";
 import { OptionGroup } from "@/components/ui/option-group";
 import {
   ROOM_DESCRIPTION_MAX,
@@ -142,6 +142,7 @@ export function RoomsPage({ group, sub, room: roomParam, onToast }: { group: Cha
 function ArchivedRoomsPage({ group, rooms, onClose, onToast }: { group: ChatGroup; rooms: CommunityRoom[]; onClose: () => void; onToast: (message: string) => void }) {
   const { t } = useTranslation();
   const [busy, setBusy] = useState(false);
+  const [deleting, setDeleting] = useState<CommunityRoom | null>(null);
   const isOwner = group.myRole === "owner";
   async function run(task: () => Promise<void>) {
     setBusy(true);
@@ -155,7 +156,8 @@ function ArchivedRoomsPage({ group, rooms, onClose, onToast }: { group: ChatGrou
     }
   }
   return (
-    <SxSub open onClose={onClose} parent={t("ay.rooms.title")} title={t("ay.rooms.archived")} testId="community-archived-rooms">
+    <>
+    <SxSub open={!deleting} onClose={onClose} parent={t("ay.rooms.title")} title={t("ay.rooms.archived")} testId="community-archived-rooms">
       <SxLabel>{t("ay.rooms.archive")}</SxLabel>
       <SxCard>
         {rooms.length === 0 && <SxRow title={t("ay.rooms.archivedEmpty")} />}
@@ -168,7 +170,7 @@ function ArchivedRoomsPage({ group, rooms, onClose, onToast }: { group: ChatGrou
               <>
                 <SxBtn disabled={busy} onClick={() => void run(() => archiveCommunityRoom(room.id, false))}>{t("rooms.manage.unarchive")}</SxBtn>
                 {isOwner && (
-                  <SxBtn tone="dng" disabled={busy} onClick={() => void run(() => deleteCommunityRoom(room.id))}>
+                  <SxBtn tone="dng" disabled={busy} onClick={() => setDeleting(room)}>
                     {t("common.delete")}
                   </SxBtn>
                 )}
@@ -178,6 +180,20 @@ function ArchivedRoomsPage({ group, rooms, onClose, onToast }: { group: ChatGrou
         ))}
       </SxCard>
     </SxSub>
+      {deleting && (
+        <SxConfirmPage
+          parent={t("ay.rooms.archived")}
+          title={t("rooms.manage.deleteTitle", { name: deleting.name })}
+          lead={t("rooms.manage.deleteBody")}
+          cancelLabel={t("common.cancel")}
+          confirmLabel={t("rooms.manage.delete")}
+          busy={busy}
+          onConfirm={() => void run(() => deleteCommunityRoom(deleting.id)).then(() => setDeleting(null))}
+          onClose={() => setDeleting(null)}
+          testId="community-room-delete"
+        />
+      )}
+    </>
   );
 }
 
