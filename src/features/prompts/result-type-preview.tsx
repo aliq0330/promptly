@@ -5,7 +5,8 @@ import { Music } from "@/components/icons/music";
 import { Video } from "@/components/icons/video";
 import { clampedAspectRatio } from "@/lib/placeholder-image";
 import { cn } from "@/lib/utils";
-import { StorageAudio, StorageImage, StorageVideo } from "@/components/ui/storage-media";
+import { MediaPlayer } from "@/components/ui/media-player";
+import { StorageAudio, StorageImage } from "@/components/ui/storage-media";
 import type { PromptResult, PromptResultSummary } from "@/types";
 
 type PreviewableResult = PromptResultSummary & Partial<Pick<PromptResult, "mediaUrl" | "width" | "height">>;
@@ -56,16 +57,8 @@ export function ResultTypePreview({ result, size }: { result: PreviewableResult;
 
   if (result.mediaType === "video") {
     if (size === "detail" && result.mediaUrl) {
-      return (
-        <StorageVideo
-          controls
-          playsInline
-          preload="metadata"
-          poster={result.thumbnailUrl ?? undefined}
-          src={result.mediaUrl}
-          className="mx-auto max-h-[70dvh] w-full rounded-lg bg-black"
-        />
-      );
+      // The detail page's own player (docs/history/484-*): minimal layout, progress line, speed, full screen.
+      return <MediaPlayer poster={result.thumbnailUrl ?? undefined} src={result.mediaUrl} />;
     }
     return (
       <div className="relative aspect-square w-full overflow-hidden bg-surface-soft">

@@ -10,7 +10,8 @@ import { FileText } from "@/components/icons/file-text";
 import { Lock } from "@/components/icons/lock";
 import { SquareTerminal } from "@/components/icons/square-terminal";
 import { buttonClassName } from "@/components/ui/button";
-import { StorageImage, StorageVideo } from "@/components/ui/storage-media";
+import { MediaPlayer } from "@/components/ui/media-player";
+import { StorageImage } from "@/components/ui/storage-media";
 import {
   AsideSection,
   BAND_PRIMARY_CLASS,
@@ -111,7 +112,7 @@ export function ResultDetailView() {
       </DetailArt>
     ) : result.mediaType === "video" && result.mediaUrl ? (
       <DetailArt ratio={16 / 9} caption={t(RESULT_MEDIA_TYPE_LABELS[result.mediaType])}>
-        <StorageVideo controls playsInline preload="metadata" poster={result.thumbnailUrl ?? undefined} src={result.mediaUrl} className="h-full w-full bg-black object-contain" />
+        <MediaPlayer fill poster={result.thumbnailUrl ?? undefined} src={result.mediaUrl} className="rounded-none" />
       </DetailArt>
     ) : result.mediaType === "audio" && result.mediaUrl ? (
       <div className="w-[260px] max-w-full lg:w-[300px]">
