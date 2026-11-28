@@ -1,4 +1,4 @@
-# 9.484 — Bildirim standardı: Topluluk ve Ekip'te aynı kademe, aynı sözcük, aynı ekran
+# 9.485 — Bildirim standardı: Topluluk ve Ekip'te aynı kademe, aynı sözcük, aynı ekran
 
 Kullanıcı, topluluk ve ekipte bildirim ayarlarının dağınık olduğunu söyledi (merkez · tüm sohbetler · oda/kanal); mockup tuvalde onaylandı ("burdaki gibi uygula"). Sorun: aynı iş için altı ayrı kontrol — topluluk merkezde 3 düzey + süre, ekipte yalnız anahtar; "Yalnızca önemli" ↔ "Yalnızca bahsetmeler"; oda yalnız anahtar, kanal 3 düzey + miras bandı; dört ayrı giriş.
 

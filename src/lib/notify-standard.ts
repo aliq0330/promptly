@@ -1,5 +1,5 @@
 /**
- * Bildirim standardı (docs/history/484-*): Topluluk ve Ekip aynı kademeleri, aynı seçenekleri ve aynı sözcükleri kullanır.
+ * Bildirim standardı (docs/history/485-*): Topluluk ve Ekip aynı kademeleri, aynı seçenekleri ve aynı sözcükleri kullanır.
  *   Merkez        Tümü · (Yalnız önemli) · Sessiz
  *   Sohbet düzeyi Tüm mesajlar · Bahsetmeler · Sessiz   (+ "Varsayılan": üst kademenin / kanalın kendi ayarını izle)
  * Bu dosya saf eşlemelerdir (ağ yok); arayüz `features/notify/` ve ayar sayfaları bunları okur.

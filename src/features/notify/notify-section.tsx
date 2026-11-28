@@ -6,7 +6,7 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import type { NotifyChatLevel, NotifyPick } from "@/lib/notify-standard";
 
-/** Bildirim standardı (docs/history/484-*): Topluluk odası ve ekip kanalı AYNI "Bildirimler" bölümünü kullanır; seçenekler ve sözcükler tek yerde. */
+/** Bildirim standardı (docs/history/485-*): Topluluk odası ve ekip kanalı AYNI "Bildirimler" bölümünü kullanır; seçenekler ve sözcükler tek yerde. */
 
 export const NOTIFY_PICK_LABEL: Record<NotifyPick, TranslationKey> = {
   default: "notify.level.default",

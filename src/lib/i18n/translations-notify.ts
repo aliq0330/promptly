@@ -1,5 +1,5 @@
 /**
- * Bildirim standardı (docs/history/484-*): Topluluk ve Ekip'te aynı yerde aynı sözcük. `translations.ts` bu nesneyi açar.
+ * Bildirim standardı (docs/history/485-*): Topluluk ve Ekip'te aynı yerde aynı sözcük. `translations.ts` bu nesneyi açar.
  * Seçenek sözlüğü: sohbet düzeyi = Tüm mesajlar · Bahsetmeler · Sessiz (+ Varsayılan); merkez = Tümü · Yalnız önemli · Sessiz.
  */
 export const notifyTranslations = {

@@ -520,7 +520,7 @@ await scenario("16b. Bildirim tercihi: Tümü / Yalnızca önemli / Sessiz kendi
   assert.ok(new Date(db.member(C1, ME).notify_muted_until) > new Date());
   const patches = calls(db, "conversation_members", "PATCH");
   assert.ok(patches.every((c) => !("role" in c.body)), "only the preference columns are written");
-  // Bildirim standardı (docs/history/484-*): "Tüm topluluk sohbetleri" ekip ile aynı sözlüğü kullanır (Tüm mesajlar · Sessiz) ve kendi üyelik satırının muted_at'ini yazar.
+  // Bildirim standardı (docs/history/485-*): "Tüm topluluk sohbetleri" ekip ile aynı sözlüğü kullanır (Tüm mesajlar · Sessiz) ve kendi üyelik satırının muted_at'ini yazar.
   const chats = prefs.getByRole("radiogroup", { name: "Tüm topluluk sohbetleri" });
   assert.equal(await chats.getByRole("radio", { name: "Tüm mesajlar" }).getAttribute("aria-checked"), "true");
   await chats.getByRole("radio", { name: "Sessiz" }).click();
