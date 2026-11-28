@@ -1,30 +1,17 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import { Copy } from "@/components/icons/copy";
-import { X } from "@/components/icons/x";
 import { Button } from "@/components/ui/button";
 import { fieldLabelClassName, Input, Select } from "@/components/ui/field";
-import { useToast } from "@/features/groups/use-toast";
 import { SpaceDialog } from "@/features/spaces/space-modals";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import {
-  cancelInvitation,
-  createInviteLink,
-  inviteUser,
-  listInviteLinks,
-  listPendingInvites,
-  revokeInviteLink,
-  type TeamActionError,
-  type TeamInviteLink,
-  type TeamPendingInvite,
-} from "@/lib/supabase/teams";
+import { createInviteLink, inviteUser } from "@/lib/supabase/teams";
 import type { TeamRole } from "@/lib/teams";
 import { absoluteUrl } from "@/lib/utils";
 import type { TeamCtx } from "./team-page";
-import { Panel, PersonRow, RoleChip, formatShortDate, roleLabelKey } from "./team-ui";
+import { roleLabelKey } from "./team-ui";
 import { ChoiceGroup } from "@/components/ui/choice-group";
-import { iconButtonClassName } from "@/components/ui/icon-button";
 
 /** Davet edilebilecek roller: sahip atanmaz; konuk yalnız `invite_guests` yetkisiyle (sunucu de denetler). */
 function inviteRoles(ctx: TeamCtx): TeamRole[] {
@@ -259,105 +246,5 @@ export function InviteCard({ ctx, onDone }: { ctx: TeamCtx; onDone: () => void }
       </form>
       {dialog && <InviteDialog ctx={ctx} initial="link" onClose={() => setDialog(false)} onDone={onDone} />}
     </section>
-  );
-}
-
-/** Bekleyen kullanıcı davetleri + etkin davet bağlantıları (Yönetim → Davetler). */
-export function InvitesPanel({ ctx }: { ctx: TeamCtx }) {
-  const { t, language } = useTranslation();
-  const { node: toastNode, show } = useToast();
-  const [invites, setInvites] = useState<TeamPendingInvite[] | null>(null);
-  const [links, setLinks] = useState<TeamInviteLink[] | null>(null);
-  const [dialog, setDialog] = useState<"user" | "link" | null>(null);
-  const [now] = useState(() => Date.now());
-
-  const load = useCallback(() => {
-    void listPendingInvites(ctx.team.id).then(setInvites, () => setInvites([]));
-    void listInviteLinks(ctx.team.id).then(setLinks, () => setLinks([]));
-  }, [ctx.team.id]);
-  useEffect(load, [load]);
-
-  const run = async (fn: () => Promise<unknown>) => {
-    try {
-      await fn();
-      load();
-    } catch (e) {
-      show((e as TeamActionError).message);
-    }
-  };
-
-  return (
-    <div className="space-y-4" data-testid="team-invites-panel">
-      <Panel
-        title={t("tm.admin.invites.pending")}
-        hint={t("tm.admin.invites.pendingHint")}
-        action={
-          <Button type="button" size="sm" onClick={() => setDialog("user")} data-team-invite>
-            {t("tm.invite.title")}
-          </Button>
-        }
-      >
-        {invites && invites.length === 0 && <p className="text-small text-text-muted">{t("tm.admin.invites.none")}</p>}
-        <ul className="divide-y divide-border-soft">
-          {(invites ?? []).map((invite) => (
-            <li key={invite.id}>
-              <PersonRow
-                name={invite.inviteeName || invite.inviteeUsername}
-                username={invite.inviteeUsername}
-                avatarUrl={invite.inviteeAvatarUrl}
-                right={
-                  <>
-                    <RoleChip role={invite.role} />
-                    <button type="button" onClick={() => void run(() => cancelInvitation(invite.id))} aria-label={t("tm.admin.invites.cancel")} className={iconButtonClassName(false, "h-9 w-9")}>
-                      <X size={16} aria-hidden />
-                    </button>
-                  </>
-                }
-              />
-            </li>
-          ))}
-        </ul>
-      </Panel>
-
-      <Panel
-        title={t("tm.admin.invites.links")}
-        hint={t("tm.admin.invites.linksHint")}
-        action={
-          <Button type="button" size="sm" variant="outline" onClick={() => setDialog("link")} data-team-link-new>
-            {t("tm.invite.createLink")}
-          </Button>
-        }
-      >
-        {links && links.length === 0 && <p className="text-small text-text-muted">{t("tm.admin.invites.noLinks")}</p>}
-        <ul className="divide-y divide-border-soft">
-          {(links ?? []).map((link) => {
-            const dead = Boolean(link.revokedAt) || new Date(link.expiresAt).getTime() < now || (link.maxUses !== null && link.useCount >= link.maxUses);
-            return (
-              <li key={link.id} className="flex flex-wrap items-center gap-3 py-2.5">
-                <div className="min-w-0 flex-1">
-                  <p className="text-small font-medium">
-                    <RoleChip role={link.role} />{" "}
-                    <span className="text-text-muted">
-                      {t("tm.admin.invites.uses", { used: link.useCount, max: link.maxUses ?? "∞" })} · {t("tm.admin.invites.until", { date: formatShortDate(link.expiresAt, language) })}
-                    </span>
-                  </p>
-                  <p className="text-caption text-text-muted">{t("tm.admin.invites.by", { name: link.createdByName })}</p>
-                </div>
-                {dead ? (
-                  <span className="text-caption text-text-muted">{t(link.revokedAt ? "tm.admin.invites.revoked" : "tm.admin.invites.expired")}</span>
-                ) : (
-                  <Button type="button" size="sm" variant="ghost" onClick={() => void run(() => revokeInviteLink(link.id))}>
-                    {t("tm.admin.invites.revoke")}
-                  </Button>
-                )}
-              </li>
-            );
-          })}
-        </ul>
-      </Panel>
-
-      {toastNode}
-      {dialog && <InviteDialog ctx={ctx} initial={dialog} onClose={() => setDialog(null)} onDone={load} />}
-    </div>
   );
 }

@@ -11,41 +11,46 @@ import { useRealMessages } from "@/features/messages/real-messages-provider";
 import { useReport } from "@/features/moderation/report-provider";
 import { useRoomsCount } from "./manage-sx-helpers";
 import { SxAvatar, SxBtn, SxCard, SxConfirmPage, SxGap, SxLabel, SxNote, SxPage, SxRow, SxRowCol, SxSep, SxSub, SxSwitch, SxTag } from "@/features/settings/sx";
-import { buildGroupJoinUrl, leaveOutcome } from "@/lib/chat-groups";
+import { buildGroupJoinUrl, can, leaveOutcome } from "@/lib/chat-groups";
 import { communityHref, isTemporarilyMuted, MUTE_DURATIONS_HOURS, muteUntilIso, NOTIFY_LEVELS } from "@/lib/communities";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { fetchProfileByUsername } from "@/lib/supabase/profiles";
 import { SHARE_BASE_PATH } from "@/lib/share-link";
-import { cancelInvitation, createChatGroupLink, deleteChatGroup, fetchGroupInvitations, fetchGroupLinkList, inviteToChatGroup, leaveChatGroup, revokeChatGroupLink, type GroupInvitation, type GroupLinkRow } from "@/lib/supabase/chat-groups";
+import { cancelInvitation, createChatGroupLink, deleteChatGroup, fetchGroupBans, fetchGroupInvitations, fetchGroupLinkList, inviteToChatGroup, leaveChatGroup, revokeChatGroupLink, unbanChatGroupMember, type GroupBan, type GroupInvitation, type GroupLinkRow } from "@/lib/supabase/chat-groups";
 import { closeCommunity, reopenCommunity, setCommunityNotifyPrefs, type MyCommunityMembership } from "@/lib/supabase/communities";
 import { formatRelativeTime } from "@/lib/utils";
 import type { ChatGroup, CommunityNotifyLevel } from "@/types";
 
 /** B3 · Davetler ve bağlantılar · B4 · Senin tercihlerin · B5 · Kapat veya sil · B6 · Silme onayı. */
 
-export function InvitesPage({ group, onChanged, onToast, sub, setSub }: { group: ChatGroup; onChanged: () => void | Promise<void>; onToast: (message: string) => void; sub: string | null; setSub: (sub: string | null) => void }) {
+export function InvitesPage({ root, group, onChanged, onToast, sub, setSub }: { root?: boolean; group: ChatGroup; onChanged: () => void | Promise<void>; onToast: (message: string) => void; sub: string | null; setSub: (sub: string | null) => void }) {
   const { t, language } = useTranslation();
   const { user } = useAuth();
   const [invitations, setInvitations] = useState<GroupInvitation[]>([]);
   const [links, setLinks] = useState<GroupLinkRow[]>([]);
+  const [bans, setBans] = useState<GroupBan[]>([]);
   const [reload, setReload] = useState(0);
   const [username, setUsername] = useState("@");
+  // Yasaklılar yalnız yasak/çıkarma yetkisi olana okunur (RLS); kaldırma yalnız `ban_members`.
+  const canSeeBans = can(group.myRole, "ban_members", group.rolePermissions) || can(group.myRole, "remove_members", group.rolePermissions);
+  const canUnban = can(group.myRole, "ban_members", group.rolePermissions);
   const invite = useAsyncAction();
   const row = useAsyncAction();
   useEffect(() => {
     let alive = true;
-    void Promise.all([fetchGroupInvitations(group.id), fetchGroupLinkList(group.id)]).then(
-      ([i, l]) => {
+    void Promise.all([fetchGroupInvitations(group.id), fetchGroupLinkList(group.id), canSeeBans ? fetchGroupBans(group.id) : Promise.resolve([] as GroupBan[])]).then(
+      ([i, l, b]) => {
         if (!alive) return;
         setInvitations(i);
         setLinks(l);
+        setBans(b);
       },
       () => undefined,
     );
     return () => {
       alive = false;
     };
-  }, [group.id, reload]);
+  }, [group.id, reload, canSeeBans]);
 
   async function send() {
     const name = username.trim().replace(/^@/, "");
@@ -75,7 +80,7 @@ export function InvitesPage({ group, onChanged, onToast, sub, setSub }: { group:
 
   return (
     <>
-      <SxPage parent={t("ay.manage.title")} title={t("ay.manage.invites")} backHref={communityHref(group.id, "manage")} testId="community-invites-page">
+      <SxPage root={root} parent={t("ay.manage.title")} title={t("ay.manage.invites")} backHref={communityHref(group.id, "manage")} testId="community-invites-page">
         <SxLabel>{t("ay.invites.byUsername")}</SxLabel>
         <SxCard style={{ paddingTop: 14, paddingBottom: 16 }}>
           <label className="fl" htmlFor="dv-ad">{t("ay.invites.username")}</label>
@@ -124,6 +129,22 @@ export function InvitesPage({ group, onChanged, onToast, sub, setSub }: { group:
             {t("ay.invites.newLink")}
           </SxBtn>
         </div>
+        {bans.length > 0 && (
+          <>
+            <SxLabel>{t("ay.invites.bans", { count: bans.length })}</SxLabel>
+            <SxCard>
+              {bans.map((ban) => (
+                <SxRow
+                  key={ban.userId}
+                  lead={<SxAvatar name={ban.user?.displayName ?? "?"} src={ban.user?.avatarUrl} />}
+                  title={ban.user?.displayName ?? t("common.genericUser")}
+                  desc={ban.reason ?? undefined}
+                  trailing={canUnban ? <SxBtn disabled={row.busy} onClick={() => void act(() => unbanChatGroupMember(group.id, ban.userId), t("groups.bans.unbannedToast"))}>{t("groups.bans.unban")}</SxBtn> : undefined}
+                />
+              ))}
+            </SxCard>
+          </>
+        )}
         <SxGap h={16} />
         <SxNote>{t("ay.invites.note")}</SxNote>
       </SxPage>

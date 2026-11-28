@@ -477,4 +477,12 @@ export const ayarTranslations = {
   "ay.notify.noteA": { tr: "Sahiplik, rol ve erişim süresi bildirimleri", en: "Ownership, role and access-period notifications" },
   "ay.notify.noteB": { tr: "hiçbir sessizlikle susmaz.", en: "are never silenced." },
   "ay.notify.noteC": { tr: "Sessize aldığın kanalda okunmamış sayısı 0 görünür.", en: "In a channel you mute, the unread count shows 0." },
+
+  // 482 · mockup dışı yüzeyler ve md+ tutarlılığı
+  "ay.rooms.sort": { tr: "Sırala", en: "Reorder" },
+  "ay.rooms.sortDone": { tr: "Bitti", en: "Done" },
+  "ay.invites.bans": { tr: "Yasaklılar ({{count}})", en: "Banned ({{count}})" },
+  "ay.file.copyDesc": { tr: "Dosyanın içeriğini yeni bir Space'e ya da başka bir yere kopyala", en: "Copy this file's content to a new Space or elsewhere" },
+  "ay.set.account": { tr: "Hesap ve güvenlik", en: "Account and security" },
+  "ay.set.app": { tr: "Uygulama", en: "App" },
 } as const;

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { ChoiceGroup } from "@/components/ui/choice-group";
 import { ROOM_ICON_COMPONENTS } from "@/features/messages/rooms/room-icon";
 import { refreshCommunityRooms, useCommunityRooms } from "@/features/messages/rooms/use-community-rooms";
-import { SxBtn, SxCard, SxField, SxGap, SxHash, SxLabel, SxNote, SxPage, SxRow, SxSep, SxSub, SxTag, SxVal, SxBarAction, SxFootPair } from "@/features/settings/sx";
+import { SxBtn, SxCard, SxConfirmPage, SxField, SxGap, SxHash, SxLabel, SxNote, SxPage, SxRow, SxSep, SxSub, SxTag, SxVal, SxBarAction, SxFootPair } from "@/features/settings/sx";
 import { OptionGroup } from "@/components/ui/option-group";
 import {
   ROOM_DESCRIPTION_MAX,
@@ -21,7 +21,7 @@ import {
 } from "@/lib/community-rooms";
 import { communityHref } from "@/lib/communities";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import { archiveCommunityRoom, createCommunityRoom, deleteCommunityRoom, updateCommunityRoom } from "@/lib/supabase/community-rooms";
+import { archiveCommunityRoom, createCommunityRoom, deleteCommunityRoom, reorderCommunityRooms, updateCommunityRoom } from "@/lib/supabase/community-rooms";
 import type { ChatGroup, CommunityRoom, CommunityRoomIcon } from "@/types";
 
 /** B1 · Sohbet odaları listesi · B2 · Oda formu (yeni / düzenle) — docs/mockups/ayar-sayfalari. */
@@ -42,6 +42,32 @@ export function RoomsPage({ group, sub, room: roomParam, onToast }: { group: Cha
   const go = (next: string | null) => router.replace(next ? `${base}&sub=${next}` : base);
   const activeCount = activeRooms(rooms).length;
   const editing = roomParam && roomParam !== "new" ? rooms.find((r) => r.id === roomParam) : undefined;
+  const [sorting, setSorting] = useState(false);
+  const [sortBusy, setSortBusy] = useState(false);
+  const canSort = (group.myRole === "owner" || group.myRole === "admin" || group.myRole === "moderator") && activeCount > 1;
+
+  /** Bir odayı kendi bölümünün içinde bir adım kaydırır; bölümler arası sıra değişmez (eski oda yönetimiyle aynı kural). */
+  async function move(room: CommunityRoom, delta: -1 | 1) {
+    if (sortBusy) return;
+    const active = activeRooms(rooms);
+    const key = (r: CommunityRoom) => r.section?.trim().toLocaleLowerCase("tr") ?? "";
+    const same = active.filter((other) => key(other) === key(room));
+    const swap = same[same.findIndex((other) => other.id === room.id) + delta];
+    if (!swap) return;
+    const ids = active.map((other) => other.id);
+    const a = ids.indexOf(room.id);
+    const b = ids.indexOf(swap.id);
+    [ids[a], ids[b]] = [ids[b], ids[a]];
+    setSortBusy(true);
+    try {
+      await reorderCommunityRooms(group.id, [...ids, ...archived.map((other) => other.id)]);
+      await refreshCommunityRooms(group.id);
+    } catch {
+      onToast(t("rooms.manage.saveOrderFailed"));
+    } finally {
+      setSortBusy(false);
+    }
+  }
 
   return (
     <>
@@ -57,18 +83,36 @@ export function RoomsPage({ group, sub, room: roomParam, onToast }: { group: Cha
         }
       >
         <p className="s" style={{ margin: "8px 20px 0" }}>{t("ay.rooms.intro", { count: activeCount, max: ROOM_LIMIT })}</p>
+        {canSort && (
+          <div style={{ margin: "12px 16px 0", display: "flex", justifyContent: "flex-end" }}>
+            <SxBtn sm tone={sorting ? "pri" : undefined} onClick={() => setSorting((v) => !v)} data-testid="community-rooms-sort">
+              {sorting ? t("ay.rooms.sortDone") : t("ay.rooms.sort")}
+            </SxBtn>
+          </div>
+        )}
         {groups.map((g) => (
           <Fragment key={g.label}>
             <SxLabel>{g.label}</SxLabel>
             <SxCard>
-              {g.rooms.map((room) => (
+              {g.rooms.map((room, index) => (
                 <SxRow
                   key={room.id}
-                  href={`${base}&sub=room&room=${room.id}`}
+                  href={sorting ? undefined : `${base}&sub=room&room=${room.id}`}
                   lead={<SxHash />}
                   title={room.name}
                   desc={roomDesc(room, t)}
-                  trailing={room.isDefault ? <SxTag>{t("ay.rooms.locked")}</SxTag> : room.readPolicy === "staff" ? <SxTag tone="or">{t("ay.rooms.private")}</SxTag> : undefined}
+                  trailing={
+                    sorting ? (
+                      <span style={{ display: "flex", gap: 6 }}>
+                        <SxBtn sm disabled={sortBusy || index === 0} aria-label={t("rooms.manage.moveUp")} onClick={() => void move(room, -1)}>↑</SxBtn>
+                        <SxBtn sm disabled={sortBusy || index === g.rooms.length - 1} aria-label={t("rooms.manage.moveDown")} onClick={() => void move(room, 1)}>↓</SxBtn>
+                      </span>
+                    ) : room.isDefault ? (
+                      <SxTag>{t("ay.rooms.locked")}</SxTag>
+                    ) : room.readPolicy === "staff" ? (
+                      <SxTag tone="or">{t("ay.rooms.private")}</SxTag>
+                    ) : undefined
+                  }
                 />
               ))}
             </SxCard>
@@ -98,6 +142,7 @@ export function RoomsPage({ group, sub, room: roomParam, onToast }: { group: Cha
 function ArchivedRoomsPage({ group, rooms, onClose, onToast }: { group: ChatGroup; rooms: CommunityRoom[]; onClose: () => void; onToast: (message: string) => void }) {
   const { t } = useTranslation();
   const [busy, setBusy] = useState(false);
+  const [deleting, setDeleting] = useState<CommunityRoom | null>(null);
   const isOwner = group.myRole === "owner";
   async function run(task: () => Promise<void>) {
     setBusy(true);
@@ -111,7 +156,8 @@ function ArchivedRoomsPage({ group, rooms, onClose, onToast }: { group: ChatGrou
     }
   }
   return (
-    <SxSub open onClose={onClose} parent={t("ay.rooms.title")} title={t("ay.rooms.archived")} testId="community-archived-rooms">
+    <>
+    <SxSub open={!deleting} onClose={onClose} parent={t("ay.rooms.title")} title={t("ay.rooms.archived")} testId="community-archived-rooms">
       <SxLabel>{t("ay.rooms.archive")}</SxLabel>
       <SxCard>
         {rooms.length === 0 && <SxRow title={t("ay.rooms.archivedEmpty")} />}
@@ -124,7 +170,7 @@ function ArchivedRoomsPage({ group, rooms, onClose, onToast }: { group: ChatGrou
               <>
                 <SxBtn disabled={busy} onClick={() => void run(() => archiveCommunityRoom(room.id, false))}>{t("rooms.manage.unarchive")}</SxBtn>
                 {isOwner && (
-                  <SxBtn tone="dng" disabled={busy} onClick={() => void run(() => deleteCommunityRoom(room.id))}>
+                  <SxBtn tone="dng" disabled={busy} onClick={() => setDeleting(room)}>
                     {t("common.delete")}
                   </SxBtn>
                 )}
@@ -134,6 +180,20 @@ function ArchivedRoomsPage({ group, rooms, onClose, onToast }: { group: ChatGrou
         ))}
       </SxCard>
     </SxSub>
+      {deleting && (
+        <SxConfirmPage
+          parent={t("ay.rooms.archived")}
+          title={t("rooms.manage.deleteTitle", { name: deleting.name })}
+          lead={t("rooms.manage.deleteBody")}
+          cancelLabel={t("common.cancel")}
+          confirmLabel={t("rooms.manage.delete")}
+          busy={busy}
+          onConfirm={() => void run(() => deleteCommunityRoom(deleting.id)).then(() => setDeleting(null))}
+          onClose={() => setDeleting(null)}
+          testId="community-room-delete"
+        />
+      )}
+    </>
   );
 }
 

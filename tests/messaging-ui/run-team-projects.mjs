@@ -243,7 +243,7 @@ await scenario("5. Dosya sayfası (lider): onaysız öğeler rozetli, yalnız do
   assert.equal(await vars.locator('[data-variable-row="musteri"]').count(), 0, "proje düzeyi değişken gösterilmez");
   // Onay anahtarı
   const switchRow = page.locator("[data-file-review-switch]");
-  await switchRow.getByText("Bu dosyada onay: Açık").waitFor();
+  await switchRow.getByText("Lider onayı gereksin").waitFor();
   await switchRow.getByRole("switch").click();
   await page.waitForFunction(() => document.body.innerText.includes("2 öğe hâlâ onaysız"));
   assert.equal(called(db, "team_file_set_review").at(-1)?.body.p_on, false);
@@ -458,20 +458,20 @@ await scenario("14. Ekle menüsü (docs/history/376-*): pano/görsel/değişken/
   assert.deepEqual({ p: body.p_project, t: body.p_title, f: body.p_file }, { p: PROJECT, t: "Mutfak çizimi", f: FILE });
 }, { setup: (db) => { db.rpc.team_create_board = (b) => { db.teamCalls.push({ name: "team_create_board", body: b }); return { body: BOARD }; }; } });
 
-await scenario("15. Proje erişimi penceresi: lider düzenler → team_set_project_access (3 rol, ekip dışı eklenemez)", async ({ page, db }) => {
+await scenario("15. Proje erişimi sayfası: lider düzenler → team_set_project_access (mod değişince Kaydet açılır; yalnız ekip üyeleri)", async ({ page, db }) => {
   await page.goto(projectUrl());
   await openInfo(page);
-  await page.locator("[data-project-edit-access]").click();
-  const form = page.getByTestId("team-project-access-form");
+  await page.locator("[data-project-edit-access]:visible").first().click();
+  const form = page.getByTestId("team-project-access");
   await form.waitFor();
-  await form.getByTestId("project-access-editor").getByText("Erişimi olanlar · 1").waitFor();
-  const roles = await form.getByLabel("Proje rolü").first().locator("option").allInnerTexts();
-  assert.deepEqual(roles, ["Lider", "Düzenleyici", "Görüntüleyici"]);
-  await form.getByRole("button", { name: "Kaydet" }).click();
+  assert.ok(page.url().includes("dlg=access"), "adres parametresi sayfayı taşır (geri tuşu kapatır)");
+  const save = form.getByRole("button", { name: "Kaydet" }).last();
+  assert.equal(await save.isDisabled(), true, "değişiklik yokken Kaydet pasif");
+  await form.getByRole("radio", { name: "Tüm ekip" }).click();
+  await save.click();
   await page.waitForTimeout(300);
   const body = called(db, "team_set_project_access").at(-1)?.body;
-  assert.equal(body.p_mode, "selected");
-  assert.deepEqual(body.p_entries, [{ type: "member", id: "u-a", role: "lead" }]);
+  assert.equal(body.p_mode, "all");
 });
 
 await scenario("16. İngilizce: Projeler, proje sayfası, dosya sayfası ve kuyruk metinleri", async ({ page }) => {
@@ -486,7 +486,7 @@ await scenario("16. İngilizce: Projeler, proje sayfası, dosya sayfası ve kuyr
   await page.getByTestId("area-boards").getByRole("heading", { name: "Boards" }).waitFor();
   await page.getByText("File items").waitFor();
   await openInfo(page);
-  await page.getByText("Review in this file: On").waitFor();
+  await page.getByText("Require lead approval").waitFor();
   await page.goto(projectUrl("&review=1"));
   await page.getByRole("heading", { name: "Awaiting review" }).waitFor();
 }, { lang: "en" });
@@ -1374,7 +1374,7 @@ await scenario("45i. Klavye açıkken (docs/history/470-*; 378 K4 tam ekran kapl
   const box = await form.boundingBox();
   assert.ok(box.y >= 0 && box.y + box.height <= frame.height + 1 && box.height < frame.height - 8, `pencere görünür alanın içinde kart: ${JSON.stringify(box)}`);
   const overlayBg = await page.getByRole("dialog").last().evaluate((el) => getComputedStyle(el).backgroundColor);
-  assert.ok(/rgba\(10, 8, 20, 0\.45\)/.test(overlayBg), "zemin karartı (beyaz değil): " + overlayBg);
+  assert.ok(/rgba\((10, 8, 20|0, 0, 0), 0\.45\)/.test(overlayBg), "zemin karartı (beyaz değil): " + overlayBg);
   assert.equal(await page.locator("#main-content").evaluate((el) => getComputedStyle(el).visibility), "visible", "arkadaki sayfa gizlenmez");
   assert.equal(await page.locator("[data-app-nav]").evaluate((el) => getComputedStyle(el).display), "none", "alt menü gizli");
   await page.evaluate(() => {

@@ -8,7 +8,7 @@ import { SwitchRow } from "@/components/ui/switch";
 import { useAuth } from "@/features/auth/auth-provider";
 import { setCallDevices, useCallDevices, useCallPrefs } from "@/features/calls/call-prefs-store";
 import { canPickSpeaker, deviceLabel, useMediaDevices } from "@/features/calls/use-media-devices";
-import { SettingsCard, SettingsSubpage, SETTING_SWITCH_ROW_CLASS, SettingNested, SettingText } from "@/features/settings/settings-ui";
+import { SettingsCard, SettingsSubpage, SettingNested, SettingText } from "@/features/settings/settings-ui";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { DEFAULT_CALL_SETTINGS, fetchMyCallSettings, saveMyCallSettings, type MyCallSettings } from "@/lib/supabase/calls";
 

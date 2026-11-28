@@ -1,53 +1,35 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useMediaQuery } from "@/lib/use-media-query";
 import { PrefsPage } from "./manage-sx-people";
 import { SxCard, SxRow } from "@/features/settings/sx";
 import { communityHref } from "@/lib/communities";
-import { Bell } from "@/components/icons/bell";
-import { BellOff } from "@/components/icons/bell-off";
 import { Check } from "@/components/icons/check";
 import { ScrollText } from "@/components/icons/scroll-text";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ChoiceGroup } from "@/components/ui/choice-group";
-import { ChatMuteToggle, LeaveCommunitySection } from "@/features/groups/personal-prefs";
 import { RoleBadge } from "@/features/groups/role-badge";
 import { ReportButton } from "@/features/moderation/report-button";
 import { VisibilityLabel } from "./visibility-label";
 import { OnlineMembersStrip } from "@/features/presence/online-members";
 import { useAsyncAction } from "@/features/groups/use-async-action";
-import { useRealMessages } from "@/features/messages/real-messages-provider";
 import type { CommunityTabProps } from "./community-page";
-import { acceptCommunityRules, setCommunityNotifyPrefs } from "@/lib/supabase/communities";
-import { communityTopicLabelKey, effectiveNotifyLevel, isTemporarilyMuted, MUTE_DURATIONS_HOURS, muteUntilIso, NOTIFY_LEVELS } from "@/lib/communities";
+import { acceptCommunityRules } from "@/lib/supabase/communities";
+import { communityTopicLabelKey } from "@/lib/communities";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import type { CommunityNotifyLevel } from "@/types";
 
 /**
  * Hakkında ve kurallar: açıklama + temel bilgiler, topluluk kuralları (kabul zorunluysa üyelik akışına etkisi açıkça yazılır) ve — üye için —
  * KİŞİYE ÖZEL tercihler: topluluk bildirim düzeyi (Tümü · Yalnız önemli · Sessiz, isteğe bağlı süreli sessize alma), sohbeti sessize alma ve
  * topluluktan ayrılma. Sessize alma ve ayrılma sohbet bilgi penceresiyle AYNI bileşenlerdir (`ChatMuteToggle`, `LeaveCommunitySection`).
  */
-export function AboutTab({ group, role, viewerId, membership, reload, onToast, goTab }: CommunityTabProps) {
+export function AboutTab({ group, role, viewerId, membership, reload, onToast }: CommunityTabProps) {
   const { t } = useTranslation();
   const router = useRouter();
-  const phone = useMediaQuery("(max-width: 767px)");
   const searchParams = useSearchParams();
-  const { refresh, patchConversation } = useRealMessages();
   const accept = useAsyncAction();
-  const prefs = useAsyncAction();
-  const [muteMenu, setMuteMenu] = useState(false);
 
   const accepted = (membership?.acceptedRulesVersion ?? 0) >= group.rulesVersion;
-  // Seçim hemen görünür (sunucu yanıtı beklenmez); kayıt başarısızsa eski değere döner.
-  const [pendingLevel, setPendingLevel] = useState<CommunityNotifyLevel | null>(null);
-  const level = pendingLevel ?? membership?.notifyLevel ?? "all";
-  const mutedUntil = membership?.notifyMutedUntil ?? null;
-  const effective = effectiveNotifyLevel(level, mutedUntil);
-  const tempMuted = isTemporarilyMuted(mutedUntil);
 
   async function acknowledge() {
     const ok = await accept.run(async () => {
@@ -59,24 +41,7 @@ export function AboutTab({ group, role, viewerId, membership, reload, onToast, g
     await reload();
   }
 
-  async function savePrefs(nextLevel: CommunityNotifyLevel, until: string | null) {
-    if (!viewerId) return;
-    setPendingLevel(nextLevel);
-    const ok = await prefs.run(async () => {
-      await setCommunityNotifyPrefs(group.id, viewerId, nextLevel, until);
-      return true;
-    });
-    if (!ok) {
-      setPendingLevel(null);
-      return;
-    }
-    setMuteMenu(false);
-    onToast(t("communities.notify.savedToast"));
-    await reload();
-    setPendingLevel(null);
-  }
-
-  if (phone && role && searchParams.get("section") === "prefs") {
+  if (role && searchParams.get("section") === "prefs") {
     const sub = searchParams.get("sub");
     return <PrefsPage group={group} membership={membership} viewerId={viewerId} reload={reload} onToast={onToast} sub={sub} setSub={(next) => router.replace(`${communityHref(group.id, "about", "prefs")}${next ? `&sub=${next}` : ""}`)} />;
   }
@@ -156,87 +121,13 @@ export function AboutTab({ group, role, viewerId, membership, reload, onToast, g
         )}
       </section>
 
-      {role && phone ? (
+      {role && (
         <div className="sx">
           <SxCard style={{ margin: 0 }}>
             <SxRow href={communityHref(group.id, "about", "prefs")} title={t("ay.prefs.title")} desc={t("ay.prefs.entryDesc")} testId="about-prefs-entry" />
           </SxCard>
         </div>
-      ) : role ? (
-        <>
-          <section aria-labelledby="about-notify-title" className="space-y-3">
-            <h2 id="about-notify-title" className="flex items-center gap-1.5 text-label font-semibold text-text">
-              {effective === "none" ? <BellOff size={16} aria-hidden /> : <Bell size={16} aria-hidden />} {t("communities.notify.title")}
-            </h2>
-            <p className="text-caption text-text-muted">{t("communities.notify.help")}</p>
-            <ChoiceGroup<(typeof NOTIFY_LEVELS)[number]>
-              ariaLabel={t("communities.notify.title")}
-              variant="segmented"
-              showHint
-              value={level}
-              disabled={prefs.busy}
-              onChange={(value) => void savePrefs(value, null)}
-              options={NOTIFY_LEVELS.map((value) => ({ key: value, label: t(`communities.notify.level.${value}`), hint: t(`communities.notify.level.${value}Help`) }))}
-            />
-            <div className="space-y-2">
-              {tempMuted ? (
-                <div className="flex flex-wrap items-center gap-3 rounded-lg bg-surface-soft px-4 py-2.5 text-small text-text-secondary">
-                  <BellOff size={16} aria-hidden />
-                  <span>{t("communities.notify.mutedUntil", { until: new Date(mutedUntil as string).toLocaleString() })}</span>
-                  <Button type="button" size="sm" variant="outline" onClick={() => void savePrefs(level, null)} disabled={prefs.busy}>
-                    {t("communities.notify.unmute")}
-                  </Button>
-                </div>
-              ) : (
-                <>
-                  <Button type="button" size="sm" variant="outline" onClick={() => setMuteMenu((prev) => !prev)} aria-expanded={muteMenu}>
-                    <BellOff size={16} /> {t("communities.notify.muteFor")}
-                  </Button>
-                  {muteMenu && (
-                    <div role="group" aria-label={t("communities.notify.muteFor")} className="flex flex-wrap gap-2">
-                      {MUTE_DURATIONS_HOURS.map((hours) => (
-                        <Button key={hours} type="button" size="sm" variant="secondary" disabled={prefs.busy} onClick={() => void savePrefs(level, muteUntilIso(hours))}>
-                          {t(`communities.notify.hours.${hours}` as "communities.notify.hours.1")}
-                        </Button>
-                      ))}
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
-            {prefs.error && (
-              <p role="alert" className="text-caption text-danger">
-                {prefs.error}
-              </p>
-            )}
-          </section>
-
-          <section className="space-y-2" aria-labelledby="about-chat-mute-title">
-            <h2 id="about-chat-mute-title" className="text-label font-semibold text-text">
-              {t("communities.about.chatMuteTitle")}
-            </h2>
-            <ChatMuteToggle
-              groupId={group.id}
-              mutedAt={membership?.mutedAt ?? null}
-              onMutedChange={(mutedAt) => {
-                patchConversation(group.id, { mutedAt });
-                void reload();
-              }}
-              onToast={onToast}
-            />
-          </section>
-
-          <LeaveCommunitySection
-            group={group}
-            onLeft={() => {
-              void refresh();
-              onToast(t("communities.about.leftToast"));
-              router.push("/communities");
-            }}
-            onGoToMembers={() => goTab("members")}
-          />
-        </>
-      ) : null}
+      )}
 
       {/* Topluluğun kendisini şikâyet etme (docs/history/305-*): merkezi pencere → `submit_report('community')`; sahibi kendi topluluğunu şikâyet edemez. */}
       {viewerId && role !== "owner" && (

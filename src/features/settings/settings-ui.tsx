@@ -2,7 +2,6 @@
 
 import type { FormEvent, ReactNode } from "react";
 import Link from "next/link";
-import { ArrowLeft } from "@/components/icons/arrow-left";
 import { ChevronRight } from "@/components/icons/chevron-right";
 import { usePageTitle } from "@/components/layout/page-title";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -14,30 +13,34 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 
 export const settingsLabelClassName = "mb-1.5 block text-body font-semibold text-text";
 
-/** Alt sayfa iskeleti: "← Ayarlar" bağlantısı, büyük başlık, kısa açıklama, kartlar (tek okuma sütunu). */
+/**
+ * Alt sayfa iskeleti (docs/history/482-*, ayar/yönetim sayfalarıyla AYNI dil): solda geri oku + üstte küçük "Ayarlar" adı ve kalın başlık,
+ * altında kısa açıklama, sonra etiket + kart bölümleri (tek okuma sütunu). Stil `app/ayar-kit.css` (`sx-set-*`).
+ */
 export function SettingsSubpage({ title, description, children, backHref = "/settings", backLabel }: { title: string; description?: string; children: ReactNode; backHref?: string; backLabel?: string }) {
   const { t } = useTranslation();
   usePageTitle(title);
+  const parent = backLabel ?? t("nav.settings");
   return (
-    <div className="mx-auto w-full max-w-[37.5rem] animate-rise-in space-y-6 px-3 py-5 sm:px-6 sm:py-7 lg:px-8 lg:py-10">
-      <Link href={backHref} className="inline-flex items-center gap-1 text-small text-text-muted hover:text-text" data-settings-back="">
-        <ArrowLeft size={16} />
-        {backLabel ?? t("settings.backToSettings")}
-      </Link>
-      <header className="space-y-1.5">
-        <h1 className="text-h1 text-text">{title}</h1>
-        {description && <p className="text-small leading-relaxed text-text-secondary">{description}</p>}
+    <div className="mx-auto w-full max-w-[37.5rem] animate-rise-in px-3 pb-10 pt-2 sm:px-6 lg:px-8 lg:pt-6">
+      <header className="sx-set-bar">
+        <Link href={backHref} className="sx-set-back" aria-label={t("settings.backToSettings")} data-settings-back="" />
+        <div className="min-w-0">
+          <small className="sx-set-parent">{parent}</small>
+          <h1 className="sx-set-title">{title}</h1>
+        </div>
       </header>
-      <div className="space-y-4">{children}</div>
+      {description && <p className="sx-set-lead">{description}</p>}
+      <div className="sx-set-body">{children}</div>
     </div>
   );
 }
 
-/** Bir başlıklı kart grubu (alt sayfa içinde bölüm başlığı). */
+/** Bir başlıklı kart grubu (alt sayfa içinde bölüm etiketi + altındaki kartlar). */
 export function SettingsGroup({ id, title, children }: { id?: string; title: string; children: ReactNode }) {
   return (
-    <section aria-labelledby={id} className="scroll-mt-24 space-y-3">
-      <h2 id={id} className="px-1 font-display text-h3 font-bold text-text">
+    <section aria-labelledby={id} className="scroll-mt-24">
+      <h2 id={id} className="sx-set-label">
         {title}
       </h2>
       <div className="space-y-3">{children}</div>
@@ -65,7 +68,7 @@ export function SettingsSectionHead({ title, hint, id }: { title: string; hint?:
   );
 }
 
-/** Yükseltilmiş tek ayar kartı; gönderiliyorsa `<form>` olarak çizilir. */
+/** Tek ayar bölümü: üstte büyük harfli etiket (+ soluk açıklama), altında kenarlıklı kart; gönderiliyorsa kart `<form>` olarak çizilir. */
 export function SettingsCard({
   as = "div",
   onSubmit,
@@ -81,10 +84,13 @@ export function SettingsCard({
 }) {
   const Tag = as;
   return (
-    <Tag onSubmit={onSubmit} className={SETTINGS_SECTION_CLASS}>
-      <SettingsSectionHead title={title} hint={hint} />
-      <div className={SETTINGS_SECTION_BODY_CLASS}>{children}</div>
-    </Tag>
+    <section>
+      <h3 className="sx-set-label">{title}</h3>
+      {hint && <p className="sx-set-hint">{hint}</p>}
+      <Tag onSubmit={onSubmit} className="sx-set-card space-y-6 p-4 sm:p-5">
+        {children}
+      </Tag>
+    </section>
   );
 }
 
@@ -106,19 +112,30 @@ export function SettingNested({ children }: { children: ReactNode }) {
   return <div className="ml-1 space-y-6 border-l-2 border-border-soft pl-4">{children}</div>;
 }
 
-/** Tam genişlik gezinme satırı (ana listedeki kategoriler, engellenenler, yasal metinler…). */
+/** Gezinme satırı (ana listedeki kategoriler, engellenenler, yasal metinler…): ikon + başlık + soluk açıklama + ›. Kartın içinde (`SettingsLinkCard`) ya da tek başına kullanılır. */
 export function SettingsLinkRow({ href, icon, title, hint }: { href: string; icon?: ReactNode; title: string; hint?: string }) {
   return (
-    <Link
-      href={href}
-      className="group flex items-center gap-3 rounded-lg card-flat p-4 shadow-card transition-colors duration-200 ease-soft hover:border-border-strong sm:px-5"
-    >
+    <Link href={href} className="sx-set-row group">
       {icon}
       <span className="min-w-0 flex-1">
         <span className="block text-body font-semibold text-text">{title}</span>
-        {hint && <span className="block text-caption text-text-muted">{hint}</span>}
+        {hint && <span className="block text-small text-text-muted">{hint}</span>}
       </span>
       <ChevronRight size={16} className="shrink-0 text-text-muted transition-transform duration-200 ease-soft group-hover:translate-x-0.5" />
     </Link>
+  );
+}
+
+/** Gezinme satırlarını tek kartta çizgilerle ayırır (ayar sayfalarının liste kalıbı). */
+export function SettingsLinkCard({ label, id, children }: { label?: string; id?: string; children: ReactNode }) {
+  return (
+    <section aria-labelledby={label ? id : undefined}>
+      {label && (
+        <h2 id={id} className="sx-set-label">
+          {label}
+        </h2>
+      )}
+      <div className="sx-set-card sx-set-rows">{children}</div>
+    </section>
   );
 }

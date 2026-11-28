@@ -37,11 +37,13 @@ export interface SxPageProps {
   /** Altta sabit eylem çubuğu (`SxFoot`). */
   footer?: ReactNode;
   testId?: string;
+  /** Kök liste sayfası: md+'da üst çubuk çizilmez (sayfa kendi sekmesinin altındadır); telefonda yine çizilir. */
+  root?: boolean;
   children: ReactNode;
 }
 
-/** Telefonda tam ekran sayfa; md+'da yalnız okuma sütunu. */
-export function SxPage({ parent, title, backHref, onBack, close, action, footer, testId, children }: SxPageProps) {
+/** Telefonda tam ekran sayfa; md+'da aynı başlık çubuğu + okuma sütunu (kök listelerde çubuk yok). */
+export function SxPage({ parent, title, backHref, onBack, close, action, footer, testId, root, children }: SxPageProps) {
   const { t } = useTranslation();
   const phone = useSxPhone();
   useEffect(() => {
@@ -56,20 +58,32 @@ export function SxPage({ parent, title, backHref, onBack, close, action, footer,
     };
   }, [phone]);
 
-  if (!phone) {
-    return (
-      <div className="sx sx-flow" data-sx-page data-testid={testId}>
-        <div className="body">{children}</div>
-        {footer && <div className="foot">{footer}</div>}
-      </div>
-    );
-  }
   const label = close ? t("common.close") : t("common.back");
   const lead = backHref && !close ? (
     <Link href={backHref} className="back" aria-label={label} data-sx-back />
   ) : (
     <button type="button" className={close ? "close" : "back"} aria-label={label} onClick={onBack} data-sx-back />
   );
+  if (!phone) {
+    return (
+      <div className="sx sx-flow" data-sx-page data-testid={testId}>
+        {!root && (
+          <div className="bar sx-flow-bar">
+            {lead}
+            <div className="bt">
+              {parent && <small>{parent}</small>}
+              <b role="heading" aria-level={1}>
+                {title}
+              </b>
+            </div>
+            {action}
+          </div>
+        )}
+        <div className="body">{children}</div>
+        {footer && <div className="foot sx-flow-foot">{footer}</div>}
+      </div>
+    );
+  }
   return (
     <div className="sx sx-shell" data-sx-page role="dialog" aria-modal="false" aria-label={title} data-testid={testId}>
       <div className="bar">

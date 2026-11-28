@@ -405,12 +405,12 @@ await scenario("14. notlar: gizli not oluşturulur (is_private), not öğeye ba�
 
 await scenario("15. üyeler: sahip davet eder; bilinmeyen kullanıcı adında çevrilmiş hata (ham SQL yok)", async ({ page, db }) => {
   await page.goto(`${BASE}/spaces/local?id=${SID(1)}&tab=members`);
-  const form = page.getByTestId("invite-member");
+  const form = page.getByTestId("space-members-page");
   await form.getByLabel("Kullanıcı adı").fill("@carol");
   await form.getByRole("button", { name: "Davet et" }).click();
   await page.getByText("@carol davet edildi").waitFor();
   assert.equal(calls(db, "RPC", "invite_space_member")[0].body.p_username, "carol");
-  await page.getByTestId("pending-invites").waitFor();
+  await form.getByText("@carol", { exact: true }).first().waitFor();
   await form.getByLabel("Kullanıcı adı").fill("yokboyle");
   await form.getByRole("button", { name: "Davet et" }).click();
   await page.getByText("Bu kullanıcı adıyla davet edilebilecek biri yok.").waitFor();

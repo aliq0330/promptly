@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { OptionGroup } from "@/components/ui/option-group";
 import { useAuth } from "@/features/auth/auth-provider";
-import { SettingsCard, SettingsLinkRow, SettingsSubpage } from "@/features/settings/settings-ui";
+import { SettingsCard, SettingsLinkCard, SettingsLinkRow, SettingsSubpage } from "@/features/settings/settings-ui";
 import { fetchOwnMessagePrivacy, updateMessagePrivacy, type MessagePrivacy } from "@/lib/supabase/profiles";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { PresenceSettingsCard } from "@/features/presence/presence-settings";
@@ -61,7 +61,9 @@ export default function PrivacySettingsPage() {
         <PresenceSettingsCard />
       </div>
 
-      <SettingsLinkRow href="/settings/blocked" title={t("settings.blockedUsers")} hint={t("settings.blockedUsersHint")} />
+      <SettingsLinkCard>
+        <SettingsLinkRow href="/settings/blocked" title={t("settings.blockedUsers")} hint={t("settings.blockedUsersHint")} />
+      </SettingsLinkCard>
     </SettingsSubpage>
   );
 }

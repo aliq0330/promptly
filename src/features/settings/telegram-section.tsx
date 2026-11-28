@@ -124,7 +124,7 @@ export function TelegramSection() {
   if (loadFailed && rows === null) {
     return (
       <section className="space-y-2" data-telegram="">
-        <h3 className="px-1 font-display text-h3 font-bold text-text">{t("tg.title")}</h3>
+        <h3 className="sx-set-label" style={{ margin: 0 }}>{t("tg.title")}</h3>
         <p role="alert" className="px-1 text-small text-danger">{t("tg.loadFailed")}</p>
         <Button type="button" size="sm" variant="outline" onClick={() => setReloadKey((key) => key + 1)}>{t("common.retry")}</Button>
       </section>
@@ -139,7 +139,7 @@ export function TelegramSection() {
   return (
     <section className="space-y-3" data-telegram="">
       <div className="space-y-1 px-1">
-        <h3 className="font-display text-h3 font-bold text-text">{t("tg.title")}</h3>
+        <h3 className="sx-set-label" style={{ margin: 0 }}>{t("tg.title")}</h3>
         <p className="text-caption leading-relaxed text-text-muted">{t("tg.hint")}</p>
       </div>
       {error && <p role="alert" className="px-1 text-small text-danger">{error}</p>}

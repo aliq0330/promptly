@@ -33,7 +33,8 @@ import { teamLink, type TeamRole } from "@/lib/teams";
 import { formatRelativeTime } from "@/lib/utils";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import type { TeamCtx } from "./team-page";
-import { auditSentence } from "./team-admin-section";
+import { auditSentence, csvEscape, download } from "./team-admin-section";
+import { ExportPage, GroupsPage } from "./admin-sx-more";
 import { LoadMoreButton } from "@/features/feed/load-more";
 import { TEAM_TONES, resolveTeamTone, roleLabelKey } from "./team-ui";
 
@@ -53,8 +54,12 @@ export function TeamAdminPhone({ ctx, route, go }: { ctx: TeamCtx; route: TeamAd
       return <PoliciesPage ctx={ctx} sub={route.sub} pickKey={route.key} go={go} />;
     case "invites":
       return <InvitesPage ctx={ctx} sub={route.sub} go={go} />;
+    case "groups":
+      return <GroupsPage ctx={ctx} sub={route.sub} groupId={route.key} go={go} />;
     case "guests":
       return <GuestsPage ctx={ctx} />;
+    case "export":
+      return <ExportPage ctx={ctx} />;
     case "audit":
       return <AuditPage ctx={ctx} />;
     case "danger":
@@ -90,7 +95,7 @@ function ManageList({ ctx }: { ctx: TeamCtx }) {
   const showPeople = can("manage_members") || can("manage_groups");
   const showRecords = can("view_audit") || can("export");
   return (
-    <SxPage parent={team.name} title={t("ay.manage.title")} backHref={teamLink(team.id)} testId="team-manage-list">
+    <SxPage root parent={team.name} title={t("ay.manage.title")} backHref={teamLink(team.id)} testId="team-manage-list">
       <div className="hd">
         <SxCover name={team.name} color={teamColor(team.tone)} />
         <div className="rt">
@@ -586,13 +591,37 @@ function AuditPage({ ctx }: { ctx: TeamCtx }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- dayKey dile bağlıdır
   }, [entries, language]);
   const sentence = (e: TeamAuditEntry) => auditSentence(t, e);
+  const [exporting, setExporting] = useState(false);
+  /** CSV: seçili süzgeç + aralıktaki TÜM kayıtlar (sayfa sayfa okunur, en çok 2000 satır); ekranda yüklenenle sınırlı değildir. */
+  async function exportCsv() {
+    setExporting(true);
+    try {
+      const all: TeamAuditEntry[] = [];
+      let before: string | null = null;
+      for (let page = 0; page < 70; page += 1) {
+        const rows = await listAudit(ctx.team.id, category === "all" || category === "deletes" ? null : category, days, before);
+        const kept = category === "deletes" ? rows.filter((e) => /delet|remov/.test(e.action)) : rows;
+        all.push(...kept.slice(0, 30));
+        if (rows.length <= 30) break;
+        before = rows[Math.min(rows.length, 30) - 1]?.createdAt ?? null;
+      }
+      const lines = [[t("tm.audit.csv.time"), t("tm.audit.csv.actor"), t("tm.audit.csv.category"), t("tm.audit.csv.event")]].concat(
+        all.map((entry) => [entry.createdAt, entry.actorName || entry.actorUsername || t("tm.admin.audit.system"), t(`tm.audit.tag.${entry.category}` as "tm.audit.tag.member"), sentence(entry)]),
+      );
+      download(`${ctx.team.slug}-audit.csv`, "\ufeff" + lines.map((row) => row.map(csvEscape).join(",")).join("\r\n"), "text/csv;charset=utf-8");
+    } catch {
+      // indirme başarısızsa sayfa olduğu gibi kalır
+    } finally {
+      setExporting(false);
+    }
+  }
   return (
     <SxPage
       parent={t("ay.manage.title")}
       title={t("ay.team.audit")}
       backHref={back(ctx)}
       testId="team-audit-page"
-      action={<SxBarAction onClick={() => undefined}>CSV</SxBarAction>}
+      action={<SxBarAction disabled={exporting} onClick={() => void exportCsv()}>CSV</SxBarAction>}
     >
       <ChoiceGroup<(typeof AUDIT_CHIPS)[number]>
         variant="sx-chips"
