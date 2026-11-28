@@ -15,7 +15,7 @@ Dal: `claude/lucid-einstein-jp5n1l`.
 
 ## Sayfa durumu (✔ mockup'la birebir doğrulandı · ◐ yapıldı, doğrulanıyor · ☐ bekliyor)
 Topluluk: A1 ✔ A2 ✔ A3 ✔ A4 ✔ A5 ✔ A6 ✔ B1 ✔ B2 ✔ B3 ✔ B4 ✔ B5 ✔ B6 ✔
-Ekip: C1 ✔ C2 ✔ C3 ✔ C4 ✔ C5 ✔ C6 ✔ D1 ☐ D2 ✔ D3 ✔ D4 ✔ D5 ✔ D6 ☐ E1 ☐ E2 ✔ E3 ✔
+Ekip: C1 ✔ C2 ✔ C3 ✔ C4 ✔ C5 ✔ C6 ✔ D1 ✔ D2 ✔ D3 ✔ D4 ✔ D5 ✔ D6 ✔ E1 ✔ E2 ✔ E3 ✔
 Space: F1 ✔ F2 ✔ F3 ✔ F4 ✔ F5 ✔ F6 ✔
 
 ## Notlar / sapmalar
@@ -24,3 +24,7 @@ Space: F1 ✔ F2 ✔ F3 ✔ F4 ✔ F5 ✔ F6 ✔
 - md+ : topluluk yönetiminde şimdilik eski bileşenler (SectionMenu + kartlar); yeni gövdeler (`SxPage` md+ kipi) md+ a uyarlama aşamasında bağlanacak (henüz yapılmadı).
 - Odaların sıralanması/silinmesi telefonda B2'de yok (mockup'ta yok): silme = arşivdeki odalar sayfası (sahip); sıralama md+ ta.
 - Bilinen test etkisi: eski `tests/messaging-ui/run-communities.mjs`, `run-groups.mjs`, `run-rooms.mjs` telefon genişliği senaryoları yeni sayfalara göre güncellenmeli.
+
+## Durum (tamamlandı)
+33 sayfa + desen sözlüğü; hepsi koyu+açık modda mockup'la 0 fark (`node tests/ayar/karsilastir.mjs`). Birim testler 1576/1576, `tsc`, `lint` (0 hata), `build` temiz.
+Eski arayüz testlerinden ekip/topluluk/proje telefon senaryoları (run-team-hub 13/29/36/39, run-team-projects 4/5/15/16 …) YENİ DOM'a göre güncellenmeli; run-groups/run-communities/run-rooms'taki `[data-section-menu]` hataları bu işten ÖNCE de vardı (sekmeler Hub `Tabs`'a geçmişti).
