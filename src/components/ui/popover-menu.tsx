@@ -12,7 +12,8 @@ import { menuKeyDown } from "@/components/ui/menu-keys";
 export interface PopoverMenuItem {
   key: string;
   label: string;
-  icon: IconComponent;
+  /** Without an icon the row keeps an empty 16 px slot so labels stay aligned with rows that have one. */
+  icon?: IconComponent;
   onSelect: () => void;
   danger?: boolean;
   hidden?: boolean;
@@ -127,12 +128,13 @@ export function PopoverMenu({ items, label, align = "right", trigger, className,
                 }}
                 className={cn(MENU_ITEM_CLASS, item.danger && MENU_ITEM_DANGER_CLASS)}
               >
-                <item.icon size={16} aria-hidden />
+                {item.icon ? <item.icon size={16} aria-hidden /> : <span aria-hidden className="h-4 w-4 shrink-0" />}
                 {item.label}
               </button>
             ))}
           </div>,
-          document.body,
+          // Inside a full-screen element only its own subtree is drawn: the menu goes there, or it would open invisibly.
+          document.fullscreenElement ?? document.body,
         )}
     </div>
   );
