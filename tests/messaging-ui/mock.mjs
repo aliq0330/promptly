@@ -364,6 +364,7 @@ export async function installMock(context, db, opts = {}) {
       const list = db.invitations.filter((i) => i.status === "pending" && (!invitee || i.invitee_id === invitee) && (!gid || i.group_id === gid));
       return rows(list.map((i) => ({ ...i, chat_groups: groupOf(i.group_id), inviter: pub(Object.values(U).find((u) => u.id === i.inviter_id)), invitee: pub(Object.values(U).find((u) => u.id === i.invitee_id)) })));
     }
+    if (table === "chat_group_links" && method === "GET" && db.links) return rows(db.links.filter((l) => l.group_id === val(q.get("group_id") ?? "", "eq")));
     if ((table === "chat_group_links" || table === "chat_group_bans") && method === "GET") return rows([]);
     // `chat_groups` satırını yalnız ÜYE okur (docs/history/177-*): üye olmayan kartı `rpc/community_cards` ile alır.
     if (table === "chat_groups" && method === "GET") return rows(db.groups.filter((g) => (!val(q.get("id") ?? "", "eq") || g.id === val(q.get("id"), "eq")) && db.member(g.id, signedIn)));

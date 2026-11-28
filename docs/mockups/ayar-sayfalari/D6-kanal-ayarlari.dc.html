@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>Kanal ayarları</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ayar.css">
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<div class="ay {{themeClass}}" style="width:390px;height:1360px">
+<div class="bar"><button type="button" class="back" aria-label="Geri"></button><div class="bt"><small>Ürün Tasarım Ekibi</small><b>Kanal ayarları</b></div><button type="button" class="bact off">Kaydet</button></div>
+<div class="body">
+<div class="lab">Kanal</div>
+<div class="card">
+<div class="row"><span class="hash">#</span><div class="rt"><div class="t">Kanal adı</div><div class="s">tasarim-kritikleri</div></div><button type="button" class="btn">Düzenle</button></div>
+<div class="row top"><div class="rt"><div class="t">Konu</div><div class="s">Haftalık kritik ve geri bildirim toplantısı notları.</div></div><button type="button" class="btn">Düzenle</button></div>
+</div>
+
+<div class="lab">Kim görür</div>
+<div class="opts">
+<button type="button" class="opt on"><span class="rd"></span><span class="rt"><span class="t" style="display:block">Tüm ekip</span><span class="s" style="display:block">Konuklar hariç ekibin herkesi kanalda olur.</span></span></button>
+<button type="button" class="opt"><span class="rd"></span><span class="rt"><span class="t" style="display:block">Özel</span><span class="s" style="display:block">Yalnız seçtiğin kişi ve gruplar görür; diğerleri kanalın varlığını bile görmez.</span></span></button>
+</div>
+
+<div class="lab">Senin bildirimlerin</div>
+<div class="card" style="padding:12px 12px 4px"><div class="seg"><button type="button" class="on">Tüm mesajlar</button><button type="button">Bahsetmeler</button><button type="button">Sessiz</button></div>
+<p class="hint" style="padding:6px 4px 10px">«Tüm mesajlar» okunmamış dönem başına tek bildirim üretir.</p></div>
+<div style="height:12px"></div>
+<div class="note"><b>Miras:</b> Ekip sessizde değil, proje sessizde değil. Bu kanalın kendi sessizliği yalnız seni etkiler.</div>
+
+<div class="lab">Üyeler</div>
+<div class="card">
+<a class="row nav" href="#"><div class="rt"><div class="t">Kanal üyeleri</div><div class="s">Tüm ekip · konuklar hariç</div></div></a>
+</div>
+
+<div class="lab">Tehlikeli bölge</div>
+<div class="card">
+<div class="row col"><div class="t">Kanalı arşivle</div><div class="s">Mesajlar durur; kanal listeden kalkar.</div><button type="button" class="btn out">Kanalı arşivle</button></div>
+<div class="sep"></div>
+<div class="row col"><div class="t">Kanalı sil</div><div class="s">Tüm mesajlarıyla silinir. Ana ve varsayılan kanal kilitlidir.</div><button type="button" class="btn dng">Kanalı sil</button></div>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":true},"$preview":{"width":390,"height":1360}}'>
+class Component extends DCLogic {
+renderVals() { return { themeClass: this.props.dark === false ? 'light' : 'dark' }; }
+}
+</script>
+</body>
+</html>

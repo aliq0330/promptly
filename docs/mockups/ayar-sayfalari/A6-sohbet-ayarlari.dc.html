@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>Sohbet ayarları</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ayar.css">
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<div class="ay {{themeClass}}" style="width:390px;height:1060px">
+<div class="bar"><button type="button" class="back" aria-label="Geri"></button><div class="bt"><small>Sinematik Prompt Atölyesi</small><b>Sohbet ayarları</b></div><button type="button" class="bact off">Kaydet</button></div>
+<div class="body">
+<div class="lab">Kim mesaj yazabilir</div>
+<div class="opts">
+<button type="button" class="opt on"><span class="rd"></span><span class="rt"><span class="t" style="display:block">Tüm üyeler</span><span class="s" style="display:block">Her üye mesaj gönderebilir.</span></span></button>
+<button type="button" class="opt"><span class="rd"></span><span class="rt"><span class="t" style="display:block">Yalnızca yöneticiler</span><span class="s" style="display:block">Sahip, yönetici ve moderatörler yazar; diğer üyeler yalnız okur.</span></span></button>
+</div>
+
+<div class="lab">Yeni üyeler önceki mesajları görsün mü?</div>
+<div class="opts">
+<button type="button" class="opt on"><span class="rd"></span><span class="rt"><span class="t" style="display:block">Görmesin</span><span class="s" style="display:block">Üye yalnızca katıldığı andan sonraki mesajları görür (varsayılan).</span></span></button>
+<button type="button" class="opt"><span class="rd"></span><span class="rt"><span class="t" style="display:block">Görsün</span><span class="s" style="display:block">Üyeler tüm geçmiş mesajları görür; yeni katılanlar da dahil.</span></span></button>
+</div>
+
+<div class="lab">Sabitleme</div>
+<div class="card">
+<div class="row top"><div class="rt"><div class="t">Üyeler de mesaj sabitleyebilsin</div><div class="s">Kapalıyken yalnız sabitleme yetkisi olan yönetim sabitler.</div></div><button type="button" class="tg" role="switch" aria-checked="false" aria-label="Üyeler mesaj sabitleyebilsin"><i></i></button></div>
+</div>
+<div style="height:16px"></div>
+<div class="note"><b>Geçmiş ve sabitleme</b> ayarlarını yalnızca topluluğun sahibi değiştirebilir. Seçim tüm üyeler için geçerlidir; kişisel «mesajları temizle» yalnız o kişinin görünümünü etkiler.</div>
+</div>
+<div class="foot"><button type="button" class="btn off full">Kaydet</button></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":true},"$preview":{"width":390,"height":1060}}'>
+class Component extends DCLogic {
+renderVals() { return { themeClass: this.props.dark === false ? 'light' : 'dark' }; }
+}
+</script>
+</body>
+</html>

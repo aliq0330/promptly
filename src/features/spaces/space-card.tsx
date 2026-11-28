@@ -19,7 +19,7 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import { formatCount, formatRelativeTime } from "@/lib/utils";
 import { removeSpaceMember, spaceFromSummary, summaryArt, updateSpace, type Space, type SpaceSummary } from "@/lib/supabase/spaces";
 import { SPACE_KIND_LABEL, SPACE_ROLE_LABEL, spaceCapabilities, spaceHref, spaceIsNew } from "@/lib/spaces";
-import { DeleteSpaceDialog, SpaceSettingsModal } from "./space-modals";
+import { DeleteSpaceSx as DeleteSpaceDialog, SpaceSettingsSx } from "./space-sx";
 import { PopoverMenu } from "@/components/ui/popover-menu";
 import { buttonClassName } from "@/components/ui/button";
 import { HUB_CARD_ACTION_CLASS, HUB_CARD_BADGE_CLASS, HUB_CARD_CHIP_CLASS, HubCard } from "@/features/hub/hub-kit";
@@ -120,7 +120,7 @@ export function SpaceCard({
 
   const dialogs = (
     <>
-      {dialog === "settings" && <SpaceSettingsModal space={spaceFromSummary(space)} onClose={() => setDialog(null)} onSaved={applySaved} />}
+      {dialog === "settings" && <SpaceSettingsSx space={spaceFromSummary(space)} onClose={() => setDialog(null)} onSaved={applySaved} onDeleted={() => onRemove(space.id)} />}
       {dialog === "delete" && <DeleteSpaceDialog space={space} onClose={() => setDialog(null)} onDeleted={() => onRemove(space.id)} />}
       {dialog === "leave" && userId && (
         <ConfirmDialog

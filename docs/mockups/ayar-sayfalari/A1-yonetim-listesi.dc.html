@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>Topluluk yönetimi</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ayar.css">
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<div class="ay {{themeClass}}" style="width:390px;height:1290px">
+<div class="bar"><button type="button" class="back" aria-label="Geri"></button><div class="bt"><small>Sinematik Prompt Atölyesi</small><b>Yönetim</b></div></div>
+<div class="body">
+<div class="hd"><span class="cov" style="background:#3b5be2">SP</span><div class="rt"><div class="t">Sinematik Prompt Atölyesi</div><div class="s" style="margin-top:4px"><span class="tag or">Sahip</span> <span class="tag">Herkese açık</span> <span class="tag">412 üye</span></div></div></div>
+
+<div class="lab">Kişiler</div>
+<div class="card">
+<a class="row nav" href="#"><div class="rt"><div class="t">Üyeler ve katılım istekleri</div><div class="s">412 üye · 3 bekleyen istek</div></div><span class="tag or">3</span></a>
+<div class="sep"></div>
+<a class="row nav" href="#"><div class="rt"><div class="t">Davetler ve bağlantılar</div><div class="s">2 etkin davet bağlantısı</div></div></a>
+</div>
+
+<div class="lab">Yapılandırma</div>
+<div class="card">
+<a class="row nav" href="#"><div class="rt"><div class="t">Topluluk ayarları</div><div class="s">Ad, görsel, görünürlük, kurallar</div></div></a>
+<a class="row nav" href="#"><div class="rt"><div class="t">Yönetici ve moderatör yetkileri</div><div class="s">Rol başına açma / kapama</div></div></a>
+<a class="row nav" href="#"><div class="rt"><div class="t">Sohbet ayarları</div><div class="s">Kim yazar, geçmiş, sabitleme</div></div></a>
+<a class="row nav" href="#"><div class="rt"><div class="t">Sohbet odaları</div><div class="s">5 / 20 etkin oda</div></div></a>
+</div>
+
+<div class="lab">İçerik ve moderasyon</div>
+<div class="card">
+<a class="row nav" href="#"><div class="rt"><div class="t">Duyurular</div><div class="s">Yayınla, düzenle, sabitle</div></div></a>
+<a class="row nav" href="#"><div class="rt"><div class="t">Moderasyon</div><div class="s">Şikâyetler ve kaldırılan gönderiler</div></div><span class="tag dg">4 açık</span></a>
+<a class="row nav" href="#"><div class="rt"><div class="t">Topluluk özeti</div><div class="s">Üye, paylaşım ve sohbet sayıları</div></div></a>
+<a class="row nav" href="#"><div class="rt"><div class="t">İşlem geçmişi</div><div class="s">Yönetimin yaptığı değişiklikler</div></div></a>
+</div>
+
+<div class="lab">Tehlikeli bölge</div>
+<div class="card">
+<a class="row nav" href="#"><div class="rt"><div class="t dgt">Kapat veya sil</div><div class="s">Yalnız topluluk sahibi görür</div></div></a>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":true},"$preview":{"width":390,"height":1290}}'>
+class Component extends DCLogic {
+renderVals() { return { themeClass: this.props.dark === false ? 'light' : 'dark' }; }
+}
+</script>
+</body>
+</html>

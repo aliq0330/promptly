@@ -1,0 +1,139 @@
+/*
+ * Ayar sayfaları ortak stili (docs/history/ — "ayar sayfaları mobil mockup'a birebir"; mockup kaynağı docs/mockups/ayar-sayfalari/ayar.css).
+ * Sınıf adları mockup'la AYNIDIR; hepsi `.sx` kökünün altında geçerlidir. Renkler site token'larına bağlıdır (açık/koyu mod otomatik);
+ * ölçüler mockup'tan birebir alınmıştır. Yeni ayar sayfası `features/settings/sx.tsx` bileşenlerini kullanır, burada sınıf eklenmez.
+ */
+.sx {
+  --bg: var(--color-background);
+  --bg2: var(--color-surface-soft);
+  --tx: var(--color-text);
+  --ds: var(--color-text-muted);
+  --bd: var(--color-border-soft);
+  --bd2: var(--p-control-border, var(--color-border-strong));
+  --btn: var(--color-surface-soft);
+  --tr: var(--p-control-border, var(--color-border-strong));
+  --or: var(--color-primary);
+  --ot: var(--color-primary-text);
+  --dg: var(--color-danger);
+  --dgt: var(--color-danger);
+  --sel: var(--color-primary-soft);
+  --ok: var(--color-success);
+  --onor: var(--color-primary-foreground);
+  --ondg: var(--color-danger-foreground);
+  color: var(--tx);
+  font: 400 15px/1.35 system-ui, -apple-system, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+.sx, .sx * { box-sizing: border-box; }
+/* Tailwind preflight sözde öğeleri de border-box yapar; mockup content-box çizer (chevron/geri oku ölçüleri buna göre) */
+.sx *::before, .sx *::after { box-sizing: content-box; }
+.sx p, .sx h1, .sx h2 { margin: 0; }
+.sx button, .sx input, .sx textarea { font-family: inherit; color: inherit; }
+.sx a { color: inherit; text-decoration: none; }
+
+/* Telefon sayfa kabuğu: uygulama menüleri gizli, ekranı kaplar */
+.sx-shell { position: fixed; inset: 0; z-index: var(--z-compose); display: flex; flex-direction: column; background: var(--bg); overflow: hidden; }
+.sx-scroll { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+/* md+ : kabuk yok, içerik okuma sütununda akar */
+.sx-flow { max-width: 37.5rem; margin: 0 auto; width: 100%; }
+
+.sx .bar { display: flex; align-items: center; gap: 2px; height: 60px; padding: 0 6px 0 4px; flex: none; }
+.sx .back, .sx .close { width: 44px; height: 44px; border: 0; background: none; display: flex; align-items: center; justify-content: center; border-radius: 12px; padding: 0; color: var(--tx); flex: none; }
+.sx .back::before { content: ""; width: 11px; height: 11px; border-left: 2.5px solid currentColor; border-bottom: 2.5px solid currentColor; transform: rotate(45deg); margin-left: 4px; }
+.sx .close::before, .sx .close::after { content: ""; position: absolute; width: 18px; height: 2.5px; background: currentColor; border-radius: 2px; transform: rotate(45deg); }
+.sx .close { position: relative; }
+.sx .close::after { transform: rotate(-45deg); }
+.sx .bt { flex: 1; min-width: 0; padding-left: 2px; }
+.sx .bt small { display: block; font-size: 12px; line-height: 16px; color: var(--ds); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sx .bt b { display: block; font-size: 20px; line-height: 26px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sx .bact { height: 44px; padding: 0 12px; border: 0; background: none; color: var(--ot); font-weight: 700; font-size: 16px; flex: none; }
+.sx .bact.off { color: var(--ds); font-weight: 600; }
+
+.sx .body { flex: 1; padding-bottom: 28px; }
+.sx .lab { margin: 26px 20px 10px; font-size: 12.5px; line-height: 16px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: var(--ds); }
+.sx .lab:first-child { margin-top: 8px; }
+.sx .card { margin: 0 16px; border: 1px solid var(--bd); border-radius: 16px; padding: 0 16px; }
+.sx .sep { height: 1px; background: var(--bd); margin: 2px 0; }
+.sx .row { display: flex; align-items: center; gap: 14px; padding: 15px 0; min-height: 56px; color: inherit; text-decoration: none; background: none; border: 0; width: 100%; text-align: left; font: inherit; }
+.sx .row.top { align-items: flex-start; }
+.sx .rt { flex: 1; min-width: 0; }
+.sx .t { font-weight: 600; font-size: 15px; line-height: 20px; }
+.sx .s { color: var(--ds); font-size: 14px; line-height: 20px; margin-top: 3px; }
+.sx .mt10 { margin-top: 10px; }
+.sx .nav::after { content: ""; flex: none; width: 9px; height: 9px; border-right: 2px solid var(--tx); border-top: 2px solid var(--tx); transform: rotate(45deg); margin: 0 5px 0 4px; }
+.sx .on-ck::after { content: ""; flex: none; width: 8px; height: 15px; border-right: 3px solid var(--or); border-bottom: 3px solid var(--or); transform: rotate(45deg); margin: 0 8px 4px 4px; }
+.sx .val { color: var(--ds); font-size: 15px; margin-right: -4px; }
+.sx .col { display: block; }
+.sx .col .btn { margin-top: 12px; }
+
+.sx .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 38px; padding: 0 15px; border: 0; border-radius: 10px; background: var(--btn); color: var(--tx); font-weight: 600; font-size: 15px; flex: none; white-space: nowrap; }
+.sx .btn.pri { background: var(--or); color: var(--onor); }
+.sx .btn.dng { background: var(--dg); color: var(--ondg); }
+.sx .btn.out { background: none; border: 1px solid var(--bd2); }
+.sx .btn.sel::after { content: ""; width: 7px; height: 7px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(45deg); margin: -3px 0 0 2px; }
+.sx .btn.off { background: var(--btn); color: var(--ds); }
+.sx .btn.full { width: 100%; height: 50px; border-radius: 12px; font-size: 16px; }
+.sx .btn.sm { height: 32px; padding: 0 12px; font-size: 14px; }
+.sx .btn:disabled { cursor: not-allowed; }
+
+.sx .tg { flex: none; width: 52px; height: 30px; border-radius: 15px; border: 0; background: var(--tr); position: relative; padding: 0; }
+.sx .tg i { position: absolute; top: 3px; left: 3px; width: 24px; height: 24px; border-radius: 50%; background: var(--bg); transition: transform .2s; }
+.sx .tg.on { background: var(--or); }
+.sx .tg.on i { transform: translateX(22px); background: var(--onor); }
+.sx .tg:disabled { opacity: .5; cursor: not-allowed; }
+
+.sx .seg { display: flex; background: var(--btn); border-radius: 12px; padding: 3px; gap: 2px; }
+.sx .seg button { flex: 1; height: 38px; border: 0; border-radius: 9px; background: none; color: var(--ds); font-weight: 600; font-size: 14px; padding: 0 6px; min-width: 0; }
+.sx .seg button.on { background: var(--bg); color: var(--tx); box-shadow: 0 0 0 1px var(--bd2); }
+.sx .chips { display: flex; gap: 8px; flex-wrap: wrap; padding: 0 16px; }
+.sx .chip { height: 36px; padding: 0 14px; border-radius: 10px; border: 1px solid var(--bd2); background: none; font-weight: 600; font-size: 14px; }
+.sx .chip.on { background: var(--sel); color: var(--ot); border-color: transparent; }
+
+.sx .fld { padding: 14px 0; }
+.sx .fld + .fld { padding-top: 4px; }
+.sx .fl { display: flex; justify-content: space-between; align-items: baseline; font-weight: 600; font-size: 15px; margin-bottom: 8px; }
+.sx .fl em { font-style: normal; font-weight: 500; font-size: 13px; color: var(--ds); }
+.sx .inp { display: block; width: 100%; min-height: 46px; padding: 0 14px; border: 1px solid var(--bd2); border-radius: 12px; background: transparent; font-size: 16px; line-height: 1.4; outline: none; }
+.sx .inp:focus { border-color: var(--color-focus); box-shadow: var(--shadow-focus, 0 0 0 3px color-mix(in srgb, var(--color-focus) 25%, transparent)); }
+.sx textarea.inp { padding: 12px 14px; min-height: 104px; resize: none; }
+.sx .hint { margin-top: 7px; font-size: 13px; line-height: 18px; color: var(--ds); }
+.sx .hint.err { color: var(--dgt); }
+
+.sx .opts { display: flex; flex-direction: column; gap: 10px; padding: 0 16px; }
+.sx .card .opts { padding: 0; }
+.sx .opt { display: flex; gap: 12px; align-items: flex-start; padding: 14px; border: 1px solid var(--bd); border-radius: 14px; background: none; width: 100%; text-align: left; font: inherit; }
+.sx .opt.on { border-color: var(--or); background: var(--sel); }
+.sx .opt .t, .sx .opt .s { display: block; }
+.sx .opt.tail .t { line-height: 36px; }
+.sx .rd { flex: none; width: 22px; height: 22px; border: 2px solid var(--bd2); border-radius: 50%; margin-top: 1px; position: relative; }
+.sx .opt.on .rd { border-color: var(--or); }
+.sx .opt.on .rd::after { content: ""; position: absolute; inset: 3px; border-radius: 50%; background: var(--or); }
+
+.sx .av { flex: none; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px; color: #fff; overflow: hidden; }
+.sx .av.lg { width: 72px; height: 72px; font-size: 26px; }
+.sx .cov { flex: none; width: 56px; height: 56px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-weight: 700; color: #fff; font-size: 20px; overflow: hidden; }
+.sx .tag { display: inline-flex; align-items: center; height: 22px; padding: 0 8px; border-radius: 6px; background: var(--btn); font-size: 12px; font-weight: 600; color: var(--ds); white-space: nowrap; }
+.sx .tag.or { background: var(--sel); color: var(--ot); }
+.sx .tag.ok { color: var(--ok); }
+.sx .tag.dg { color: var(--dgt); }
+.sx .note { margin: 0 16px; padding: 12px 14px; border-radius: 12px; background: var(--btn); color: var(--ds); font-size: 13.5px; line-height: 19px; }
+.sx .note b { color: var(--tx); }
+.sx .dgt { color: var(--dgt); }
+.sx .hash { flex: none; width: 36px; height: 36px; border-radius: 10px; background: var(--btn); display: flex; align-items: center; justify-content: center; font-weight: 700; color: var(--ds); }
+.sx .stat { flex: 1; padding: 12px; border: 1px solid var(--bd); border-radius: 12px; }
+.sx .stat b { display: block; font-size: 22px; line-height: 26px; }
+.sx .stat span { font-size: 12.5px; color: var(--ds); }
+.sx .stats { display: flex; gap: 10px; margin: 0 16px; }
+.sx .hd { display: flex; gap: 14px; align-items: center; padding: 18px 16px 4px; }
+.sx .hd .t { font-size: 18px; line-height: 24px; font-weight: 700; }
+
+.sx .foot { margin-top: auto; flex: none; display: flex; gap: 10px; padding: 12px 16px 26px; border-top: 1px solid var(--bd); background: var(--bg); }
+.sx .foot .meta { align-self: center; font-size: 13px; color: var(--ds); margin-right: auto; }
+.sx-shell .foot { padding-bottom: calc(26px + env(safe-area-inset-bottom)); }
+
+/* Kapak seçici (F2) */
+.sx .g3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; padding: 0 16px; }
+.sx .gi { aspect-ratio: 1/1; border-radius: 12px; border: 2px solid transparent; padding: 0; display: block; overflow: hidden; }
+.sx .gi.on { border-color: var(--or); box-shadow: 0 0 0 2px var(--bg) inset; }
+.sx .gi.auto { background: var(--btn); border: 1px dashed var(--bd2); color: var(--ds); font-weight: 600; font-size: 13px; display: flex; align-items: center; justify-content: center; }
+.sx .gi.auto.on { border: 2px solid var(--or); color: var(--ot); }

@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>Konuklar</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ayar.css">
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<div class="ay {{themeClass}}" style="width:390px;height:1180px">
+<div class="bar"><button type="button" class="back" aria-label="Geri"></button><div class="bt"><small>Yönetim</small><b>Konuklar</b></div></div>
+<div class="body">
+<p class="s" style="margin:8px 20px 14px">Süreli dış kişiler. Süre dolunca erişimleri kendiliğinden kapanır.</p>
+<div class="stats"><div class="stat"><b>3</b><span>Aktif konuk</span></div><div class="stat"><b>1</b><span>7 günde dolan</span></div></div>
+
+<div class="lab">Aktif konuklar</div>
+<div class="card">
+<div class="row top"><span class="av" style="background:#7c3aed">SK</span><div class="rt"><div class="t">Selin Kara</div><div class="s">2 proje · Görüntüleyici</div><div class="s"><span class="tag or">12 gün kaldı</span></div><div class="s">Son giriş: Dün</div></div></div>
+<div style="display:flex;gap:8px;padding-bottom:14px"><button type="button" class="btn sm">Süreyi uzat</button><button type="button" class="btn sm">Projeleri düzenle</button></div>
+<div class="sep"></div>
+<div class="row top"><span class="av" style="background:#b45309">OT</span><div class="rt"><div class="t">Onur Tan</div><div class="s">1 proje · Düzenleyici</div><div class="s"><span class="tag dg">5 gün kaldı</span></div><div class="s">Son giriş: Bugün</div></div></div>
+<div style="display:flex;gap:8px;padding-bottom:14px"><button type="button" class="btn sm">Süreyi uzat</button><button type="button" class="btn sm">Projeleri düzenle</button></div>
+<div class="sep"></div>
+<div class="row top"><span class="av" style="background:#0f766e">DA</span><div class="rt"><div class="t">Deniz Aksoy</div><div class="s">3 proje · Görüntüleyici</div><div class="s"><span class="tag">30 gün kaldı</span></div><div class="s">Son giriş: 3 gün önce</div></div></div>
+<div style="display:flex;gap:8px;padding-bottom:14px"><button type="button" class="btn sm">Süreyi uzat</button><button type="button" class="btn sm">Projeleri düzenle</button></div>
+</div>
+
+<div class="lab">Konuk daveti yetkisi</div>
+<div class="card">
+<a class="row nav" href="#"><div class="rt"><div class="t">Kim konuk davet edebilir</div><div class="s">Politikalar sayfasından değişir</div></div><span class="val">Yönetici</span></a>
+</div>
+<div style="height:16px"></div>
+<div class="note"><b>Konuk neleri göremez?</b> Ekip üye listesini, politikaları, denetim günlüğünü ve davet edilmediği projeleri.</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":true},"$preview":{"width":390,"height":1180}}'>
+class Component extends DCLogic {
+renderVals() { return { themeClass: this.props.dark === false ? 'light' : 'dark' }; }
+}
+</script>
+</body>
+</html>

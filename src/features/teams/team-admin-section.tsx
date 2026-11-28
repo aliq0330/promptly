@@ -43,6 +43,7 @@ import { teamLink, type TeamRole } from "@/lib/teams";
 import { cn } from "@/lib/utils";
 import { AdminGroupsSection, AdminGuestsSection } from "./team-admin-access";
 import { InvitesPanel } from "./team-invites";
+import { TeamAdminPhone } from "./admin-sx";
 import type { TeamCtx } from "./team-page";
 import { Panel, StatTile, TeamToneSwatches, roleLabelKey } from "./team-ui";
 
@@ -96,8 +97,16 @@ export function TeamAdminSection({ ctx }: { ctx: TeamCtx }) {
   const go = (key: Section) => router.replace(teamLink(team.id, "admin", { section: key }));
   const phone = useMediaQuery("(max-width: 767.98px)");
 
-  // Telefon (docs/history/357-*, Yön C): Yönetim bir bölüm LİSTESİDİR; satır alt sayfayı açar, alt sayfa kendi geri çubuğunu çizer.
+  // Telefon (docs/history/357-*, mobil ayar mockup'ı C1–C6/D2/D3/E3): Yönetim bir bölüm LİSTESİDİR; satır alt sayfayı açar, alt sayfa kendi geri çubuğunu çizer.
   if (phone) {
+    const goTo = (section: string | null, sub?: string | null, key?: string | null) => router.replace(teamLink(team.id, "admin", { section, sub, key }));
+    const need: Record<string, boolean> = { profile: can("manage_team"), policies: can("manage_team"), invites: can("manage_members"), guests: can("manage_members"), audit: can("view_audit"), danger: team.myRole === "owner" };
+    if (!rawParam || rawParam === "general" || rawParam === "overview" || (rawParam in need && !need[rawParam])) {
+      return <TeamAdminPhone ctx={ctx} route={{ section: null, sub: null, key: null }} go={goTo} />;
+    }
+    if (rawParam in need) {
+      return <TeamAdminPhone ctx={ctx} route={{ section: rawParam, sub: params.get("sub"), key: params.get("key") }} go={goTo} />;
+    }
     const ICONS: Record<Section, PhoneSectionItem["icon"]> = {
       overview: Info,
       policies: ShieldCheck,
@@ -423,7 +432,7 @@ function auditTime(t: ReturnType<typeof useTranslation>["t"], language: string, 
 }
 
 /** Eylem cümlesi: bilinen eylem çevrilir, bilinmeyen eylem ham anahtar yerine okunur bir metne düşer (yeni SQL eylemi çeviri beklemeden bozuk görünmez). */
-function auditSentence(t: ReturnType<typeof useTranslation>["t"], entry: TeamAuditEntry): string {
+export function auditSentence(t: ReturnType<typeof useTranslation>["t"], entry: TeamAuditEntry): string {
   const key = `tm.audit.action.${entry.action}` as TranslationKey;
   let text = auditKeyKnown(key) ? t(key) : entry.action.replace(/_/g, " ");
   const details = entry.details ?? {};

@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>Üye ayrıntısı</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ayar.css">
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<div class="ay {{themeClass}}" style="width:390px;height:1120px">
+<div class="bar"><button type="button" class="back" aria-label="Geri"></button><div class="bt"><small>Üyeler</small><b>Üye ayarları</b></div><button type="button" class="bact off">Kaydet</button></div>
+<div class="body">
+<div class="hd"><span class="av lg" style="background:#0f766e">CY</span><div class="rt"><div class="t">Can Yıldız</div><div class="s">@can.yildiz</div><div class="s" style="margin-top:6px"><span class="tag or">Düzenleyici</span> <span class="tag">Tasarım grubu</span></div></div></div>
+
+<div class="lab">Rol</div>
+<div class="opts">
+<button type="button" class="opt"><span class="rd"></span><span class="rt"><span class="t" style="display:block">Yönetici</span><span class="s" style="display:block">Üye, davet ve politika yönetir.</span></span></button>
+<button type="button" class="opt on"><span class="rd"></span><span class="rt"><span class="t" style="display:block">Düzenleyici</span><span class="s" style="display:block">Projelerde içerik ekler ve düzenler.</span></span></button>
+<button type="button" class="opt"><span class="rd"></span><span class="rt"><span class="t" style="display:block">Üye</span><span class="s" style="display:block">Erişimi olan projeleri görür.</span></span></button>
+</div>
+
+<div class="lab">Erişim</div>
+<div class="card">
+<a class="row nav" href="#"><div class="rt"><div class="t">Proje erişimi</div><div class="s">4 projede rolü var</div></div></a>
+<a class="row nav" href="#"><div class="rt"><div class="t">Grup</div><div class="s">Erişim listelerinde tek satır olur</div></div><span class="val">Tasarım</span></a>
+</div>
+
+<div class="lab">Bilgi</div>
+<div class="card">
+<div class="row"><div class="rt"><div class="t">Katılma tarihi</div></div><span class="val">12 Mart 2026</span></div>
+</div>
+
+<div class="lab">Tehlikeli bölge</div>
+<div class="card">
+<div class="row col"><div class="t">Ekipten çıkar</div><div class="s">Üye tüm projelere erişimini kaybeder. Eklediği içerik ekipte kalır.</div><button type="button" class="btn dng">Ekipten çıkar</button></div>
+</div>
+</div>
+<div class="foot"><button type="button" class="btn off full">Rolü değiştir</button></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":true},"$preview":{"width":390,"height":1120}}'>
+class Component extends DCLogic {
+renderVals() { return { themeClass: this.props.dark === false ? 'light' : 'dark' }; }
+}
+</script>
+</body>
+</html>

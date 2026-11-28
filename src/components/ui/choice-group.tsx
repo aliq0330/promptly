@@ -42,7 +42,7 @@ export function ChoiceGroup<K extends string>({
   onChange: (key: K) => void;
   ariaLabel?: string;
   labelledBy?: string;
-  variant?: "pill" | "segmented" | "tile";
+  variant?: "pill" | "segmented" | "tile" | "sx-seg" | "sx-chips";
   showHint?: boolean;
   /** `tile` only: a compact icon-only grid (room icons); the label is the accessible name. */
   iconOnly?: boolean;
@@ -64,12 +64,15 @@ export function ChoiceGroup<K extends string>({
         title={option.hint}
         aria-label={iconOnly ? option.label : undefined}
         disabled={disabled || option.disabled}
-        data-segment={variant === "segmented" ? option.key : undefined}
+        data-segment={variant === "segmented" || variant === "sx-seg" ? option.key : undefined}
         data-choice={option.key}
         onClick={() => !selected && onChange(option.key)}
         {...option.attrs}
         className={cn(
-          "text-small transition-colors duration-200 ease-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:cursor-not-allowed disabled:opacity-50",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:cursor-not-allowed disabled:opacity-50",
+          variant !== "sx-seg" && variant !== "sx-chips" && "text-small transition-colors duration-200 ease-soft",
+          variant === "sx-seg" && selected && "on",
+          variant === "sx-chips" && cn("chip", selected && "on"),
           variant === "pill" && cn("inline-flex min-h-9 items-center gap-1.5 rounded-sm border px-4", selected ? "border-primary bg-primary-soft font-semibold text-primary-text" : "border-border-strong bg-surface font-medium text-text-secondary hover:bg-surface-soft"),
           variant === "segmented" && cn("inline-flex min-h-9 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-sm px-2 py-1.5 leading-tight", selected ? "bg-surface font-semibold text-primary-text shadow-xs" : "font-medium text-text-secondary hover:text-text"),
           variant === "tile" && cn("flex flex-col items-center justify-center gap-1.5 rounded-sm border text-center leading-tight", iconOnly ? "h-12 px-0" : "min-h-18 px-2 py-2", selected ? "border-primary bg-primary-soft font-semibold text-primary-text" : "border-border-strong bg-surface font-medium text-text-secondary hover:bg-surface-soft"),
@@ -87,11 +90,13 @@ export function ChoiceGroup<K extends string>({
       aria-label={ariaLabel}
       aria-labelledby={labelledBy}
       onKeyDown={radioGroupKeyDown}
-      data-segmented={variant === "segmented" ? testId : undefined}
+      data-segmented={variant === "segmented" || variant === "sx-seg" ? testId : undefined}
       data-choice-group={testId}
       className={cn(
         variant === "pill" && "flex flex-wrap gap-2",
         variant === "segmented" && "flex rounded-sm bg-surface-soft p-0.5",
+        variant === "sx-seg" && "seg",
+        variant === "sx-chips" && "chips",
         variant === "tile" && (iconOnly ? "grid grid-cols-[repeat(auto-fill,minmax(3rem,1fr))] gap-2" : "grid grid-cols-[repeat(auto-fit,minmax(5.5rem,1fr))] gap-2"),
         className,
       )}

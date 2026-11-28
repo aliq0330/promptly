@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>Ekip politikaları</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ayar.css">
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<div class="ay {{themeClass}}" style="width:390px;height:1220px">
+<div class="bar"><button type="button" class="back" aria-label="Geri"></button><div class="bt"><small>Yönetim</small><b>Politikalar</b></div><button type="button" class="bact">Kaydet</button></div>
+<div class="body">
+<p class="s" style="margin:8px 20px 0">Değişiklikler yerelde birikir; Kaydet tek seferde yazar.</p>
+
+<div class="lab">Dışarıya paylaşım</div>
+<div class="card">
+<div class="row"><div class="rt"><div class="t">Dışarıya yayınlama</div><div class="s">Kim ekip içeriğini dışarı açabilir</div></div><a class="btn sel" href="#">Düzenleyici</a></div>
+<div class="row"><div class="rt"><div class="t">Konuk daveti</div><div class="s">Kim konuk davet edebilir</div></div><a class="btn sel" href="#">Yönetici</a></div>
+<div class="row"><div class="rt"><div class="t">Dışa aktarma</div><div class="s">Kim ekip verisini indirebilir</div></div><a class="btn sel" href="#">Yönetici</a></div>
+</div>
+
+<div class="lab">İçerik sahipliği</div>
+<div class="card">
+<div class="row"><div class="rt"><div class="t">İçeriğin sahibi</div><div class="s">Eklenen içerik kime ait sayılır</div></div><a class="btn sel" href="#">Ekip</a></div>
+<div class="row"><div class="rt"><div class="t">Üye ayrılınca</div><div class="s">İçeriği ne olur</div></div><a class="btn sel" href="#">Sor</a></div>
+</div>
+
+<div class="lab">Katılım</div>
+<div class="card">
+<div class="row"><div class="rt"><div class="t">Varsayılan rol</div><div class="s">Yeni katılana verilen rol</div></div><a class="btn sel" href="#">Üye</a></div>
+<div class="row"><div class="rt"><div class="t">Davet bağlantısı süresi</div><div class="s">Yeni bağlantılar için varsayılan</div></div><a class="btn sel" href="#">7 gün</a></div>
+</div>
+
+</div>
+<div class="foot"><span class="meta">1 değişiklik</span><button type="button" class="btn pri full" style="width:auto;flex:1">Kaydet</button></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":true},"$preview":{"width":390,"height":1220}}'>
+class Component extends DCLogic {
+renderVals() { return { themeClass: this.props.dark === false ? 'light' : 'dark' }; }
+}
+</script>
+</body>
+</html>

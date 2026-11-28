@@ -17,6 +17,8 @@ import { SpaceDialog } from "@/features/spaces/space-modals";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { fetchMemberProjectRoles, type MemberProjectRoles } from "@/lib/supabase/team-center";
 import { memberRoleSummary } from "@/lib/team-center";
+import { TeamMemberSx } from "./notify-sx";
+import { useMediaQuery } from "@/lib/use-media-query";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import {
   leaveTeam,
@@ -121,6 +123,8 @@ export function TeamMembersSection({ ctx }: { ctx: TeamCtx }) {
   const [version, setVersion] = useState(0);
   const [inviteOpen, setInviteOpen] = useState(false);
   const [removing, setRemoving] = useState<TeamMember | null>(null);
+  const [openMember, setOpenMember] = useState<TeamMember | null>(null);
+  const phone = useMediaQuery("(max-width: 767px)");
   const [leaveOpen, setLeaveOpen] = useState(false);
   const [matrixOpen, setMatrixOpen] = useState(false);
   const [groups, setGroups] = useState<TeamGroup[]>([]);
@@ -207,6 +211,7 @@ export function TeamMembersSection({ ctx }: { ctx: TeamCtx }) {
                     <li
                       key={member.userId}
                       data-member={member.username}
+                      onClick={manageable && phone ? () => setOpenMember(member) : undefined}
                       className="flex items-center gap-3 border-b border-border-soft px-4 py-2.5 last:border-b-0 md:flex-col md:gap-1 md:rounded-xl md:border md:bg-surface md:px-4 md:py-[18px] md:text-center md:last:border-b"
                     >
                       <PresenceAvatar userId={member.userId} src={member.avatarUrl} alt={name} size={40} />
@@ -220,6 +225,7 @@ export function TeamMembersSection({ ctx }: { ctx: TeamCtx }) {
                       <span className="md:my-1">
                         {manageable ? (
                           <select
+                            onClick={(e) => e.stopPropagation()}
                             aria-label={t("tm.members.changeRole")}
                             value={member.role}
                             onChange={(event) => void changeRole(member, event.target.value as TeamRole)}
@@ -246,7 +252,7 @@ export function TeamMembersSection({ ctx }: { ctx: TeamCtx }) {
                         </button>
                       )}
                       {manageable && (
-                        <button type="button" onClick={() => setRemoving(member)} data-member-remove-phone aria-label={t("tm.members.remove")} className="grid h-11 w-11 shrink-0 place-items-center rounded-sm text-text-secondary hover:bg-danger-soft hover:text-danger md:hidden">
+                        <button type="button" onClick={(e) => { e.stopPropagation(); setRemoving(member); }} data-member-remove-phone aria-label={t("tm.members.remove")} className="grid h-11 w-11 shrink-0 place-items-center rounded-sm text-text-secondary hover:bg-danger-soft hover:text-danger md:hidden">
                           <UserMinus size={20} aria-hidden />
                         </button>
                       )}
@@ -348,6 +354,16 @@ export function TeamMembersSection({ ctx }: { ctx: TeamCtx }) {
         </SpaceDialog>
       )}
       {inviteOpen && <InviteDialog ctx={ctx} onClose={() => setInviteOpen(false)} onDone={() => undefined} />}
+      {openMember && !removing && (
+        <TeamMemberSx
+          ctx={ctx}
+          member={openMember}
+          projectCount={memberRoleSummary(projectRoles.get(openMember.userId)).reduce((n, entry) => n + entry.count, 0)}
+          onClose={() => setOpenMember(null)}
+          onChanged={refresh}
+          onRemove={() => setRemoving(openMember)}
+        />
+      )}
       {removing && (
         <RemoveMemberDialog
           ctx={ctx}
@@ -415,7 +431,7 @@ function RemoveMemberDialog({ ctx, member, onClose, onDone }: { ctx: TeamCtx; me
     [summary?.variables ?? 0, "tm.members.stat.variables"],
   ];
   return (
-    <SpaceDialog
+    <SpaceDialog page
       eyebrow={t("tm.members.removeEyebrow")}
       leading={
         <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-secondary-soft text-body font-semibold text-secondary" aria-hidden>

@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>Sohbet odaları</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ayar.css">
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<div class="ay {{themeClass}}" style="width:390px;height:1000px">
+<div class="bar"><button type="button" class="back" aria-label="Geri"></button><div class="bt"><small>Yönetim</small><b>Sohbet odaları</b></div><button type="button" class="bact">Yeni oda</button></div>
+<div class="body">
+<p class="s" style="margin:8px 20px 0">5 / 20 etkin oda. Odalar aynı sohbette durur; ayrı üyelik gerekmez.</p>
+
+<div class="lab">Genel</div>
+<div class="card">
+<a class="row nav" href="#"><span class="hash">#</span><div class="rt"><div class="t">Genel</div><div class="s">Varsayılan oda · herkes görür</div></div><span class="tag">Kilitli</span></a>
+<a class="row nav" href="#"><span class="hash">#</span><div class="rt"><div class="t">Duyurular</div><div class="s">Yalnız yönetim yazar</div></div></a>
+</div>
+
+<div class="lab">Atölye</div>
+<div class="card">
+<a class="row nav" href="#"><span class="hash">#</span><div class="rt"><div class="t">Prompt ipuçları</div><div class="s">Tüm üyeler yazar</div></div></a>
+<a class="row nav" href="#"><span class="hash">#</span><div class="rt"><div class="t">Yardım</div><div class="s">Tüm üyeler yazar</div></div></a>
+</div>
+
+<div class="lab">Özel</div>
+<div class="card">
+<a class="row nav" href="#"><span class="hash">#</span><div class="rt"><div class="t">Yönetim</div><div class="s">Özel oda · yalnız yönetim görür</div></div><span class="tag or">Özel</span></a>
+</div>
+
+<div class="lab">Arşiv</div>
+<div class="card">
+<a class="row nav" href="#"><div class="rt"><div class="t">Arşivdeki odalar</div><div class="s">2 oda · geri alınabilir</div></div></a>
+</div>
+<div style="height:16px"></div>
+<div class="note">Odayı arşivlemek yönetim yetkisidir; <b>silmek yalnızca topluluk sahibine</b> aittir. Genel oda silinemez ve arşivlenemez.</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":true},"$preview":{"width":390,"height":1000}}'>
+class Component extends DCLogic {
+renderVals() { return { themeClass: this.props.dark === false ? 'light' : 'dark' }; }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>Space ayarları</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ayar.css">
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<div class="ay {{themeClass}}" style="width:390px;height:1180px">
+<div class="bar"><button type="button" class="back" aria-label="Geri"></button><div class="bt"><small>Neon şehir karakterleri</small><b>Space ayarları</b></div><button type="button" class="bact">Kaydet</button></div>
+<div class="body">
+<div class="lab">Temel bilgiler</div>
+<div class="card">
+<div class="row"><span class="cov" style="background:linear-gradient(135deg,#7c3aed,#ff6719)"></span><div class="rt"><div class="t">Kapak görseli</div><div class="s">Otomatik · ilk görsel</div></div><button type="button" class="btn">Değiştir</button></div>
+<div class="fld"><label class="fl" for="sp-ad">Space adı <em>Zorunlu</em></label><input id="sp-ad" class="inp" value="Neon şehir karakterleri"></div>
+<div class="fld"><label class="fl" for="sp-ac">Açıklama <em>İsteğe bağlı</em></label><textarea id="sp-ac" class="inp" style="min-height:90px">Cyberpunk şehir için ana karakterler, yan roller ve kostüm paleti.</textarea></div>
+</div>
+
+<div class="lab">Tür</div>
+<div class="card">
+<a class="row nav" href="#"><div class="rt"><div class="t">Space türü</div><div class="s">Şablonları ve öneri araçlarını belirler</div></div><span class="val">Karakter tasarımı</span></a>
+</div>
+
+<div class="lab">Erişim</div>
+<div class="card">
+<a class="row nav" href="#"><div class="rt"><div class="t">Üyeler ve davet</div><div class="s">3 üye · 1 bekleyen davet</div></div></a>
+</div>
+<div style="height:16px"></div>
+<div class="note"><b>Space'ler özeldir:</b> yalnız üyeler görür. Herkese açık görünürlük, yorum ve puan yoktur.</div>
+
+<div class="lab">Tehlikeli bölge</div>
+<div class="card">
+<a class="row nav" href="#"><div class="rt"><div class="t dgt">Arşivle veya sil</div><div class="s">Yalnız Space sahibi görür</div></div></a>
+</div>
+</div>
+<div class="foot"><span class="meta">1 değişiklik</span><button type="button" class="btn pri full" style="width:auto;flex:1">Kaydet</button></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":true},"$preview":{"width":390,"height":1180}}'>
+class Component extends DCLogic {
+renderVals() { return { themeClass: this.props.dark === false ? 'light' : 'dark' }; }
+}
+</script>
+</body>
+</html>

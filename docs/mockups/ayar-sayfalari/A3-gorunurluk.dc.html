@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>Görünürlük</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ayar.css">
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<div class="ay {{themeClass}}" style="width:390px;height:820px">
+<div class="bar"><button type="button" class="back" aria-label="Geri"></button><div class="bt"><small>Topluluk ayarları</small><b>Görünürlük</b></div></div>
+<div class="body">
+<p class="s" style="margin:8px 20px 4px">Topluluğu kimlerin bulabileceğini ve içeriğini okuyabileceğini seç.</p>
+<div class="lab">Şu anki: Herkese açık</div>
+<div class="opts">
+<button type="button" class="opt on"><span class="rd"></span><span class="rt"><span class="t" style="display:block">Herkese açık</span><span class="s" style="display:block">Herkes topluluğu keşfedebilir ve gönderileri okuyabilir. Katılım doğrudandır.</span></span></button>
+<button type="button" class="opt"><span class="rd"></span><span class="rt"><span class="t" style="display:block">Kapalı</span><span class="s" style="display:block">Aramada bulunur; gönderileri yalnız üyeler görür. Katılmak için istek gönderilir.</span></span></button>
+<button type="button" class="opt"><span class="rd"></span><span class="rt"><span class="t" style="display:block">Tamamen kapalı</span><span class="s" style="display:block">Gizlidir; erişim davetledir. Hiçbir listede, aramada ya da öneride görünmez.</span></span></button>
+</div>
+<div style="height:18px"></div>
+<div class="note"><b>Geçişte ne olur?</b> Kapalıdan herkese açığa geçince bekleyen başvurular toplu kabul edilir; üye sınırı dolarsa kalanlar bekler.</div>
+</div>
+<div class="foot"><button type="button" class="btn out full" style="flex:0 0 120px">Vazgeç</button><button type="button" class="btn off full">Kaydet</button></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":true},"$preview":{"width":390,"height":820}}'>
+class Component extends DCLogic {
+renderVals() { return { themeClass: this.props.dark === false ? 'light' : 'dark' }; }
+}
+</script>
+</body>
+</html>

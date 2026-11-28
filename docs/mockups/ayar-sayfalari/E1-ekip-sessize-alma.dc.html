@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>Ekip bildirimleri</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ayar.css">
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<div class="ay {{themeClass}}" style="width:390px;height:1160px">
+<div class="bar"><button type="button" class="back" aria-label="Geri"></button><div class="bt"><small>Ürün Tasarım Ekibi</small><b>Bildirimler</b></div></div>
+<div class="body">
+<p class="s" style="margin:8px 20px 0">Sessizlik ekip → proje → kanal sırasıyla birleşir. Üst düzeyde sessize aldığın her şey alt düzeyleri de susturur.</p>
+
+<div class="lab">Ekip</div>
+<div class="card">
+<div class="row top"><div class="rt"><div class="t">Ekibi sessize al</div><div class="s">Tüm proje ve kanal bildirimleri susar.</div></div><button type="button" class="tg" role="switch" aria-checked="false" aria-label="Ekibi sessize al"><i></i></button></div>
+</div>
+
+<div class="lab">Projeler</div>
+<div class="card">
+<div class="row top"><div class="rt"><div class="t">Mobil uygulama yenileme</div><div class="s">Proje sohbeti ve onay bildirimleri</div></div><button type="button" class="tg on" role="switch" aria-checked="true" aria-label="Mobil uygulama yenileme sessiz"><i></i></button></div>
+<div class="row top"><div class="rt"><div class="t">Marka rehberi</div><div class="s">Proje sohbeti ve onay bildirimleri</div></div><button type="button" class="tg" role="switch" aria-checked="false" aria-label="Marka rehberi sessiz"><i></i></button></div>
+</div>
+
+<div class="lab">Kanallar</div>
+<div class="card">
+<div class="row"><span class="hash">#</span><div class="rt"><div class="t">genel</div><div class="s"><span class="tag">Projeden sessiz</span></div></div><a class="btn sel" href="#">Sessiz</a></div>
+<div class="row"><span class="hash">#</span><div class="rt"><div class="t">tasarim-kritikleri</div></div><a class="btn sel" href="#">Bahsetmeler</a></div>
+<div class="row"><span class="hash">#</span><div class="rt"><div class="t">duyurular</div></div><a class="btn sel" href="#">Tüm mesajlar</a></div>
+</div>
+<div style="height:16px"></div>
+<div class="note">Sahiplik, rol ve erişim süresi bildirimleri <b>hiçbir sessizlikle susmaz</b>. Sessize aldığın kanalda okunmamış sayısı 0 görünür.</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":true},"$preview":{"width":390,"height":1160}}'>
+class Component extends DCLogic {
+renderVals() { return { themeClass: this.props.dark === false ? 'light' : 'dark' }; }
+}
+</script>
+</body>
+</html>

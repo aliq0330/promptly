@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>Ekip yönetimi</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ayar.css">
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<div class="ay {{themeClass}}" style="width:390px;height:1200px">
+<div class="bar"><button type="button" class="back" aria-label="Geri"></button><div class="bt"><small>Ürün Tasarım Ekibi</small><b>Yönetim</b></div></div>
+<div class="body">
+<div class="hd"><span class="cov" style="background:#3b5be2">ÜT</span><div class="rt"><div class="t">Ürün Tasarım Ekibi</div><div class="s" style="margin-top:4px"><span class="tag or">Sahip</span> <span class="tag">18 üye</span> <span class="tag">6 proje</span></div></div></div>
+
+<div class="lab">Ekip</div>
+<div class="card">
+<a class="row nav" href="#"><div class="rt"><div class="t">Ekip profili</div><div class="s">Ad, açıklama ve renk</div></div></a>
+<a class="row nav" href="#"><div class="rt"><div class="t">Politikalar</div><div class="s">Paylaşım, sahiplik, katılım kuralları</div></div></a>
+</div>
+
+<div class="lab">Kişiler</div>
+<div class="card">
+<a class="row nav" href="#"><div class="rt"><div class="t">Davetler</div><div class="s">Bekleyen davetler ve bağlantılar</div></div><span class="tag or">2</span></a>
+<a class="row nav" href="#"><div class="rt"><div class="t">Gruplar</div><div class="s">Tasarım, pazarlama gibi gruplar</div></div></a>
+<a class="row nav" href="#"><div class="rt"><div class="t">Konuklar</div><div class="s">Süreli dış kişiler</div></div><span class="tag">3 aktif</span></a>
+</div>
+
+<div class="lab">Kayıt ve veri</div>
+<div class="card">
+<a class="row nav" href="#"><div class="rt"><div class="t">Denetim günlüğü</div><div class="s">Rol, erişim ve silme olayları</div></div></a>
+<a class="row nav" href="#"><div class="rt"><div class="t">Dışa aktar</div><div class="s">Ekip verisini JSON olarak indir</div></div></a>
+</div>
+
+<div class="lab">Tehlikeli bölge</div>
+<div class="card">
+<a class="row nav" href="#"><div class="rt"><div class="t dgt">Sahipliği devret veya ekibi sil</div><div class="s">Yalnız ekip sahibi görür</div></div></a>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":true},"$preview":{"width":390,"height":1200}}'>
+class Component extends DCLogic {
+renderVals() { return { themeClass: this.props.dark === false ? 'light' : 'dark' }; }
+}
+</script>
+</body>
+</html>

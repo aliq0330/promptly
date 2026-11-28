@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>Ekip profili</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ayar.css">
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<div class="ay {{themeClass}}" style="width:390px;height:1100px">
+<div class="bar"><button type="button" class="back" aria-label="Geri"></button><div class="bt"><small>Yönetim</small><b>Ekip profili</b></div><button type="button" class="bact">Kaydet</button></div>
+<div class="body">
+<div class="lab">Temel bilgiler</div>
+<div class="card">
+<div class="fld"><label class="fl" for="ek-ad">Ekip adı <em>Zorunlu</em></label><input id="ek-ad" class="inp" value="Ürün Tasarım Ekibi"><p class="hint">2–60 karakter</p></div>
+<div class="fld"><label class="fl" for="ek-ac">Açıklama <em>İsteğe bağlı</em></label><textarea id="ek-ac" class="inp">Ürün tasarımı, prompt kütüphanesi ve ortak proje panoları.</textarea><p class="hint">58 / 500</p></div>
+</div>
+
+<div class="lab">Renk</div>
+<div class="opts">
+<button type="button" class="opt on"><span class="cov" style="background:#3b5be2;width:36px;height:36px;border-radius:10px"></span><span class="rt"><span class="t" style="display:block;line-height:36px">Mavi</span></span><span class="rd"></span></button>
+<button type="button" class="opt"><span class="cov" style="background:#8a93a8;width:36px;height:36px;border-radius:10px"></span><span class="rt"><span class="t" style="display:block;line-height:36px">Pus</span></span><span class="rd"></span></button>
+<button type="button" class="opt"><span class="cov" style="background:#5b5c60;width:36px;height:36px;border-radius:10px"></span><span class="rt"><span class="t" style="display:block;line-height:36px">Nötr</span></span><span class="rd"></span></button>
+</div>
+
+<div class="lab">Önizleme</div>
+<div class="card" style="padding:0;overflow:hidden">
+<div style="height:64px;background:#3b5be2"></div>
+<div class="row" style="padding:14px 16px"><span class="cov" style="background:#3b5be2">ÜT</span><div class="rt"><div class="t">Ürün Tasarım Ekibi</div><div class="s">18 üye · 6 proje</div></div></div>
+</div>
+</div>
+<div class="foot"><span class="meta">1 değişiklik</span><button type="button" class="btn pri full" style="width:auto;flex:1">Kaydet</button></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":true},"$preview":{"width":390,"height":1100}}'>
+class Component extends DCLogic {
+renderVals() { return { themeClass: this.props.dark === false ? 'light' : 'dark' }; }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>Kapak seçici</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ayar.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.ay .g3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;padding:0 16px}
+.ay .gi{aspect-ratio:1/1;border-radius:12px;border:2px solid transparent;padding:0;display:block}
+.ay .gi.on{border-color:var(--or);box-shadow:0 0 0 2px var(--bg) inset}
+.ay .gi.auto{background:var(--btn);border:1px dashed var(--bd2);color:var(--ds);font-weight:600;font-size:13px;display:flex;align-items:center;justify-content:center}
+.ay .gi.auto.on{border:2px solid var(--or);color:var(--ot)}
+</style>
+</helmet>
+<div class="ay {{themeClass}}" style="width:390px;height:920px">
+<div class="bar"><button type="button" class="back" aria-label="Geri"></button><div class="bt"><small>Space ayarları</small><b>Kapak görseli</b></div></div>
+<div class="body">
+<div class="lab">Şu anki</div>
+<div style="padding:0 16px"><div style="height:150px;border-radius:16px;background:linear-gradient(135deg,#7c3aed,#ff6719)"></div></div>
+
+<div class="lab">Space'teki görsellerden seç</div>
+<div class="g3">
+<button type="button" class="gi auto on" aria-label="Otomatik kapak">Otomatik</button>
+<button type="button" class="gi" style="background:#7c3aed" aria-label="Görsel 1"></button>
+<button type="button" class="gi" style="background:#0f766e" aria-label="Görsel 2"></button>
+<button type="button" class="gi" style="background:#b45309" aria-label="Görsel 3"></button>
+<button type="button" class="gi" style="background:#3b5be2" aria-label="Görsel 4"></button>
+<button type="button" class="gi" style="background:#8a2b5c" aria-label="Görsel 5"></button>
+</div>
+
+<div class="lab">Kendi görselin</div>
+<div class="card">
+<div class="row"><div class="rt"><div class="t">Görsel yükle</div><div class="s">JPEG, PNG veya WebP · 16:9 önerilir</div></div><button type="button" class="btn">Seç</button></div>
+<div class="row"><div class="rt"><div class="t">Yüklenen kapağı kaldır</div></div><button type="button" class="btn out">Kaldır</button></div>
+</div>
+</div>
+<div class="foot"><button type="button" class="btn pri full">Kapağı kaydet</button></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":true},"$preview":{"width":390,"height":920}}'>
+class Component extends DCLogic {
+renderVals() { return { themeClass: this.props.dark === false ? 'light' : 'dark' }; }
+}
+</script>
+</body>
+</html>
