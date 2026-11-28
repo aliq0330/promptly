@@ -31,6 +31,8 @@ import { focusActiveIndex, focusKeyAction, focusResultStep, type FocusSheetState
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { usePrefersReducedMotion } from "@/lib/motion";
 import { useMediaQuery } from "@/lib/use-media-query";
+import { setMediaSound } from "@/lib/media-sound";
+import { useMediaSound } from "@/lib/use-media-sound";
 import { cn } from "@/lib/utils";
 import { isPostItem, type PostFeedItem } from "@/features/feed/types";
 import { FocusPanelContext, FocusPlaybackContext, HIDE_WHILE_FULL, type FocusPanelApi } from "./focus-context";
@@ -294,14 +296,18 @@ function FocusScreen() {
   const taxonomy = useMemo(() => ({ contentType, category: null, subcategory: null }), [contentType]);
   // Which way the last type change went (1 = further down the menu's list) — only for the entrance animation; 0 = none yet.
   const [channelShift, setChannelShift] = useState<0 | 1 | -1>(0);
-  const [muted, setMuted] = useState(true);
+  // Sound is the ONE site-wide preference (`lib/media-sound.ts`, docs/history/483-*), shared with the post cards; `muted` is what is heard NOW
+  // (chosen AND allowed by the browser), so a fresh page load with sound chosen stays silent until the first tap.
+  const { audible } = useMediaSound();
+  const muted = !audible;
+  const setMuted = useCallback((next: boolean) => setMediaSound(!next), []);
   // The card over a post (phone): half / full + its tab; `null` = closed (the prompt strip). From `md` the card is the side panel: `panelOpen` + its tab.
   const [sheet, setSheet] = useState<{ state: FocusSheetState; tab: FocusTabId } | null>(null);
   const [panelOpen, setPanelOpen] = useState(true);
   const [panelTab, setPanelTab] = useState<FocusTabId>("main");
   // The `{variable}` of a text prompt the picker is open on (phone), keyed by post.
   const [fillEdit, setFillEdit] = useState<{ key: string; name: string } | null>(null);
-  const playback = useMemo(() => ({ muted, setMuted }), [muted]);
+  const playback = useMemo(() => ({ muted, setMuted }), [muted, setMuted]);
   useFullScreenChrome();
 
   // "Takip" needs an account: a guest gets the login prompt and no request is made (while the session restores we wait).

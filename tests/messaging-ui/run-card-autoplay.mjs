@@ -46,7 +46,7 @@ const MEDIA_STUB = (refuseSound) => {
   };
 };
 
-async function scenario(name, fn, { viewport = { width: 390, height: 844 }, reducedMotion = false, refuseSound = false, count = 12 } = {}) {
+async function scenario(name, fn, { viewport = { width: 390, height: 844 }, reducedMotion = false, refuseSound = false, count = 12, sound = null, noActivation = false } = {}) {
   if (ONLY && !name.startsWith(ONLY)) return;
   const db = createDb();
   const rows = Array.from({ length: count }, (_, i) => row(i + 1));
@@ -76,6 +76,10 @@ async function scenario(name, fn, { viewport = { width: 390, height: 844 }, redu
   await context.route(/\/rest\/v1\/profiles\?.*order=follower_count/, (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify([]) }));
   await context.route("https://example.com/**", (route) => route.fulfill({ status: 200, contentType: "video/mp4", body: "" }));
   await context.addInitScript(MEDIA_STUB, refuseSound);
+  // The site-wide sound preference (docs/history/483-*) lives on the device: a returning visitor who chose "on" starts with it set.
+  // A fresh page load: the browser has not seen a tap yet on this visit (headless Chromium reports one after `goto`).
+  if (noActivation) await context.addInitScript(() => { try { Object.defineProperty(Navigator.prototype, "userActivation", { configurable: true, get: () => ({ hasBeenActive: false, isActive: false }) }); } catch {} });
+  if (sound) await context.addInitScript((value) => { try { localStorage.setItem("promptly-media-sound", value); } catch {} }, sound);
   await context.addInitScript(() => {
     try {
       localStorage.setItem("promptly-language", "tr");
@@ -154,9 +158,11 @@ await scenario("2. düğme durdurur/başlatır ve yazıyı AÇMAZ; resmin başka
   await page.waitForURL(/\/prompts\/local\/?\?id=/);
 });
 
-await scenario("3. aynı anda yalnız bir kart oynar: kaydırınca öncekiler durur, ortadaki başlar", async ({ page, rows }) => {
+await scenario("3. aynı anda yalnız bir kart oynar: kaydırınca öncekiler durur, ortadaki başlar (ses tercihi açık)", async ({ page, rows }) => {
   await page.goto(`${BASE}/`);
   await waitFeed(page);
+  await page.mouse.click(2, 2); // the first tap of the visit lets sound play
+  await page.waitForTimeout(150);
   await center(page, 1); // video
   let playing = playingSrcs(await ops(page));
   assert.deepEqual(playing, [`https://example.com/out/${rows[1].id}.mp4`]);
@@ -168,7 +174,7 @@ await scenario("3. aynı anda yalnız bir kart oynar: kaydırınca öncekiler du
   await center(page, 3); // video
   playing = playingSrcs(await ops(page));
   assert.deepEqual(playing, [`https://example.com/out/${rows[3].id}.mp4`]);
-});
+}, { sound: "on" });
 
 await scenario("4. görsel kartı oynatma düğmesi taşımaz; uzaktaki video çıktısını hiç yüklemez", async ({ page }) => {
   await page.goto(`${BASE}/`);
@@ -205,6 +211,70 @@ await scenario("7. masaüstü: iki sütunlu akışta yalnız ekran ortasına en 
   const playing = playingSrcs(await ops(page));
   assert.ok(playing.length <= 1, `en çok bir kart oynar: ${JSON.stringify(playing)}`);
 }, { viewport: { width: 1280, height: 900 } });
+
+await scenario("8. varsayılan KAPALI: ses kartı kendiliğinden çalmaz, video sessiz oynar; ses düğmesi tüm videoların sesini açar/kapatır (cihazda tutulur)", async ({ page, rows }) => {
+  await page.goto(`${BASE}/`);
+  await waitFeed(page);
+  await center(page, 2); // ses
+  assert.equal((await ops(page)).filter((m) => m.tag === "AUDIO" && m.op === "play").length, 0, "tercih kapalıyken ses kartı çalmaz");
+  await center(page, 1); // video
+  const btn1 = cell(page, 1).locator("[data-media-sound]");
+  await btn1.waitFor();
+  assert.equal(await btn1.getAttribute("data-media-sound"), "off");
+  assert.equal(await btn1.getAttribute("aria-label"), "Tüm videoların sesini aç");
+  assert.equal(await cell(page, 1).locator("video").evaluate((el) => el.muted), true, "video sessiz");
+  const url = page.url();
+  await btn1.click();
+  await page.waitForTimeout(300);
+  assert.equal(page.url(), url, "ses düğmesi gönderiyi açmadı");
+  assert.equal(await page.evaluate(() => localStorage.getItem("promptly-media-sound")), "on", "tercih cihazda saklandı");
+  assert.equal(await btn1.getAttribute("data-media-sound"), "on");
+  assert.equal(await btn1.getAttribute("aria-label"), "Tüm videoların sesini kapat");
+  assert.ok(await page.getByText("Tüm videoların sesi açıldı").isVisible(), "bildirim çıktı");
+  assert.equal(await cell(page, 1).locator("video").evaluate((el) => el.muted), false, "açık video sesli");
+  // Aşağıdaki başka bir video da sesle başlar, ses kartı da çalar.
+  await center(page, 3); // video
+  assert.equal(await cell(page, 3).locator("video").evaluate((el) => el.muted), false, "sonraki video sesle başladı");
+  assert.equal(await cell(page, 3).locator("[data-media-sound]").getAttribute("data-media-sound"), "on", "her videoda simge açık");
+  await center(page, 4); // ses
+  assert.ok((await ops(page)).some((m) => m.tag === "AUDIO" && m.op === "play" && m.muted === false), "tercih açıkken ses kartı sesle çalar");
+  // Başka bir videoda kapat: hepsi sessize döner.
+  await center(page, 3);
+  await cell(page, 3).locator("[data-media-sound]").click();
+  await page.waitForTimeout(300);
+  assert.equal(await page.evaluate(() => localStorage.getItem("promptly-media-sound")), "off");
+  assert.equal(await cell(page, 3).locator("video").evaluate((el) => el.muted), true);
+  assert.equal(await cell(page, 1).locator("[data-media-sound]").getAttribute("data-media-sound"), "off", "diğer videonun simgesi de kapandı");
+  assert.ok(await page.getByText("Tüm videolar sessize alındı").isVisible());
+});
+
+await scenario("9. yenilemeden sonra: tercih AÇIK ama dokunuş yok → 'bekliyor'; ilk basış tercihi kapatmaz, sesi getirir", async ({ page }) => {
+  await page.goto(`${BASE}/`);
+  await waitFeed(page);
+  await center(page, 1);
+  const btn = cell(page, 1).locator("[data-media-sound]");
+  await btn.waitFor();
+  assert.equal(await btn.getAttribute("data-media-sound"), "pending");
+  assert.ok(await btn.getByText("Dokun, ses gelsin").isVisible(), "ipucu görünür");
+  assert.equal(await cell(page, 1).locator("video").evaluate((el) => el.muted), true, "dokunuştan önce sessiz");
+  await btn.click();
+  await page.waitForTimeout(300);
+  assert.equal(await page.evaluate(() => localStorage.getItem("promptly-media-sound")), "on", "tercih kapanmadı");
+  assert.equal(await btn.getAttribute("data-media-sound"), "on");
+  assert.equal(await cell(page, 1).locator("video").evaluate((el) => el.muted), false, "ses geldi");
+}, { sound: "on", noActivation: true });
+
+await scenario("10. tarayıcı sesi reddederse tercih silinmez: video sessiz kalır, düğme 'bekliyor' olur", async ({ page }) => {
+  await page.goto(`${BASE}/`);
+  await waitFeed(page);
+  await page.mouse.click(2, 2);
+  await page.waitForTimeout(150);
+  await center(page, 1);
+  await page.waitForTimeout(300);
+  // Browser refused play-with-sound (stub): the choice stays on the device, the button waits for a tap.
+  assert.equal(await page.evaluate(() => localStorage.getItem("promptly-media-sound")), "on");
+  assert.ok(["pending", "on"].includes(await cell(page, 1).locator("[data-media-sound]").getAttribute("data-media-sound")));
+}, { sound: "on", refuseSound: true });
 
 console.log("\n" + results.map(([s, n]) => `${s}  ${n}`).join("\n"));
 const failed = results.filter(([s]) => s === "FAIL").length;

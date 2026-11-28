@@ -6,6 +6,7 @@ import { Music } from "@/components/icons/music";
 import { MediaPlayButton } from "@/components/ui/media-play-button";
 import { StorageAudio, StorageImg, StorageVideo } from "@/components/ui/storage-media";
 import type { FocusFeedCover } from "@/lib/focus-feed";
+import { reportSoundBlocked } from "@/lib/media-sound";
 import { cn } from "@/lib/utils";
 import type { Prompt } from "@/types";
 import { FocusPlaybackContext } from "./focus-context";
@@ -60,48 +61,45 @@ export function PlayableMedia({ prompt, cover, active, near }: { prompt: Prompt;
   // A signed (private) file mounts its element a moment after the output is known: the player is ready once its metadata is in.
   const [ready, setReady] = useState(false);
   const kind = output?.mediaUrl ? output.mediaType : null;
+  // A pause the viewer asked for by hand holds until the post leaves the screen (a sound switch flipping must not restart it).
+  const userPaused = useRef(false);
   const element = () => (kind === "video" ? videoRef.current : kind === "audio" ? audioRef.current : null);
-  // The effects below read the sound switch without re-running when it flips (an audio post must not fight a switch turned off by hand).
-  const mutedRef = useRef(muted);
-  useEffect(() => {
-    mutedRef.current = muted;
-  }, [muted]);
 
-  // The active post plays by itself, the others pause. A video starts silent unless the sound switch is on; an audio post
-  // starts with its sound — and, once it has, the switch turns on (the browser may refuse sound before a tap: it then waits on its button).
+  // The active post plays by itself, the others pause. Sound is the site-wide preference (`muted` = not heard now): a video plays silent until
+  // it is on and then follows it live; an audio post plays only while it is on (turning it off anywhere silences it, its button brings it back).
+  // If the browser still refuses sound (no tap yet on this visit) the preference waits for a tap — it is not switched off.
   useEffect(() => {
     const media = kind === "video" ? videoRef.current : kind === "audio" ? audioRef.current : null;
     if (!media) return;
     if (!active) {
+      userPaused.current = false;
       media.pause();
       return;
     }
-    if (kind === "video") {
-      media.muted = mutedRef.current;
-      media.play().catch(() => {
-        // Sound needs a gesture on this browser: fall back to a silent video.
-        if (!media.muted) setMuted(true);
-      });
-    } else {
-      media.muted = false;
-      media.play().then(() => setMuted(false), () => undefined);
+    media.muted = kind === "video" ? muted : false;
+    if (kind === "audio" && muted) {
+      media.pause();
+      return;
     }
-  }, [active, ready, kind, setMuted]);
-
-  // The sound switch: a video follows it through its `muted` prop; turning sound off silences an audio post (its button brings it back).
-  useEffect(() => {
-    const media = audioRef.current;
-    if (muted && media && !media.paused) media.pause();
-  }, [muted, ready]);
+    if (userPaused.current) return;
+    media.play().catch(() => {
+      if (!media.muted) reportSoundBlocked();
+    });
+  }, [active, ready, kind, muted]);
 
   function toggle() {
     const media = element();
     if (!media) return;
     if (media.paused) {
-      // A tap is a gesture: an audio post may now play with sound.
+      userPaused.current = false;
+      // A tap is a gesture: an audio post may now play with sound, and that is the preference for every post.
       if (kind === "audio" && muted) setMuted(false);
+      media.muted = kind === "video" ? muted : false;
       void media.play().catch(() => undefined);
-    } else media.pause();
+    } else {
+      userPaused.current = true;
+      media.pause();
+    }
   }
 
   const events = { onPlay: () => setPlaying(true), onPause: () => setPlaying(false), onLoadedMetadata: () => setReady(true) };
