@@ -8,7 +8,8 @@ import { Search } from "@/components/icons/search";
 import { X } from "@/components/icons/x";
 import { Modal } from "@/components/ui/modal";
 import { ConfirmDialog } from "@/features/groups/confirm-dialog";
-import { ChoiceGroup } from "@/components/ui/choice-group";
+import { NotifySection } from "@/features/notify/notify-section";
+import { roomPick } from "@/lib/notify-standard";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { communityHref } from "@/lib/communities";
 import { archiveCommunityRoom, setRoomMuted } from "@/lib/supabase/community-rooms";
@@ -123,20 +124,17 @@ export function RoomInfoSheet({
               ))}
             </dl>
 
-            <div className="space-y-1.5">
-              <p className="text-caption font-semibold text-text-muted">{t("rooms.info.notifyHeading")}</p>
-              <ChoiceGroup<RoomNotify> variant="segmented"
-                value={room.muted ? "none" : "all"}
-                ariaLabel={t("rooms.info.notifyHeading")}
-                testId="room-notify"
-                disabled={busy}
-                onChange={(next) => void changeNotify(next)}
-                options={[
-                  { key: "all", label: t("rooms.info.notifyAll") },
-                  { key: "none", label: t("rooms.info.notifyNone") },
-                ]}
-              />
-            </div>
+            <NotifySection<"all" | "none">
+              testId="room"
+              heading={t("rooms.info.notifyHeading")}
+              value={roomPick(room.muted)}
+              disabled={busy}
+              onChange={(next) => void changeNotify(next)}
+              items={[
+                { key: "all", description: t("notify.room.all") },
+                { key: "none", description: t("notify.room.none") },
+              ]}
+            />
 
             <div className="overflow-hidden rounded-lg border border-border-soft">
               <button type="button" data-room-info-row="pinned" disabled={pinnedCount === 0} onClick={onShowPinned} className={rowClass}>

@@ -511,7 +511,7 @@ await scenario("16b. Bildirim tercihi: Tümü / Yalnızca önemli / Sessiz kendi
   await open(page, C1, "about&section=prefs");
   const prefs = page.getByTestId("community-prefs-page");
   await prefs.waitFor();
-  await prefs.getByRole("radio", { name: /Yalnızca önemli/ }).click();
+  await prefs.getByRole("radio", { name: /Yalnız önemli/ }).click();
   await page.getByText("Bildirim tercihin kaydedildi.").waitFor();
   assert.equal(db.member(C1, ME).notify_level, "important");
   await prefs.getByRole("radio", { name: "8 saat" }).click();
@@ -520,6 +520,12 @@ await scenario("16b. Bildirim tercihi: Tümü / Yalnızca önemli / Sessiz kendi
   assert.ok(new Date(db.member(C1, ME).notify_muted_until) > new Date());
   const patches = calls(db, "conversation_members", "PATCH");
   assert.ok(patches.every((c) => !("role" in c.body)), "only the preference columns are written");
+  // Bildirim standardı (docs/history/484-*): "Tüm topluluk sohbetleri" ekip ile aynı sözlüğü kullanır (Tüm mesajlar · Sessiz) ve kendi üyelik satırının muted_at'ini yazar.
+  const chats = prefs.getByRole("radiogroup", { name: "Tüm topluluk sohbetleri" });
+  assert.equal(await chats.getByRole("radio", { name: "Tüm mesajlar" }).getAttribute("aria-checked"), "true");
+  await chats.getByRole("radio", { name: "Sessiz" }).click();
+  await page.waitForFunction(() => document.querySelector("[aria-label='Tüm topluluk sohbetleri'] [aria-checked='true']")?.textContent === "Sessiz");
+  assert.ok(db.member(C1, ME).muted_at, "chat muted_at stored");
 }, { setup: (db) => seed(db, { myRole: "member" }) });
 
 await scenario("16c. Ayrılma: onay ister, çift tık tek istek, topluluklar sayfasına döner", async ({ page, db }) => {

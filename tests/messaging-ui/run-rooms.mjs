@@ -245,8 +245,8 @@ await scenario("9. Oda sessize alma: ⋮ menüsü → sunucuya yazılır; oda bi
   await page.locator("button[aria-label^='Topluluk seçenekleri'], button[aria-label^='Community options']").first().click();
   await page.locator("[data-menu-room-info]").click();
   await page.locator("[data-room-info]").waitFor();
-  assert.equal(await page.locator("[data-segmented='room-notify'] [data-segment='none']").getAttribute("aria-checked"), "true");
-  await page.locator("[data-segmented='room-notify'] [data-segment='all']").click();
+  assert.equal(await page.locator("[data-notify-section='room'] [data-option='none']").getAttribute("aria-checked"), "true");
+  await page.locator("[data-notify-section='room'] [data-option='all']").click();
   await page.waitForTimeout(300);
   assert.ok(db.roomCalls.some((c) => c.fn === "mute" && c.body.p_muted === false && c.body.p_room_id === seedResult.ann.id), "oda bilgisinden sesi açılır");
 }, { setup: (db) => { seedResult = seed(db); } });

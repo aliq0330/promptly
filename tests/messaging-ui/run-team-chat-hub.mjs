@@ -276,7 +276,7 @@ await scenario("9. Kanal bilgisi: ekip sessizken 'bu kanaldan bildirim gelmiyor'
   const banner = sheet.locator('[data-channel-inherited="team"]');
   await banner.waitFor();
   assert.match(await banner.innerText(), /Ekip sessizde olduğu için/);
-  assert.match(await sheet.locator("[data-channel-notify-hint]").innerText(), /Yalnız seni andıklarında/);
+  assert.match(await sheet.locator("[data-notify-section='channel']").innerText(), /Yalnız seni andıklarında/);
   await sheet.locator("[data-channel-unmute-parent]").click();
   await page.waitForFunction(() => !document.querySelector('[data-channel-inherited]'));
   const call = called(db, "team_set_mute").pop().body;

@@ -422,7 +422,7 @@ export const communityTranslations = {
   "communities.notify.help": { tr: "Yalnızca bu topluluk için geçerlidir. Sana doğrudan ilgilendiren bildirimler (davet, başvuru sonucu, çıkarılma) her zaman gelir.", en: "Applies to this community only. Notifications that directly concern you (invitations, request results, removal) always arrive." },
   "communities.notify.level.all": { tr: "Tümü", en: "All" },
   "communities.notify.level.allHelp": { tr: "Duyurular, anmalar, etkinlikler ve yeni üyeler.", en: "Announcements, mentions, events and new members." },
-  "communities.notify.level.important": { tr: "Yalnızca önemli", en: "Important only" },
+  "communities.notify.level.important": { tr: "Yalnız önemli", en: "Important only" },
   "communities.notify.level.importantHelp": { tr: "Duyurular, seni anan mesajlar, etkinlik hatırlatma/değişiklikleri ve kural güncellemeleri.", en: "Announcements, mentions of you, event reminders/changes and rule updates." },
   "communities.notify.level.none": { tr: "Sessiz", en: "Muted" },
   "communities.notify.level.noneHelp": { tr: "Bu topluluktan bilgi bildirimi gelmez.", en: "No informational notifications from this community." },
