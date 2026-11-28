@@ -3,14 +3,16 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ChoiceGroup } from "@/components/ui/choice-group";
-import { OptionGroup } from "@/components/ui/option-group";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useAsyncAction } from "@/features/groups/use-async-action";
 import { useChatMute } from "@/features/groups/personal-prefs";
 import { useRealMessages } from "@/features/messages/real-messages-provider";
 import { useReport } from "@/features/moderation/report-provider";
 import { useRoomsCount } from "./manage-sx-helpers";
-import { SxAvatar, SxBtn, SxCard, SxConfirmPage, SxGap, SxLabel, SxNote, SxPage, SxRow, SxRowCol, SxSep, SxSub, SxSwitch, SxTag } from "@/features/settings/sx";
+import { SxAvatar, SxBtn, SxCard, SxConfirmPage, SxGap, SxHash, SxLabel, SxNote, SxPage, SxPicker, SxRow, SxRowCol, SxSep, SxSub, SxTag } from "@/features/settings/sx";
+import { patchCachedRoom, useCommunityRooms } from "@/features/messages/rooms/use-community-rooms";
+import { setRoomMuted } from "@/lib/supabase/community-rooms";
+import { roomPick } from "@/lib/notify-standard";
 import { buildGroupJoinUrl, can, leaveOutcome } from "@/lib/chat-groups";
 import { communityHref, isTemporarilyMuted, MUTE_DURATIONS_HOURS, muteUntilIso, NOTIFY_LEVELS } from "@/lib/communities";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -19,7 +21,7 @@ import { SHARE_BASE_PATH } from "@/lib/share-link";
 import { cancelInvitation, createChatGroupLink, deleteChatGroup, fetchGroupBans, fetchGroupInvitations, fetchGroupLinkList, inviteToChatGroup, leaveChatGroup, revokeChatGroupLink, unbanChatGroupMember, type GroupBan, type GroupInvitation, type GroupLinkRow } from "@/lib/supabase/chat-groups";
 import { closeCommunity, reopenCommunity, setCommunityNotifyPrefs, type MyCommunityMembership } from "@/lib/supabase/communities";
 import { formatRelativeTime } from "@/lib/utils";
-import type { ChatGroup, CommunityNotifyLevel } from "@/types";
+import type { ChatGroup, CommunityNotifyLevel, CommunityRoom } from "@/types";
 
 /** B3 · Davetler ve bağlantılar · B4 · Senin tercihlerin · B5 · Kapat veya sil · B6 · Silme onayı. */
 
@@ -225,6 +227,8 @@ export function PrefsPage({ group, membership, viewerId, reload, onToast, sub, s
   const prefs = useAsyncAction();
   const [pendingLevel, setPendingLevel] = useState<CommunityNotifyLevel | null>(null);
   const [hours, setHours] = useState<number | null>(null);
+  const [roomSheet, setRoomSheet] = useState<CommunityRoom | null>(null);
+  const { rooms } = useCommunityRooms(group.id);
   const level = pendingLevel ?? membership?.notifyLevel ?? "all";
   const mutedUntil = membership?.notifyMutedUntil ?? null;
   const tempMuted = isTemporarilyMuted(mutedUntil);
@@ -259,16 +263,18 @@ export function PrefsPage({ group, membership, viewerId, reload, onToast, sub, s
   return (
     <>
       <SxPage parent={group.name} title={t("ay.prefs.title")} backHref={communityHref(group.id, "about")} testId="community-prefs-page">
-        <SxLabel>{t("communities.notify.title")}</SxLabel>
-        <OptionGroup<CommunityNotifyLevel>
-          variant="sx"
-          ariaLabel={t("communities.notify.title")}
-          value={level}
-          disabled={prefs.busy}
-          onChange={(value) => void savePrefs(value, null)}
-          options={NOTIFY_LEVELS.map((value) => ({ key: value, label: t(`communities.notify.level.${value}`), description: t(`ay.prefs.level.${value}Help` as const) }))}
-        />
-        <p className="hint" style={{ margin: "8px 20px 0" }}>{t("ay.prefs.always")}</p>
+        <SxLabel>{t("notify.section.community")}</SxLabel>
+        <SxCard style={{ padding: 12 }}>
+          <ChoiceGroup<CommunityNotifyLevel>
+            variant="sx-seg"
+            ariaLabel={t("notify.section.community")}
+            value={level}
+            disabled={prefs.busy}
+            onChange={(value) => void savePrefs(value, null)}
+            options={NOTIFY_LEVELS.map((value) => ({ key: value, label: t(`communities.notify.level.${value}`) }))}
+          />
+          <p className="hint" style={{ padding: "8px 4px 4px" }}>{t(`ay.prefs.level.${level}Help` as const)}</p>
+        </SxCard>
 
         <SxLabel>{t("ay.prefs.muteFor")}</SxLabel>
         <ChoiceGroup<string>
@@ -291,10 +297,38 @@ export function PrefsPage({ group, membership, viewerId, reload, onToast, sub, s
           </p>
         )}
 
-        <SxLabel>{t("ay.prefs.chat")}</SxLabel>
-        <SxCard>
-          <SxRow top title={t("ay.prefs.muteChat")} desc={t("ay.prefs.muteChatHelp")} trailing={<SxSwitch checked={chatMute.muted} onChange={() => void chatMute.toggle()} disabled={chatMute.busy} label={t("ay.prefs.muteChat")} />} />
+        <SxLabel>{t("notify.section.chats")}</SxLabel>
+        <SxCard style={{ padding: 12 }}>
+          <div className="t" style={{ padding: "2px 4px 10px" }}>{t("notify.chats.community")}</div>
+          <ChoiceGroup<"all" | "none">
+            variant="sx-seg"
+            ariaLabel={t("notify.chats.community")}
+            value={roomPick(chatMute.muted)}
+            disabled={chatMute.busy}
+            onChange={(next) => { if ((next === "none") !== chatMute.muted) void chatMute.toggle(); }}
+            options={[{ key: "all", label: t("notify.level.all") }, { key: "none", label: t("notify.level.none") }]}
+          />
+          <p className="hint" style={{ padding: "8px 4px 4px" }}>{t("notify.chats.communityHint")}</p>
         </SxCard>
+
+        {rooms.length > 1 && (
+          <>
+            <SxLabel>{t("notify.section.rooms")}</SxLabel>
+            <SxCard>
+              {rooms.map((room) => (
+                <SxRow
+                  key={room.id}
+                  lead={<SxHash />}
+                  title={room.name}
+                  trailing={<SxBtn tone="sel" onClick={() => setRoomSheet(room)}>{t(room.muted ? "notify.level.none" : "notify.level.all")}</SxBtn>}
+                />
+              ))}
+            </SxCard>
+          </>
+        )}
+
+        <SxGap h={16} />
+        <SxNote><b>{t("notify.always.label")}</b> {t("notify.always.community")}</SxNote>
 
         <SxLabel>{t("ay.rules.section")}</SxLabel>
         <SxCard>
@@ -322,6 +356,33 @@ export function PrefsPage({ group, membership, viewerId, reload, onToast, sub, s
           </>
         )}
       </SxPage>
+      {roomSheet && (
+        <SxPicker<"all" | "none">
+          open
+          onClose={() => setRoomSheet(null)}
+          parent={t("ay.prefs.title")}
+          title={roomSheet.name}
+          label={t("notify.picker.room")}
+          options={[
+            { key: "all", label: t("notify.level.all"), desc: t("notify.room.all") },
+            { key: "none", label: t("notify.level.none"), desc: t("notify.room.none") },
+          ]}
+          value={roomSheet.muted ? "none" : "all"}
+          onPick={(next) => void prefs.run(async () => {
+            const muted = next === "none";
+            patchCachedRoom(group.id, roomSheet.id, { muted });
+            try {
+              await setRoomMuted(roomSheet.id, muted);
+            } catch (err) {
+              patchCachedRoom(group.id, roomSheet.id, { muted: !muted });
+              throw err;
+            }
+            return true;
+          })}
+          pickLabel={t("ay.pick")}
+          testId="community-room-notify-picker"
+        />
+      )}
       {sub === "leave" && <LeavePage group={group} onClose={() => setSub(null)} onLeft={() => { void refresh(); onToast(t("communities.about.leftToast")); router.push("/communities"); }} />}
     </>
   );

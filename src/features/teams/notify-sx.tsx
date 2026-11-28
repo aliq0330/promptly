@@ -4,12 +4,14 @@ import { Fragment, useEffect, useState } from "react";
 import { ChoiceGroup } from "@/components/ui/choice-group";
 import { OptionGroup } from "@/components/ui/option-group";
 import { useAsyncAction } from "@/features/groups/use-async-action";
-import { SxAvatar, SxBarAction, SxBtn, SxCard, SxField, SxGap, SxHash, SxLabel, SxNote, SxPage, SxPicker, SxRow, SxRowCol, SxSep, SxSub, SxSwitch, SxTag, SxVal } from "@/features/settings/sx";
+import { SxAvatar, SxBarAction, SxBtn, SxCard, SxField, SxGap, SxHash, SxLabel, SxNote, SxPage, SxPicker, SxRow, SxRowCol, SxSep, SxSub, SxTag, SxVal } from "@/features/settings/sx";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import { listProjects, type ProjectSummary } from "@/lib/supabase/team-projects";
 import { archiveTeamChannel, deleteTeamChannel, setChannelNotify, setMemberRole, updateTeamChannel, type TeamChannel, type TeamMember } from "@/lib/supabase/teams";
 import { teamLink, teamRank, type TeamRole } from "@/lib/teams";
+import { NOTIFY_CHANNEL_HINT, NOTIFY_PICK_LABEL } from "@/features/notify/notify-section";
+import { channelPick, NOTIFY_PICK_ORDER, pickToServer, type NotifyPick } from "@/lib/notify-standard";
 import type { TeamCtx } from "./team-page";
 import { useTeamChannelList, useTeamMutes } from "./team-chat-data";
 import { roleLabelKey } from "./team-ui";
@@ -113,7 +115,7 @@ export function ChannelSettingsSx({ ctx, channel, onClose, onChanged }: { ctx: T
   const [description, setDescription] = useState(channel.description ?? "");
   const [mode, setMode] = useState<"open" | "private">(channel.mode === "private" ? "private" : "open");
   const [editing, setEditing] = useState<"name" | "description" | null>(null);
-  const [level, setLevel] = useState(channel.notifyLevel);
+  const [level, setLevel] = useState<NotifyPick>(channelPick(channel.notifyLevel, channel.notifyDefault));
   const [posting, setPosting] = useState<"members" | "admins">(channel.postingPolicy);
   const action = useAsyncAction();
   const [confirm, setConfirm] = useState<null | "archive" | "delete">(null);
@@ -183,19 +185,19 @@ export function ChannelSettingsSx({ ctx, channel, onClose, onChanged }: { ctx: T
 
         <SxLabel>{t("ay.chan.yourNotify")}</SxLabel>
         <SxCard style={{ padding: "12px 12px 4px" }}>
-          <ChoiceGroup<"all" | "mentions" | "none">
-            variant="sx-seg"
+          <ChoiceGroup<NotifyPick>
+            variant="sx-chips"
             ariaLabel={t("ay.chan.yourNotify")}
             value={level}
             onChange={(next) => {
               setLevel(next);
               void action.run(async () => {
-                await setChannelNotify(channel.id, next);
+                await setChannelNotify(channel.id, pickToServer(next));
                 onChanged();
                 return true;
               });
             }}
-            options={[{ key: "all", label: t("tm.chat.notify.all") }, { key: "mentions", label: t("tm.chat.notify.mentionsShort") }, { key: "none", label: t("tm.chat.notify.none") }]}
+            options={NOTIFY_PICK_ORDER.map((key) => ({ key, label: t(NOTIFY_PICK_LABEL[key]) }))}
           />
           <p className="hint" style={{ padding: "6px 4px 10px" }}>{t("ay.chan.allHint")}</p>
         </SxCard>
@@ -267,6 +269,7 @@ export function TeamNotifySx({ ctx, backHref }: { ctx: TeamCtx; backHref: string
   const { channels, reload } = useTeamChannelList(team.id);
   const [projects, setProjects] = useState<ProjectSummary[]>([]);
   const [pick, setPick] = useState<TeamChannel | null>(null);
+  const [pickProject, setPickProject] = useState<ProjectSummary | null>(null);
   const action = useAsyncAction();
   useEffect(() => {
     let alive = true;
@@ -275,19 +278,35 @@ export function TeamNotifySx({ ctx, backHref }: { ctx: TeamCtx; backHref: string
       alive = false;
     };
   }, [team.id]);
-  const levelLabel = (c: TeamChannel) => t(c.muted || c.notifyLevel === "none" ? "tm.chat.notify.none" : c.notifyLevel === "all" ? "tm.chat.notify.all" : "tm.chat.notify.mentionsShort");
+  const pickOf = (c: TeamChannel): NotifyPick => channelPick(c.notifyLevel, c.notifyDefault);
+  const levelLabel = (c: TeamChannel) => (c.muted || c.notifyLevel === "none" ? t("notify.level.none") : t(NOTIFY_PICK_LABEL[c.notifyLevel]));
+  const busy = mutes.busy || !mutes.loaded;
   return (
     <>
       <SxPage parent={team.name} title={t("ay.notify.title")} backHref={backHref} testId="team-notify-page">
         <p className="s" style={{ margin: "8px 20px 0" }}>{t("ay.notify.intro")}</p>
-        <SxLabel>{t("ay.team.team")}</SxLabel>
-        <SxCard>
-          <SxRow top title={t("ay.notify.muteTeam")} desc={t("ay.notify.muteTeamDesc")} trailing={<SxSwitch checked={mutes.teamMuted} disabled={mutes.busy || !mutes.loaded} onChange={(on) => void mutes.setTeamMuted(on)} label={t("ay.notify.muteTeam")} />} />
+        <SxLabel>{t("notify.section.team")}</SxLabel>
+        <SxCard style={{ padding: 12 }}>
+          <ChoiceGroup<"all" | "none">
+            variant="sx-seg"
+            ariaLabel={t("notify.section.team")}
+            value={mutes.teamMuted ? "none" : "all"}
+            disabled={busy}
+            onChange={(next) => void mutes.setTeamMuted(next === "none")}
+            options={[{ key: "all", label: t("notify.hub.all") }, { key: "none", label: t("notify.level.none") }]}
+          />
+          <p className="hint" style={{ padding: "8px 4px 4px" }}>{t("ay.notify.muteTeamDesc")}</p>
         </SxCard>
         <SxLabel>{t("ay.notify.projects")}</SxLabel>
         <SxCard>
           {projects.map((p) => (
-            <SxRow key={p.id} top title={p.title} desc={t("ay.notify.projectDesc")} trailing={<SxSwitch checked={mutes.isProjectMuted(p.id)} disabled={mutes.busy || !mutes.loaded} onChange={(on) => void mutes.setProjectMuted(p.id, on)} label={p.title} />} />
+            <SxRow
+              key={p.id}
+              top
+              title={p.title}
+              desc={t("ay.notify.projectDesc")}
+              trailing={<SxBtn tone="sel" disabled={busy} onClick={() => setPickProject(p)}>{t(mutes.isProjectMuted(p.id) ? "notify.level.none" : "notify.hub.all")}</SxBtn>}
+            />
           ))}
         </SxCard>
         <SxLabel>{t("ay.notify.channels")}</SxLabel>
@@ -299,12 +318,14 @@ export function TeamNotifySx({ ctx, backHref }: { ctx: TeamCtx; backHref: string
               title={c.name}
               trailing={<SxBtn tone="sel" onClick={() => setPick(c)}>{levelLabel(c)}</SxBtn>}
             >
-              {c.muteScope === "project" || c.muteScope === "team" ? <div className="s"><SxTag>{t(c.muteScope === "team" ? "ay.notify.fromTeam" : "ay.notify.fromProject")}</SxTag></div> : null}
+              <div className="s">
+                {c.muteScope === "project" || c.muteScope === "team" ? <SxTag>{t(c.muteScope === "team" ? "ay.notify.fromTeam" : "ay.notify.fromProject")}</SxTag> : <SxTag>{t(pickOf(c) === "default" ? "notify.source.default" : "notify.source.own")}</SxTag>}
+              </div>
             </SxRow>
           ))}
         </SxCard>
         <SxGap h={16} />
-        <SxNote>{t("ay.notify.noteA")} <b>{t("ay.notify.noteB")}</b> {t("ay.notify.noteC")}</SxNote>
+        <SxNote><b>{t("notify.always.label")}</b> {t("ay.notify.noteA")} <b>{t("ay.notify.noteB")}</b> {t("ay.notify.noteC")}</SxNote>
         {(mutes.error || action.error) && (
           <>
             <SxGap h={12} />
@@ -313,20 +334,41 @@ export function TeamNotifySx({ ctx, backHref }: { ctx: TeamCtx; backHref: string
         )}
       </SxPage>
       {pick && (
-        <SxPicker<"all" | "mentions" | "none">
+        <SxPicker<NotifyPick>
           open
           onClose={() => setPick(null)}
           parent={t("ay.notify.title")}
           title={pick.name}
           label={t("ay.chan.yourNotify")}
-          options={[{ key: "all", label: t("tm.chat.notify.all") }, { key: "mentions", label: t("tm.chat.notify.mentions") }, { key: "none", label: t("tm.chat.notify.none") }]}
-          value={pick.notifyLevel}
-          onPick={(next) => void action.run(async () => { await setChannelNotify(pick.id, next); reload(); return true; })}
+          options={[
+            { key: "default", label: t("notify.level.default"), desc: t("notify.default.channel", { level: t(NOTIFY_PICK_LABEL[pick.notifyDefault]) }) },
+            { key: "all", label: t("notify.level.all"), desc: t(NOTIFY_CHANNEL_HINT.all) },
+            { key: "mentions", label: t("notify.level.mentions"), desc: t(NOTIFY_CHANNEL_HINT.mentions) },
+            { key: "none", label: t("notify.level.none"), desc: t(NOTIFY_CHANNEL_HINT.none) },
+          ]}
+          value={pickOf(pick)}
+          onPick={(next) => void action.run(async () => { await setChannelNotify(pick.id, pickToServer(next)); reload(); return true; })}
           pickLabel={t("ay.pick")}
           testId="team-notify-level-picker"
+        />
+      )}
+      {pickProject && (
+        <SxPicker<"all" | "none">
+          open
+          onClose={() => setPickProject(null)}
+          parent={t("ay.notify.title")}
+          title={pickProject.title}
+          label={t("notify.picker.project")}
+          options={[
+            { key: "all", label: t("notify.hub.all"), desc: t("notify.picker.projectAll") },
+            { key: "none", label: t("notify.level.none"), desc: t("notify.picker.projectNone") },
+          ]}
+          value={mutes.isProjectMuted(pickProject.id) ? "none" : "all"}
+          onPick={(next) => void mutes.setProjectMuted(pickProject.id, next === "none")}
+          pickLabel={t("ay.pick")}
+          testId="team-notify-project-picker"
         />
       )}
     </>
   );
 }
-

@@ -41,6 +41,7 @@ import { sharePeopleTranslations } from "./translations-share-people";
 import { apiKeysTranslations } from "./translations-api-keys";
 import { telegramTranslations } from "./translations-telegram";
 import { ayarTranslations } from "./translations-ayar";
+import { notifyTranslations } from "./translations-notify";
 import { firstRunTranslations } from "./translations-first-run";
 import { settingsTranslations } from "./translations-settings";
 import { connectGuideTranslations } from "./translations-connect-guide";
@@ -3360,6 +3361,7 @@ export const translations = {
   ...apiKeysTranslations,
   ...telegramTranslations,
   ...ayarTranslations,
+  ...notifyTranslations,
   ...firstRunTranslations,
   ...settingsTranslations,
   ...connectGuideTranslations,

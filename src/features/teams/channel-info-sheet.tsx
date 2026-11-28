@@ -10,7 +10,8 @@ import { Search } from "@/components/icons/search";
 import { X } from "@/components/icons/x";
 import { Modal } from "@/components/ui/modal";
 import { ConfirmDialog } from "@/features/groups/confirm-dialog";
-import { ChoiceGroup } from "@/components/ui/choice-group";
+import { NOTIFY_CHANNEL_HINT, NOTIFY_PICK_LABEL, NotifyInheritBanner, NotifySection } from "@/features/notify/notify-section";
+import { channelPick, pickToServer, type NotifyPick } from "@/lib/notify-standard";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { archiveTeamChannel, deleteTeamChannel, setChannelNotify, setTeamMute, type TeamActionError, type TeamChannel, type TeamSummary } from "@/lib/supabase/teams";
 import { channelParam } from "@/lib/team-chat";
@@ -18,8 +19,6 @@ import { teamLink, teamRoleCan } from "@/lib/teams";
 import { cn } from "@/lib/utils";
 import { InlineAlert } from "@/components/ui/inline-alert";
 import { DialogShell } from "@/components/ui/dialog-shell";
-
-type NotifyLevel = "all" | "mentions" | "none";
 
 /**
  * Kanal bilgisi (Yön A, mockup "Ekip 4", docs/history/353-*): ekip sohbetinin ⋮ menüsünden ya da bilgi sayfasındaki kanal satırından açılan alttan sayfa.
@@ -121,39 +120,20 @@ export function ChannelInfoSheet({
               ))}
             </dl>
 
-            <div className="space-y-1.5" data-channel-notify-block>
-              <p className="text-caption font-semibold text-text-muted">{t("th.notify.heading")}</p>
-              {inherited && (
-                <div data-channel-inherited={inherited} className="space-y-1.5 rounded-xl border border-warning/40 bg-warning/5 px-3 py-2.5">
-                  <p className="text-small font-semibold text-text">{t(inherited === "team" ? "th.inherit.team" : "th.inherit.project")}</p>
-                  <p className="text-caption text-text-secondary">{t("th.inherit.note")}</p>
-                  <button
-                    type="button"
-                    data-channel-unmute-parent
-                    disabled={busy}
-                    onClick={() => void run(() => setTeamMute(team.id, inherited === "project" ? (channel.projectId ?? null) : null, false), onChanged)}
-                    className="text-small font-semibold text-primary-text hover:underline disabled:opacity-50"
-                  >
-                    {t(inherited === "team" ? "th.inherit.unmuteTeam" : "th.inherit.unmuteProject")}
-                  </button>
-                </div>
-              )}
-              <ChoiceGroup<NotifyLevel> variant="segmented"
-                value={channel.notifyLevel}
-                ariaLabel={t("th.notify.heading")}
-                testId="channel-notify"
-                disabled={busy}
-                onChange={(next) => void run(() => setChannelNotify(channel.id, next), onChanged)}
-                options={[
-                  { key: "all", label: t("tm.chat.notify.all") },
-                  { key: "mentions", label: t("tm.chat.notify.mentionsShort") },
-                  { key: "none", label: t("tm.chat.notify.none") },
-                ]}
-              />
-              <p data-channel-notify-hint className="text-caption text-text-secondary">
-                {t(`th.notify.${channel.notifyLevel}` as "th.notify.all")}
-              </p>
-            </div>
+            <NotifySection<NotifyPick>
+              testId="channel"
+              heading={t("th.notify.heading")}
+              value={channelPick(channel.notifyLevel, channel.notifyDefault)}
+              disabled={busy}
+              onChange={(next) => void run(() => setChannelNotify(channel.id, pickToServer(next)), onChanged)}
+              banner={inherited ? <NotifyInheritBanner scope={inherited} busy={busy} onUnmute={() => void run(() => setTeamMute(team.id, inherited === "project" ? (channel.projectId ?? null) : null, false), onChanged)} /> : undefined}
+              items={[
+                { key: "default", description: t("notify.default.channel", { level: t(NOTIFY_PICK_LABEL[channel.notifyDefault]) }) },
+                { key: "all", description: t(NOTIFY_CHANNEL_HINT.all) },
+                { key: "mentions", description: t(NOTIFY_CHANNEL_HINT.mentions) },
+                { key: "none", description: t(NOTIFY_CHANNEL_HINT.none) },
+              ]}
+            />
 
             <div className="overflow-hidden rounded-lg border border-border-soft">
               {rows.map((row) => {

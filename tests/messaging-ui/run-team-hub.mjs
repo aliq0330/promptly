@@ -388,7 +388,7 @@ await scenario("21. Kanal bilgisi (E4): kim görür/yazar, bildirim düzeyi, yö
   const sheet = page.locator("[data-channel-info]");
   await sheet.waitFor();
   await sheet.getByText("Kim görür").waitFor();
-  await sheet.locator("[data-segmented='channel-notify'] [data-segment='all']").click();
+  await sheet.locator("[data-notify-section='channel'] [data-option='all']").click();
   await page.waitForTimeout(300);
   assert.ok(called(db, "team_set_channel_notify").some((c) => c.body.p_channel === CH_GENERAL && c.body.p_level === "all"));
   assert.match(await sheet.locator("[data-channel-edit]").getAttribute("href"), /settings=1/);
