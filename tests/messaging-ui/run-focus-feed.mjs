@@ -177,7 +177,7 @@ const MEDIA_STUB = () => {
   };
 };
 
-async function scenario(name, fn, { viewport = { width: 390, height: 844 }, lang = "tr", guest = false, theme, reducedMotion, noMediaRpc = false } = {}) {
+async function scenario(name, fn, { viewport = { width: 390, height: 844 }, lang = "tr", guest = false, theme, reducedMotion, noMediaRpc = false, sound = null } = {}) {
   if (ONLY && !name.startsWith(ONLY)) return;
   const db = createDb();
   db.noMediaRpc = noMediaRpc;
@@ -193,6 +193,8 @@ async function scenario(name, fn, { viewport = { width: 390, height: 844 }, lang
       if (th) localStorage.setItem("promptly-theme", th);
     } catch {}
   }, [lang, theme ?? null]);
+  // The site-wide sound preference (docs/history/483-*) lives on the device.
+  if (sound) await context.addInitScript((value) => { try { localStorage.setItem("promptly-media-sound", value); } catch {} }, sound);
   const page = await context.newPage();
   page.setDefaultTimeout(8000);
   const errors = [];
@@ -377,16 +379,22 @@ await scenario("5. Video: yazarın çıktısı oynar (sessiz), rayda ses düğme
   assert.ok(db.calls.some((c) => c.table === "prompt_results" && c.body.byPrompt === feed.video.id));
 });
 
-await scenario("6. Ses: etkin olunca kendiliğinden (sesle) çalar ve sesi açar; ortadaki düğme durdurur/başlatır; ilerleme çubuğu yok", async ({ page }) => {
+await scenario("6. Ses: tercih KAPALIyken kendiliğinden çalmaz, düğmesi çalar ve tercihi (tüm site) açar; ortadaki düğme durdurur/başlatır; ilerleme çubuğu yok", async ({ page }) => {
   await openFocus(page);
   await jump(page, 6);
   assert.equal(await activeIndex(page), 7);
   const s = slide(page, 6);
   await s.locator("audio").waitFor({ state: "attached" });
   await page.waitForTimeout(300);
+  assert.equal((await media(page)).filter((m) => m.op === "play" && m.tag === "AUDIO").length, 0, "sound is off: the audio post waits on its button");
+  assert.ok(await (await menuItem(page, "Sesi aç")).isVisible(), "the switch shows sound is off");
+  await page.keyboard.press("Escape");
+  await s.getByRole("button", { name: "Oynat" }).click();
+  await page.waitForTimeout(300);
   const plays = (await media(page)).filter((m) => m.op === "play" && m.tag === "AUDIO");
-  assert.ok(plays.length >= 1 && plays.at(-1).muted === false, `audio autoplays with its sound: ${JSON.stringify(plays)}`);
-  assert.ok(await (await menuItem(page, "Sesi kapat")).isVisible(), "sound switched on by the audio post starting");
+  assert.ok(plays.length >= 1 && plays.at(-1).muted === false, `the tap plays it with its sound: ${JSON.stringify(plays)}`);
+  assert.ok(await (await menuItem(page, "Sesi kapat")).isVisible(), "sound switched on (the one site-wide preference)");
+  assert.equal(await page.evaluate(() => localStorage.getItem("promptly-media-sound")), "on", "kept on the device");
   await page.keyboard.press("Escape");
   assert.equal(await s.locator("[class*='bottom-0'][class*='h-0.5']").count(), 0, "no progress line on the slide");
   await s.getByRole("button", { name: "Duraklat" }).click({ force: true });
@@ -397,6 +405,38 @@ await scenario("6. Ses: etkin olunca kendiliğinden (sesle) çalar ve sesi açar
   assert.equal((await media(page)).at(-1).op, "play");
   await shot(page, "06-audio");
 });
+
+await scenario("6b. Ses: tercih AÇIKken etkin olunca kendiliğinden (sesle) çalar; anahtarı kapatınca susar, elle durdurulan yeniden başlamaz", async ({ page }) => {
+  await openFocus(page);
+  await jump(page, 6);
+  const s = slide(page, 6);
+  await s.locator("audio").waitFor({ state: "attached" });
+  await page.waitForTimeout(300);
+  const plays = (await media(page)).filter((m) => m.op === "play" && m.tag === "AUDIO");
+  assert.ok(plays.length >= 1 && plays.at(-1).muted === false, `audio autoplays with its sound: ${JSON.stringify(plays)}`);
+  assert.ok(await (await menuItem(page, "Sesi kapat")).isVisible(), "switch is on");
+  await page.keyboard.press("Escape");
+  await s.locator("[data-focus-sound]").click();
+  await page.waitForTimeout(300);
+  assert.equal((await media(page)).at(-1).op, "pause", "turning sound off silences the audio post");
+  assert.equal(await page.evaluate(() => localStorage.getItem("promptly-media-sound")), "off");
+}, { sound: "on" });
+
+await scenario("6c. Video: tercih AÇIKken sesli başlar; elle durdurunca anahtar değişse de yeniden başlamaz", async ({ page }) => {
+  await openFocus(page);
+  await jump(page, 5);
+  const video = slide(page, 5).locator("video");
+  await video.waitFor({ state: "attached" });
+  await page.waitForTimeout(300);
+  assert.equal(await video.evaluate((el) => el.muted), false, "starts with its sound");
+  await slide(page, 5).getByRole("button", { name: "Duraklat" }).click({ force: true });
+  await page.waitForTimeout(200);
+  const before = (await media(page)).filter((m) => m.tag === "VIDEO" && m.op === "play").length;
+  await slide(page, 5).locator("[data-focus-sound]").click();
+  await page.waitForTimeout(300);
+  assert.equal((await media(page)).filter((m) => m.tag === "VIDEO" && m.op === "play").length, before, "a hand-paused video stays paused");
+  assert.equal(await video.evaluate((el) => el.muted), true, "but follows the switch");
+}, { sound: "on" });
 
 await scenario("7. 'Yalnız görselliler' KAPALI başlar: metin promptu + görselsiz workflow akışta; açınca sunucu p_has_media ister, düşerler; kapatınca geri gelirler", async ({ page, db }) => {
   await openFocus(page);

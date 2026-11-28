@@ -5,9 +5,10 @@ import type { PostFeedItem } from "@/features/feed/types";
 import type { FocusTabId } from "@/lib/focus-sheet";
 
 /**
- * Odak's one sound switch (top bar): videos start muted (browsers only autoplay silently); turning sound on, or tapping
- * an audio post's play button — or an audio post starting by itself with its sound — applies to every following post until it is
- * turned off again.
+ * Odak's one sound switch (top bar) is the SITE-WIDE preference (`lib/media-sound.ts`, docs/history/483-*), not a state of its own:
+ * `muted` is what is heard now (the choice AND the browser allowing sound — a fresh page load with sound chosen stays silent until the
+ * first tap), `setMuted(false)` turns the preference on for the post cards too, `setMuted(true)` turns it off everywhere. Videos start
+ * silent by default (browsers only autoplay silently); an audio post waits on its button until sound is on.
  */
 export const FocusPlaybackContext = createContext<{ muted: boolean; setMuted: (muted: boolean) => void }>({ muted: true, setMuted: () => undefined });
 
