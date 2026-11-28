@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useUrlDialog } from "@/lib/use-url-dialog";
 import { useRouter } from "next/navigation";
 import { ChoiceGroup } from "@/components/ui/choice-group";
 import { OptionGroup } from "@/components/ui/option-group";
@@ -45,7 +46,7 @@ export function SpaceSettingsSx({ space, images, onClose, onSaved, onDeleted }: 
   const [coverItemId, setCoverItemId] = useState<string | null>(space.coverItemId);
   const [removeUpload, setRemoveUpload] = useState(false);
   const [loaded, setLoaded] = useState<SpaceItem[] | null>(images ?? null);
-  const [sub, setSub] = useState<"kind" | "cover" | "danger" | "delete" | null>(null);
+  const [sub, setSub] = useUrlDialog<"kind" | "cover" | "danger" | "delete">("sdlg");
   const [counts, setCounts] = useState<{ members: number; invites: number } | null>(null);
   const save = useAsyncAction();
   const danger = useAsyncAction();
@@ -244,11 +245,12 @@ export function DeleteSpaceSx({ space, onClose, onDeleted }: { space: Pick<Space
 // F3 · Üyeler ve davet (+ F4 üye rolü)
 // ---------------------------------------------------------------------------------------------
 
-export function SpaceMembersSx() {
+export function SpaceMembersSx({ root }: { root?: boolean }) {
   const { t } = useTranslation();
   const router = useRouter();
   const { user } = useAuth();
-  const { space, caps } = useSpaceContext();
+  const { space, caps, userId } = useSpaceContext();
+  const [leaving, setLeaving] = useState(false);
   const [members, setMembers] = useState<SpaceMember[] | null>(null);
   const [invites, setInvites] = useState<SpaceInvitation[]>([]);
   const [username, setUsername] = useState("");
@@ -287,7 +289,7 @@ export function SpaceMembersSx() {
   const list = members ?? [];
   return (
     <>
-      <SxPage parent={space.title} title={t("ay.space.membersInvite")} backHref={spaceHref(space.id)} testId="space-members-page">
+      <SxPage root={root} parent={space.title} title={t("ay.space.membersInvite")} backHref={spaceHref(space.id)} testId="space-members-page">
         <SxLabel>{t("ay.space.access")}</SxLabel>
         <SxNote><b>{t("ay.space.privateTitle")}</b> {t("ay.space.membersNote")}</SxNote>
 
@@ -329,7 +331,35 @@ export function SpaceMembersSx() {
             </SxCard>
           </>
         )}
+        {caps.leave && userId && (
+          <>
+            <SxLabel>{t("ay.danger.label")}</SxLabel>
+            <SxCard>
+              <SxRow nav titleClass="dgt" title={t("spaces.card.leave")} onClick={() => setLeaving(true)} testId="space-leave-row" />
+            </SxCard>
+          </>
+        )}
       </SxPage>
+      {leaving && userId && (
+        <SxConfirmPage
+          parent={space.title}
+          title={t("spaces.leave.title")}
+          lead={t("spaces.leave.body", { title: space.title })}
+          cancelLabel={t("common.cancel")}
+          confirmLabel={t("spaces.leave.confirm")}
+          busy={row.busy}
+          error={row.error}
+          onConfirm={() =>
+            void row.run(async () => {
+              await removeSpaceMember(space.id, userId);
+              router.replace("/spaces");
+              return true;
+            })
+          }
+          onClose={() => setLeaving(false)}
+          testId="space-leave-confirm"
+        />
+      )}
       {pick && <MemberRoleSx member={pick} onClose={() => setPick(null)} onChanged={async () => { setPick(null); await load(); }} onGone={() => { setPick(null); router.refresh(); void load(); }} spaceId={space.id} />}
     </>
   );

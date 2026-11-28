@@ -23,8 +23,5 @@ x/y/genişlik/yükseklik + metin farkını raporlar (renk karşılaştırılmaz:
 C3 (meta açıklama notu çıkarıldı), C5 («21 Ara tarihine kadar»), D1 («Son etkinlik» satırı çıkarıldı: veri yok), D2/D3 (ekipte «Space» yazılmaz → «alan»), E3 (Daha fazla yükle yalnız sayfa varsa), F1 («Karakter tasarımı»), A2 (kadro yüksekliği 1470).
 
 ## Bilinen sınırlar
-- Duyurular · Moderasyon · Topluluk özeti · İşlem geçmişi (topluluk) ve Gruplar · Dışa aktar (ekip) mockup'ta yok: telefonda eski sayfa kalır.
-- Telefonda mockup'ta olmadığı için çıkanlar: odaların sıralanması/silinmesi (silme = arşivdeki odalar sayfası, sahip), kanalda «kim yazar», dosya «başka yere kopyala», topluluk yasaklılar listesi (md+ eski bileşenlerde duruyor).
-- md+ yüzeylerinin çoğu eski bileşenle çalışır; yeni gövdeler `SxPage/SxSub` ile md+'da pencere/okuma sütunudur (topluluk yönetimi md+ bölüm menüsü değişmedi).
-- Proje ayarları/dosya bilgisi telefonda yerel durumdur (adres parametresi yok; geri tuşu sayfayı kapatmaz).
+- Bu dosyadaki «telefonda eski sayfa kalır», «md+ eski bileşenle çalışır», «adres parametresi yok» sınırları `482-*` ile KAPATILDI.
 - Gerçek Supabase'e/gerçek telefona KARŞI DENENMEDİ; ağ taklidi + 390 px Chromium.

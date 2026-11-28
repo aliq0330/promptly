@@ -114,16 +114,17 @@ export function ChannelSettingsSx({ ctx, channel, onClose, onChanged }: { ctx: T
   const [mode, setMode] = useState<"open" | "private">(channel.mode === "private" ? "private" : "open");
   const [editing, setEditing] = useState<"name" | "description" | null>(null);
   const [level, setLevel] = useState(channel.notifyLevel);
+  const [posting, setPosting] = useState<"members" | "admins">(channel.postingPolicy);
   const action = useAsyncAction();
   const [confirm, setConfirm] = useState<null | "archive" | "delete">(null);
   const locked = channel.isDefault || channel.projectMain === true;
-  const changes = (name.trim() !== channel.name ? 1 : 0) + (description.trim() !== (channel.description ?? "") ? 1 : 0) + (mode !== (channel.mode === "private" ? "private" : "open") ? 1 : 0);
+  const changes = (name.trim() !== channel.name ? 1 : 0) + (description.trim() !== (channel.description ?? "") ? 1 : 0) + (mode !== (channel.mode === "private" ? "private" : "open") ? 1 : 0) + (posting !== channel.postingPolicy ? 1 : 0);
   const teamMuted = channel.muteScope === "team";
   const projectMuted = channel.muteScope === "project";
   async function submit() {
     if (!changes) return;
     const ok = await action.run(async () => {
-      await updateTeamChannel(channel.id, { name: name.trim(), description: description.trim(), ...(locked ? {} : { mode }) });
+      await updateTeamChannel(channel.id, { name: name.trim(), description: description.trim(), ...(locked ? {} : { mode }), ...(posting !== channel.postingPolicy ? { posting_policy: posting } : {}) });
       return true;
     });
     if (ok) onChanged();
@@ -164,6 +165,21 @@ export function ChannelSettingsSx({ ctx, channel, onClose, onChanged }: { ctx: T
             { key: "private", label: t("tm.chat.mode.private"), description: t("ay.chan.privateHint") },
           ]}
         />
+
+        <SxLabel id="kn-yaz-lab">{t("tm.chan.whoPosts")}</SxLabel>
+        <SxCard style={{ padding: 12 }}>
+          <ChoiceGroup<"members" | "admins">
+            variant="sx-seg"
+            labelledBy="kn-yaz-lab"
+            value={posting}
+            disabled={channel.isDefault}
+            onChange={setPosting}
+            options={[
+              { key: "members", label: t("tm.chan.postsAll") },
+              { key: "admins", label: t(channel.projectId ? "th.newChannel.postingLeads" : "tm.chan.postsAdmins") },
+            ]}
+          />
+        </SxCard>
 
         <SxLabel>{t("ay.chan.yourNotify")}</SxLabel>
         <SxCard style={{ padding: "12px 12px 4px" }}>

@@ -198,7 +198,7 @@ export function AccessList({ access }: { access: DeveloperAccess }) {
   return (
     <section className="space-y-4" data-access-list="" aria-labelledby="access-title">
       <div className="flex items-baseline justify-between gap-3">
-        <h2 id="access-title" className="font-display text-h3 font-bold text-text">{t("devSettings.access.title")}</h2>
+        <h2 id="access-title" className="sx-set-label" style={{ margin: 0 }}>{t("devSettings.access.title")}</h2>
         {rows !== null && <span className="text-caption text-text-muted">{t("devSettings.access.count", { count: active })}</span>}
       </div>
       <p className="text-caption leading-relaxed text-text-muted">{t("devSettings.access.hint")}</p>

@@ -11,7 +11,7 @@ import { ConnectWizard } from "@/features/developers/connect-wizard";
 import { AccessList, useDeveloperAccess } from "@/features/settings/access-list";
 import { ApiKeysSection } from "@/features/settings/api-keys-section";
 import { ExtensionSection } from "@/features/settings/extension-section";
-import { SettingsCard, SettingsLinkRow, SettingsSubpage } from "@/features/settings/settings-ui";
+import { SettingsCard, SettingsLinkCard, SettingsLinkRow, SettingsSubpage } from "@/features/settings/settings-ui";
 import { TelegramSection } from "@/features/settings/telegram-section";
 import { developerEndpoints } from "@/lib/developers";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -65,9 +65,9 @@ export function DeveloperSettings() {
 
   return (
     <SettingsSubpage title={t("settings.groupDeveloper")} description={t("settings.hub.developerDesc")}>
-      <section className="space-y-3" aria-labelledby="dev-connect">
+      <section className="mt-6 space-y-3" aria-labelledby="dev-connect">
         <div className="flex items-baseline justify-between gap-3 px-1">
-          <h2 id="dev-connect" className="font-display text-h3 font-bold text-text">{t("devSettings.hub.connectTitle")}</h2>
+          <h2 id="dev-connect" className="sx-set-label" style={{ margin: 0 }}>{t("devSettings.hub.connectTitle")}</h2>
           <span className="text-caption text-text-muted">{t("devSettings.hub.connectHint")}</span>
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
@@ -121,7 +121,9 @@ export function DeveloperSettings() {
 
       <AccessList access={access} />
 
-      <SettingsLinkRow href="/developers" icon={<Code2 size={20} className="text-text-secondary" />} title={t("devSettings.docsTitle")} hint={t("devSettings.docsHint")} />
+      <SettingsLinkCard>
+        <SettingsLinkRow href="/developers" icon={<Code2 size={20} className="text-text-secondary" />} title={t("devSettings.docsTitle")} hint={t("devSettings.docsHint")} />
+      </SettingsLinkCard>
     </SettingsSubpage>
   );
 }

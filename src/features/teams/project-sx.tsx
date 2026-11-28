@@ -5,6 +5,7 @@ import { ChoiceGroup } from "@/components/ui/choice-group";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useAsyncAction } from "@/features/groups/use-async-action";
 import { SxAvatar, SxBtn, SxCard, SxConfirmPage, SxField, SxFoot, SxGap, SxLabel, SxNote, SxPicker, SxRow, SxRowCol, SxSep, SxSub, SxSwitch, SxTag } from "@/features/settings/sx";
+import { CopyItemsDialog } from "@/features/spaces/copy-items-dialog";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { listTeamGroups, listTeamGuests, listTeamMembers, type TeamGroup, type TeamGuest, type TeamMember } from "@/lib/supabase/teams";
 import {
@@ -309,6 +310,7 @@ export function FileSettingsSx({
   const { t } = useTranslation();
   const action = useAsyncAction();
   const [review, setReview] = useState(file.reviewRequired);
+  const [copyOpen, setCopyOpen] = useState(false);
   const vars = detail.variables.filter((v) => v.fileId === file.id);
   const boards = detail.boards.filter((b) => b.fileId === file.id);
   const grouped = boards.filter((b) => b.groupId);
@@ -340,7 +342,9 @@ export function FileSettingsSx({
       <SxCard>
         <SxRow nav title={t("ay.file.boardGroup")} desc={grouped.length ? t("ay.file.boardGroupDesc", { count: grouped.length }) : t("ay.file.noBoardGroup")} onClick={onClose} />
         <SxRow nav title={t("ay.file.sortBoards")} desc={t("ay.file.sortBoardsDesc")} onClick={onClose} />
+        {file.mainAreaId && <SxRow nav title={t("spaces.copy.fileButton")} desc={t("ay.file.copyDesc")} onClick={() => setCopyOpen(true)} testId="team-file-copy" />}
       </SxCard>
+      {copyOpen && file.mainAreaId && <CopyItemsDialog sourceSpaceId={file.mainAreaId} sourceTitle={file.title} defaultDestination="newSpace" allowArchive={false} onClose={() => setCopyOpen(false)} />}
 
       <SxLabel>{t("ay.prefs.chat")}</SxLabel>
       <SxCard>

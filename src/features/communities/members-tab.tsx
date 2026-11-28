@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Tabs, type TabItem } from "@/components/ui/tabs";
-import { GroupInvitesSection } from "@/features/groups/group-invites-section";
 import { GroupMembersSection } from "@/features/groups/group-members-section";
 import { GroupRequestsSection } from "@/features/groups/group-requests-section";
 import type { CommunityTabProps } from "./community-page";
@@ -35,10 +34,11 @@ export function MembersTab({ group, role, viewerId, reload, onToast, section }: 
   const available = membersSections(role, group.rolePermissions);
   const active: MembersSection = (available.find((key) => key === section) ?? "list") as MembersSection;
   if (!viewerId) return null;
-  if (phone && section === "invites" && available.includes("invites")) {
-    const sub = searchParams.get("sub");
-    return <InvitesPage group={group} onChanged={reload} onToast={onToast} sub={sub} setSub={(next) => router.replace(`${communityHref(group.id, "members", "invites")}${next ? `&sub=${next}` : ""}`)} />;
-  }
+  const invitesPage = (root: boolean) => (
+    <InvitesPage root={root} group={group} onChanged={reload} onToast={onToast} sub={searchParams.get("sub")} setSub={(next) => router.replace(`${communityHref(group.id, "members", "invites")}${next ? `&sub=${next}` : ""}`)} />
+  );
+  // Telefon: davetler tam ekran sayfa; md+: "Üyeler" sekmesinin altındaki bölüm (aynı gövde, başlık çubuğu yok).
+  if (phone && section === "invites" && available.includes("invites")) return invitesPage(false);
 
   const items: TabItem<MembersSection>[] = available.map((key) => ({
     key,
@@ -86,7 +86,7 @@ export function MembersTab({ group, role, viewerId, reload, onToast, section }: 
         </>
       )}
       {active === "requests" && <GroupRequestsSection group={group} onChanged={reload} onToast={onToast} />}
-      {active === "invites" && <GroupInvitesSection group={group} onChanged={reload} onToast={onToast} />}
+      {active === "invites" && invitesPage(true)}
     </div>
   );
 }

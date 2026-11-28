@@ -545,7 +545,7 @@ export function ManageListPage({ group, role }: { group: ChatGroup; role: GroupR
   const showModeration = can(role, "moderate_posts", perms) || can(role, "delete_messages", perms);
 
   return (
-    <SxPage parent={group.name} title={t("ay.manage.title")} backHref={communityHref(group.id)} testId="community-manage-list">
+    <SxPage root parent={group.name} title={t("ay.manage.title")} backHref={communityHref(group.id)} testId="community-manage-list">
       <div className="hd">
         <GroupCover group={group} />
         <div className="rt">

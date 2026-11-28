@@ -182,6 +182,7 @@ export function CopyItemsDialog({
 
   return (
     <SpaceDialog
+      page
       title={t("spaces.copy.title")}
       onClose={onClose}
       busy={phase === "running"}

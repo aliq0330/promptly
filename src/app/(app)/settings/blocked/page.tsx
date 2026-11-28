@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowLeft } from "@/components/icons/arrow-left";
+import { SettingsSubpage } from "@/features/settings/settings-ui";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/features/auth/auth-provider";
@@ -39,18 +39,13 @@ export default function BlockedUsersPage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-xl animate-rise-in space-y-5 px-3 py-5 sm:px-5 sm:py-7 lg:px-8 lg:py-10">
-      <Link href="/settings/privacy" className="inline-flex items-center gap-1 text-small text-text-muted hover:text-text">
-        <ArrowLeft size={16} />
-        {t("settings.backToSettings")}
-      </Link>
-      <h1 className="text-h1 text-text">{t("settings.blockedUsers")}</h1>
+    <SettingsSubpage title={t("settings.blockedUsers")} backHref="/settings/privacy" backLabel={t("settings.privacyTitle")}>
       {error && <p className="text-small text-danger">{error}</p>}
       <PagedListState list={blockedPages} skeleton={<p className="py-10 text-center text-small text-text-muted">{t("settings.loadingEllipsis")}</p>}>
         {blocked.length === 0 ? (
           <p className="rounded-xl border border-dashed border-border-soft py-10 text-center text-small text-text-muted">{t("settings.blockedEmpty")}</p>
         ) : (
-          <div className="overflow-hidden rounded-lg card-flat shadow-card">
+          <div className="sx-set-card mt-4 overflow-hidden">
             {blocked.map((profile) => (
               <div key={profile.id} className="flex items-center gap-3 border-b border-border-soft px-4 py-3 last:border-0">
                 <Link href={profileHref(profile)} className="flex min-w-0 flex-1 items-center gap-3">
@@ -68,6 +63,6 @@ export default function BlockedUsersPage() {
           </div>
         )}
       </PagedListState>
-    </div>
+    </SettingsSubpage>
   );
 }

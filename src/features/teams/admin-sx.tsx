@@ -34,6 +34,7 @@ import { formatRelativeTime } from "@/lib/utils";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import type { TeamCtx } from "./team-page";
 import { auditSentence } from "./team-admin-section";
+import { ExportPage, GroupsPage } from "./admin-sx-more";
 import { LoadMoreButton } from "@/features/feed/load-more";
 import { TEAM_TONES, resolveTeamTone, roleLabelKey } from "./team-ui";
 
@@ -53,8 +54,12 @@ export function TeamAdminPhone({ ctx, route, go }: { ctx: TeamCtx; route: TeamAd
       return <PoliciesPage ctx={ctx} sub={route.sub} pickKey={route.key} go={go} />;
     case "invites":
       return <InvitesPage ctx={ctx} sub={route.sub} go={go} />;
+    case "groups":
+      return <GroupsPage ctx={ctx} sub={route.sub} groupId={route.key} go={go} />;
     case "guests":
       return <GuestsPage ctx={ctx} />;
+    case "export":
+      return <ExportPage ctx={ctx} />;
     case "audit":
       return <AuditPage ctx={ctx} />;
     case "danger":
@@ -90,7 +95,7 @@ function ManageList({ ctx }: { ctx: TeamCtx }) {
   const showPeople = can("manage_members") || can("manage_groups");
   const showRecords = can("view_audit") || can("export");
   return (
-    <SxPage parent={team.name} title={t("ay.manage.title")} backHref={teamLink(team.id)} testId="team-manage-list">
+    <SxPage root parent={team.name} title={t("ay.manage.title")} backHref={teamLink(team.id)} testId="team-manage-list">
       <div className="hd">
         <SxCover name={team.name} color={teamColor(team.tone)} />
         <div className="rt">

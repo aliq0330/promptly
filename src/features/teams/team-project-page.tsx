@@ -18,6 +18,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/features/groups/use-toast";
 import { SpaceDialog } from "@/features/spaces/space-modals";
 import { useTranslation } from "@/lib/i18n/language-provider";
+import { useUrlDialog } from "@/lib/use-url-dialog";
 import { deleteBoard, fetchProject, renameBoard, setFileReview, type ProjectDetail } from "@/lib/supabase/team-projects";
 import { effectiveVariables } from "@/lib/team-projects";
 import { teamLink } from "@/lib/teams";
@@ -271,7 +272,6 @@ function FileInfoSheet({
   onRename: () => void;
   onDelete: () => void;
 }) {
-  const { t } = useTranslation();
   const { project, myRole } = detail;
   const lead = canReview(myRole);
   const { node: toastNode, show } = useToast();
@@ -332,7 +332,7 @@ function ProjectHome({ ctx, detail, onChanged }: { ctx: TeamCtx; detail: Project
   const { team } = ctx;
   const { project, myRole } = detail;
   const lead = canReview(myRole);
-  const [dialog, setDialog] = useState<null | "info" | "file" | "access" | "settings">(null);
+  const [dialog, setDialog] = useUrlDialog<"info" | "file" | "access" | "settings">();
   const archived = Boolean(project.archivedAt);
   // Proje BOŞ doğar (docs/history/368-*): proje geneli alan/pano açılmaz. Önceki sürümden kalan veri varsa yalnız OKUNUR/açılır, silinmez.
   const sharedBoards = boardRows(detail, team.id, null);
@@ -541,7 +541,7 @@ function FilePage({ ctx, detail, file, onChanged }: { ctx: TeamCtx; detail: Proj
   const { project, myRole } = detail;
   const tab = useAreaTab();
   const { item: itemParam, focus } = useItemParams();
-  const [dialog, setDialog] = useState<null | "info" | "rename" | "delete" | "board" | "variable">(null);
+  const [dialog, setDialog] = useUrlDialog<"info" | "rename" | "delete" | "board" | "variable">();
   const fileBoards = boardRows(detail, team.id, file.id);
   const fileHref = projectLink(team.id, project.id, { file: file.id });
   const overview = teamLink(team.id);
@@ -674,7 +674,7 @@ function BoardPage({ ctx, detail, boardId, onChanged }: { ctx: TeamCtx; detail: 
   const [renaming, setRenaming] = useState(false);
   const [title, setTitle] = useState(board?.title ?? "");
   const [error, setError] = useState<string | null>(null);
-  const [dialog, setDialog] = useState<null | "info" | "access" | "settings">(null);
+  const [dialog, setDialog] = useUrlDialog<"info" | "access" | "settings">();
   const known = isMain || Boolean(board);
   // Dosyanın bir panosu artık doğrudan tuvalde açılır (öğeler dosyanın listesindedir); eski liste adresleri tuvale yönlenir.
   const redirectToCanvas = Boolean(board) && !isMain && !tab && !itemParam;
@@ -820,7 +820,7 @@ function BoardMode({ ctx, detail, onChanged }: { ctx: TeamCtx; detail: ProjectDe
   const params = useSearchParams();
   const { team } = ctx;
   const { project, myRole } = detail;
-  const [dialog, setDialog] = useState<null | "info" | "access" | "settings" | "invite">(null);
+  const [dialog, setDialog] = useUrlDialog<"info" | "access" | "settings" | "invite">();
   const fileParam = params.get("file");
   const boardParam = params.get("board");
   const focus = params.get("focus") || null;

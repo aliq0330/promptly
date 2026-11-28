@@ -32,6 +32,10 @@ import { fetchAreaInfo } from "@/lib/supabase/team-projects";
 import { projectLink } from "@/lib/team-projects";
 import { isSpaceTab, SPACE_TAB_LABEL, SPACE_TABS, spaceHref, type SpaceTab } from "@/lib/spaces";
 import { SpaceProvider, useSpaceContext, type SpaceData } from "./space-provider";
+import { useUrlDialog } from "@/lib/use-url-dialog";
+
+/** Ayarlar sayfasının ikinci düzey adres parametresi: ayarlar kapanınca o da silinir. */
+const SPACE_SUB_PARAMS = ["sdlg"] as const;
 import { DeleteSpaceSx as DeleteSpaceDialog, SpaceSettingsSx } from "./space-sx";
 import type { PopoverMenuItem } from "@/components/ui/popover-menu";
 import { SpaceHeader } from "./space-header";
@@ -157,7 +161,7 @@ function SpaceView() {
   const defaultTab: SpaceTab = "overview";
   const tab: SpaceTab = isSpaceTab(tabParam) && visibleTabs.includes(tabParam) ? tabParam : defaultTab;
   const focusId = searchParams.get("focus");
-  const [dialog, setDialog] = useState<null | "settings" | "delete" | "leave" | "copy">(null);
+  const [dialog, setDialog] = useUrlDialog<"settings" | "delete" | "leave" | "copy">("dlg", SPACE_SUB_PARAMS);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
