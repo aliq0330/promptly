@@ -1,5 +1,6 @@
 "use client";
 
+import { usePinnedHere } from "@/features/profile/profile-pins";
 import { resolveToolRefs } from "@/lib/ai-tool-catalog";
 import { formatRelativeTime, promptHref } from "@/lib/utils";
 import { handOffPrompt } from "@/lib/detail-handoff";
@@ -57,12 +58,15 @@ export function PromptCard({
   // The two-line summary: the author's description; an image / video / audio prompt without one shows its prompt text (a text prompt's text is already the art).
   const summary = prompt.description.trim() || (hasPromptText && prompt.contentType !== "text" ? prompt.promptText.trim() : "");
 
+  const pinned = usePinnedHere("prompt", prompt.id);
+
   return (
     <ContentCard variant="visual" href={href} onOpen={() => handOffPrompt(prompt)}>
       <ContentCardPost
         author={prompt.author}
         meta={postMeta(prompt.author.username, prompt.createdAt, language, isResponse ? t("prompt.sharedAReply") : undefined)}
         time={formatRelativeTime(prompt.createdAt, language)}
+        pinned={pinned}
         status={prompt.visibility === "private" ? <Badge variant="neutral">{t("prompt.privateBadge")}</Badge> : undefined}
         editHref={`/create?edit=${prompt.id}`}
         ownMetrics={

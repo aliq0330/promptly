@@ -19,14 +19,16 @@ import type { UserProfile } from "@/types";
  * same user now share one live count instead of each starting from
  * whatever stale `followerCount` their own cached profile object carried.
  */
-export function useFollowState(target: UserProfile) {
+export function useFollowState(target: UserProfile, options: { enabled?: boolean } = {}) {
+  const enabled = options.enabled !== false;
   const { user } = useAuth();
   const key = engagementStore.keyOf("follow", "", target.id);
   const entry = useEngagementEntry("follow", "", target.id, target.followerCount);
 
   useEffect(() => {
     let cancelled = false;
-    if (!user) return;
+    // `enabled` false: ⋮ menüsü kapalıyken kart başına "takip ediyor muyum" sorgusu atılmaz (docs/history/480-*).
+    if (!user || !enabled) return;
     const { activeChecked } = engagementStore.readActive(key);
     if (activeChecked) return;
     fetchIsFollowing(user.id, target.id).then((result) => {
@@ -35,7 +37,7 @@ export function useFollowState(target: UserProfile) {
     return () => {
       cancelled = true;
     };
-  }, [user, target.id, key]);
+  }, [user, enabled, target.id, key]);
 
   const toggle = useCallback(async () => {
     if (!user) return; // canFollow is false in this case — nothing to toggle

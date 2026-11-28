@@ -6,7 +6,8 @@ import { Bookmark } from "@/components/icons/bookmark";
 import { SlidersHorizontal } from "@/components/icons/sliders-horizontal";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Tabs } from "@/components/ui/tabs";
-import { fetchPresetsByCreatorPage, fetchSavedPresetsPage } from "@/lib/supabase/presets";
+import { fetchPresetsByCreatorPage, fetchPresetsByIds, fetchSavedPresetsPage } from "@/lib/supabase/presets";
+import { mergePinned, usePinnedItems } from "@/features/profile/profile-pins";
 import { usePagedList } from "@/features/content/use-paged-list";
 import { PagedListState } from "@/features/feed/paged-list-state";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -40,7 +41,9 @@ export function ProfilePresetsPanel({ ownerId, isOwn }: { ownerId: string; isOwn
   const [scope, setScope] = useState<Scope>("created");
   // "Oluşturduklarım": a page at a time (docs/history/255-*).
   const createdPages = usePagedList(`presets|${ownerId}`, true, (offset) => fetchPresetsByCreatorPage(ownerId, {}, offset));
-  const created = createdPages.items;
+  // "Profilde sabitle" (docs/history/480-*): sabitlenen hazır ayarlar "Oluşturduklarım" listesinin en üstünde.
+  const pinnedPresets = usePinnedItems("preset", fetchPresetsByIds, (preset) => preset.status === "published" && preset.visibility === "public", scope === "created" || !isOwn);
+  const created = mergePinned(pinnedPresets, createdPages.items);
 
   // "Kaydettiklerim": 24'erli sayfa, kendiliğinden devam (eskiden 120'de kesiliyordu).
   const savedPages = usePagedList(`presets-saved|${ownerId}`, isOwn && scope === "saved", (offset) => fetchSavedPresetsPage(ownerId, offset));

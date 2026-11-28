@@ -18,7 +18,7 @@ import { DetailMetaBlock, DetailMetaCard } from "@/features/content/detail-meta-
 import { ConfirmDialog } from "@/features/groups/confirm-dialog";
 import { MenuItem } from "@/components/ui/dropdown-menu";
 import { Copy } from "@/components/icons/copy";
-import { EngageCommentCount, EngageComments, EngageLike, EngageReactionSummary, EngageSave, EngageShare, EngageStatistics } from "@/features/content/scoped-engagement";
+import { EngageCommentCount, EngageComments, EngageLike, EngageReactionSummary, EngageQuoteSlot, EngageSave, EngageShare } from "@/features/content/scoped-engagement";
 import { FollowButton } from "@/features/profile/follow-button";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { SKILL_COMPAT_LABEL, SKILL_LICENSE_LABEL, skillCategoryName, skillLabelText } from "@/lib/skills/categories";
@@ -39,7 +39,8 @@ import { SkillInstallSection } from "./skill-install-section";
 import { downloadSkillExchange, downloadSkillMd, downloadSkillMetadata, skillMdFor } from "./skill-download";
 import { downloadSkillPackage, pickLatestVersion, SkillFilesSection, SkillRelatedSection, SkillVersionsSection } from "./skill-detail-parts";
 import { SkillDownloadButton } from "./skill-download-button";
-import { SkillMenu } from "./skill-menu";
+import { PostMenu } from "@/features/prompts/post-menu";
+import { RelationMapMenu } from "@/features/relations/relation-map-link";
 import { useSkillCategories } from "./use-skill-categories";
 import type { Skill, Tag } from "@/types";
 
@@ -225,7 +226,15 @@ export function SkillDetailView({ skillId }: { skillId?: string } = {}) {
               follow={!isOwn && <FollowButton user={skill.creator} />}
             />
           }
-          menu={<SkillMenu skill={skill} isOwn={isOwn} signedIn={Boolean(user)} onDelete={() => setConfirmDelete(true)} />}
+          menu={
+            skill.status === "published" && skill.visibility === "public" ? (
+              <RelationMapMenu kind="skill" id={skill.id}>
+                <PostMenu target={{ kind: "skill", skill }} surface="detail" onDelete={() => setConfirmDelete(true)} />
+              </RelationMapMenu>
+            ) : (
+              <PostMenu target={{ kind: "skill", skill }} surface="detail" onDelete={() => setConfirmDelete(true)} />
+            )
+          }
         />
       }
       aside={aside}
@@ -235,7 +244,7 @@ export function SkillDetailView({ skillId }: { skillId?: string } = {}) {
           end={
             skill.status === "published" && skill.visibility === "public" ? (
               <>
-                <EngageStatistics target={{ contentType: "skill", contentId: skill.id, likeCount: skill.likeCount, commentCount: skill.commentCount, saveCount: skill.saveCount }} size={20} />
+                <EngageQuoteSlot share={{ contentType: "skill", skill }} stats={{ contentType: "skill", contentId: skill.id, likeCount: skill.likeCount, commentCount: skill.commentCount, saveCount: skill.saveCount }} size={20} />
                 <EngageShare target={{ contentType: "skill", skill }} />
               </>
             ) : undefined

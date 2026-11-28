@@ -98,6 +98,8 @@ const overflowFree = (page) => page.evaluate(() => document.documentElement.scro
 const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: `${SHOTS}/${name}.png` }); };
 const cell = (page, n) => page.locator("[data-flip-key]").nth(n);
 const menuButton = (page, n) => cell(page, n).getByRole("button", { name: /Gönderi seçenekleri|Post options/ });
+/** Bir koşul sağlanana kadar (en çok 4 sn) bekler: tıklama ile ağ çağrısının kaydı arasındaki küçük gecikme için. */
+const until = async (fn) => { const end = Date.now() + 4000; while (Date.now() < end) { if (fn()) return; await new Promise((r) => setTimeout(r, 50)); } };
 const waitFeed = async (page) => { await page.locator("[data-flip-key]").first().waitFor(); };
 
 // 1 — Sana özel: kart yalnız 7. gönderinin altında
@@ -163,15 +165,18 @@ await scenario("4. Sana özel ⋮ menüsü: iki cevap var; 'İlgimi çekmiyor' g
   await page.waitForTimeout(300);
   await shot(page, "4-menu");
   await yes.click();
+  await until(() => state.rpcCalls.length >= 1);
   assert.deepEqual(state.rpcCalls[0], { p_kind: "prompt", p_id: pid(1), p_value: "interested" });
   assert.equal(await page.locator("[data-interest-hidden]").count(), 0, "'çekiyor' gönderiyi gizlemez");
   await menuButton(page, 0).click();
   assert.equal(await page.getByRole("menuitemcheckbox", { name: "İlgimi çekiyor" }).getAttribute("aria-checked"), "true", "seçili olan işaretli");
   await page.getByRole("menuitemcheckbox", { name: "İlgimi çekiyor" }).click();
+  await until(() => state.rpcCalls.length >= 2);
   assert.deepEqual(state.rpcCalls[1], { p_kind: "prompt", p_id: pid(1), p_value: null }, "seçiliye tekrar basmak geri alır");
   await menuButton(page, 0).click();
   await page.getByRole("menuitemcheckbox", { name: "İlgimi çekmiyor" }).click();
   await page.locator("[data-interest-hidden]").waitFor();
+  await until(() => state.rpcCalls.length >= 3);
   assert.deepEqual(state.rpcCalls[2], { p_kind: "prompt", p_id: pid(1), p_value: "not_interested" });
 });
 

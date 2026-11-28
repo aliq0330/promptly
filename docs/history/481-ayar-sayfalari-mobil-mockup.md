@@ -1,4 +1,4 @@
-# 480 — Ayar ve yönetim sayfaları: mobil mockup'a birebir (Topluluk · Ekip · Space)
+# 481 — Ayar ve yönetim sayfaları: mobil mockup'a birebir (Topluluk · Ekip · Space)
 
 Kaynak: kullanıcının paylaştığı Substack «Ayarlar» ekranı (koyu, büyük harfli bölüm etiketi, kenarlıklı kartlar, başlık + soluk açıklama + sağda kontrol) ve
 buna göre çizilen tuval — 34 mobil pano (`docs/mockups/ayar-sayfalari/`, tuval: https://claude.ai/artifact/S3w1sACrG5Y7wdg94tuZ4e).
