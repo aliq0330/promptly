@@ -35,5 +35,5 @@ Durum: ✔ bekliyor · ✔ yapıldı. Her madde tek tek işaretlenir.
 27. ✔ `/settings/danger` · 28. `/settings/blocked`
 
 ## F. Testler ve dokümantasyon
-29. ✔ (bkz. 482 notu: güncellenen paketler) Eski arayüz testlerinin yeni DOM'a göre güncellenmesi (run-team-hub, run-team-projects, run-communities/groups/rooms)
+29. ◐ Eski arayüz testleri: run-team-hub 43/43, run-settings 14/14, run-team-projects 60/61, run-rooms 32/34, run-spaces 28/30 güncellendi. KALAN (yeni DOM'a göre yeniden yazılmalı; çoğu 481'den ÖNCE de kırmızıydı): run-communities (≈9: 10b, 12, 13b, 17c, 17d, 22, 27b, 33–33c), run-groups (≈11: 4, 5, 6, 20, 21, 23b/c, 24, 26–28), run-community-home 26b/28, run-rooms 1/14 (`[data-kind-chips]`), run-spaces 30, run-team-projects 32b
 30. ✔ CLAUDE.md, docs/history/482-*, README satırı, bu liste

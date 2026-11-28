@@ -18,6 +18,11 @@
 - Yeni ayar/yönetim yüzeyi telefon/md+ ayrı yazılmaz: `SxPage` (+ `root`) / `SxSub` ile TEK gövde; yeni /settings sayfası `SettingsSubpage` + `SettingsCard`/`SettingsLinkCard` kullanır.
 - Telefonda tam ekran sayfa olması gereken bir pencere `SpaceDialog page` ya da `SxSub` olur.
 
+## Test durumu
+run-team-hub 43/43 · run-settings 14/14 · run-team-projects 60/61 · run-rooms 32/34 · run-spaces 28/30 · run-communities 56→(16b/16c düzeltildi)/68. Kalan kırmızılar `docs/ayar-sayfalari-eksikler.md` madde 29'da listeli (eski DOM'a bağlı topluluk/grup senaryoları; yeniden yazılmalı).
+Mockup karşılaştırması: 33 sayfa 0 fark; B1/D6/E2'ye eklenen yeni satırlar mockup dosyalarına da işlendi.
+
 ## Bilinen sınırlar
+- Dosya ayarlarındaki «Pano grubu» / «Panoları sırala» ve kanal ayarlarındaki «Üyeler» satırları yalnız sayfayı kapatıp ilgili yüzeye döndürür (ayrı bir düzenleme ekranı yok).
 - Mockup'ta olmayan yüzeylerin telefon görünümü mockup'la piksel karşılaştırılmadı (mockup'ı yok); ölçü/dil aynı kit'ten.
 - Gerçek Supabase'e/gerçek cihaza KARŞI DENENMEDİ; ağ taklidi + Chromium (390/768/1280 px).
